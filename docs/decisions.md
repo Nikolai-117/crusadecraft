@@ -88,4 +88,22 @@ Les compétences vont de 1 à 99 : un citoyen débutant obtient 1 à 5, un exper
 
 ## Journal des décisions prises en cours de route
 
-*(ajouté au fil des phases)*
+**P1 (2 octobre 2026)**
+
+- **Trois niveaux de tests.**
+  - Tests JUnit pour la logique pure.
+  - **GameTests** (`./gradlew runGameTestServer`) : ils créent de vraies colonies MineColonies, avec
+    Hôtel de ville, dans le monde jetable du serveur de test, et vérifient la fondation de bout en
+    bout. Les joueurs y sont des `FakePlayer` de Forge, car celui de Minecraft 1.20.1 n'a pas de
+    canal réseau.
+  - **Banc d'essai visuel** (`./gradlew runUiShots`) : le client capture chaque écran avec des
+    données d'exemple, dans `run/screenshots/`, puis se ferme.
+- **`runServer` n'est pas utilisé**, car il exigerait d'accepter l'EULA dans `run-server/eula.txt`
+  à ta place. `runClient` (serveur intégré) et le serveur de GameTests suffisent.
+- **Événements MineColonies traités au tick suivant** (`server.tell`), pas par `server.execute`.
+  Depuis le fil serveur, `execute` s'exécute aussitôt. Or MineColonies publie par exemple la
+  suppression d'une colonie *avant* de la retirer. La suppression de la capitale est en plus traitée
+  explicitement.
+- **Les paquets ne partent jamais vers un `FakePlayer`** (machines, tests).
+- Le Trône ne se pose que dans l'Hôtel de ville d'une colonie que le joueur gère. Les opérateurs en
+  mode créatif peuvent le poser partout, en décor, mais il ne fonde toujours qu'au bon endroit.

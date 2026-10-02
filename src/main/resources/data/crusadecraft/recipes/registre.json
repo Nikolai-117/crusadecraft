@@ -1,0 +1,11 @@
+{
+  "type": "minecraft:crafting_shapeless",
+  "category": "misc",
+  "ingredients": [
+    { "item": "minecraft:book" },
+    { "item": "minecraft:feather" },
+    { "item": "minecraft:ink_sac" },
+    { "item": "minecraft:gold_nugget" }
+  ],
+  "result": { "item": "crusadecraft:registre" }
+}

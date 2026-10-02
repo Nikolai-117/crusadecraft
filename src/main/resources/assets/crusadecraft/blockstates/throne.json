@@ -1,0 +1,8 @@
+{
+  "variants": {
+    "facing=north": { "model": "crusadecraft:block/throne" },
+    "facing=east": { "model": "crusadecraft:block/throne", "y": 90 },
+    "facing=south": { "model": "crusadecraft:block/throne", "y": 180 },
+    "facing=west": { "model": "crusadecraft:block/throne", "y": 270 }
+  }
+}

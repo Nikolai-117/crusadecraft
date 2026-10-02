@@ -1,0 +1,184 @@
+plugins {
+    id 'eclipse'
+    id 'idea'
+    id 'net.minecraftforge.gradle' version '[6.0,6.2)'
+    id 'org.parchmentmc.librarian.forgegradle' version '1.+'
+}
+
+version = mod_version
+group = mod_group_id
+
+base {
+    archivesName = 'crusadecraft'
+}
+
+java.toolchain.languageVersion = JavaLanguageVersion.of(17)
+
+println "Java: ${System.getProperty 'java.version'}, JVM: ${System.getProperty 'java.vm.version'} (${System.getProperty 'java.vendor'})"
+
+minecraft {
+    mappings channel: mapping_channel, version: mapping_version
+    copyIdeResources = true
+
+    runs {
+        configureEach {
+            workingDirectory project.file('run')
+            property 'forge.logging.markers', 'REGISTRIES'
+            property 'forge.logging.console.level', 'info'
+            property 'mixin.env.remapRefMap', 'true'
+            property 'mixin.env.refMapRemappingFile', "${projectDir}/build/createSrgToMcp/output.srg"
+            mods {
+                "${mod_id}" {
+                    source sourceSets.main
+                }
+            }
+        }
+
+        client {
+            property 'forge.enabledGameTestNamespaces', mod_id
+            jvmArgs '-Xmx4G'
+            args '--username', 'Romain'
+        }
+
+        // Banc d'essai visuel : capture chaque écran avec des données d'exemple, puis ferme le jeu.
+        uiShots {
+            parent runs.client
+            property 'crusadecraft.uishots', 'true'
+        }
+
+        server {
+            workingDirectory project.file('run-server')
+            property 'forge.enabledGameTestNamespaces', mod_id
+            args '--nogui'
+        }
+
+        gameTestServer {
+            workingDirectory project.file('run-gametest')
+            property 'forge.enabledGameTestNamespaces', mod_id
+        }
+    }
+}
+
+sourceSets.main.resources { srcDir 'src/generated/resources' }
+
+repositories {
+    mavenCentral()
+    maven {
+        name = 'CurseMaven'
+        url = 'https://cursemaven.com'
+        content { includeGroup 'curse.maven' }
+    }
+}
+
+dependencies {
+    minecraft "net.minecraftforge:forge:${minecraft_version}-${forge_version}"
+
+    // MineColonies et sa pile, aux versions exactes de l'instance de Romain.
+    implementation fg.deobf("curse.maven:minecolonies-245506:${minecolonies_file}")
+    runtimeOnly fg.deobf("curse.maven:structurize-298744:${structurize_file}")
+    runtimeOnly fg.deobf("curse.maven:blockui-522992:${blockui_file}")
+    runtimeOnly fg.deobf("curse.maven:domum-ornamentum-527361:${domum_file}")
+    runtimeOnly fg.deobf("curse.maven:jei-238222:${jei_file}")
+
+    // Tests de la logique pure (aucun démarrage de Minecraft).
+    testImplementation platform('org.junit:junit-bom:5.10.2')
+    testImplementation 'org.junit.jupiter:junit-jupiter'
+    testRuntimeOnly 'org.junit.platform:junit-platform-launcher'
+}
+
+test {
+    useJUnitPlatform()
+    testLogging {
+        events 'passed', 'failed', 'skipped'
+        exceptionFormat 'full'
+    }
+}
+
+// ---------------------------------------------------------------------------
+// Garde d'architecture (leçons de War 'N Taxes, voir docs/etape-0-rapport.md §3.2).
+//
+//  1. Les types MineColonies ne s'importent que dans compat/minecolonies : son API bouge
+//     d'une version à l'autre, et un seul endroit doit absorber ces changements.
+//  2. Un mod optionnel ne s'importe que dans son paquet compat : un import ailleurs fait
+//     résoudre ses classes au chargement et plante (NoClassDefFoundError) quand il est absent.
+//  3. Les rangs MineColonies se lisent à l'envers (Propriétaire = 0 ... Hostile = 4) : toute
+//     comparaison numérique de leur identifiant est interdite.
+//  4. getOwner() peut être nul sur une colonie abîmée : écrire uuid.equals(getOwner()).
+// ---------------------------------------------------------------------------
+def architectureGuard = tasks.register('checkArchitecture') {
+    group = 'verification'
+    description = 'Vérifie les règles d\'import et les pièges MineColonies connus'
+    def srcDir = file('src/main/java')
+    def reportFile = layout.buildDirectory.file('reports/architecture.txt')
+    inputs.dir(srcDir)
+    outputs.file(reportFile)
+    doLast {
+        def rules = [
+            [pkg: 'com.minecolonies.', allowed: '/fr/crusadecraft/compat/minecolonies/'],
+            [pkg: 'com.ldtteam.',      allowed: '/fr/crusadecraft/compat/minecolonies/'],
+            [pkg: 'ydmsama.',          allowed: '/fr/crusadecraft/compat/hyw/'],
+            [pkg: 'xaero.',            allowed: '/fr/crusadecraft/compat/xaero/'],
+            [pkg: 'journeymap.',       allowed: '/fr/crusadecraft/compat/journeymap/'],
+            [pkg: 'dev.ftb.',          allowed: '/fr/crusadecraft/compat/ftbteams/'],
+            [pkg: 'vazkii.patchouli.', allowed: '/fr/crusadecraft/compat/patchouli/'],
+        ]
+        def rankPattern = ~/(?i)\brank\w*\s*\.\s*getId\s*\(\s*\)\s*(<=|>=|<|>)/
+        def ownerPattern = ~/\.\s*getOwner\s*\(\s*\)\s*\.\s*equals\s*\(/
+        def offenders = []
+        srcDir.eachFileRecurse(groovy.io.FileType.FILES) { f ->
+            if (!f.name.endsWith('.java')) return
+            def path = f.absolutePath.replace('\\', '/')
+            f.readLines('UTF-8').eachWithIndex { line, idx ->
+                def code = line.replaceAll('//.*$', '')
+                rules.each { r ->
+                    if (code =~ ('^\\s*import\\s+(static\\s+)?' + java.util.regex.Pattern.quote(r.pkg)) && !path.contains(r.allowed)) {
+                        offenders << "${path}:${idx + 1}: import ${r.pkg}* interdit hors de ${r.allowed}"
+                    }
+                }
+                if (code =~ rankPattern) offenders << "${path}:${idx + 1}: comparaison numérique de rang MineColonies"
+                if (code =~ ownerPattern) offenders << "${path}:${idx + 1}: getOwner().equals(...) peut lever une NPE ; écrire uuid.equals(getOwner())"
+            }
+        }
+        def report = reportFile.get().asFile
+        report.parentFile.mkdirs()
+        report.text = offenders.isEmpty() ? 'OK\n' : offenders.join('\n') + '\n'
+        if (!offenders.isEmpty()) {
+            throw new GradleException("Règles d'architecture enfreintes :\n  " + offenders.join('\n  '))
+        }
+    }
+}
+tasks.named('check') { dependsOn architectureGuard }
+
+tasks.named('processResources', ProcessResources).configure {
+    var replaceProperties = [
+            minecraft_version: minecraft_version, minecraft_version_range: minecraft_version_range,
+            forge_version: forge_version, forge_version_range: forge_version_range,
+            loader_version_range: loader_version_range,
+            mod_id: mod_id, mod_name: mod_name, mod_license: mod_license, mod_version: mod_version,
+            mod_authors: mod_authors, mod_description: mod_description,
+            minecolonies_version_range: minecolonies_version_range,
+    ]
+    inputs.properties replaceProperties
+    filesMatching(['META-INF/mods.toml', 'pack.mcmeta']) {
+        expand replaceProperties + [project: project]
+    }
+}
+
+tasks.named('jar', Jar).configure {
+    manifest {
+        attributes([
+                'Specification-Title'     : mod_id,
+                'Specification-Vendor'    : mod_authors,
+                'Specification-Version'   : '1',
+                'Implementation-Title'    : project.name,
+                'Implementation-Version'  : project.jar.archiveVersion,
+                'Implementation-Vendor'   : mod_authors,
+                'Implementation-Timestamp': new Date().format("yyyy-MM-dd'T'HH:mm:ssZ")
+        ])
+    }
+    finalizedBy 'reobfJar'
+}
+
+tasks.withType(JavaCompile).configureEach {
+    options.encoding = 'UTF-8'
+}

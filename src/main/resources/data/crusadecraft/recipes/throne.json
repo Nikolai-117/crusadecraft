@@ -1,0 +1,12 @@
+{
+  "type": "minecraft:crafting_shaped",
+  "category": "misc",
+  "pattern": [" G ", "PRP", "LPL"],
+  "key": {
+    "G": { "item": "minecraft:gold_block" },
+    "P": { "item": "minecraft:dark_oak_planks" },
+    "R": { "item": "minecraft:red_wool" },
+    "L": { "item": "minecraft:dark_oak_log" }
+  },
+  "result": { "item": "crusadecraft:throne" }
+}

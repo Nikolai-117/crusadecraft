@@ -1,0 +1,157 @@
+package fr.crusadecraft.core.realm;
+
+import fr.crusadecraft.core.ColonyRef;
+import net.minecraft.nbt.CompoundTag;
+import net.minecraft.nbt.ListTag;
+import net.minecraft.nbt.Tag;
+
+import java.util.ArrayList;
+import java.util.Collections;
+import java.util.List;
+import java.util.Objects;
+import java.util.UUID;
+
+/**
+ * Un royaume : un enregistrement dans les données de CrusadeCraft, jamais dans MineColonies.
+ *
+ * <p>Il désigne ses colonies par {@link ColonyRef}. Fonder, perdre ou dissoudre un royaume ne
+ * modifie donc aucune colonie, et retirer le mod les rend exactement comme avant.
+ */
+public final class Realm {
+    private final UUID id;
+    private String name;
+    private String motto;
+    private String house;
+    private int color;
+    private UUID ruler;
+    private String rulerName;
+    private boolean feminineTitle;
+    private ColonyRef capital;
+    private final List<ColonyRef> provinces = new ArrayList<>();
+    private TitleRank rank;
+    private RealmState state = RealmState.ACTIVE;
+    private long foundedDay;
+
+    // Ressources du souverain. L'or passera par un registre atomique (P4) ; ici, il n'est que stocké.
+    private long gold;
+    private int prestige;
+    private int piety;
+    private int dread;
+
+    public Realm(UUID id, String name, String motto, String house, int color, UUID ruler, String rulerName,
+                 boolean feminineTitle, ColonyRef capital, TitleRank rank, long foundedDay) {
+        this.id = Objects.requireNonNull(id);
+        this.name = name;
+        this.motto = motto;
+        this.house = house;
+        this.color = color;
+        this.ruler = Objects.requireNonNull(ruler);
+        this.rulerName = rulerName;
+        this.feminineTitle = feminineTitle;
+        this.capital = Objects.requireNonNull(capital);
+        this.rank = rank;
+        this.foundedDay = foundedDay;
+    }
+
+    public UUID id() { return id; }
+    public String name() { return name; }
+    public String motto() { return motto; }
+    public String house() { return house; }
+    public int color() { return color; }
+    public UUID ruler() { return ruler; }
+    public String rulerName() { return rulerName; }
+    public boolean feminineTitle() { return feminineTitle; }
+    public ColonyRef capital() { return capital; }
+    public List<ColonyRef> provinces() { return Collections.unmodifiableList(provinces); }
+    public TitleRank rank() { return rank; }
+    public RealmState state() { return state; }
+    public long foundedDay() { return foundedDay; }
+    public long gold() { return gold; }
+    public int prestige() { return prestige; }
+    public int piety() { return piety; }
+    public int dread() { return dread; }
+
+    /** Capitale puis provinces, sans doublon. */
+    public List<ColonyRef> allColonies() {
+        List<ColonyRef> all = new ArrayList<>(provinces.size() + 1);
+        all.add(capital);
+        for (ColonyRef p : provinces) {
+            if (!p.equals(capital)) all.add(p);
+        }
+        return all;
+    }
+
+    public boolean holds(ColonyRef colony) {
+        return capital.equals(colony) || provinces.contains(colony);
+    }
+
+    public void setName(String name) { this.name = name; }
+    public void setMotto(String motto) { this.motto = motto; }
+    public void setHouse(String house) { this.house = house; }
+    public void setColor(int color) { this.color = color; }
+    public void setRulerName(String rulerName) { this.rulerName = rulerName; }
+    public void setFeminineTitle(boolean feminineTitle) { this.feminineTitle = feminineTitle; }
+    public void setRank(TitleRank rank) { this.rank = rank; }
+    public void setState(RealmState state) { this.state = state; }
+    public void setPrestige(int prestige) { this.prestige = prestige; }
+    public void setPiety(int piety) { this.piety = piety; }
+    public void setDread(int dread) { this.dread = dread; }
+    void setGold(long gold) { this.gold = gold; }
+
+    public void addProvince(ColonyRef colony) {
+        if (!holds(colony)) provinces.add(colony);
+    }
+
+    public void removeProvince(ColonyRef colony) {
+        provinces.remove(colony);
+    }
+
+    public CompoundTag save() {
+        CompoundTag tag = new CompoundTag();
+        tag.putUUID("id", id);
+        tag.putString("name", name);
+        tag.putString("motto", motto);
+        tag.putString("house", house);
+        tag.putInt("color", color);
+        tag.putUUID("ruler", ruler);
+        tag.putString("rulerName", rulerName);
+        tag.putBoolean("feminine", feminineTitle);
+        tag.put("capital", capital.save());
+        ListTag list = new ListTag();
+        for (ColonyRef p : provinces) list.add(p.save());
+        tag.put("provinces", list);
+        tag.putString("rank", rank.name());
+        tag.putString("state", state.name());
+        tag.putLong("founded", foundedDay);
+        tag.putLong("gold", gold);
+        tag.putInt("prestige", prestige);
+        tag.putInt("piety", piety);
+        tag.putInt("dread", dread);
+        return tag;
+    }
+
+    public static Realm load(CompoundTag tag) {
+        Realm realm = new Realm(
+                tag.getUUID("id"),
+                tag.getString("name"),
+                tag.getString("motto"),
+                tag.getString("house"),
+                tag.getInt("color"),
+                tag.getUUID("ruler"),
+                tag.getString("rulerName"),
+                tag.getBoolean("feminine"),
+                ColonyRef.load(tag.getCompound("capital")),
+                TitleRank.byName(tag.getString("rank"), TitleRank.BARONNIE),
+                tag.getLong("founded"));
+        ListTag list = tag.getList("provinces", Tag.TAG_COMPOUND);
+        for (int i = 0; i < list.size(); i++) {
+            realm.addProvince(ColonyRef.load(list.getCompound(i)));
+        }
+        realm.state = RealmState.byName(tag.getString("state"));
+        realm.gold = tag.getLong("gold");
+        realm.prestige = tag.getInt("prestige");
+        realm.piety = tag.getInt("piety");
+        realm.dread = tag.getInt("dread");
+        return realm;
+    }
+}
