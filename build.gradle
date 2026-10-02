@@ -55,7 +55,6 @@ minecraft {
         gameTestServer {
             workingDirectory project.file('run-gametest')
             property 'forge.enabledGameTestNamespaces', mod_id
-            property 'crusadecraft.debugai', 'true'
         }
     }
 }

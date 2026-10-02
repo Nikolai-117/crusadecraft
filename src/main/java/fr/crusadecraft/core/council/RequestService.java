@@ -256,7 +256,7 @@ public final class RequestService {
 
     // ------------------------------------------------------------------ réponses
 
-    static int goldCost(RequestType.Choice c) {
+    public static int goldCost(RequestType.Choice c) {
         return switch (c) {
             case PAY_HEALER -> 5;
             case OPEN_GRANARIES, GRANT_FAVOUR -> 10;
@@ -264,7 +264,7 @@ public final class RequestService {
         };
     }
 
-    static int prestigeCost(RequestType.Choice c) {
+    public static int prestigeCost(RequestType.Choice c) {
         return c == RequestType.Choice.PROMISE_HONOURS ? 10 : 0;
     }
 

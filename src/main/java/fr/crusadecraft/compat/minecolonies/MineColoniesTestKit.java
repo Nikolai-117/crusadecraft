@@ -32,6 +32,12 @@ public final class MineColoniesTestKit {
 
     /** Crée une colonie appartenant à {@code owner}, avec un Hôtel de ville au niveau voulu (0 = aucun). */
     public static ColonyRef createColony(ServerLevel level, BlockPos center, ServerPlayer owner, String name, int townHallLevel) {
+        // Les tests réutilisent les mêmes emplacements : une colonie laissée par un test qui a échoué sans
+        // nettoyer occuperait la place, et tous les tests suivants échoueraient en cascade.
+        IColony leftover = IMinecoloniesAPI.getInstance().getColonyManager().getColonyByPosFromWorld(level, center);
+        if (leftover != null) {
+            IMinecoloniesAPI.getInstance().getColonyManager().deleteColonyByDimension(leftover.getID(), false, level.dimension());
+        }
         IColony colony = IMinecoloniesAPI.getInstance().getColonyManager().createColony(level, center, owner, name, "Medieval Oak");
         if (colony == null) throw new IllegalStateException("MineColonies a refusé de créer la colonie de test");
         if (townHallLevel > 0) {

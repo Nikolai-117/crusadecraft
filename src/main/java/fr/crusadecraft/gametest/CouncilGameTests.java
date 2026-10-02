@@ -151,22 +151,25 @@ public final class CouncilGameTests {
         BlockPos target = h.absolutePos(new BlockPos(7, 1, 7));
         DutyOrders.give(walker, new DutyOrders.Order(DutyOrders.Kind.MEETING, h.getLevel().dimension().location(), target,
                 null, target, null, null, h.getLevel().getGameTime() + 2000));
-        // Vérification toutes les secondes ; la colonie est toujours défaite avant de conclure.
-        int[] checks = {0};
-        Runnable[] poll = new Runnable[1];
-        poll[0] = () -> {
-            double d = entity.get().distanceToSqr(target.getX() + 0.5, target.getY(), target.getZ() + 0.5);
-            boolean arrived = d <= 3.2 * 3.2;
-            if (arrived || ++checks[0] >= 18) {
+        // Vérification toutes les secondes ; la colonie est toujours défaite avant de conclure. Les
+        // vérifications sont toutes inscrites d'avance, chacune par un objet distinct : Minecraft range les
+        // tâches différées par objet, si bien qu'une tâche qui se réinscrit elle-même est aussitôt effacée.
+        boolean[] done = {false};
+        int checks = 18;
+        for (int i = 1; i <= checks; i++) {
+            boolean last = i == checks;
+            h.runAfterDelay(20L * i, () -> {
+                if (done[0]) return;
+                double d = entity.get().distanceToSqr(target.getX() + 0.5, target.getY(), target.getZ() + 0.5);
+                boolean arrived = d <= 3.2 * 3.2;
+                if (!arrived && !last) return;
+                done[0] = true;
                 DutyOrders.cancel(walker);
                 entity.get().discard();
                 w.cleanup();
                 if (arrived) h.succeed();
                 else h.fail("le citoyen n'est pas arrivé (distance² " + Math.round(d) + ")");
-                return;
-            }
-            h.runAfterDelay(20, poll[0]);
-        };
-        h.runAfterDelay(20, poll[0]);
+            });
+        }
     }
 }

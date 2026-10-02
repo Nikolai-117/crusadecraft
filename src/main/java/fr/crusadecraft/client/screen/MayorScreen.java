@@ -100,7 +100,9 @@ public class MayorScreen extends Screen {
             int cx = left + w / 2 + 6;
             Ui.text(g, font, Component.translatable("crusadecraft.mayor.candidates"), cx, top + 40, Ui.TEXT_TITLE);
             int cy = top + 50;
-            if (view.candidates().isEmpty()) {
+            if (view.mayor() != null) {
+                Ui.wrapped(g, font, Component.translatable("crusadecraft.mayor.filled"), cx, cy + 2, w / 2 - 24, Ui.TEXT_MUTED);
+            } else if (view.candidates().isEmpty()) {
                 Ui.text(g, font, Component.translatable("crusadecraft.mayor.no_candidates"), cx, cy + 2, Ui.TEXT_MUTED);
             }
             for (MayorView.Person p : view.candidates()) {

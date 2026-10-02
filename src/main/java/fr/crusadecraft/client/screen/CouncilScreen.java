@@ -123,7 +123,11 @@ public class CouncilScreen extends Screen {
                 Component.translatable("crusadecraft.resource.gold").getString(), view.gold(),
                 Component.translatable("crusadecraft.resource.piety").getString(), view.piety(),
                 Component.translatable("crusadecraft.council.happiness").getString(), Math.round((view.happinessFactor() - 1) * 100));
-        Ui.text(g, font, Component.literal(res), left + 168, top + h - 21, Ui.TEXT_MUTED);
+        // Entre les deux boutons du bas, réduit au besoin pour ne jamais les chevaucher.
+        int gapLeft = left + 166, gapRight = left + w - 96;
+        float scale = Math.min(1f, (gapRight - gapLeft) / (float) Math.max(1, font.width(res)));
+        int resX = (gapLeft + gapRight) / 2 - Math.round(font.width(res) * scale / 2);
+        Ui.scaled(g, font, Component.literal(res), resX, top + h - 21 + Math.round((1 - scale) * 4), scale, Ui.TEXT_MUTED, false);
         super.render(g, mouseX, mouseY, partialTick);
         if (pendingTooltip != null) g.renderComponentTooltip(font, pendingTooltip, mouseX, mouseY);
     }

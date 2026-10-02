@@ -400,7 +400,7 @@
   "crusadecraft.task.bonheur_du_peuple.desc": "Le bonheur de vos citoyens monte (modificateur « Couronne » de MineColonies, selon l'Érudition du chapelain).",
   "crusadecraft.task.recherche": "Recherche",
   "crusadecraft.task.recherche.desc": "Faire avancer le savoir du royaume.",
-  "crusadecraft.council.screen_title": "Conseil royal de %s",
+  "crusadecraft.council.screen_title": "Conseil royal — %s",
   "crusadecraft.council.meets": "La table siège à %s · réunion chaque jour à %s h",
   "crusadecraft.council.no_table.short": "Aucune Table du Conseil : posez-en une dans une colonie de votre royaume.",
   "crusadecraft.council.no_table": "Il faut d'abord poser une Table du Conseil.",
@@ -446,9 +446,9 @@
   "crusadecraft.request.mayor_homeless.text": "%s, à %s, %s citoyens dorment dehors. Il nous faut des maisons.",
   "crusadecraft.request.mayor_jobless.title": "Des bras inoccupés",
   "crusadecraft.request.mayor_jobless.text": "%s, à %s, %s citoyens n'ont pas d'ouvrage. L'oisiveté ronge la ville.",
-  "crusadecraft.request.mayor_sick.title": "La maladie à %s",
+  "crusadecraft.request.mayor_sick.title": "La maladie frappe",
   "crusadecraft.request.mayor_sick.text": "%s, la maladie frappe %s : %s citoyens sont alités.",
-  "crusadecraft.request.mayor_hunger.title": "La faim à %s",
+  "crusadecraft.request.mayor_hunger.title": "Les greniers sont vides",
   "crusadecraft.request.mayor_hunger.text": "%s, les greniers de %s sont vides : %s citoyens ont faim.",
   "crusadecraft.request.spy_raid_warning.title": "Des pillards en approche",
   "crusadecraft.request.spy_raid_warning.text": "%s, mes yeux ne mentent pas : des pillards marcheront sur %s cette nuit.",
@@ -502,5 +502,6 @@
   "crusadecraft.toast.audience.title": "Une audience est demandée",
   "crusadecraft.toast.audience.body": "%s souhaite vous voir : %s. Répondez à la Table du Conseil, ou approchez-vous.",
   "crusadecraft.toast.raid_warning": "Des pillards marcheront sur %s cette nuit.",
-  "crusadecraft.dialogue.order.none": "Seuls les dignitaires reçoivent des ordres."
+  "crusadecraft.dialogue.order.none": "Seuls les dignitaires reçoivent des ordres.",
+  "crusadecraft.mayor.filled": "Le poste est pourvu. Pour changer de maire, démettez d'abord celui-ci depuis sa fiche."
 }

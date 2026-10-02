@@ -129,3 +129,31 @@ Les compétences vont de 1 à 99 : un citoyen débutant obtient 1 à 5, un exper
   aussi quand l'entité est simplement déchargée. Un citoyen parti est détecté par la vérification
   périodique (toutes les 30 s).
 - Forge 47.4 : le constructeur du mod reçoit le contexte de chargement (`get()` est déprécié).
+
+**P3 (3 octobre 2026)**
+
+- **Les citoyens se déplacent par leur propre IA MineColonies.** On ajoute un état « service » à
+  leur automate, déclenché comme un événement, et seulement depuis les états de repos ou de travail.
+  Le sommeil, la maladie, la fuite et les raids restent prioritaires. À la fin de l'ordre, le citoyen
+  repasse au repos et MineColonies reprend la main. On ne remplace jamais son IA.
+- **Les ordres ne sont pas enregistrés.** Après un redémarrage, chacun reprend sa vie normale, et les
+  ordres sont recalculés au prochain créneau (réunion à 9 h, heures de bureau à 13 h par défaut).
+- **Au moindre souci, l'état « service » se coupe** pour la session (une ligne dans le journal), et
+  le mod continue sans déplacements.
+- **Les sièges sont ceux de MineColonies** : un conseiller s'assoit comme un citoyen sur une chaise.
+- **Effets écrits chez MineColonies** : uniquement par l'API officielle. Il s'agit d'un modificateur
+  de bonheur « Couronne » et d'XP de compétences pour les gardes. MineColonies ne recharge pas un
+  modificateur qu'il ne connaît pas : retirer CrusadeCraft ne laisse donc pas de trace. L'or et la
+  piété restent dans nos données.
+- **Réunion tenue** dès qu'un conseiller au moins s'est assis à la table : les tâches rapportent
+  25 % de plus jusqu'au lendemain.
+- **Requêtes portées en personne** : le citoyen marche jusqu'au souverain s'il est à moins de
+  48 blocs. Sinon, une notification arrive et l'on répond depuis la Table du Conseil.
+- **Le jour 0 existe** : « jamais traité » vaut `Long.MIN_VALUE`, pas -1, qui serait la veille du
+  premier jour d'un monde neuf.
+- **Maj + clic sur un citoyen ouvre son inventaire MineColonies** : c'est le comportement de
+  MineColonies. Le bouton « Fenêtre MineColonies » du dialogue ouvre sa fenêtre principale.
+- **GameTests** : le monde de test est effacé avant chaque exécution. Une colonie laissée par un test
+  échoué est défaite avant d'en créer une au même endroit. Les vérifications différées sont toutes
+  inscrites d'avance : Minecraft range ces tâches par objet, et une tâche qui se réinscrit est
+  aussitôt effacée.

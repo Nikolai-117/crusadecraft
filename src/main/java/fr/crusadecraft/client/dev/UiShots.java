@@ -2,13 +2,22 @@ package fr.crusadecraft.client.dev;
 
 import fr.crusadecraft.CrusadeCraft;
 import fr.crusadecraft.client.screen.CharacterScreen;
+import fr.crusadecraft.client.screen.CouncilScreen;
 import fr.crusadecraft.client.screen.DialogueScreen;
 import fr.crusadecraft.client.screen.FoundingScreen;
+import fr.crusadecraft.client.screen.MayorScreen;
 import fr.crusadecraft.client.screen.RealmScreen;
 import fr.crusadecraft.client.screen.RegistreScreen;
+import fr.crusadecraft.client.screen.RequestScreen;
 import fr.crusadecraft.client.toast.CrusadeToast;
 import fr.crusadecraft.core.ColonyInfo;
 import fr.crusadecraft.core.ColonyRef;
+import fr.crusadecraft.core.ColonyReport;
+import fr.crusadecraft.core.council.CouncilTask;
+import fr.crusadecraft.core.council.CouncilView;
+import fr.crusadecraft.core.council.MayorView;
+import fr.crusadecraft.core.council.RequestType;
+import fr.crusadecraft.core.council.RequestView;
 import fr.crusadecraft.core.character.CharacterStatus;
 import fr.crusadecraft.core.character.CharacterView;
 import fr.crusadecraft.core.character.CitizenRef;
@@ -78,8 +87,15 @@ public final class UiShots {
         list.add(new Shot("dialogue", () -> new DialogueScreen(character), null));
         RealmView withCouncil = withSeats(view);
         list.add(new Shot("menu_conseil", () -> RealmScreen.withTab(withCouncil, RealmScreen.Tab.CONSEIL), null));
+        list.add(new Shot("conseil", () -> new CouncilScreen(sampleCouncil(true)), null));
+        list.add(new Shot("conseil_sans_table", () -> new CouncilScreen(sampleCouncil(false)), null));
+        list.add(new Shot("bureau_maire", () -> new MayorScreen(sampleMayor(true)), null));
+        list.add(new Shot("bureau_sans_maire", () -> new MayorScreen(sampleMayor(false)), null));
+        list.add(new Shot("requete", () -> new RequestScreen(sampleRequest()), null));
         list.add(new Shot("objets", () -> new ItemShowcaseScreen(List.of(new ItemStack(ModItems.THRONE.get()),
-                new ItemStack(ModItems.REGISTRE.get()), new ItemStack(ModItems.SCEPTRE.get()))), null));
+                new ItemStack(ModItems.REGISTRE.get()), new ItemStack(ModItems.SCEPTRE.get()),
+                new ItemStack(ModItems.COUNCIL_TABLE.get()), new ItemStack(ModItems.COUNCIL_SEAT.get()),
+                new ItemStack(ModItems.MAYOR_DESK.get()))), null));
         list.add(new Shot("notification", TitleScreen::new, () -> Minecraft.getInstance().getToasts().addToast(
                 new CrusadeToast(ToastPacket.Kind.REALM, Component.translatable("crusadecraft.toast.founded.title"),
                         Component.translatable("crusadecraft.toast.founded.body", view.name())))));
@@ -109,6 +125,49 @@ public final class UiShots {
                 Post.MARECHAL, CharacterStatus.LIBRE, -1, false, skills, base, stats, new Education(Stat.MARTIAL, 3),
                 traits, true, 51, lines, 40, 7.3, history, -1, true, false, 57, slots,
                 fr.crusadecraft.core.character.CharacterService.sources(fr.crusadecraft.core.character.StatFormula.defaults()));
+    }
+
+    private static final ResourceLocation OW = ResourceLocation.tryParse("minecraft:overworld");
+
+    private static List<CouncilView.RequestSummary> sampleRequests() {
+        return List.of(
+                new CouncilView.RequestSummary(UUID.randomUUID(), RequestType.MAYOR_HOMELESS, "Ysolde", "Valbrume", 4, 56),
+                new CouncilView.RequestSummary(UUID.randomUUID(), RequestType.SPY_RAID_WARNING, "Gautier", "Hautemarche", 0, 57));
+    }
+
+    private static CouncilView sampleCouncil(boolean table) {
+        ColonyRef capital = new ColonyRef(OW, 1);
+        List<CouncilView.Seat> seats = List.of(
+                new CouncilView.Seat(Post.CHANCELIER, null, "", false, 0, 0, CharacterStatus.LIBRE, CouncilTask.GERER_LA_COUR),
+                new CouncilView.Seat(Post.MARECHAL, new CitizenRef(capital, 7), "Aldric", false, 13, 51, CharacterStatus.LIBRE, CouncilTask.ENTRAINER_TROUPES),
+                new CouncilView.Seat(Post.INTENDANT, new CitizenRef(capital, 9), "Berthe", true, 11, 18, CharacterStatus.LIBRE, CouncilTask.GERER_LE_DOMAINE),
+                new CouncilView.Seat(Post.MAITRE_ESPION, new CitizenRef(capital, 4), "Odon", false, 8, -12, CharacterStatus.LIBRE, CouncilTask.SURVEILLER_LES_TERRES),
+                new CouncilView.Seat(Post.CHAPELAIN, new CitizenRef(new ColonyRef(OW, 2), 3), "Gautier", false, 9, -32, CharacterStatus.LIBRE, CouncilTask.BONHEUR_DU_PEUPLE));
+        return new CouncilView("Royaume de Valbrume", table, table ? "Valbrume" : "", 9, true, table,
+                seats, table ? sampleRequests() : List.of(), null, 1250, 12, 1.15);
+    }
+
+    private static MayorView sampleMayor(boolean withMayor) {
+        ColonyRef colony = new ColonyRef(OW, 1);
+        ColonyReport report = new ColonyReport(colony, "Valbrume", 24, 30, 4, 2, 1, 0, 5, 7.4, true, false);
+        MayorView.Person mayor = new MayorView.Person(new CitizenRef(colony, 12), "Ysolde", true, 11, 9);
+        List<MayorView.Person> candidates = List.of(
+                new MayorView.Person(new CitizenRef(colony, 9), "Berthe", true, 11, 18),
+                new MayorView.Person(new CitizenRef(colony, 15), "Hugues", false, 8, 4),
+                new MayorView.Person(new CitizenRef(colony, 21), "Mahaut", true, 6, -7));
+        return new MayorView(colony, "Valbrume", true, withMayor ? mayor : null, report,
+                withMayor ? List.of() : candidates, 13, withMayor, withMayor ? sampleRequests().subList(0, 1) : List.of());
+    }
+
+    private static RequestView sampleRequest() {
+        RequestType type = RequestType.MAYOR_SICK;
+        List<RequestView.ChoiceView> choices = new ArrayList<>();
+        for (RequestType.Choice c : type.choices()) {
+            int gold = fr.crusadecraft.core.council.RequestService.goldCost(c);
+            int prestige = fr.crusadecraft.core.council.RequestService.prestigeCost(c);
+            choices.add(new RequestView.ChoiceView(c, true, gold, prestige));
+        }
+        return new RequestView(UUID.randomUUID(), type, "Ysolde", true, Post.MAIRE, "Valbrume", 3, -1, false, choices);
     }
 
     private static RealmView withSeats(RealmView v) {
