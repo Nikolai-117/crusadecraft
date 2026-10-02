@@ -1,18 +1,28 @@
 package fr.crusadecraft.compat.minecolonies;
 
 import com.minecolonies.api.IMinecoloniesAPI;
+import com.minecolonies.api.colony.ICitizenData;
 import com.minecolonies.api.colony.IColony;
 import com.minecolonies.api.colony.IColonyManager;
 import com.minecolonies.api.colony.buildings.workerbuildings.ITownHall;
 import com.minecolonies.api.colony.permissions.Rank;
+import com.minecolonies.api.entity.citizen.AbstractEntityCitizen;
+import com.minecolonies.api.entity.citizen.Skill;
 import fr.crusadecraft.CrusadeCraft;
 import fr.crusadecraft.core.ColonyInfo;
 import fr.crusadecraft.core.ColonyRef;
+import fr.crusadecraft.core.character.CitizenInfo;
+import fr.crusadecraft.core.character.CitizenRef;
+import fr.crusadecraft.core.character.CitizenSkill;
 import net.minecraft.ChatFormatting;
 import net.minecraft.core.BlockPos;
 import net.minecraft.core.registries.Registries;
 import net.minecraft.resources.ResourceKey;
+import net.minecraft.world.entity.Entity;
 import net.minecraft.world.level.Level;
+
+import java.util.ArrayList;
+import java.util.List;
 
 import java.util.Optional;
 import java.util.UUID;
@@ -171,6 +181,79 @@ public final class MineColoniesBridge {
             breakBridge(e);
             return ColonyInfo.missing(ref);
         }
+    }
+
+    // ------------------------------------------------------------------ citoyens
+
+    /**
+     * Le citoyen qu'incarne cette entité. Fonctionne aussi côté client : la colonie et l'identifiant
+     * sont des données synchronisées de l'entité MineColonies.
+     */
+    public static Optional<CitizenRef> refOf(Entity entity) {
+        if (broken || !(entity instanceof AbstractEntityCitizen citizen)) return Optional.empty();
+        try {
+            int colonyId = citizen.getEntityData().get(AbstractEntityCitizen.DATA_COLONY_ID);
+            int citizenId = citizen.getEntityData().get(AbstractEntityCitizen.DATA_CITIZEN_ID);
+            if (colonyId <= 0 || citizenId <= 0) return Optional.empty();
+            return Optional.of(new CitizenRef(new ColonyRef(entity.level().dimension().location(), colonyId), citizenId));
+        } catch (LinkageError e) {
+            breakBridge(e);
+            return Optional.empty();
+        }
+    }
+
+    private static ICitizenData citizenData(CitizenRef ref) {
+        IColony c = colony(ref.colony());
+        return c == null ? null : c.getCitizenManager().getCivilian(ref.citizenId());
+    }
+
+    /** Relevé d'un citoyen, ou vide s'il n'existe pas (ou plus). */
+    public static Optional<CitizenInfo> citizen(CitizenRef ref) {
+        if (broken) return Optional.empty();
+        try {
+            IColony c = colony(ref.colony());
+            ICitizenData d = c == null ? null : c.getCitizenManager().getCivilian(ref.citizenId());
+            if (d == null) return Optional.empty();
+            int[] skills = new int[CitizenSkill.COUNT];
+            for (CitizenSkill s : CitizenSkill.values()) {
+                try {
+                    skills[s.ordinal()] = d.getCitizenSkillHandler().getLevel(Skill.valueOf(s.name()));
+                } catch (IllegalArgumentException missing) {
+                    skills[s.ordinal()] = 1;
+                }
+            }
+            String job = d.getJob() == null ? "" : d.getJob().getJobRegistryEntry().getTranslationKey();
+            double happiness = d.getCitizenHappinessHandler().getHappiness(c, d);
+            int entityId = d.getEntity().map(Entity::getId).orElse(-1);
+            return Optional.of(new CitizenInfo(ref, d.getName(), d.isFemale(), d.isChild(), job, skills, happiness, entityId));
+        } catch (LinkageError e) {
+            breakBridge(e);
+            return Optional.empty();
+        }
+    }
+
+    public static boolean citizenExists(CitizenRef ref) {
+        if (broken) return false;
+        try {
+            return citizenData(ref) != null;
+        } catch (LinkageError e) {
+            breakBridge(e);
+            return false;
+        }
+    }
+
+    /** Les citoyens d'une colonie (identifiants). */
+    public static List<CitizenRef> citizensOf(ColonyRef ref) {
+        List<CitizenRef> out = new ArrayList<>();
+        if (broken) return out;
+        try {
+            IColony c = colony(ref);
+            if (c == null) return out;
+            for (ICitizenData d : c.getCitizenManager().getCitizens()) out.add(new CitizenRef(ref, d.getId()));
+        } catch (LinkageError e) {
+            breakBridge(e);
+        }
+        return out;
     }
 
     private static int colorOf(IColony c) {

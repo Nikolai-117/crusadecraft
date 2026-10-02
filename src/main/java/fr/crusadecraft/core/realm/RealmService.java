@@ -5,6 +5,10 @@ import fr.crusadecraft.compat.minecolonies.MineColoniesBridge;
 import fr.crusadecraft.config.CrusadeConfig;
 import fr.crusadecraft.core.ColonyInfo;
 import fr.crusadecraft.core.ColonyRef;
+import fr.crusadecraft.core.character.CharacterService;
+import fr.crusadecraft.core.character.CitizenInfo;
+import fr.crusadecraft.core.character.CitizenRef;
+import fr.crusadecraft.core.character.Post;
 import fr.crusadecraft.core.logic.FoundingRules;
 import fr.crusadecraft.core.logic.Heraldry;
 import fr.crusadecraft.core.logic.TextRules;
@@ -101,9 +105,25 @@ public final class RealmService {
     public static RealmView view(MinecraftServer server, Realm realm) {
         List<ColonyInfo> colonies = new ArrayList<>();
         for (ColonyRef ref : realm.allColonies()) colonies.add(MineColoniesBridge.info(ref));
+        List<RealmView.Seat> seats = new ArrayList<>();
+        for (Post post : Post.values()) {
+            if (!post.isCouncil()) continue;
+            seats.add(seat(server, realm, post, realm.council().get(post), ""));
+        }
+        for (ColonyInfo colony : colonies) {
+            seats.add(seat(server, realm, Post.MAIRE, realm.mayors().get(colony.ref()), colony.name()));
+        }
         return new RealmView(realm.id(), realm.name(), realm.motto(), realm.house(), realm.color(), realm.rulerName(),
                 realm.feminineTitle(), realm.rank(), realm.state(), realm.foundedDay(), currentDay(server),
-                realm.gold(), realm.prestige(), realm.piety(), realm.dread(), colonies);
+                realm.gold(), realm.prestige(), realm.piety(), realm.dread(), colonies, seats);
+    }
+
+    private static RealmView.Seat seat(MinecraftServer server, Realm realm, Post post, CitizenRef holder, String place) {
+        if (holder == null) return new RealmView.Seat(post, null, "", false, 0, place);
+        Optional<CitizenInfo> info = MineColoniesBridge.citizen(holder);
+        String name = info.map(CitizenInfo::name).orElseGet(() -> CharacterService.nameOf(server, holder));
+        boolean female = info.map(CitizenInfo::female).orElse(false);
+        return new RealmView.Seat(post, holder, name, female, CharacterService.opinionOf(server, realm, holder), place);
     }
 
     public static boolean dissolve(MinecraftServer server, UUID realmId) {

@@ -1,10 +1,14 @@
 package fr.crusadecraft.network;
 
 import fr.crusadecraft.CrusadeCraft;
+import fr.crusadecraft.network.packet.CharacterActionPacket;
 import fr.crusadecraft.network.packet.FoundRealmPacket;
+import fr.crusadecraft.network.packet.OpenCharacterPacket;
 import fr.crusadecraft.network.packet.OpenFoundingScreenPacket;
 import fr.crusadecraft.network.packet.OpenRealmScreenPacket;
+import fr.crusadecraft.network.packet.RequestCharacterPacket;
 import fr.crusadecraft.network.packet.RequestRealmPacket;
+import fr.crusadecraft.network.packet.SyncTitlesPacket;
 import fr.crusadecraft.network.packet.ToastPacket;
 import net.minecraft.resources.ResourceLocation;
 import net.minecraft.server.level.ServerPlayer;
@@ -45,12 +49,29 @@ public final class CrusadeNetwork {
         CHANNEL.messageBuilder(RequestRealmPacket.class, nextId++, NetworkDirection.PLAY_TO_SERVER)
                 .encoder(RequestRealmPacket::encode).decoder(RequestRealmPacket::decode)
                 .consumerMainThread(RequestRealmPacket::handle).add();
+        // P2 : personnages
+        CHANNEL.messageBuilder(SyncTitlesPacket.class, nextId++, NetworkDirection.PLAY_TO_CLIENT)
+                .encoder(SyncTitlesPacket::encode).decoder(SyncTitlesPacket::decode)
+                .consumerMainThread(SyncTitlesPacket::handle).add();
+        CHANNEL.messageBuilder(OpenCharacterPacket.class, nextId++, NetworkDirection.PLAY_TO_CLIENT)
+                .encoder(OpenCharacterPacket::encode).decoder(OpenCharacterPacket::decode)
+                .consumerMainThread(OpenCharacterPacket::handle).add();
+        CHANNEL.messageBuilder(RequestCharacterPacket.class, nextId++, NetworkDirection.PLAY_TO_SERVER)
+                .encoder(RequestCharacterPacket::encode).decoder(RequestCharacterPacket::decode)
+                .consumerMainThread(RequestCharacterPacket::handle).add();
+        CHANNEL.messageBuilder(CharacterActionPacket.class, nextId++, NetworkDirection.PLAY_TO_SERVER)
+                .encoder(CharacterActionPacket::encode).decoder(CharacterActionPacket::decode)
+                .consumerMainThread(CharacterActionPacket::handle).add();
     }
 
     public static void toPlayer(ServerPlayer player, Object packet) {
         // Un joueur fictif (machines, tests) n'a pas de client à qui parler.
         if (player instanceof net.minecraftforge.common.util.FakePlayer) return;
         CHANNEL.send(PacketDistributor.PLAYER.with(() -> player), packet);
+    }
+
+    public static void toAll(Object packet) {
+        CHANNEL.send(PacketDistributor.ALL.noArg(), packet);
     }
 
     public static void toServer(Object packet) {

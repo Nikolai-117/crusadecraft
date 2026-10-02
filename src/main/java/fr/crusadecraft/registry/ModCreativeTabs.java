@@ -18,6 +18,7 @@ public final class ModCreativeTabs {
             .displayItems((params, output) -> {
                 output.accept(ModItems.THRONE.get());
                 output.accept(ModItems.REGISTRE.get());
+                output.accept(ModItems.SCEPTRE.get());
             })
             .build());
 

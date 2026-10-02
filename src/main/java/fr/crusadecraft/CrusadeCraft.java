@@ -8,7 +8,6 @@ import fr.crusadecraft.registry.ModBlocks;
 import fr.crusadecraft.registry.ModCreativeTabs;
 import fr.crusadecraft.registry.ModItems;
 import net.minecraftforge.eventbus.api.IEventBus;
-import net.minecraftforge.fml.ModLoadingContext;
 import net.minecraftforge.fml.common.Mod;
 import net.minecraftforge.fml.config.ModConfig;
 import net.minecraftforge.fml.event.lifecycle.FMLCommonSetupEvent;
@@ -25,15 +24,16 @@ public final class CrusadeCraft {
     public static final String MOD_ID = "crusadecraft";
     public static final Logger LOGGER = LogUtils.getLogger();
 
-    public CrusadeCraft() {
-        IEventBus modBus = FMLJavaModLoadingContext.get().getModEventBus();
+    /** Forge 47.3+ injecte le contexte de chargement (l'ancien {@code get()} est déprécié). */
+    public CrusadeCraft(FMLJavaModLoadingContext context) {
+        IEventBus modBus = context.getModEventBus();
         ModBlocks.register(modBus);
         ModItems.register(modBus);
         ModCreativeTabs.register(modBus);
         modBus.addListener(this::commonSetup);
 
-        ModLoadingContext.get().registerConfig(ModConfig.Type.SERVER, CrusadeConfig.SERVER_SPEC, "crusadecraft-server.toml");
-        ModLoadingContext.get().registerConfig(ModConfig.Type.CLIENT, CrusadeConfig.CLIENT_SPEC, "crusadecraft-client.toml");
+        context.registerConfig(ModConfig.Type.SERVER, CrusadeConfig.SERVER_SPEC, "crusadecraft-server.toml");
+        context.registerConfig(ModConfig.Type.CLIENT, CrusadeConfig.CLIENT_SPEC, "crusadecraft-client.toml");
     }
 
     private void commonSetup(FMLCommonSetupEvent event) {

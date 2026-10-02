@@ -1,6 +1,8 @@
 package fr.crusadecraft.core.realm;
 
 import fr.crusadecraft.core.ColonyInfo;
+import fr.crusadecraft.core.character.CitizenRef;
+import fr.crusadecraft.core.character.Post;
 import net.minecraft.network.FriendlyByteBuf;
 
 import java.util.ArrayList;
@@ -14,7 +16,29 @@ import java.util.UUID;
  */
 public record RealmView(UUID id, String name, String motto, String house, int color, String rulerName,
                         boolean feminineTitle, TitleRank rank, RealmState state, long foundedDay, long currentDay,
-                        long gold, int prestige, int piety, int dread, List<ColonyInfo> colonies) {
+                        long gold, int prestige, int piety, int dread, List<ColonyInfo> colonies, List<Seat> seats) {
+
+    /**
+     * Un siège de dignitaire : un poste du conseil (ou un maire) et son titulaire. {@code holder} est nul
+     * pour un siège vacant ; {@code place} est la colonie pour un maire.
+     */
+    public record Seat(Post post, CitizenRef holder, String name, boolean female, int opinion, String place) {
+        void write(FriendlyByteBuf buf) {
+            buf.writeEnum(post);
+            buf.writeBoolean(holder != null);
+            if (holder != null) holder.write(buf);
+            buf.writeUtf(name);
+            buf.writeBoolean(female);
+            buf.writeVarInt(opinion);
+            buf.writeUtf(place);
+        }
+
+        static Seat read(FriendlyByteBuf buf) {
+            Post post = buf.readEnum(Post.class);
+            CitizenRef holder = buf.readBoolean() ? CitizenRef.read(buf) : null;
+            return new Seat(post, holder, buf.readUtf(), buf.readBoolean(), buf.readVarInt(), buf.readUtf());
+        }
+    }
 
     public ColonyInfo capital() {
         return colonies.isEmpty() ? null : colonies.get(0);
@@ -44,6 +68,8 @@ public record RealmView(UUID id, String name, String motto, String house, int co
         buf.writeVarInt(dread);
         buf.writeVarInt(colonies.size());
         for (ColonyInfo c : colonies) c.write(buf);
+        buf.writeVarInt(seats.size());
+        for (Seat s : seats) s.write(buf);
     }
 
     public static RealmView read(FriendlyByteBuf buf) {
@@ -65,7 +91,10 @@ public record RealmView(UUID id, String name, String motto, String house, int co
         int n = buf.readVarInt();
         List<ColonyInfo> colonies = new ArrayList<>(n);
         for (int i = 0; i < n; i++) colonies.add(ColonyInfo.read(buf));
+        int ns = buf.readVarInt();
+        List<Seat> seats = new ArrayList<>(ns);
+        for (int i = 0; i < ns; i++) seats.add(Seat.read(buf));
         return new RealmView(id, name, motto, house, color, rulerName, feminine, rank, state, founded, current,
-                gold, prestige, piety, dread, colonies);
+                gold, prestige, piety, dread, colonies, seats);
     }
 }

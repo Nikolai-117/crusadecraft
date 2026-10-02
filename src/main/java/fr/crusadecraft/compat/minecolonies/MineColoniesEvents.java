@@ -7,6 +7,9 @@ import com.minecolonies.api.eventbus.events.ColonyManagerUnloadedModEvent;
 import com.minecolonies.api.eventbus.events.colony.ColonyDeletedModEvent;
 import com.minecolonies.api.eventbus.events.colony.ColonyNameChangedModEvent;
 import com.minecolonies.api.eventbus.events.colony.ColonyPlayerRankChangedModEvent;
+import com.minecolonies.api.eventbus.events.colony.citizens.CitizenDiedModEvent;
+import fr.crusadecraft.core.character.CharacterService;
+import fr.crusadecraft.core.character.CitizenRef;
 import fr.crusadecraft.CrusadeCraft;
 import fr.crusadecraft.core.ColonyRef;
 import fr.crusadecraft.core.realm.RealmService;
@@ -42,6 +45,12 @@ public final class MineColoniesEvents {
         });
         bus.subscribe(ColonyPlayerRankChangedModEvent.class, e -> onColonyChanged(e.getColony()));
         bus.subscribe(ColonyNameChangedModEvent.class, e -> onColonyChanged(e.getColony()));
+        bus.subscribe(CitizenDiedModEvent.class, e -> {
+            if (e.getColony() == null) return;
+            CitizenRef ref = new CitizenRef(refOf(e.getColony()), e.getCitizen().getId());
+            String name = e.getCitizen().getName();
+            withServer(server -> CharacterService.onCitizenDied(server, ref, name));
+        });
     }
 
     /** Filet de sécurité : si le signal n'est jamais venu, on considère les colonies chargées au démarrage. */

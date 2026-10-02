@@ -107,3 +107,25 @@ Les compétences vont de 1 à 99 : un citoyen débutant obtient 1 à 5, un exper
 - **Les paquets ne partent jamais vers un `FakePlayer`** (machines, tests).
 - Le Trône ne se pose que dans l'Hôtel de ville d'une colonie que le joueur gère. Les opérateurs en
   mode créatif peuvent le poser partout, en décor, mais il ne fonde toujours qu'au bon endroit.
+
+**P2 (2 octobre 2026)**
+
+- **Rien n'est copié depuis MineColonies.** Le nom, les compétences, le métier et le bonheur d'un
+  citoyen sont relus à chaque affichage. Seul ce qui n'existe que chez nous est enregistré : traits,
+  opinion datée, stress, captivité, souvenirs.
+- **Traits tirés de façon déterministe** à partir de la graine du monde, de la dimension, de la
+  colonie et du citoyen. Les compétences orientent le tirage : un citoyen très fort est plus souvent
+  brave. Même si nos données étaient perdues, un citoyen retrouverait sa personnalité.
+- **Prison et exil sont des états dans nos données.** Le citoyen continue sa vie dans MineColonies.
+  Le renvoyer de la colonie serait une écriture irréversible chez MineColonies, ce qui est exclu.
+- **Récompense** : un objet pris dans l'inventaire du souverain (un lingot d'or par défaut, réglable).
+  Elle puisera dans le trésor quand celui-ci existera (P4).
+- **Titre au-dessus des têtes** : le client remplace le texte de l'étiquette par l'événement
+  `RenderNameTagEvent`. Le nom MineColonies n'est jamais modifié.
+- **Interception du clic** : avec le Sceptre, ou sur un dignitaire sans Maj, CrusadeCraft prend le clic
+  des deux côtés, client et serveur. Avec **Maj**, MineColonies garde la main. Le bouton « Fenêtre
+  MineColonies » du dialogue laisse passer le clic suivant.
+- **Mort** : `CitizenDiedModEvent`. `CitizenRemovedModEvent` n'est pas utilisé, car il se déclenche
+  aussi quand l'entité est simplement déchargée. Un citoyen parti est détecté par la vérification
+  périodique (toutes les 30 s).
+- Forge 47.4 : le constructeur du mod reçoit le contexte de chargement (`get()` est déprécié).

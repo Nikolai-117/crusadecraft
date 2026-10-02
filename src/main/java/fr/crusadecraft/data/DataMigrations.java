@@ -22,7 +22,11 @@ public final class DataMigrations {
                     version, CrusadeSavedData.DATA_VERSION);
             return tag;
         }
-        // Aucune migration pour l'instant : la version 1 est la première.
+        // v1 → v2 : ajout des personnages et des postes du royaume. Rien à convertir : les listes
+        // absentes se lisent vides.
+        if (version < 2) {
+            CrusadeCraft.LOGGER.info("CrusadeCraft : données mises à niveau de la version {} à 2", version);
+        }
         return tag;
     }
 }

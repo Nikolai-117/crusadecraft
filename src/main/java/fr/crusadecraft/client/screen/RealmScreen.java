@@ -87,6 +87,8 @@ public class RealmScreen extends Screen {
         Ui.inset(g, left + 8, cy, w - 16, ch);
         if (tab == Tab.ROYAUME) {
             renderRealmTab(g, left + 8, cy, w - 16, ch, mouseX, mouseY);
+        } else if (tab == Tab.CONSEIL && hasAnySeat()) {
+            renderCouncilTab(g, left + 8, cy, w - 16, ch, mouseX, mouseY);
         } else {
             renderEmpty(g, left + 8, cy, w - 16, ch);
         }
@@ -138,6 +140,51 @@ public class RealmScreen extends Screen {
             if (Ui.inside(mouseX, mouseY, tx, ty, tw - 2, 24)) {
                 g.renderTooltip(font, t.label(), mouseX, mouseY);
             }
+        }
+    }
+
+    private boolean hasAnySeat() {
+        for (RealmView.Seat s : view.seats()) if (s.holder() != null) return true;
+        return false;
+    }
+
+    /** Zones cliquables des sièges occupés, recalculées à chaque rendu. */
+    private final java.util.List<Object[]> seatHits = new java.util.ArrayList<>();
+
+    private void renderCouncilTab(GuiGraphics g, int x, int y, int cw, int ch, int mouseX, int mouseY) {
+        seatHits.clear();
+        int colW = (cw - 30) / 2;
+        Ui.text(g, font, Component.translatable("crusadecraft.council.title"), x + 10, y + 8, Ui.TEXT_TITLE);
+        Ui.text(g, font, Component.translatable("crusadecraft.council.mayors"), x + 20 + colW, y + 8, Ui.TEXT_TITLE);
+        int ly = y + 22, ry = y + 22;
+        for (RealmView.Seat seat : view.seats()) {
+            boolean mayor = seat.post() == fr.crusadecraft.core.character.Post.MAIRE;
+            int sx = mayor ? x + 20 + colW : x + 10;
+            int sy = mayor ? ry : ly;
+            if (sy + 17 > y + ch - 13) continue;
+            boolean hover = seat.holder() != null && Ui.inside(mouseX, mouseY, sx, sy, colW, 17);
+            g.fill(sx, sy, sx + colW, sy + 17, hover ? Ui.PANEL_HIGHLIGHT : 0xFF1C1612);
+            g.renderOutline(sx, sy, colW, 17, Ui.GOLD_DARK);
+            Component title = mayor ? Component.literal(seat.place())
+                    : Component.translatable(seat.post().key(seat.female()));
+            Ui.text(g, font, Component.literal(font.plainSubstrByWidth(title.getString(), colW / 2 - 6)), sx + 4, sy + 5, Ui.TEXT_MUTED);
+            if (seat.holder() == null) {
+                Ui.text(g, font, Component.translatable("crusadecraft.appoint.vacant"), sx + colW / 2, sy + 5, 0xFF6E6250);
+            } else {
+                String op = (seat.opinion() > 0 ? "+" : "") + seat.opinion();
+                int opColor = seat.opinion() >= 20 ? Ui.GREEN : seat.opinion() <= -20 ? Ui.RED : 0xFFC99A3C;
+                Ui.text(g, font, Component.literal(font.plainSubstrByWidth(seat.name(), colW / 2 - 28)), sx + colW / 2, sy + 5, Ui.TEXT);
+                Ui.text(g, font, Component.literal(op), sx + colW - 4 - font.width(op), sy + 5, opColor);
+                seatHits.add(new Object[]{seat.holder(), sx, sy, colW});
+                if (hover) pendingTooltip = java.util.List.of(Component.translatable("crusadecraft.council.open", seat.name()));
+            }
+            if (mayor) ry += 19; else ly += 19;
+        }
+        String hint = font.plainSubstrByWidth(Component.translatable("crusadecraft.council.hint").getString(), cw - 20);
+        Ui.text(g, font, Component.literal(hint), x + 10, y + ch - 11, Ui.TEXT_MUTED);
+        if (pendingTooltip != null) {
+            g.renderComponentTooltip(font, pendingTooltip, mouseX, mouseY);
+            pendingTooltip = null;
         }
     }
 
@@ -241,6 +288,15 @@ public class RealmScreen extends Screen {
 
     @Override
     public boolean mouseClicked(double mouseX, double mouseY, int button) {
+        if (tab == Tab.CONSEIL) {
+            for (Object[] hit : seatHits) {
+                if (Ui.inside(mouseX, mouseY, (int) hit[1], (int) hit[2], (int) hit[3], 17)) {
+                    fr.crusadecraft.network.CrusadeNetwork.toServer(new fr.crusadecraft.network.packet.RequestCharacterPacket(
+                            (fr.crusadecraft.core.character.CitizenRef) hit[0], fr.crusadecraft.network.packet.RequestCharacterPacket.Mode.SHEET));
+                    return true;
+                }
+            }
+        }
         int tw = tabWidth();
         int ty = top + 56;
         for (Tab t : Tab.values()) {

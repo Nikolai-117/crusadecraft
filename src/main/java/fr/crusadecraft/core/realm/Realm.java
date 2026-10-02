@@ -1,11 +1,16 @@
 package fr.crusadecraft.core.realm;
 
 import fr.crusadecraft.core.ColonyRef;
+import fr.crusadecraft.core.character.CitizenRef;
+import fr.crusadecraft.core.character.Post;
 import net.minecraft.nbt.CompoundTag;
 import net.minecraft.nbt.ListTag;
 import net.minecraft.nbt.Tag;
 
 import java.util.ArrayList;
+import java.util.EnumMap;
+import java.util.LinkedHashMap;
+import java.util.Map;
 import java.util.Collections;
 import java.util.List;
 import java.util.Objects;
@@ -31,6 +36,11 @@ public final class Realm {
     private TitleRank rank;
     private RealmState state = RealmState.ACTIVE;
     private long foundedDay;
+
+    /** Conseil royal : un titulaire par poste. */
+    private final Map<Post, CitizenRef> council = new EnumMap<>(Post.class);
+    /** Maires : un par colonie du royaume. */
+    private final Map<ColonyRef, CitizenRef> mayors = new LinkedHashMap<>();
 
     // Ressources du souverain. L'or passera par un registre atomique (P4) ; ici, il n'est que stocké.
     private long gold;
@@ -81,6 +91,31 @@ public final class Realm {
         return all;
     }
 
+    public Map<Post, CitizenRef> council() { return Collections.unmodifiableMap(council); }
+    public Map<ColonyRef, CitizenRef> mayors() { return Collections.unmodifiableMap(mayors); }
+
+    /** Le poste qu'occupe ce citoyen dans ce royaume, s'il en a un. */
+    public Post postOf(CitizenRef citizen) {
+        for (Map.Entry<Post, CitizenRef> e : council.entrySet()) {
+            if (e.getValue().equals(citizen)) return e.getKey();
+        }
+        return mayors.containsValue(citizen) ? Post.MAIRE : null;
+    }
+
+    /** Nomme {@code citizen} ; renvoie l'ancien titulaire éventuel. Le maire est celui de sa propre colonie. */
+    public CitizenRef appoint(Post post, CitizenRef citizen) {
+        vacate(citizen);
+        return post == Post.MAIRE ? mayors.put(citizen.colony(), citizen) : council.put(post, citizen);
+    }
+
+    /** Retire ce citoyen de tout poste ; renvoie le poste libéré. */
+    public Post vacate(CitizenRef citizen) {
+        Post post = postOf(citizen);
+        if (post == Post.MAIRE) mayors.values().remove(citizen);
+        else if (post != null) council.remove(post);
+        return post;
+    }
+
     public boolean holds(ColonyRef colony) {
         return capital.equals(colony) || provinces.contains(colony);
     }
@@ -123,6 +158,16 @@ public final class Realm {
         tag.putString("rank", rank.name());
         tag.putString("state", state.name());
         tag.putLong("founded", foundedDay);
+        ListTag councilTag = new ListTag();
+        for (Map.Entry<Post, CitizenRef> e : council.entrySet()) {
+            CompoundTag p = e.getValue().save();
+            p.putString("post", e.getKey().name());
+            councilTag.add(p);
+        }
+        tag.put("council", councilTag);
+        ListTag mayorTag = new ListTag();
+        for (CitizenRef m : mayors.values()) mayorTag.add(m.save());
+        tag.put("mayors", mayorTag);
         tag.putLong("gold", gold);
         tag.putInt("prestige", prestige);
         tag.putInt("piety", piety);
@@ -148,6 +193,17 @@ public final class Realm {
             realm.addProvince(ColonyRef.load(list.getCompound(i)));
         }
         realm.state = RealmState.byName(tag.getString("state"));
+        ListTag councilTag = tag.getList("council", Tag.TAG_COMPOUND);
+        for (int i = 0; i < councilTag.size(); i++) {
+            CompoundTag p = councilTag.getCompound(i);
+            Post post = Post.byName(p.getString("post"));
+            if (post != null && post.isCouncil()) realm.council.put(post, CitizenRef.load(p));
+        }
+        ListTag mayorTag = tag.getList("mayors", Tag.TAG_COMPOUND);
+        for (int i = 0; i < mayorTag.size(); i++) {
+            CitizenRef m = CitizenRef.load(mayorTag.getCompound(i));
+            realm.mayors.put(m.colony(), m);
+        }
         realm.gold = tag.getLong("gold");
         realm.prestige = tag.getInt("prestige");
         realm.piety = tag.getInt("piety");

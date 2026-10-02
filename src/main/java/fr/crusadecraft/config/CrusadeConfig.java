@@ -34,6 +34,12 @@ public final class CrusadeConfig {
         public final ForgeConfigSpec.IntValue minTownHallLevel;
         public final ForgeConfigSpec.BooleanValue throneMustBeInTownHall;
         public final ForgeConfigSpec.IntValue startingPrestige;
+        public final ForgeConfigSpec.ConfigValue<java.util.List<? extends String>> statRules;
+        public final ForgeConfigSpec.IntValue traitsPerCharacter;
+        public final ForgeConfigSpec.IntValue refuseOfficeBelowOpinion;
+        public final ForgeConfigSpec.ConfigValue<String> rewardItem;
+        public final ForgeConfigSpec.IntValue rewardCount;
+        public final ForgeConfigSpec.IntValue exileDays;
         public final ForgeConfigSpec.BooleanValue disableDuplicatesWithWarNTaxes;
         public final ForgeConfigSpec.BooleanValue disableDuplicatesWithWarNNobility;
 
@@ -48,6 +54,23 @@ public final class CrusadeConfig {
             startingPrestige = b
                     .comment("Prestige accordé à la fondation du royaume.")
                     .defineInRange("prestigeDeDepart", 50, 0, 100000);
+            b.pop();
+
+            b.comment("Personnages : aptitudes CK3 calculées depuis les compétences MineColonies").push("personnages");
+            statRules = b
+                    .comment("Une règle par aptitude, dans l'ordre : Diplomatie, Martial, Intendance, Intrigue, Érudition.",
+                            "Format : \"Competence:poids, Competence:poids / diviseur\". Compétences MineColonies : Athletics,",
+                            "Dexterity, Strength, Agility, Stamina, Mana, Adaptability, Focus, Creativity, Knowledge, Intelligence.",
+                            "Par défaut : paires complémentaires de MineColonies (Force et Agilité y sont adverses).")
+                    .defineList("reglesAptitudes", fr.crusadecraft.core.character.StatFormula.DEFAULT_RULES, o -> o instanceof String);
+            traitsPerCharacter = b.comment("Nombre de traits de personnalité par personnage.")
+                    .defineInRange("traitsParPersonnage", 3, 1, 5);
+            refuseOfficeBelowOpinion = b.comment("En dessous de cette opinion, un personnage refuse le poste qu'on lui propose.")
+                    .defineInRange("refusPosteSousOpinion", -25, -100, 100);
+            rewardItem = b.comment("Objet offert pour récompenser un personnage (pris dans l'inventaire du souverain).")
+                    .define("objetRecompense", "minecraft:gold_ingot");
+            rewardCount = b.comment("Quantité offerte.").defineInRange("quantiteRecompense", 1, 1, 64);
+            exileDays = b.comment("Durée d'un exil, en jours du monde.").defineInRange("dureeExil", 30, 1, 3650);
             b.pop();
 
             b.comment("Cohabitation avec d'autres mods qui font la même chose").push("compatibilite");

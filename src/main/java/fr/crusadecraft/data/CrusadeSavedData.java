@@ -2,6 +2,8 @@ package fr.crusadecraft.data;
 
 import fr.crusadecraft.CrusadeCraft;
 import fr.crusadecraft.core.ColonyRef;
+import fr.crusadecraft.core.character.CharacterRecord;
+import fr.crusadecraft.core.character.CitizenRef;
 import fr.crusadecraft.core.realm.Realm;
 import net.minecraft.nbt.CompoundTag;
 import net.minecraft.nbt.ListTag;
@@ -27,9 +29,10 @@ import java.util.UUID;
  */
 public final class CrusadeSavedData extends AtomicSavedData {
     public static final String FILE_NAME = CrusadeCraft.MOD_ID;
-    public static final int DATA_VERSION = 1;
+    public static final int DATA_VERSION = 2;
 
     private final Map<UUID, Realm> realms = new LinkedHashMap<>();
+    private final Map<CitizenRef, CharacterRecord> characters = new LinkedHashMap<>();
 
     public static CrusadeSavedData get(MinecraftServer server) {
         return server.getLevel(Level.OVERWORLD).getDataStorage()
@@ -49,6 +52,15 @@ public final class CrusadeSavedData extends AtomicSavedData {
                 CrusadeCraft.LOGGER.error("CrusadeCraft : royaume illisible ignoré (index {})", i, e);
             }
         }
+        ListTag chars = migrated.getList("characters", Tag.TAG_COMPOUND);
+        for (int i = 0; i < chars.size(); i++) {
+            try {
+                CharacterRecord c = CharacterRecord.load(chars.getCompound(i));
+                data.characters.put(c.ref(), c);
+            } catch (RuntimeException e) {
+                CrusadeCraft.LOGGER.error("CrusadeCraft : personnage illisible ignoré (index {})", i, e);
+            }
+        }
         return data;
     }
 
@@ -58,6 +70,9 @@ public final class CrusadeSavedData extends AtomicSavedData {
         ListTag list = new ListTag();
         for (Realm realm : realms.values()) list.add(realm.save());
         tag.put("realms", list);
+        ListTag chars = new ListTag();
+        for (CharacterRecord c : characters.values()) chars.add(c.save());
+        tag.put("characters", chars);
         return tag;
     }
 
@@ -86,6 +101,27 @@ public final class CrusadeSavedData extends AtomicSavedData {
     public Optional<Realm> realmWithCapital(ColonyRef colony) {
         for (Realm realm : realms.values()) {
             if (realm.capital().equals(colony)) return Optional.of(realm);
+        }
+        return Optional.empty();
+    }
+
+    public Optional<CharacterRecord> character(CitizenRef ref) {
+        return Optional.ofNullable(characters.get(ref));
+    }
+
+    public Collection<CharacterRecord> characters() {
+        return Collections.unmodifiableCollection(characters.values());
+    }
+
+    public void putCharacter(CharacterRecord record) {
+        characters.put(record.ref(), record);
+        setDirty();
+    }
+
+    /** Le royaume dans lequel ce citoyen occupe un poste, s'il y en a un. */
+    public Optional<Realm> realmEmploying(CitizenRef citizen) {
+        for (Realm realm : realms.values()) {
+            if (realm.postOf(citizen) != null) return Optional.of(realm);
         }
         return Optional.empty();
     }

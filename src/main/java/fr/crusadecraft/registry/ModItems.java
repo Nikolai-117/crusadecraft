@@ -2,6 +2,7 @@ package fr.crusadecraft.registry;
 
 import fr.crusadecraft.CrusadeCraft;
 import fr.crusadecraft.item.RegistreItem;
+import fr.crusadecraft.item.SceptreItem;
 import net.minecraft.world.item.BlockItem;
 import net.minecraft.world.item.Item;
 import net.minecraft.world.item.Rarity;
@@ -18,6 +19,9 @@ public final class ModItems {
 
     public static final RegistryObject<Item> REGISTRE = ITEMS.register("registre",
             () -> new RegistreItem(new Item.Properties().stacksTo(1)));
+
+    public static final RegistryObject<Item> SCEPTRE = ITEMS.register("sceptre",
+            () -> new SceptreItem(new Item.Properties().stacksTo(1).rarity(Rarity.EPIC)));
 
     private ModItems() {}
 

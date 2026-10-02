@@ -1,10 +1,12 @@
 package fr.crusadecraft.compat.minecolonies;
 
 import com.minecolonies.api.IMinecoloniesAPI;
+import com.minecolonies.api.colony.ICitizenData;
 import com.minecolonies.api.colony.IColony;
 import com.minecolonies.api.colony.buildings.IBuilding;
 import com.minecolonies.api.tileentities.AbstractTileEntityColonyBuilding;
 import fr.crusadecraft.core.ColonyRef;
+import fr.crusadecraft.core.character.CitizenRef;
 import net.minecraft.core.BlockPos;
 import net.minecraft.core.registries.Registries;
 import net.minecraft.resources.ResourceKey;
@@ -44,6 +46,24 @@ public final class MineColoniesTestKit {
             building.setBuildingLevel(townHallLevel);
         }
         return new ColonyRef(colony.getDimension().location(), colony.getID());
+    }
+
+    private static IColony colony(ColonyRef ref) {
+        ResourceKey<Level> key = ResourceKey.create(Registries.DIMENSION, ref.dimension());
+        return IMinecoloniesAPI.getInstance().getColonyManager().getColonyByDimension(ref.colonyId(), key);
+    }
+
+    /** Ajoute un citoyen adulte (données seules, sans entité), comme MineColonies le fait à l'arrivée d'un colon. */
+    public static CitizenRef addCitizen(ColonyRef ref) {
+        ICitizenData data = colony(ref).getCitizenManager().createAndRegisterCivilianData();
+        return new CitizenRef(ref, data.getId());
+    }
+
+    /** Retire un citoyen de la colonie (départ, renvoi). */
+    public static void removeCitizen(CitizenRef ref) {
+        IColony c = colony(ref.colony());
+        ICitizenData data = c.getCitizenManager().getCivilian(ref.citizenId());
+        if (data != null) c.getCitizenManager().removeCivilian(data);
     }
 
     public static void deleteColony(ColonyRef ref) {
