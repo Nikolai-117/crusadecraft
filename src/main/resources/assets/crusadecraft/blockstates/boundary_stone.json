@@ -1,0 +1,8 @@
+{
+  "variants": {
+    "facing=north": { "model": "crusadecraft:block/boundary_stone" },
+    "facing=east": { "model": "crusadecraft:block/boundary_stone", "y": 90 },
+    "facing=south": { "model": "crusadecraft:block/boundary_stone", "y": 180 },
+    "facing=west": { "model": "crusadecraft:block/boundary_stone", "y": 270 }
+  }
+}

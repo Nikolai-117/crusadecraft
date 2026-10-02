@@ -1,0 +1,9 @@
+{
+  "parent": "minecraft:block/block",
+  "textures": { "stone": "minecraft:block/stone_bricks", "cap": "minecraft:block/chiseled_stone_bricks", "cloth": "minecraft:block/red_wool", "particle": "minecraft:block/stone_bricks" },
+  "elements": [
+    { "from": [5, 0, 5], "to": [11, 13, 11], "faces": {"north": {"texture": "#stone"}, "south": {"texture": "#stone"}, "east": {"texture": "#stone"}, "west": {"texture": "#stone"}, "up": {"texture": "#stone"}, "down": {"texture": "#stone"}} },
+    { "from": [4, 13, 4], "to": [12, 16, 12], "faces": {"north": {"texture": "#cap"}, "south": {"texture": "#cap"}, "east": {"texture": "#cap"}, "west": {"texture": "#cap"}, "up": {"texture": "#cap"}, "down": {"texture": "#cap"}} },
+    { "from": [6, 6, 4.5], "to": [10, 11, 5], "faces": {"north": {"texture": "#cloth"}, "south": {"texture": "#cloth"}, "east": {"texture": "#cloth"}, "west": {"texture": "#cloth"}, "up": {"texture": "#cloth"}, "down": {"texture": "#cloth"}} }
+  ]
+}

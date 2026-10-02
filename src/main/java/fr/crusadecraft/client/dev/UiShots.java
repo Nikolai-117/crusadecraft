@@ -10,6 +10,11 @@ import fr.crusadecraft.client.screen.RealmScreen;
 import fr.crusadecraft.client.screen.RegistreScreen;
 import fr.crusadecraft.client.screen.RequestScreen;
 import fr.crusadecraft.client.screen.TreasuryScreen;
+import fr.crusadecraft.client.screen.MapScreen;
+import fr.crusadecraft.client.screen.AiRealmScreen;
+import fr.crusadecraft.core.world.AiPersonality;
+import fr.crusadecraft.core.world.AiRealmView;
+import fr.crusadecraft.core.world.MapView;
 import fr.crusadecraft.core.law.Law;
 import fr.crusadecraft.core.law.LawsView;
 import fr.crusadecraft.core.treasury.LedgerCategory;
@@ -110,10 +115,19 @@ public final class UiShots {
             s.select(Law.FISCALITE, 2);
             return s;
         }, null));
+        MapView map = sampleMap();
+        list.add(new Shot("carte_politique", () -> new MapScreen(map), null));
+        list.add(new Shot("carte_dejure", () -> {
+            MapScreen s = new MapScreen(map);
+            s.toggleDejureForPreview();
+            return s;
+        }, null));
+        list.add(new Shot("fiche_royaume_ia", () -> new AiRealmScreen(sampleAiRealm()), null));
         list.add(new Shot("objets", () -> new ItemShowcaseScreen(List.of(new ItemStack(ModItems.THRONE.get()),
                 new ItemStack(ModItems.REGISTRE.get()), new ItemStack(ModItems.SCEPTRE.get()),
                 new ItemStack(ModItems.COUNCIL_TABLE.get()), new ItemStack(ModItems.COUNCIL_SEAT.get()),
-                new ItemStack(ModItems.MAYOR_DESK.get()), new ItemStack(ModItems.TREASURY.get()))), null));
+                new ItemStack(ModItems.MAYOR_DESK.get()), new ItemStack(ModItems.TREASURY.get()),
+                new ItemStack(ModItems.WAR_MAP.get()), new ItemStack(ModItems.BOUNDARY_STONE.get()))), null));
         list.add(new Shot("notification", TitleScreen::new, () -> Minecraft.getInstance().getToasts().addToast(
                 new CrusadeToast(ToastPacket.Kind.REALM, Component.translatable("crusadecraft.toast.founded.title"),
                         Component.translatable("crusadecraft.toast.founded.body", view.name())))));
@@ -186,6 +200,48 @@ public final class UiShots {
             choices.add(new RequestView.ChoiceView(c, true, gold, prestige));
         }
         return new RequestView(UUID.randomUUID(), type, "Ysolde", true, Post.MAIRE, "Valbrume", 3, -1, false, choices);
+    }
+
+    private static MapView sampleMap() {
+        List<MapView.Territory> t = new ArrayList<>();
+        t.add(new MapView.Territory(UUID.randomUUID(), false, true, "Royaume de Valbrume", TitleRank.BARONNIE, Heraldry.AZUR.rgb(),
+                "Romain", false, null, 41));
+        t.add(new MapView.Territory(UUID.randomUUID(), true, false, "Ambrevent", TitleRank.ROYAUME, Heraldry.GUEULES.rgb(),
+                "Godefroy", false, AiPersonality.EXPANSIONNISTE, 160));
+        t.add(new MapView.Territory(UUID.randomUUID(), true, false, "Rochegarde", TitleRank.DUCHE, Heraldry.SINOPLE.rgb(),
+                "Mathilde", true, AiPersonality.MARCHAND, 90));
+        t.add(new MapView.Territory(UUID.randomUUID(), true, false, "Cendrecourt", TitleRank.COMTE, Heraldry.POURPRE.rgb(),
+                "Thibaut", false, AiPersonality.FANATIQUE, 35));
+        List<MapView.Seat> seats = List.of(
+                new MapView.Seat(0, "Valbrume", 0, 0, true, 0, false),
+                new MapView.Seat(0, "Hautemarche", 260, 120, false, 0, false),
+                new MapView.Seat(1, "Ambrevent", -1100, -350, true, 0, true),
+                new MapView.Seat(1, "Ormesval", -1400, -100, false, 0, true),
+                new MapView.Seat(1, "Givrefond", -900, -650, false, 1, false),
+                new MapView.Seat(1, "Brisemer", -1350, -600, false, 0, true),
+                new MapView.Seat(2, "Rochegarde", 900, -700, true, 1, true),
+                new MapView.Seat(2, "Saulepré", 1150, -450, false, 1, false),
+                new MapView.Seat(3, "Cendrecourt", 700, 800, true, 1, true));
+        return new MapView(ResourceLocation.tryParse("minecraft:overworld"), 0, 0, 40, 60, 160, 110, t, seats,
+                List.of(new MapView.Dejure("Aquilée", 0xD9A88E), new MapView.Dejure("Montvert", 0x9DB58C)));
+    }
+
+    private static AiRealmView sampleAiRealm() {
+        AiRealmView.Person ruler = new AiRealmView.Person("Godefroy", false, 47, new int[]{9, 14, 7, 5, 8},
+                List.of(Trait.AMBITIEUX, Trait.BRAVE, Trait.CRUEL));
+        List<AiRealmView.Seat> council = List.of(
+                new AiRealmView.Seat(Post.CHANCELIER, new AiRealmView.Person("Bérenger", false, 39, new int[]{12, 4, 6, 7, 5}, List.of(Trait.HONNETE))),
+                new AiRealmView.Seat(Post.MARECHAL, new AiRealmView.Person("Aude", true, 33, new int[]{5, 13, 4, 6, 3}, List.of(Trait.BRAVE))),
+                new AiRealmView.Seat(Post.INTENDANT, new AiRealmView.Person("Eudes", false, 51, new int[]{6, 3, 11, 4, 7}, List.of(Trait.AVARE))),
+                new AiRealmView.Seat(Post.MAITRE_ESPION, new AiRealmView.Person("Sibylle", true, 28, new int[]{7, 4, 5, 12, 6}, List.of(Trait.FOURBE))),
+                new AiRealmView.Seat(Post.CHAPELAIN, new AiRealmView.Person("Anseau", false, 60, new int[]{6, 2, 5, 4, 13}, List.of(Trait.ZELE))));
+        List<AiRealmView.Province> provinces = List.of(
+                new AiRealmView.Province("Ambrevent", true, fr.crusadecraft.core.world.AiProvince.Anchor.VILLAGE, 58, 31, -1100, -350),
+                new AiRealmView.Province("Ormesval", false, fr.crusadecraft.core.world.AiProvince.Anchor.VILLAGE_PREDICTED, 24, 18, -1400, -100),
+                new AiRealmView.Province("Givrefond", false, fr.crusadecraft.core.world.AiProvince.Anchor.LAND, 17, 12, -900, -650),
+                new AiRealmView.Province("Brisemer", false, fr.crusadecraft.core.world.AiProvince.Anchor.VILLAGE, 31, 22, -1350, -600));
+        return new AiRealmView(UUID.randomUUID(), "Ambrevent", TitleRank.ROYAUME, Heraldry.GUEULES.rgb(), "Ormesval",
+                AiPersonality.EXPANSIONNISTE, ruler, council, provinces, 742, 263, 41, 12, 1164);
     }
 
     private static TreasuryView sampleTreasury(long gold) {

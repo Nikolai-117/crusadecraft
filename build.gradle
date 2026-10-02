@@ -46,6 +46,13 @@ minecraft {
             property 'crusadecraft.uishots', 'true'
         }
 
+        // Banc d'essai en monde réel : monde plat jetable dans run-worldshots, captures, puis fermeture.
+        worldShots {
+            parent runs.client
+            workingDirectory project.file('run-worldshots')
+            property 'crusadecraft.worldshots', 'true'
+        }
+
         server {
             workingDirectory project.file('run-server')
             property 'forge.enabledGameTestNamespaces', mod_id

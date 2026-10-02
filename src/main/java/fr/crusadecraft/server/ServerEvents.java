@@ -51,6 +51,7 @@ public final class ServerEvents {
         MineColoniesEvents.onServerStopped();
         fr.crusadecraft.core.council.CouncilService.onServerStopped();
         fr.crusadecraft.core.council.RequestService.onServerStopped();
+        fr.crusadecraft.core.world.WorldService.onServerStopped();
     }
 
     @SubscribeEvent
@@ -65,7 +66,13 @@ public final class ServerEvents {
     /** Chaque citoyen chargé reçoit l'état « service » (réunions, bureau, audiences). */
     @SubscribeEvent
     public static void onEntityJoin(net.minecraftforge.event.entity.EntityJoinLevelEvent event) {
-        if (!event.getLevel().isClientSide()) fr.crusadecraft.compat.minecolonies.DutyAI.install(event.getEntity());
+        if (event.getLevel().isClientSide()) return;
+        // Un héraut resté d'une session interrompue n'a plus rien à faire là.
+        if (fr.crusadecraft.core.world.WorldService.isStrayHerald(event.getEntity())) {
+            event.setCanceled(true);
+            return;
+        }
+        fr.crusadecraft.compat.minecolonies.DutyAI.install(event.getEntity());
     }
 
     @SubscribeEvent
@@ -78,6 +85,7 @@ public final class ServerEvents {
         if (t % 100 == 50) fr.crusadecraft.core.council.RequestService.deliver(server);
         if (t % 1200 == 300) fr.crusadecraft.core.council.RequestService.periodic(server);
         if (t % 2400 == 900) fr.crusadecraft.core.council.CouncilService.applyHappiness(server);
+        if (t % 40 == 20) fr.crusadecraft.core.world.WorldService.tick(server);
     }
 
     /**
@@ -88,6 +96,14 @@ public final class ServerEvents {
     @SubscribeEvent
     public static void onEntityInteract(PlayerInteractEvent.EntityInteract event) {
         if (event.getLevel().isClientSide() || !(event.getEntity() instanceof ServerPlayer player)) return;
+        // Le héraut d'un royaume IA ne commerce pas : il présente son royaume.
+        Optional<java.util.UUID> herald = fr.crusadecraft.core.world.WorldService.heraldRealm(event.getTarget());
+        if (herald.isPresent()) {
+            event.setCanceled(true);
+            event.setCancellationResult(InteractionResult.SUCCESS);
+            fr.crusadecraft.network.packet.WorldPackets.sendAiRealm(player, herald.get());
+            return;
+        }
         Optional<CitizenRef> ref = MineColoniesBridge.refOf(event.getTarget());
         if (ref.isEmpty()) return;
         boolean scepter = player.getMainHandItem().is(ModItems.SCEPTRE.get());
@@ -109,6 +125,7 @@ public final class ServerEvents {
             if (event.getPlacedBlock().is(ModBlocks.COUNCIL_TABLE.get())) refusal = fr.crusadecraft.block.CourtBlocks.checkTable(p, lvl, event.getPos());
             else if (event.getPlacedBlock().is(ModBlocks.MAYOR_DESK.get())) refusal = fr.crusadecraft.block.CourtBlocks.checkDesk(p, lvl, event.getPos());
             else if (event.getPlacedBlock().is(ModBlocks.TREASURY.get())) refusal = fr.crusadecraft.block.CourtBlocks.checkTreasury(p, lvl, event.getPos());
+            else if (event.getPlacedBlock().is(ModBlocks.WAR_MAP.get())) refusal = fr.crusadecraft.block.CourtBlocks.checkWarMap(p, lvl, event.getPos());
             if (refusal.isPresent()) {
                 event.setCanceled(true);
                 p.displayClientMessage(refusal.get(), true);

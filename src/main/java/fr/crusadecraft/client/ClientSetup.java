@@ -13,6 +13,12 @@ public final class ClientSetup {
     private ClientSetup() {}
 
     @SubscribeEvent
+    public static void onRenderers(net.minecraftforge.client.event.EntityRenderersEvent.RegisterRenderers event) {
+        event.registerBlockEntityRenderer(fr.crusadecraft.registry.ModBlockEntities.WAR_MAP.get(),
+                fr.crusadecraft.client.map.WarMapRenderer::new);
+    }
+
+    @SubscribeEvent
     public static void onKeys(RegisterKeyMappingsEvent event) {
         event.register(KeyBindings.REALM_MENU);
         event.register(KeyBindings.MAP);

@@ -190,6 +190,33 @@ public final class MineColoniesBridge {
         }
     }
 
+    /** Centre (x, z) de chaque colonie d'une dimension : les sièges des royaumes IA s'en tiennent à l'écart. */
+    public static List<int[]> colonyCenters(Level level) {
+        List<int[]> out = new ArrayList<>();
+        if (broken) return out;
+        try {
+            for (IColony c : IMinecoloniesAPI.getInstance().getColonyManager().getColonies(level)) {
+                BlockPos center = c.getCenter();
+                out.add(new int[]{center.getX(), center.getZ()});
+            }
+        } catch (LinkageError e) {
+            breakBridge(e);
+        }
+        return out;
+    }
+
+    /** Centre d'une colonie (son Hôtel de ville, ou à défaut son point de fondation). */
+    public static Optional<BlockPos> center(ColonyRef ref) {
+        if (broken) return Optional.empty();
+        try {
+            IColony c = colony(ref);
+            return c == null ? Optional.empty() : Optional.of(c.getCenter());
+        } catch (LinkageError e) {
+            breakBridge(e);
+            return Optional.empty();
+        }
+    }
+
     // ------------------------------------------------------------------ citoyens
 
     /**

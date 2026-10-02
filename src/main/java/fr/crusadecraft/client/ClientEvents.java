@@ -26,7 +26,12 @@ public final class ClientEvents {
             CrusadeNetwork.toServer(new RequestRealmPacket(OpenRealmScreenPacket.Target.MENU));
         }
         while (KeyBindings.MAP.consumeClick()) {
-            mc.player.displayClientMessage(Component.translatable("crusadecraft.map.soon"), true);
+            CrusadeNetwork.toServer(new fr.crusadecraft.network.packet.WorldPackets.RequestMap(true));
         }
+    }
+
+    @SubscribeEvent
+    public static void onLogout(net.minecraftforge.client.event.ClientPlayerNetworkEvent.LoggingOut event) {
+        fr.crusadecraft.client.map.ClientMapData.clear();
     }
 }

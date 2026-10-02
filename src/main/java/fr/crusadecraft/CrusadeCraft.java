@@ -29,6 +29,7 @@ public final class CrusadeCraft {
         IEventBus modBus = context.getModEventBus();
         ModBlocks.register(modBus);
         ModItems.register(modBus);
+        fr.crusadecraft.registry.ModBlockEntities.register(modBus);
         ModCreativeTabs.register(modBus);
         modBus.addListener(this::commonSetup);
 

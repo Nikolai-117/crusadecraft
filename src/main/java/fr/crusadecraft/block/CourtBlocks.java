@@ -67,6 +67,18 @@ public final class CourtBlocks {
         return Optional.empty();
     }
 
+    /** La Table de guerre demande, comme la Table du Conseil, un Hôtel de ville assez grand dans la colonie. */
+    public static Optional<Component> checkWarMap(ServerPlayer player, Level level, BlockPos pos) {
+        Optional<Component> outside = checkTreasury(player, level, pos);
+        if (outside.isPresent()) return outside;
+        ColonyRef colony = MineColoniesBridge.colonyAt(level, pos).orElseThrow();
+        int min = fr.crusadecraft.config.CrusadeConfig.SERVER.councilMinTownHallLevel.get();
+        if (MineColoniesBridge.townHallLevel(colony) < min) {
+            return Optional.of(Component.translatable("crusadecraft.world.war_map_level", min));
+        }
+        return Optional.empty();
+    }
+
     public static void registerTable(ServerPlayer player, Level level, BlockPos pos) {
         RealmService.realmOf(player.server, player.getUUID()).ifPresent(realm -> {
             realm.court().setTable(level.dimension().location(), pos);

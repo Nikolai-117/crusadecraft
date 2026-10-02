@@ -12,6 +12,7 @@ import fr.crusadecraft.network.packet.RequestCharacterPacket;
 import fr.crusadecraft.network.packet.RequestRealmPacket;
 import fr.crusadecraft.network.packet.SyncTitlesPacket;
 import fr.crusadecraft.network.packet.ToastPacket;
+import fr.crusadecraft.network.packet.WorldPackets;
 import net.minecraft.resources.ResourceLocation;
 import net.minecraft.server.level.ServerPlayer;
 import net.minecraftforge.network.NetworkDirection;
@@ -26,7 +27,7 @@ import net.minecraftforge.network.simple.SimpleChannel;
  * (distance, droits, état) avant d'agir.
  */
 public final class CrusadeNetwork {
-    private static final String VERSION = "2";
+    private static final String VERSION = "3";
 
     public static final SimpleChannel CHANNEL = NetworkRegistry.newSimpleChannel(
             ResourceLocation.tryParse(CrusadeCraft.MOD_ID + ":main"),
@@ -102,6 +103,19 @@ public final class CrusadeNetwork {
         CHANNEL.messageBuilder(EconomyPackets.ProposeLaw.class, nextId++, NetworkDirection.PLAY_TO_SERVER)
                 .encoder(EconomyPackets.ProposeLaw::encode).decoder(EconomyPackets.ProposeLaw::decode)
                 .consumerMainThread(EconomyPackets.ProposeLaw::handle).add();
+        // P5 : le monde
+        CHANNEL.messageBuilder(WorldPackets.MapData.class, nextId++, NetworkDirection.PLAY_TO_CLIENT)
+                .encoder(WorldPackets.MapData::encode).decoder(WorldPackets.MapData::decode)
+                .consumerMainThread(WorldPackets.MapData::handle).add();
+        CHANNEL.messageBuilder(WorldPackets.AiRealmData.class, nextId++, NetworkDirection.PLAY_TO_CLIENT)
+                .encoder(WorldPackets.AiRealmData::encode).decoder(WorldPackets.AiRealmData::decode)
+                .consumerMainThread(WorldPackets.AiRealmData::handle).add();
+        CHANNEL.messageBuilder(WorldPackets.RequestMap.class, nextId++, NetworkDirection.PLAY_TO_SERVER)
+                .encoder(WorldPackets.RequestMap::encode).decoder(WorldPackets.RequestMap::decode)
+                .consumerMainThread(WorldPackets.RequestMap::handle).add();
+        CHANNEL.messageBuilder(WorldPackets.RequestAiRealm.class, nextId++, NetworkDirection.PLAY_TO_SERVER)
+                .encoder(WorldPackets.RequestAiRealm::encode).decoder(WorldPackets.RequestAiRealm::decode)
+                .consumerMainThread(WorldPackets.RequestAiRealm::handle).add();
     }
 
     public static void toPlayer(ServerPlayer player, Object packet) {

@@ -23,6 +23,8 @@ public final class ModCreativeTabs {
                 output.accept(ModItems.COUNCIL_SEAT.get());
                 output.accept(ModItems.MAYOR_DESK.get());
                 output.accept(ModItems.TREASURY.get());
+                output.accept(ModItems.WAR_MAP.get());
+                output.accept(ModItems.BOUNDARY_STONE.get());
             })
             .build());
 

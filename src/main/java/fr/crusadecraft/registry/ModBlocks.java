@@ -35,6 +35,16 @@ public final class ModBlocks {
     public static final RegistryObject<Block> TREASURY = BLOCKS.register("treasury", () -> new fr.crusadecraft.block.TreasuryBlock(
             BlockBehaviour.Properties.of().mapColor(MapColor.GOLD).strength(3.5F, 1200.0F).sound(SoundType.WOOD).noOcclusion()));
 
+    /** Cadre de la Table de guerre, à accrocher au mur en carré de 3 × 3. */
+    public static final RegistryObject<Block> WAR_MAP = BLOCKS.register("war_map", () -> new fr.crusadecraft.block.WarMapBlock(
+            BlockBehaviour.Properties.of().mapColor(MapColor.WOOD).strength(1.0F).sound(SoundType.WOOD).noOcclusion().noCollission()));
+
+    /** Borne de frontière, décorative. */
+    public static final RegistryObject<Block> BOUNDARY_STONE = BLOCKS.register("boundary_stone", () -> new CourtFurnitureBlock(
+            BlockBehaviour.Properties.of().mapColor(MapColor.STONE).strength(2.0F, 6.0F).sound(SoundType.STONE).noOcclusion()
+                    .requiresCorrectToolForDrops(),
+            new double[][]{{5, 0, 5, 11, 13, 11}, {4, 13, 4, 12, 16, 12}}));
+
     private ModBlocks() {}
 
     public static void register(IEventBus modBus) {

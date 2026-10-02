@@ -47,7 +47,37 @@ public final class CrusadeCommand {
                         .then(Commands.argument("royaume", StringArgumentType.greedyString())
                                 .suggests((ctx, b) -> SharedSuggestionProvider.suggest(
                                         CrusadeSavedData.get(ctx.getSource().getServer()).realms().stream().map(Realm::name), b))
-                                .executes(CrusadeCommand::dissolve))));
+                                .executes(CrusadeCommand::dissolve)))
+                .then(Commands.literal("monde")
+                        .then(Commands.literal("info").executes(CrusadeCommand::worldInfo))
+                        .then(Commands.literal("generer").executes(ctx -> {
+                            // Débogage : régénère les royaumes IA autour du joueur (efface les anciens).
+                            var player = ctx.getSource().getPlayerOrException();
+                            int n = fr.crusadecraft.core.world.WorldService.generate(ctx.getSource().getServer(), player.serverLevel(),
+                                    player.getBlockX(), player.getBlockZ());
+                            ctx.getSource().sendSuccess(() -> Component.translatable("crusadecraft.command.world.generated", n), true);
+                            return n;
+                        }))
+                        .then(Commands.literal("decouvrir").executes(ctx -> {
+                            int n = fr.crusadecraft.core.world.WorldService.discoverAll(ctx.getSource().getPlayerOrException());
+                            ctx.getSource().sendSuccess(() -> Component.translatable("crusadecraft.command.world.discovered", n), true);
+                            return n;
+                        }))));
+    }
+
+    private static int worldInfo(CommandContext<CommandSourceStack> ctx) {
+        var world = CrusadeSavedData.get(ctx.getSource().getServer()).world();
+        if (!world.generated()) {
+            ctx.getSource().sendSuccess(() -> Component.translatable("crusadecraft.command.world.none"), false);
+            return 0;
+        }
+        for (var r : world.realms()) {
+            var capital = r.capital();
+            ctx.getSource().sendSuccess(() -> Component.translatable("crusadecraft.command.world.line",
+                    fr.crusadecraft.core.world.AiNames.realm(r.rank(), r.place()), Component.translatable(r.personality().key()),
+                    r.provinces().size(), capital == null ? "?" : capital.seat().toShortString(), r.discoveredBy().size()), false);
+        }
+        return world.realms().size();
     }
 
     private static int list(CommandContext<CommandSourceStack> ctx) {

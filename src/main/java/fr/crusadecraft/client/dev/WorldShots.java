@@ -1,0 +1,173 @@
+package fr.crusadecraft.client.dev;
+
+import fr.crusadecraft.CrusadeCraft;
+import fr.crusadecraft.block.WarMapBlock;
+import fr.crusadecraft.client.map.ClientMapData;
+import fr.crusadecraft.core.world.AiRealm;
+import fr.crusadecraft.core.world.AiProvince;
+import fr.crusadecraft.core.world.MapView;
+import fr.crusadecraft.core.world.WorldService;
+import fr.crusadecraft.data.CrusadeSavedData;
+import fr.crusadecraft.network.CrusadeNetwork;
+import fr.crusadecraft.network.packet.WorldPackets;
+import fr.crusadecraft.registry.ModBlocks;
+import net.minecraft.client.Minecraft;
+import net.minecraft.client.Screenshot;
+import net.minecraft.core.BlockPos;
+import net.minecraft.core.Direction;
+import net.minecraft.core.registries.Registries;
+import net.minecraft.server.MinecraftServer;
+import net.minecraft.server.level.ServerLevel;
+import net.minecraft.server.level.ServerPlayer;
+import net.minecraft.world.Difficulty;
+import net.minecraft.world.level.GameRules;
+import net.minecraft.world.level.GameType;
+import net.minecraft.world.level.LevelSettings;
+import net.minecraft.world.level.WorldDataConfiguration;
+import net.minecraft.world.level.block.Blocks;
+import net.minecraft.world.level.levelgen.WorldOptions;
+import net.minecraft.world.level.levelgen.presets.WorldPresets;
+import net.minecraftforge.api.distmarker.Dist;
+import net.minecraftforge.event.TickEvent;
+import net.minecraftforge.eventbus.api.SubscribeEvent;
+import net.minecraftforge.fml.common.Mod;
+
+import java.io.IOException;
+import java.nio.file.Files;
+import java.nio.file.Path;
+import java.util.Comparator;
+import java.util.Iterator;
+import java.util.stream.Stream;
+
+/**
+ * Banc d'essai en monde réel, réservé au développement ({@code ./gradlew runWorldShots}) : crée un monde
+ * plat jetable dans {@code run-worldshots/saves}, y accroche une Table de guerre, génère et révèle les
+ * royaumes IA, puis photographie le mur, la carte, une fiche et la venue d'un héraut. Le jeu se ferme ensuite.
+ * Rien d'autre que ce dossier de développement n'est touché.
+ */
+@Mod.EventBusSubscriber(modid = CrusadeCraft.MOD_ID, bus = Mod.EventBusSubscriber.Bus.FORGE, value = Dist.CLIENT)
+public final class WorldShots {
+    private static final boolean ENABLED = Boolean.getBoolean("crusadecraft.worldshots");
+    private static final String WORLD = "crusadecraft-shots";
+
+    private enum Step { BOOT, LOADING, SETUP, WALL, MAP, SHEET, HERALD, DONE }
+
+    private static Step step = Step.BOOT;
+    private static int wait;
+    private static int shot;
+
+    private WorldShots() {}
+
+    @SubscribeEvent
+    public static void onTick(TickEvent.ClientTickEvent event) {
+        if (!ENABLED || event.phase != TickEvent.Phase.END) return;
+        Minecraft mc = Minecraft.getInstance();
+        if (wait > 0) {
+            wait--;
+            return;
+        }
+        switch (step) {
+            case BOOT -> {
+                if (mc.screen == null || mc.level != null || mc.getOverlay() != null) return;
+                createWorld(mc);
+                step = Step.LOADING;
+            }
+            case LOADING -> {
+                if (mc.level == null || mc.player == null || mc.getSingleplayerServer() == null) return;
+                step = Step.SETUP;
+                wait = 100;
+            }
+            case SETUP -> {
+                MinecraftServer server = mc.getSingleplayerServer();
+                server.execute(() -> setup(server));
+                step = Step.WALL;
+                wait = 160;
+            }
+            case WALL -> {
+                grab(mc, "table_de_guerre");
+                CrusadeNetwork.toServer(new WorldPackets.RequestMap(true));
+                step = Step.MAP;
+                wait = 40;
+            }
+            case MAP -> {
+                grab(mc, "carte");
+                MapView view = ClientMapData.view();
+                MapView.Territory ai = view == null ? null : view.territories().stream().filter(MapView.Territory::ai).findFirst().orElse(null);
+                if (ai != null) CrusadeNetwork.toServer(new WorldPackets.RequestAiRealm(ai.id()));
+                step = Step.SHEET;
+                wait = 30;
+            }
+            case SHEET -> {
+                grab(mc, "fiche");
+                mc.setScreen(null);
+                MinecraftServer server = mc.getSingleplayerServer();
+                server.execute(() -> visitHiddenRealm(server));
+                step = Step.HERALD;
+                wait = 200;
+            }
+            case HERALD -> {
+                grab(mc, "heraut");
+                step = Step.DONE;
+                wait = 20;
+            }
+            case DONE -> {
+                CrusadeCraft.LOGGER.info("WorldShots : terminé, fermeture du jeu");
+                mc.stop();
+            }
+        }
+    }
+
+    private static void createWorld(Minecraft mc) {
+        Path dir = mc.getLevelSource().getBaseDir().resolve(WORLD);
+        if (Files.exists(dir)) {
+            try (Stream<Path> walk = Files.walk(dir)) {
+                walk.sorted(Comparator.reverseOrder()).forEach(p -> p.toFile().delete());
+            } catch (IOException e) {
+                CrusadeCraft.LOGGER.warn("WorldShots : ancien monde non effacé", e);
+            }
+        }
+        GameRules rules = new GameRules();
+        rules.getRule(GameRules.RULE_DAYLIGHT).set(false, null);
+        rules.getRule(GameRules.RULE_WEATHER_CYCLE).set(false, null);
+        LevelSettings settings = new LevelSettings(WORLD, GameType.CREATIVE, false, Difficulty.PEACEFUL, true, rules,
+                WorldDataConfiguration.DEFAULT);
+        mc.createWorldOpenFlows().createFreshLevel(WORLD, settings, new WorldOptions(20261003L, true, false),
+                registries -> registries.registryOrThrow(Registries.WORLD_PRESET).getHolderOrThrow(WorldPresets.FLAT).value().createWorldDimensions());
+    }
+
+    /** Un mur, neuf cadres, les royaumes IA ; tout est révélé sauf le premier, gardé pour le héraut. */
+    private static void setup(MinecraftServer server) {
+        ServerPlayer player = server.getPlayerList().getPlayers().get(0);
+        ServerLevel level = player.serverLevel();
+        level.setDayTime(6000);
+        BlockPos base = player.blockPosition();
+        int wallZ = base.getZ() - 5;
+        for (int x = -2; x <= 2; x++) {
+            for (int y = 0; y <= 3; y++) level.setBlockAndUpdate(new BlockPos(base.getX() + x, base.getY() + y, wallZ), Blocks.STONE_BRICKS.defaultBlockState());
+        }
+        for (int x = -1; x <= 1; x++) {
+            for (int y = 0; y <= 2; y++) {
+                level.setBlockAndUpdate(new BlockPos(base.getX() + x, base.getY() + y, wallZ + 1),
+                        ModBlocks.WAR_MAP.get().defaultBlockState().setValue(WarMapBlock.FACING, Direction.SOUTH));
+            }
+        }
+        WorldService.generate(server, level, base.getX(), base.getZ());
+        Iterator<AiRealm> it = CrusadeSavedData.get(server).world().realms().iterator();
+        if (it.hasNext()) it.next();
+        long today = fr.crusadecraft.core.realm.RealmService.currentDay(server);
+        while (it.hasNext()) it.next().discover(player.getUUID(), today);
+        player.connection.teleport(base.getX() + 0.5, base.getY(), base.getZ() + 0.5, 180f, -8f);
+    }
+
+    private static void visitHiddenRealm(MinecraftServer server) {
+        ServerPlayer player = server.getPlayerList().getPlayers().get(0);
+        AiRealm first = CrusadeSavedData.get(server).world().realms().iterator().next();
+        AiProvince capital = first.capital();
+        player.connection.teleport(capital.seat().getX() + 0.5, capital.seat().getY() + 1, capital.seat().getZ() + 12.5, 180f, 5f);
+    }
+
+    private static void grab(Minecraft mc, String name) {
+        String file = "crusadecraft_monde_" + String.format("%02d", ++shot) + "_" + name + ".png";
+        Screenshot.grab(mc.gameDirectory, file, mc.getMainRenderTarget(), msg -> CrusadeCraft.LOGGER.info("WorldShots : {}", msg.getString()));
+    }
+}

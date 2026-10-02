@@ -11,6 +11,28 @@ const REGALIA = {
 };
 
 export const TEXTURES = {
+  // Cadre de la Table de guerre : parchemin dans un liseré de chêne noir, avec un tracé de carte.
+  'block/war_map': {
+    palette: { k: '2b1d12', w: '5a3d24', p: 'e8d9b0', P: 'd6c393', b: '6d8fb3', r: 'a8443a', g: '7a8c4e', d: '8a7650' },
+    pixels: [
+      'kkkkkkkkkkkkkkkk',
+      'kwwwwwwwwwwwwwwk',
+      'kwpppPpppppbpppk',
+      'kwppgggpppbbpPpk',
+      'kwpgggggpbbppppk',
+      'kwpPgrggpbpppppk',
+      'kwppprpppbpppdpk',
+      'kwppprrrrbrrppPk',
+      'kwpPpppprbppprpk',
+      'kwppdppprbppprpk',
+      'kwpppppbbpppgrgk',
+      'kwppPpbbppppggPk',
+      'kwpppbbpppPppppk',
+      'kwppbbpppppppPpk',
+      'kwwwwwwwwwwwwwwk',
+      'kkkkkkkkkkkkkkkk',
+    ],
+  },
   'item/sceptre': {
     palette: REGALIA,
     pixels: [

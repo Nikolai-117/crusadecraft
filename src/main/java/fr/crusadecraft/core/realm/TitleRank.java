@@ -24,6 +24,11 @@ public enum TitleRank {
         return "crusadecraft.rank." + key;
     }
 
+    /** Clé du titre précédé de « de » (« du Comté », « de la Baronnie »), pour « les terres du Comté de… ». */
+    public String ofKey() {
+        return "crusadecraft.rank." + key + ".of";
+    }
+
     /** Clé de traduction du titre porté (« Baron » / « Baronne »). */
     public String holderKey(boolean feminine) {
         return "crusadecraft.rank." + key + (feminine ? ".holder.f" : ".holder.m");

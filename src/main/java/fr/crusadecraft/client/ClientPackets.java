@@ -1,5 +1,7 @@
 package fr.crusadecraft.client;
 
+import fr.crusadecraft.core.world.AiRealmView;
+import fr.crusadecraft.core.world.MapView;
 import fr.crusadecraft.client.screen.TreasuryScreen;
 import fr.crusadecraft.core.law.LawsView;
 import fr.crusadecraft.core.treasury.TreasuryView;
@@ -100,5 +102,16 @@ public final class ClientPackets {
 
     public static void laws(LawsView view) {
         if (Minecraft.getInstance().screen instanceof RealmScreen open) open.setLaws(view);
+    }
+
+    public static void map(MapView view, boolean open) {
+        fr.crusadecraft.client.map.ClientMapData.set(view);
+        Minecraft mc = Minecraft.getInstance();
+        if (mc.screen instanceof fr.crusadecraft.client.screen.MapScreen screen) screen.refresh(view);
+        else if (open) mc.setScreen(new fr.crusadecraft.client.screen.MapScreen(view));
+    }
+
+    public static void aiRealm(AiRealmView view) {
+        Minecraft.getInstance().setScreen(new fr.crusadecraft.client.screen.AiRealmScreen(view));
     }
 }

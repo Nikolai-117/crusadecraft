@@ -1,0 +1,10 @@
+{
+  "type": "minecraft:crafting_shaped",
+  "category": "building",
+  "pattern": ["B", "S", "S"],
+  "key": {
+    "B": { "tag": "minecraft:banners" },
+    "S": { "item": "minecraft:stone_bricks" }
+  },
+  "result": { "item": "crusadecraft:boundary_stone", "count": 2 }
+}

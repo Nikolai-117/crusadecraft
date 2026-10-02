@@ -184,3 +184,29 @@ Les compétences vont de 1 à 99 : un citoyen débutant obtient 1 à 5, un exper
   donc sans trace si l'on retire le mod.
 - **War 'N Taxes** : s'il est installé (et que l'option de cohabitation est active), nos impôts se
   coupent ; le trésor, les salaires et les lois restent.
+
+**P5 (3 octobre 2026)**
+
+- **Les royaumes IA naissent une seule fois**, juste après la fondation du premier royaume, autour de sa
+  capitale : 6 royaumes entre 600 et 2 500 blocs (réglable). Un royaume IA tient 1 à 5 provinces selon
+  son rang. Une commande d'administration les régénère pour le débogage.
+- **Villages repérés sans générer ni charger un seul chunk.** L'algorithme de placement de Minecraft
+  donne les emplacements possibles, la biome trie, et la vérification de structure lit les chunks déjà
+  enregistrés (village confirmé) ou prévoit le village d'une région jamais visitée. Les villages
+  confirmés passent en premier ; à défaut, un point de terre ferme (ni océan ni rivière). Mesuré :
+  20 à 90 villages repérés en moins d'une seconde.
+- **Les sièges IA s'écartent des colonies MineColonies** existantes (au moins deux rayons de territoire).
+- **Le héraut** est un villageois vanilla temporaire : immobile, invulnérable, marqué, retiré au bout de
+  45 secondes et au chargement suivant s'il reste d'un arrêt brutal. Il est inscrit avant d'apparaître,
+  sinon le garde-fou contre les hérauts égarés l'empêche d'entrer (bug trouvé par un GameTest). Un clic
+  droit ouvre la fiche de son royaume au lieu du commerce.
+- **Le brouillard n'est pas un voile** : le serveur n'envoie que les royaumes découverts par ce joueur.
+- **Royaumes de jure** : un par secteur autour du centre (un pour trois États environ). Les colonies des
+  joueurs relèvent du plus proche. La vue de jure de la carte s'en sert ; les revendications aussi, plus tard.
+- **La carte est calculée par le client** dans une texture (le siège le plus proche dans son rayon,
+  frontières, parchemin, brouillard). La Table de guerre découpe une carte de 192 pixels centrée sur la
+  capitale en neuf parts, une par cadre ; un cadre isolé reste un simple parchemin.
+- **Xaero's World Map** : pas d'API publique propre pour colorer des territoires (le mod est fermé).
+  Pas d'intégration ; la carte du mod et la Table de guerre en tiennent lieu.
+- **Banc d'essai en monde réel** (`./gradlew runWorldShots`) : monde plat jetable dans
+  `run-worldshots/saves`, Table de guerre, royaumes IA, héraut, puis captures et fermeture.

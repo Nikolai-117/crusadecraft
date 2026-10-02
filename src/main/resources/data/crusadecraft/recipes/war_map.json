@@ -1,0 +1,11 @@
+{
+  "type": "minecraft:crafting_shaped",
+  "category": "misc",
+  "pattern": ["SLS", "LML", "SLS"],
+  "key": {
+    "S": { "item": "minecraft:stick" },
+    "L": { "item": "minecraft:leather" },
+    "M": { "item": "minecraft:map" }
+  },
+  "result": { "item": "crusadecraft:war_map", "count": 3 }
+}

@@ -70,6 +70,15 @@ public final class CrusadeConfig {
         public final ForgeConfigSpec.BooleanValue taxHappiness;
         public final ForgeConfigSpec.IntValue lawCooldownDays;
         public final ForgeConfigSpec.IntValue forceCostPerVote;
+        public final ForgeConfigSpec.BooleanValue aiRealms;
+        public final ForgeConfigSpec.IntValue aiRealmCount;
+        public final ForgeConfigSpec.IntValue aiMinDistance;
+        public final ForgeConfigSpec.IntValue aiMaxDistance;
+        public final ForgeConfigSpec.IntValue territoryRadius;
+        public final ForgeConfigSpec.IntValue colonyRadius;
+        public final ForgeConfigSpec.IntValue discoveryRadius;
+        public final ForgeConfigSpec.BooleanValue heralds;
+        public final ForgeConfigSpec.IntValue heraldSeconds;
         public final ForgeConfigSpec.BooleanValue disableDuplicatesWithWarNTaxes;
         public final ForgeConfigSpec.BooleanValue disableDuplicatesWithWarNNobility;
 
@@ -157,6 +166,23 @@ public final class CrusadeConfig {
             lawCooldownDays = b.comment("Jours à attendre avant de rechanger une même loi.").defineInRange("delaiEntreChangements", 3, 0, 365);
             forceCostPerVote = b.comment("Prestige à dépenser par voix contre pour imposer une loi rejetée par le conseil.")
                     .defineInRange("prestigeParVoixContre", 20, 0, 10000);
+            b.pop();
+
+            b.comment("Le monde : royaumes IA, découverte, carte").push("monde");
+            aiRealms = b.comment("Des royaumes IA naissent autour de la capitale du premier royaume fondé. Ce ne sont que des",
+                            "données : aucune colonie, aucun bloc posé ; leurs sièges s'ancrent sur des villages existants.")
+                    .define("royaumesIA", true);
+            aiRealmCount = b.comment("Nombre de royaumes IA.").defineInRange("nombreRoyaumesIA", 6, 1, 24);
+            aiMinDistance = b.comment("Distance minimale, en blocs, entre la capitale fondatrice et une capitale IA.")
+                    .defineInRange("distanceMinimale", 600, 150, 20000);
+            aiMaxDistance = b.comment("Distance maximale, en blocs.").defineInRange("distanceMaximale", 2500, 300, 50000);
+            territoryRadius = b.comment("Rayon du territoire d'une province IA sur la carte, en blocs.").defineInRange("rayonProvince", 160, 32, 2000);
+            colonyRadius = b.comment("Rayon du territoire d'une colonie de joueur sur la carte, en blocs.").defineInRange("rayonColonie", 110, 32, 2000);
+            discoveryRadius = b.comment("Distance à un siège IA à partir de laquelle on découvre son royaume.")
+                    .defineInRange("rayonDecouverte", 192, 32, 2000);
+            heralds = b.comment("Un héraut temporaire vient saluer le joueur qui découvre un royaume (il repart ensuite).")
+                    .define("herauts", true);
+            heraldSeconds = b.comment("Durée de présence du héraut, en secondes.").defineInRange("dureeHeraut", 45, 10, 600);
             b.pop();
 
             b.comment("Cohabitation avec d'autres mods qui font la même chose").push("compatibilite");

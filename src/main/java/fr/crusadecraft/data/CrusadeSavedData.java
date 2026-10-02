@@ -29,10 +29,12 @@ import java.util.UUID;
  */
 public final class CrusadeSavedData extends AtomicSavedData {
     public static final String FILE_NAME = CrusadeCraft.MOD_ID;
-    public static final int DATA_VERSION = 4;
+    public static final int DATA_VERSION = 5;
 
     private final Map<UUID, Realm> realms = new LinkedHashMap<>();
     private final Map<CitizenRef, CharacterRecord> characters = new LinkedHashMap<>();
+    /** Les royaumes IA et les royaumes de jure. */
+    private fr.crusadecraft.core.world.WorldState world = new fr.crusadecraft.core.world.WorldState();
 
     public static CrusadeSavedData get(MinecraftServer server) {
         return server.getLevel(Level.OVERWORLD).getDataStorage()
@@ -61,6 +63,12 @@ public final class CrusadeSavedData extends AtomicSavedData {
                 CrusadeCraft.LOGGER.error("CrusadeCraft : personnage illisible ignoré (index {})", i, e);
             }
         }
+        try {
+            data.world = fr.crusadecraft.core.world.WorldState.load(migrated.getCompound("world"));
+        } catch (RuntimeException e) {
+            // Le monde IA se régénère ; mieux vaut le perdre que perdre les royaumes des joueurs.
+            CrusadeCraft.LOGGER.error("CrusadeCraft : royaumes IA illisibles, ils seront régénérés", e);
+        }
         return data;
     }
 
@@ -73,7 +81,12 @@ public final class CrusadeSavedData extends AtomicSavedData {
         ListTag chars = new ListTag();
         for (CharacterRecord c : characters.values()) chars.add(c.save());
         tag.put("characters", chars);
+        tag.put("world", world.save());
         return tag;
+    }
+
+    public fr.crusadecraft.core.world.WorldState world() {
+        return world;
     }
 
     public Collection<Realm> realms() {
