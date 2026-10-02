@@ -1,0 +1,15 @@
+{
+  "branch": "crusadecraft:gouvernance",
+  "name": "crusadecraft.research.gouvernance.autoriteroyale",
+  "subtitle": "crusadecraft.research.gouvernance.autoriteroyale.subtitle",
+  "parentResearch": "crusadecraft:gouvernance/chancellerie",
+  "researchLevel": 3,
+  "sortOrder": 1,
+  "icon": "crusadecraft:throne",
+  "requirements": [ { "type": "minecolonies:single-building", "building": "minecolonies:townhall", "level": 4 } ],
+  "costs": [
+    { "type": "minecolonies:item_simple", "item": "minecraft:gold_ingot", "quantity": 32 },
+    { "type": "minecolonies:item_simple", "item": "minecraft:book", "quantity": 32 }
+  ],
+  "effects": [ { "id": "crusadecraft:effects/autoriteroyale", "level": 1 } ]
+}

@@ -26,7 +26,10 @@ public enum OpinionReason {
     REQUETE_IGNOREE(-10, 6, true),
     FAVEUR(15, 8, true),
     MENACE(-10, 8, true),
-    REFUS(-15, 8, true);
+    REFUS(-15, 8, true),
+    // P4 : trésor et lois
+    SALAIRE_IMPAYE(-10, 5, true),
+    LOI_IMPOSEE(-15, 10, true);
 
     private final int value;
     private final int durationDays;

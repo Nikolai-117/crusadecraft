@@ -29,6 +29,8 @@ public final class ModItems {
             () -> new BlockItem(ModBlocks.COUNCIL_SEAT.get(), new Item.Properties()));
     public static final RegistryObject<Item> MAYOR_DESK = ITEMS.register("mayor_desk",
             () -> new BlockItem(ModBlocks.MAYOR_DESK.get(), new Item.Properties().rarity(Rarity.UNCOMMON)));
+    public static final RegistryObject<Item> TREASURY = ITEMS.register("treasury",
+            () -> new BlockItem(ModBlocks.TREASURY.get(), new Item.Properties().rarity(Rarity.UNCOMMON)));
 
     private ModItems() {}
 

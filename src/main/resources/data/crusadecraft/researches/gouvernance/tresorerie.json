@@ -1,0 +1,14 @@
+{
+  "branch": "crusadecraft:gouvernance",
+  "name": "crusadecraft.research.gouvernance.tresorerie",
+  "subtitle": "crusadecraft.research.gouvernance.tresorerie.subtitle",
+  "parentResearch": "crusadecraft:gouvernance/administration",
+  "researchLevel": 2,
+  "sortOrder": 1,
+  "icon": "minecraft:gold_ingot:16",
+  "costs": [
+    { "type": "minecolonies:item_simple", "item": "minecraft:gold_ingot", "quantity": 16 },
+    { "type": "minecolonies:item_simple", "item": "minecraft:paper", "quantity": 64 }
+  ],
+  "effects": [ { "id": "crusadecraft:effects/fiscalite", "level": 2 } ]
+}

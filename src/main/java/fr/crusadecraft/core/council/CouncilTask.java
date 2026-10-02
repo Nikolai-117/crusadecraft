@@ -25,7 +25,7 @@ public enum CouncilTask {
     // Intendant
     GERER_LE_DOMAINE(Post.INTENDANT, true),
     DEVELOPPER_PROVINCE(Post.INTENDANT, false),
-    COLLECTER_IMPOTS(Post.INTENDANT, false),
+    COLLECTER_IMPOTS(Post.INTENDANT, true),
     // Maître-espion
     SURVEILLER_LES_TERRES(Post.MAITRE_ESPION, true),
     DEBUSQUER_COMPLOTS(Post.MAITRE_ESPION, false),

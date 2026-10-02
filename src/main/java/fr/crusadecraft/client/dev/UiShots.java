@@ -9,6 +9,11 @@ import fr.crusadecraft.client.screen.MayorScreen;
 import fr.crusadecraft.client.screen.RealmScreen;
 import fr.crusadecraft.client.screen.RegistreScreen;
 import fr.crusadecraft.client.screen.RequestScreen;
+import fr.crusadecraft.client.screen.TreasuryScreen;
+import fr.crusadecraft.core.law.Law;
+import fr.crusadecraft.core.law.LawsView;
+import fr.crusadecraft.core.treasury.LedgerCategory;
+import fr.crusadecraft.core.treasury.TreasuryView;
 import fr.crusadecraft.client.toast.CrusadeToast;
 import fr.crusadecraft.core.ColonyInfo;
 import fr.crusadecraft.core.ColonyRef;
@@ -92,10 +97,23 @@ public final class UiShots {
         list.add(new Shot("bureau_maire", () -> new MayorScreen(sampleMayor(true)), null));
         list.add(new Shot("bureau_sans_maire", () -> new MayorScreen(sampleMayor(false)), null));
         list.add(new Shot("requete", () -> new RequestScreen(sampleRequest()), null));
+        list.add(new Shot("tresor_coffre", () -> new TreasuryScreen(sampleTreasury(1250), BlockPos.ZERO), null));
+        list.add(new Shot("tresor_dette", () -> new TreasuryScreen(sampleTreasury(-40), BlockPos.ZERO), null));
+        list.add(new Shot("menu_tresor", () -> {
+            RealmScreen s = RealmScreen.withTab(view, RealmScreen.Tab.TRESOR);
+            s.setTreasury(sampleTreasury(1250));
+            return s;
+        }, null));
+        list.add(new Shot("menu_lois", () -> {
+            RealmScreen s = RealmScreen.withTab(view, RealmScreen.Tab.LOIS);
+            s.setLaws(sampleLaws());
+            s.select(Law.FISCALITE, 2);
+            return s;
+        }, null));
         list.add(new Shot("objets", () -> new ItemShowcaseScreen(List.of(new ItemStack(ModItems.THRONE.get()),
                 new ItemStack(ModItems.REGISTRE.get()), new ItemStack(ModItems.SCEPTRE.get()),
                 new ItemStack(ModItems.COUNCIL_TABLE.get()), new ItemStack(ModItems.COUNCIL_SEAT.get()),
-                new ItemStack(ModItems.MAYOR_DESK.get()))), null));
+                new ItemStack(ModItems.MAYOR_DESK.get()), new ItemStack(ModItems.TREASURY.get()))), null));
         list.add(new Shot("notification", TitleScreen::new, () -> Minecraft.getInstance().getToasts().addToast(
                 new CrusadeToast(ToastPacket.Kind.REALM, Component.translatable("crusadecraft.toast.founded.title"),
                         Component.translatable("crusadecraft.toast.founded.body", view.name())))));
@@ -168,6 +186,45 @@ public final class UiShots {
             choices.add(new RequestView.ChoiceView(c, true, gold, prestige));
         }
         return new RequestView(UUID.randomUUID(), type, "Ysolde", true, Post.MAIRE, "Valbrume", 3, -1, false, choices);
+    }
+
+    private static TreasuryView sampleTreasury(long gold) {
+        List<TreasuryView.ColonyLine> colonies = List.of(
+                new TreasuryView.ColonyLine("Valbrume", true, 7.4, 31, 58, 6, false),
+                new TreasuryView.ColonyLine("Hautemarche", false, 5.1, 14, 17, 2, false),
+                new TreasuryView.ColonyLine("Pierrefeu", false, 3.2, 7, 4, 0, true));
+        List<TreasuryView.Entry> today = List.of(
+                new TreasuryView.Entry(LedgerCategory.IMPOTS, 76),
+                new TreasuryView.Entry(LedgerCategory.DOMAINE, 9),
+                new TreasuryView.Entry(LedgerCategory.DEPOTS, 81),
+                new TreasuryView.Entry(LedgerCategory.SALAIRES, -13),
+                new TreasuryView.Entry(LedgerCategory.ENTRETIEN, -8),
+                new TreasuryView.Entry(LedgerCategory.REQUETES, -5));
+        List<TreasuryView.DayLine> history = new ArrayList<>();
+        long[][] days = {{62, -21}, {70, -19}, {0, 0}, {151, -24}, {74, -30}, {81, -21}, {166, -26}};
+        for (int i = 0; i < days.length; i++) history.add(new TreasuryView.DayLine(51 + i, days[i][0], days[i][1]));
+        return new TreasuryView("Royaume de Valbrume", 57, gold, 200, true, 1, 1.0, 0.24, 0.1, 0.8, colonies, 9, 13,
+                today, history, fr.crusadecraft.core.treasury.GoldValues.parse(fr.crusadecraft.core.treasury.GoldValues.DEFAULTS).denominations(), true);
+    }
+
+    private static LawsView sampleLaws() {
+        List<LawsView.LawLine> laws = new ArrayList<>();
+        laws.add(new LawsView.LawLine(Law.FISCALITE, 1, 0, List.of(
+                new LawsView.LevelOption(0, true, List.of("Aldric", "Berthe", "Odon"), List.of(), 0),
+                new LawsView.LevelOption(1, true, List.of(), List.of(), 0),
+                new LawsView.LevelOption(2, true, List.of("Aldric"), List.of("Berthe", "Odon", "Gautier"), 60))));
+        laws.add(new LawsView.LawLine(Law.AUTORITE, 1, 2, List.of(
+                new LawsView.LevelOption(0, true, List.of("Odon", "Gautier"), List.of("Aldric"), 0),
+                new LawsView.LevelOption(1, true, List.of(), List.of(), 0),
+                new LawsView.LevelOption(2, true, List.of("Aldric"), List.of("Odon", "Gautier"), 40),
+                new LawsView.LevelOption(3, false, List.of(), List.of(), 0))));
+        laws.add(new LawsView.LawLine(Law.CODE_CHEVALERESQUE, 0, 0, List.of(
+                new LawsView.LevelOption(0, true, List.of(), List.of(), 0),
+                new LawsView.LevelOption(1, false, List.of(), List.of(), 0))));
+        laws.add(new LawsView.LawLine(Law.JUSTICE_ROYALE, 1, 0, List.of(
+                new LawsView.LevelOption(0, true, List.of("Odon"), List.of("Aldric", "Berthe"), 40),
+                new LawsView.LevelOption(1, true, List.of(), List.of(), 0))));
+        return new LawsView(50, 4, laws);
     }
 
     private static RealmView withSeats(RealmView v) {

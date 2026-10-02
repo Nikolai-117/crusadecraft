@@ -16,6 +16,8 @@ import fr.crusadecraft.core.character.Stat;
 import fr.crusadecraft.core.character.Trait;
 import fr.crusadecraft.core.realm.Realm;
 import fr.crusadecraft.core.realm.RealmService;
+import fr.crusadecraft.core.treasury.LedgerCategory;
+import fr.crusadecraft.core.treasury.TreasuryService;
 import fr.crusadecraft.data.CrusadeSavedData;
 import fr.crusadecraft.network.CrusadeNetwork;
 import fr.crusadecraft.network.packet.CourtPackets;
@@ -283,7 +285,9 @@ public final class RequestService {
         if (realm.prestige() < prestige) return CouncilActions.Outcome.no("crusadecraft.request.no_prestige", prestige);
 
         long today = RealmService.currentDay(server);
-        realm.setGold(realm.gold() - gold);
+        if (!TreasuryService.spend(server, realm, LedgerCategory.REQUETES, gold)) {
+            return CouncilActions.Outcome.no("crusadecraft.request.no_gold", gold);
+        }
         realm.setPrestige(realm.prestige() - prestige);
         Optional<CharacterRecord> rec = data.character(request.from());
         OpinionReason reason = switch (choice) {

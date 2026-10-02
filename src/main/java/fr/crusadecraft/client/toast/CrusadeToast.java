@@ -78,6 +78,7 @@ public class CrusadeToast implements Toast {
             case LETTER -> new ItemStack(Items.PAPER);
             case EVENT -> new ItemStack(Items.WRITABLE_BOOK);
             case COUNCIL -> new ItemStack(Items.LECTERN);
+            case TREASURY -> new ItemStack(Items.GOLD_INGOT);
             default -> new ItemStack(ModItems.THRONE.get());
         };
     }

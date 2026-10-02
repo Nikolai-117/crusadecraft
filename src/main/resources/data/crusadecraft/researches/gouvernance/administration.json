@@ -1,0 +1,13 @@
+{
+  "branch": "crusadecraft:gouvernance",
+  "name": "crusadecraft.research.gouvernance.administration",
+  "subtitle": "crusadecraft.research.gouvernance.administration.subtitle",
+  "researchLevel": 1,
+  "sortOrder": 1,
+  "icon": "minecraft:paper:16",
+  "costs": [
+    { "type": "minecolonies:item_simple", "item": "minecraft:paper", "quantity": 64 },
+    { "type": "minecolonies:item_simple", "item": "minecraft:book", "quantity": 8 }
+  ],
+  "effects": [ { "id": "crusadecraft:effects/fiscalite", "level": 1 } ]
+}

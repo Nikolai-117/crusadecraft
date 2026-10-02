@@ -1,5 +1,8 @@
 package fr.crusadecraft.client;
 
+import fr.crusadecraft.client.screen.TreasuryScreen;
+import fr.crusadecraft.core.law.LawsView;
+import fr.crusadecraft.core.treasury.TreasuryView;
 import fr.crusadecraft.client.screen.CharacterScreen;
 import fr.crusadecraft.client.screen.CouncilScreen;
 import fr.crusadecraft.client.screen.MayorScreen;
@@ -83,5 +86,19 @@ public final class ClientPackets {
         } else {
             mc.setScreen(new RealmScreen(view));
         }
+    }
+
+    public static void treasury(TreasuryView view, BlockPos chest) {
+        Minecraft mc = Minecraft.getInstance();
+        if (chest != null) {
+            if (mc.screen instanceof TreasuryScreen open && open.isFor(chest)) open.refresh(view);
+            else mc.setScreen(new TreasuryScreen(view, chest));
+        } else if (mc.screen instanceof RealmScreen open) {
+            open.setTreasury(view);
+        }
+    }
+
+    public static void laws(LawsView view) {
+        if (Minecraft.getInstance().screen instanceof RealmScreen open) open.setLaws(view);
     }
 }

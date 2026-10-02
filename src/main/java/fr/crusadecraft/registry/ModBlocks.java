@@ -32,6 +32,9 @@ public final class ModBlocks {
     public static final RegistryObject<Block> MAYOR_DESK = BLOCKS.register("mayor_desk", () -> new MayorDeskBlock(
             BlockBehaviour.Properties.of().mapColor(MapColor.WOOD).strength(2.5F, 6.0F).sound(SoundType.WOOD).noOcclusion()));
 
+    public static final RegistryObject<Block> TREASURY = BLOCKS.register("treasury", () -> new fr.crusadecraft.block.TreasuryBlock(
+            BlockBehaviour.Properties.of().mapColor(MapColor.GOLD).strength(3.5F, 1200.0F).sound(SoundType.WOOD).noOcclusion()));
+
     private ModBlocks() {}
 
     public static void register(IEventBus modBus) {

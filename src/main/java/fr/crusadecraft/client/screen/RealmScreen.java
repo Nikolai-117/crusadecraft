@@ -1,9 +1,16 @@
 package fr.crusadecraft.client.screen;
 
 import fr.crusadecraft.core.ColonyInfo;
+import fr.crusadecraft.core.law.Law;
+import fr.crusadecraft.core.law.LawsView;
 import fr.crusadecraft.core.realm.RealmView;
+import fr.crusadecraft.core.treasury.TreasuryView;
+import fr.crusadecraft.network.CrusadeNetwork;
+import fr.crusadecraft.network.packet.EconomyPackets;
 import net.minecraft.ChatFormatting;
 import net.minecraft.client.gui.GuiGraphics;
+import net.minecraft.client.gui.components.Button;
+import net.minecraft.client.gui.components.Tooltip;
 import net.minecraft.client.gui.screens.Screen;
 import net.minecraft.network.chat.Component;
 import net.minecraft.world.item.ItemStack;
@@ -47,6 +54,11 @@ public class RealmScreen extends Screen {
     private RealmView view;
     private Tab tab = lastTab;
     private int left, top, w, h;
+    /** Données des onglets Trésor et Lois, demandées au serveur à l'ouverture de l'onglet. */
+    private TreasuryView treasury;
+    private LawsView laws;
+    private Law selectedLaw;
+    private int selectedLevel = -1;
 
     public RealmScreen(RealmView view) {
         super(Component.literal(view.name()));
@@ -68,12 +80,72 @@ public class RealmScreen extends Screen {
         this.view = newView;
     }
 
+    public void setTreasury(TreasuryView v) {
+        this.treasury = v;
+    }
+
+    public void setLaws(LawsView v) {
+        this.laws = v;
+        if (minecraft != null) rebuildWidgets();
+    }
+
+    /** Présélectionne un niveau de loi (aperçu du banc d'essai visuel). */
+    public void select(Law law, int level) {
+        this.selectedLaw = law;
+        this.selectedLevel = level;
+        if (minecraft != null) rebuildWidgets();
+    }
+
+    /** Demande les données d'un onglet au serveur (rien hors connexion, comme au banc d'essai). */
+    private void request(EconomyPackets.RequestTab.Tab which) {
+        if (minecraft != null && minecraft.getConnection() != null) CrusadeNetwork.toServer(new EconomyPackets.RequestTab(which));
+    }
+
     @Override
     protected void init() {
         w = Math.min(440, width - 16);
         h = Math.min(262, height - 16);
         left = (width - w) / 2;
         top = (height - h) / 2;
+        if (tab == Tab.TRESOR && treasury == null) request(EconomyPackets.RequestTab.Tab.TREASURY);
+        if (tab == Tab.LOIS && laws == null) request(EconomyPackets.RequestTab.Tab.LAWS);
+        if (tab == Tab.LOIS) initLawButton();
+    }
+
+    /** Le bouton qui propose (ou impose) le niveau de loi sélectionné. */
+    private void initLawButton() {
+        LawsView.LevelOption option = selectedOption();
+        if (option == null) return;
+        int cy = top + 82;
+        int ch = h - 82 - 10;
+        boolean force = !option.passes();
+        Component label = force ? Component.translatable("crusadecraft.law.force", option.forceCost())
+                : Component.translatable("crusadecraft.law.propose");
+        Law law = selectedLaw;
+        int level = selectedLevel;
+        Button b = Button.builder(label, btn -> {
+            CrusadeNetwork.toServer(new EconomyPackets.ProposeLaw(law, level, force));
+            selectedLaw = null;
+            selectedLevel = -1;
+            rebuildWidgets();
+        }).bounds(left + w - 8 - 150, cy + ch - 22, 142, 18).build();
+        LawsView.LawLine line = lawLine(selectedLaw);
+        b.active = option.unlocked() && line != null && line.cooldownLeft() == 0
+                && (!force || laws.prestige() >= option.forceCost());
+        b.setTooltip(Tooltip.create(Component.translatable(force ? "crusadecraft.law.force.tip" : "crusadecraft.law.propose.tip")));
+        addRenderableWidget(b);
+    }
+
+    private LawsView.LawLine lawLine(Law law) {
+        if (laws == null || law == null) return null;
+        for (LawsView.LawLine l : laws.laws()) if (l.law() == law) return l;
+        return null;
+    }
+
+    private LawsView.LevelOption selectedOption() {
+        LawsView.LawLine line = lawLine(selectedLaw);
+        if (line == null || selectedLevel < 0 || selectedLevel >= line.options().size() || selectedLevel == line.level()) return null;
+        return line.options().get(selectedLevel);
     }
 
     @Override
@@ -89,6 +161,10 @@ public class RealmScreen extends Screen {
             renderRealmTab(g, left + 8, cy, w - 16, ch, mouseX, mouseY);
         } else if (tab == Tab.CONSEIL && hasAnySeat()) {
             renderCouncilTab(g, left + 8, cy, w - 16, ch, mouseX, mouseY);
+        } else if (tab == Tab.TRESOR) {
+            renderTreasuryTab(g, left + 8, cy, w - 16, ch, mouseX, mouseY);
+        } else if (tab == Tab.LOIS) {
+            renderLawsTab(g, left + 8, cy, w - 16, ch, mouseX, mouseY);
         } else {
             renderEmpty(g, left + 8, cy, w - 16, ch);
         }
@@ -186,6 +262,115 @@ public class RealmScreen extends Screen {
             g.renderComponentTooltip(font, pendingTooltip, mouseX, mouseY);
             pendingTooltip = null;
         }
+    }
+
+    private void renderLoading(GuiGraphics g, int x, int y, int cw, int ch) {
+        Ui.centered(g, font, Component.translatable("crusadecraft.tab.loading"), x + cw / 2, y + ch / 2 - 4, Ui.TEXT_MUTED);
+    }
+
+    private void renderTreasuryTab(GuiGraphics g, int x, int y, int cw, int ch, int mouseX, int mouseY) {
+        if (treasury == null) {
+            renderLoading(g, x, y, cw, ch);
+            return;
+        }
+        boolean roomy = ch >= 150;
+        List<Component> tip = TreasuryPanel.render(g, font, treasury, x, y, cw, roomy ? ch - 10 : ch, mouseX, mouseY);
+        if (roomy) {
+            String hint = font.plainSubstrByWidth(Component.translatable("crusadecraft.treasury.hint").getString(), cw - 16);
+            Ui.text(g, font, Component.literal(hint), x + 8, y + ch - 11, Ui.TEXT_MUTED);
+        }
+        if (tip != null) g.renderComponentTooltip(font, tip, mouseX, mouseY);
+    }
+
+    private static final int CHIP_W = 64;
+    private static final int LAW_ROW = 22;
+
+    /** Zones cliquables des niveaux de loi : {loi, niveau, x, y}. */
+    private final java.util.List<Object[]> lawHits = new java.util.ArrayList<>();
+
+    private void renderLawsTab(GuiGraphics g, int x, int y, int cw, int ch, int mouseX, int mouseY) {
+        lawHits.clear();
+        if (laws == null) {
+            renderLoading(g, x, y, cw, ch);
+            return;
+        }
+        Ui.text(g, font, Component.translatable("crusadecraft.law.title"), x + 8, y + 7, Ui.TEXT_TITLE);
+        Component meta = Component.translatable(laws.councilSize() == 0 ? "crusadecraft.law.meta.alone" : "crusadecraft.law.meta",
+                laws.prestige(), laws.councilSize());
+        Ui.text(g, font, meta, x + cw - 8 - font.width(meta), y + 7, Ui.TEXT_MUTED);
+        List<Component> tip = null;
+        int ry = y + 18;
+        for (LawsView.LawLine line : laws.laws()) {
+            Law law = line.law();
+            int n = line.options().size();
+            int chipsX = x + cw - 8 - n * (CHIP_W + 4) + 4;
+            // Le niveau en vigueur se lit sur les pastilles ; sous le nom, seulement le délai s'il y en a un.
+            // Une loi qui vient de changer s'affiche en ambre ; l'infobulle donne le délai.
+            Component name = Component.translatable(law.key());
+            float scale = Math.min(1f, (chipsX - x - 16) / (float) Math.max(1, font.width(name)));
+            Ui.scaled(g, font, name, x + 8, ry + 7, scale, line.cooldownLeft() > 0 ? 0xFFE0A070 : Ui.TEXT, false);
+            if (line.cooldownLeft() > 0 && Ui.inside(mouseX, mouseY, x + 8, ry + 4, chipsX - x - 16, 12)) {
+                tip = List.of(Component.translatable("crusadecraft.law.cooldown", line.cooldownLeft()));
+            }
+            for (LawsView.LevelOption o : line.options()) {
+                int cx = chipsX + o.level() * (CHIP_W + 4);
+                boolean current = o.level() == line.level();
+                boolean selected = law == selectedLaw && o.level() == selectedLevel;
+                boolean hover = Ui.inside(mouseX, mouseY, cx, ry + 2, CHIP_W, 18);
+                int bg = current ? 0xFF4A3A1E : selected ? Ui.PANEL_HIGHLIGHT : hover && o.unlocked() ? 0xFF2C231B : 0xFF1C1612;
+                g.fill(cx, ry + 2, cx + CHIP_W, ry + 20, bg);
+                g.renderOutline(cx, ry + 2, CHIP_W, 18, current || selected ? Ui.GOLD : Ui.GOLD_DARK);
+                Component label = Component.translatable(law.levelKey(o.level()));
+                String text = font.plainSubstrByWidth(label.getString(), CHIP_W - 6);
+                int color = !o.unlocked() ? 0xFF6E6250 : current ? Ui.TEXT_TITLE : Ui.TEXT;
+                Ui.centered(g, font, Component.literal(text), cx + CHIP_W / 2, ry + 7, color);
+                lawHits.add(new Object[]{law, o.level(), cx, ry + 2});
+                if (hover) tip = levelTooltip(law, line, o);
+            }
+            ry += LAW_ROW;
+        }
+        LawsView.LevelOption option = selectedOption();
+        if (option != null) {
+            Component level = Component.translatable(selectedLaw.levelKey(selectedLevel));
+            Component summary = option.approve().isEmpty() && option.reject().isEmpty()
+                    ? Component.translatable("crusadecraft.law.summary.alone", level)
+                    : Component.translatable(option.passes() ? "crusadecraft.law.summary.passes" : "crusadecraft.law.summary.fails",
+                            level, option.approve().size(), option.reject().size());
+            Ui.wrapped(g, font, summary, x + 8, y + ch - 22, cw - 175, option.passes() ? Ui.TEXT : 0xFFE0A070);
+        } else {
+            Ui.wrapped(g, font, Component.translatable("crusadecraft.law.hint"), x + 8, y + ch - 22, cw - 16, Ui.TEXT_MUTED);
+        }
+        if (tip != null) g.renderComponentTooltip(font, tip, mouseX, mouseY);
+    }
+
+    private List<Component> levelTooltip(Law law, LawsView.LawLine line, LawsView.LevelOption o) {
+        List<Component> tip = new java.util.ArrayList<>();
+        tip.add(Component.translatable(law.levelKey(o.level())).withStyle(ChatFormatting.GOLD));
+        for (String part : Component.translatable(law.levelKey(o.level()) + ".desc").getString().split("\\n")) {
+            tip.add(Component.literal(part).withStyle(ChatFormatting.GRAY));
+        }
+        if (o.level() == line.level()) {
+            tip.add(Component.translatable("crusadecraft.law.in_force").withStyle(ChatFormatting.GREEN));
+            return tip;
+        }
+        if (!o.unlocked()) {
+            tip.add(Component.translatable("crusadecraft.law.locked.tip",
+                    Component.translatable(researchKey(law, o.level()))).withStyle(ChatFormatting.RED));
+            return tip;
+        }
+        if (!o.approve().isEmpty()) tip.add(Component.translatable("crusadecraft.law.for", String.join(", ", o.approve())).withStyle(ChatFormatting.GREEN));
+        if (!o.reject().isEmpty()) tip.add(Component.translatable("crusadecraft.law.against", String.join(", ", o.reject())).withStyle(ChatFormatting.RED));
+        if (o.approve().isEmpty() && o.reject().isEmpty()) tip.add(Component.translatable("crusadecraft.law.no_council").withStyle(ChatFormatting.GRAY));
+        if (!o.passes()) tip.add(Component.translatable("crusadecraft.law.force.cost", o.forceCost()).withStyle(ChatFormatting.YELLOW));
+        if (line.cooldownLeft() > 0) tip.add(Component.translatable("crusadecraft.law.cooldown", line.cooldownLeft()).withStyle(ChatFormatting.RED));
+        tip.add(Component.translatable("crusadecraft.law.click").withStyle(ChatFormatting.DARK_GRAY));
+        return tip;
+    }
+
+    /** Clé du nom court de la recherche qui ouvre un niveau de loi. */
+    private static String researchKey(Law law, int level) {
+        var research = law.levels().get(level).research();
+        return research == null ? "" : "crusadecraft.research.short." + research.getPath().replace("effects/", "");
     }
 
     private void renderEmpty(GuiGraphics g, int x, int y, int cw, int ch) {
@@ -297,6 +482,21 @@ public class RealmScreen extends Screen {
                 }
             }
         }
+        if (tab == Tab.LOIS) {
+            for (Object[] hit : lawHits) {
+                if (Ui.inside(mouseX, mouseY, (int) hit[2], (int) hit[3], CHIP_W, 18)) {
+                    Law law = (Law) hit[0];
+                    int level = (int) hit[1];
+                    LawsView.LawLine line = lawLine(law);
+                    if (line != null && level != line.level()) {
+                        selectedLaw = law;
+                        selectedLevel = level;
+                        rebuildWidgets();
+                    }
+                    return true;
+                }
+            }
+        }
         int tw = tabWidth();
         int ty = top + 56;
         for (Tab t : Tab.values()) {
@@ -304,6 +504,11 @@ public class RealmScreen extends Screen {
             if (Ui.inside(mouseX, mouseY, tx, ty, tw - 2, 24)) {
                 tab = t;
                 lastTab = t;
+                if (t == Tab.TRESOR) request(EconomyPackets.RequestTab.Tab.TREASURY);
+                if (t == Tab.LOIS) request(EconomyPackets.RequestTab.Tab.LAWS);
+                selectedLaw = null;
+                selectedLevel = -1;
+                rebuildWidgets();
                 return true;
             }
         }

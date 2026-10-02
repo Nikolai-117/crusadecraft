@@ -4,6 +4,7 @@ import com.minecolonies.api.IMinecoloniesAPI;
 import com.minecolonies.api.colony.ICitizenData;
 import com.minecolonies.api.colony.IColony;
 import com.minecolonies.api.colony.IColonyManager;
+import com.minecolonies.api.colony.buildings.IBuilding;
 import com.minecolonies.api.colony.buildings.workerbuildings.ITownHall;
 import com.minecolonies.api.colony.permissions.Rank;
 import com.minecolonies.api.entity.citizen.AbstractEntityCitizen;
@@ -17,10 +18,12 @@ import fr.crusadecraft.core.ColonyRef;
 import fr.crusadecraft.core.character.CitizenInfo;
 import fr.crusadecraft.core.character.CitizenRef;
 import fr.crusadecraft.core.character.CitizenSkill;
+import fr.crusadecraft.core.treasury.TaxRules;
 import net.minecraft.ChatFormatting;
 import net.minecraft.core.BlockPos;
 import net.minecraft.core.registries.Registries;
 import net.minecraft.resources.ResourceKey;
+import net.minecraft.resources.ResourceLocation;
 import net.minecraft.world.entity.Entity;
 import net.minecraft.world.level.Level;
 
@@ -33,9 +36,10 @@ import java.util.UUID;
 /**
  * Le seul point de contact avec l'API MineColonies (un garde de build interdit ses imports ailleurs).
  *
- * <p><b>Lecture seule.</b> Aucune méthode n'écrit dans les données de MineColonies. Les quelques
- * écritures prévues plus tard (XP de compétences, rang « Hostile » en guerre) passeront par l'API
- * officielle, dans des méthodes distinctes, et jamais avant {@link #isReady()}.
+ * <p><b>Presque toujours en lecture.</b> Les seules écritures passent par l'API officielle, dans des
+ * méthodes distinctes, et jamais avant {@link #isReady()} : l'XP de compétences (native, elle reste si
+ * le mod est retiré) et des modificateurs de bonheur que MineColonies n'enregistre pas (ils disparaissent
+ * au redémarrage, on les réapplique). Aucune colonie n'est créée, aucun propriétaire n'est changé.
  *
  * <p><b>Tolérance aux versions.</b> L'API de MineColonies change entre versions : le gestionnaire
  * des bâtiments a été renommé, {@code setOwner} a changé de signature. Chaque appel est donc protégé.
@@ -322,6 +326,8 @@ public final class MineColoniesBridge {
 
     /** Identifiant du modificateur de bonheur de la couronne dans MineColonies (traduit dans nos langues). */
     public static final String HAPPINESS_ID = "crusadecraft";
+    /** Identifiant du modificateur de bonheur lié à la loi de fiscalité. */
+    public static final String TAX_HAPPINESS_ID = "crusadecraft_impots";
 
     /**
      * Applique le facteur de bonheur de la couronne aux adultes d'une colonie (1.0 = neutre, ignoré par
@@ -329,17 +335,62 @@ public final class MineColoniesBridge {
      * disparaît au redémarrage, et on le réapplique périodiquement. Retirer le mod ne laisse donc rien.
      */
     public static void applyCrownHappiness(ColonyRef ref, double factor) {
+        applyHappiness(ref, HAPPINESS_ID, factor);
+    }
+
+    /** Même principe, pour le modificateur « Impôts » de la loi de fiscalité. */
+    public static void applyTaxHappiness(ColonyRef ref, double factor) {
+        applyHappiness(ref, TAX_HAPPINESS_ID, factor);
+    }
+
+    private static void applyHappiness(ColonyRef ref, String id, double factor) {
         if (broken) return;
         try {
             IColony c = colony(ref);
             if (c == null) return;
             for (ICitizenData d : c.getCitizenManager().getCitizens()) {
                 if (d.isChild()) continue;
-                d.getCitizenHappinessHandler().addModifier(new StaticHappinessModifier(HAPPINESS_ID, 1.0,
+                d.getCitizenHappinessHandler().addModifier(new StaticHappinessModifier(id, 1.0,
                         new StaticHappinessSupplier(factor)));
             }
         } catch (LinkageError e) {
             breakBridge(e);
+        }
+    }
+
+    // ------------------------------------------------------------------ économie
+
+    /** Les bâtiments construits d'une colonie (identifiant MineColonies et niveau), pour l'impôt. */
+    public static List<TaxRules.Building> buildings(ColonyRef ref) {
+        List<TaxRules.Building> out = new ArrayList<>();
+        if (broken) return out;
+        try {
+            IColony c = colony(ref);
+            if (c == null) return out;
+            // Le niveau suffit : MineColonies tient lui-même pour construit un bâtiment chargé avec un niveau.
+            for (IBuilding b : c.getServerBuildingManager().getBuildings().values()) {
+                if (b.getBuildingLevel() <= 0) continue;
+                out.add(new TaxRules.Building(b.getBuildingType().getRegistryName().toString(), b.getBuildingLevel()));
+            }
+        } catch (LinkageError e) {
+            breakBridge(e);
+        }
+        return out;
+    }
+
+    /**
+     * Force d'un effet de recherche dans une colonie (0 si la recherche n'est pas terminée). Nos recherches
+     * de gouvernance sont un datapack : MineColonies ignore lui-même une recherche inconnue au chargement,
+     * si bien que retirer le mod ne gêne pas ses sauvegardes.
+     */
+    public static double researchEffect(ColonyRef ref, ResourceLocation effect) {
+        if (broken || effect == null) return 0;
+        try {
+            IColony c = colony(ref);
+            return c == null ? 0 : c.getResearchManager().getResearchEffects().getEffectStrength(effect);
+        } catch (LinkageError e) {
+            breakBridge(e);
+            return 0;
         }
     }
 

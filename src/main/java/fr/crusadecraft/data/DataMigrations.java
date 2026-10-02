@@ -25,6 +25,7 @@ public final class DataMigrations {
         // v1 → v2 : ajout des personnages et des postes du royaume. Rien à convertir : les listes
         // absentes se lisent vides.
         // v2 → v3 : ajout de la cour (table du conseil, bureaux, tâches, requêtes). Lue vide si absente.
+        // v3 → v4 : ajout des lois et du livre de comptes. Lois absentes = niveaux par défaut.
         if (version < CrusadeSavedData.DATA_VERSION) {
             CrusadeCraft.LOGGER.info("CrusadeCraft : données mises à niveau de la version {} à {}", version,
                     CrusadeSavedData.DATA_VERSION);

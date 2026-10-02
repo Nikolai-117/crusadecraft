@@ -55,6 +55,21 @@ public final class CrusadeConfig {
         public final ForgeConfigSpec.IntValue requestExpiryDays;
         public final ForgeConfigSpec.IntValue maxPendingRequests;
         public final ForgeConfigSpec.BooleanValue crownHappiness;
+        public final ForgeConfigSpec.BooleanValue taxes;
+        public final ForgeConfigSpec.ConfigValue<java.util.List<? extends String>> taxRates;
+        public final ForgeConfigSpec.DoubleValue taxBase;
+        public final ForgeConfigSpec.DoubleValue taxPerLevel;
+        public final ForgeConfigSpec.ConfigValue<java.util.List<? extends String>> upkeepRates;
+        public final ForgeConfigSpec.IntValue councilSalary;
+        public final ForgeConfigSpec.IntValue mayorSalary;
+        public final ForgeConfigSpec.IntValue debtLimit;
+        public final ForgeConfigSpec.IntValue debtPrestigeLoss;
+        public final ForgeConfigSpec.ConfigValue<java.util.List<? extends String>> goldValues;
+        public final ForgeConfigSpec.BooleanValue allowWithdraw;
+        public final ForgeConfigSpec.IntValue rewardGold;
+        public final ForgeConfigSpec.BooleanValue taxHappiness;
+        public final ForgeConfigSpec.IntValue lawCooldownDays;
+        public final ForgeConfigSpec.IntValue forceCostPerVote;
         public final ForgeConfigSpec.BooleanValue disableDuplicatesWithWarNTaxes;
         public final ForgeConfigSpec.BooleanValue disableDuplicatesWithWarNNobility;
 
@@ -82,9 +97,11 @@ public final class CrusadeConfig {
                     .defineInRange("traitsParPersonnage", 3, 1, 5);
             refuseOfficeBelowOpinion = b.comment("En dessous de cette opinion, un personnage refuse le poste qu'on lui propose.")
                     .defineInRange("refusPosteSousOpinion", -25, -100, 100);
-            rewardItem = b.comment("Objet offert pour récompenser un personnage (pris dans l'inventaire du souverain).")
+            rewardGold = b.comment("Or pris dans le trésor pour récompenser un personnage.")
+                    .defineInRange("orRecompense", 9, 0, 100000);
+            rewardItem = b.comment("Si le trésor n'y suffit pas : objet pris dans l'inventaire du souverain.")
                     .define("objetRecompense", "minecraft:gold_ingot");
-            rewardCount = b.comment("Quantité offerte.").defineInRange("quantiteRecompense", 1, 1, 64);
+            rewardCount = b.comment("Quantité de cet objet.").defineInRange("quantiteRecompense", 1, 1, 64);
             exileDays = b.comment("Durée d'un exil, en jours du monde.").defineInRange("dureeExil", 30, 1, 3650);
             b.pop();
 
@@ -112,6 +129,34 @@ public final class CrusadeConfig {
             maxPendingRequests = b.comment("Requêtes en attente au plus, par royaume.").defineInRange("requetesMax", 6, 1, 30);
             crownHappiness = b.comment("Le chapelain peut agir sur le bonheur MineColonies (modificateur « Couronne », jamais enregistré chez MineColonies).")
                     .define("bonheurCouronne", true);
+            b.pop();
+
+            b.comment("Trésor, impôts et dépenses. L'unité est la pièce d'or (une pépite au Coffre du Trésor).").push("economie");
+            taxes = b.comment("Les colonies du royaume paient l'impôt chaque jour (coupé si War 'N Taxes gère déjà les impôts).")
+                    .define("impots", true);
+            taxRates = b.comment("Barème par bâtiment MineColonies, en or par jour : \"nom=base:parNiveau\".",
+                            "Les bâtiments absents paient le barème par défaut ci-dessous ; les bâtiments militaires ne paient rien.")
+                    .defineList("baremeImpots", fr.crusadecraft.core.treasury.EconomyDefaults.TAX_RATES, o -> o instanceof String);
+            taxBase = b.comment("Barème par défaut : base, en or par jour.").defineInRange("impotBase", 0.5, 0.0, 1000.0);
+            taxPerLevel = b.comment("Barème par défaut : supplément par niveau du bâtiment.").defineInRange("impotParNiveau", 0.5, 0.0, 1000.0);
+            upkeepRates = b.comment("Entretien des bâtiments militaires, en or par jour : \"nom=base:parNiveau\".")
+                    .defineList("entretienMilitaire", fr.crusadecraft.core.treasury.EconomyDefaults.UPKEEP_RATES, o -> o instanceof String);
+            councilSalary = b.comment("Salaire quotidien d'un conseiller.").defineInRange("salaireConseiller", 2, 0, 10000);
+            mayorSalary = b.comment("Salaire quotidien d'un maire.").defineInRange("salaireMaire", 1, 0, 10000);
+            debtLimit = b.comment("Dette maximale du trésor. Au-delà, salaires et entretien ne sont plus payés.")
+                    .defineInRange("detteMaximale", 200, 0, 1000000);
+            debtPrestigeLoss = b.comment("Prestige perdu chaque jour passé dans le rouge.").defineInRange("prestigePerduParJourDeDette", 2, 0, 1000);
+            goldValues = b.comment("Valeur de l'or physique au Coffre du Trésor : \"objet=valeur\".")
+                    .defineList("valeursOr", fr.crusadecraft.core.treasury.GoldValues.DEFAULTS, o -> o instanceof String);
+            allowWithdraw = b.comment("Le souverain peut retirer de l'or physique du trésor.").define("retraitsAutorises", true);
+            taxHappiness = b.comment("La loi de fiscalité agit sur le bonheur MineColonies (modificateur « Impôts », jamais enregistré chez MineColonies).")
+                    .define("bonheurImpots", true);
+            b.pop();
+
+            b.comment("Lois du royaume").push("lois");
+            lawCooldownDays = b.comment("Jours à attendre avant de rechanger une même loi.").defineInRange("delaiEntreChangements", 3, 0, 365);
+            forceCostPerVote = b.comment("Prestige à dépenser par voix contre pour imposer une loi rejetée par le conseil.")
+                    .defineInRange("prestigeParVoixContre", 20, 0, 10000);
             b.pop();
 
             b.comment("Cohabitation avec d'autres mods qui font la même chose").push("compatibilite");

@@ -108,6 +108,7 @@ public final class ServerEvents {
             Optional<Component> refusal = Optional.empty();
             if (event.getPlacedBlock().is(ModBlocks.COUNCIL_TABLE.get())) refusal = fr.crusadecraft.block.CourtBlocks.checkTable(p, lvl, event.getPos());
             else if (event.getPlacedBlock().is(ModBlocks.MAYOR_DESK.get())) refusal = fr.crusadecraft.block.CourtBlocks.checkDesk(p, lvl, event.getPos());
+            else if (event.getPlacedBlock().is(ModBlocks.TREASURY.get())) refusal = fr.crusadecraft.block.CourtBlocks.checkTreasury(p, lvl, event.getPos());
             if (refusal.isPresent()) {
                 event.setCanceled(true);
                 p.displayClientMessage(refusal.get(), true);

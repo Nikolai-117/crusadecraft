@@ -1,0 +1,8 @@
+{
+  "variants": {
+    "facing=north": { "model": "crusadecraft:block/treasury" },
+    "facing=east": { "model": "crusadecraft:block/treasury", "y": 90 },
+    "facing=south": { "model": "crusadecraft:block/treasury", "y": 180 },
+    "facing=west": { "model": "crusadecraft:block/treasury", "y": 270 }
+  }
+}

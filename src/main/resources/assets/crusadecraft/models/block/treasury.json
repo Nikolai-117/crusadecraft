@@ -1,0 +1,12 @@
+{
+  "parent": "minecraft:block/block",
+  "textures": { "wood": "minecraft:block/dark_oak_planks", "lid": "minecraft:block/stripped_dark_oak_log", "gold": "minecraft:block/gold_block", "iron": "minecraft:block/iron_block", "particle": "minecraft:block/dark_oak_planks" },
+  "elements": [
+    { "from": [1, 0, 1], "to": [15, 10, 15], "faces": {"north": {"texture": "#wood"}, "south": {"texture": "#wood"}, "east": {"texture": "#wood"}, "west": {"texture": "#wood"}, "up": {"texture": "#wood"}, "down": {"texture": "#wood"}} },
+    { "from": [1, 10, 1], "to": [15, 14, 15], "faces": {"north": {"texture": "#lid"}, "south": {"texture": "#lid"}, "east": {"texture": "#lid"}, "west": {"texture": "#lid"}, "up": {"texture": "#lid"}, "down": {"texture": "#lid"}} },
+    { "from": [3, 0, 0.5], "to": [5, 14.5, 15.5], "faces": {"north": {"texture": "#gold"}, "south": {"texture": "#gold"}, "east": {"texture": "#gold"}, "west": {"texture": "#gold"}, "up": {"texture": "#gold"}, "down": {"texture": "#gold"}} },
+    { "from": [11, 0, 0.5], "to": [13, 14.5, 15.5], "faces": {"north": {"texture": "#gold"}, "south": {"texture": "#gold"}, "east": {"texture": "#gold"}, "west": {"texture": "#gold"}, "up": {"texture": "#gold"}, "down": {"texture": "#gold"}} },
+    { "from": [0.5, 9.5, 0.5], "to": [15.5, 10.5, 15.5], "faces": {"north": {"texture": "#gold"}, "south": {"texture": "#gold"}, "east": {"texture": "#gold"}, "west": {"texture": "#gold"}, "up": {"texture": "#gold"}, "down": {"texture": "#gold"}} },
+    { "from": [6.5, 7, 0], "to": [9.5, 11, 1], "faces": {"north": {"texture": "#iron"}, "south": {"texture": "#iron"}, "east": {"texture": "#iron"}, "west": {"texture": "#iron"}, "up": {"texture": "#iron"}, "down": {"texture": "#iron"}} }
+  ]
+}

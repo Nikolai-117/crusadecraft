@@ -85,12 +85,14 @@ public final class CouncilGameTests {
             appoint(w, intendant, Post.INTENDANT);
             appoint(w, chapelain, Post.CHAPELAIN);
             CouncilService.setTask(w.ruler, Post.CHAPELAIN, CouncilTask.LEGITIMITE);
-            long gold = w.realm.gold();
             int piety = w.realm.piety();
             // On fait comme si la veille n'avait pas encore été comptée.
-            w.realm.court().setLastProcessedDay(RealmService.currentDay(server) - 1);
+            long today = RealmService.currentDay(server);
+            w.realm.court().setLastProcessedDay(today - 1);
             CouncilService.tick(server);
-            w.check(w.realm.gold() > gold, "l'intendant n'a rien rapporté (" + gold + " → " + w.realm.gold() + ")");
+            // Les salaires sont payés le même jour : on lit la recette du domaine au livre de comptes.
+            long domain = w.realm.ledger().peek(today).amount(fr.crusadecraft.core.treasury.LedgerCategory.DOMAINE);
+            w.check(domain > 0, "l'intendant n'a rien rapporté (domaine : " + domain + ")");
             w.check(w.realm.piety() > piety, "le chapelain n'a pas apporté de piété");
             w.check(w.realm.court().lastProcessedDay() == RealmService.currentDay(server), "jour non marqué comme traité");
             h.succeed();

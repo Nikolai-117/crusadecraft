@@ -14,7 +14,7 @@ public record ToastPacket(Kind kind, Component title, Component body) {
 
     /** Le type choisit l'icône et la couleur du liseré. */
     public enum Kind {
-        REALM, ALERT, LETTER, EVENT, WAR, COUNCIL
+        REALM, ALERT, LETTER, EVENT, WAR, COUNCIL, TREASURY
     }
 
     public static ToastPacket of(Kind kind, Component title, Component body) {

@@ -22,6 +22,7 @@ public final class ModCreativeTabs {
                 output.accept(ModItems.COUNCIL_TABLE.get());
                 output.accept(ModItems.COUNCIL_SEAT.get());
                 output.accept(ModItems.MAYOR_DESK.get());
+                output.accept(ModItems.TREASURY.get());
             })
             .build());
 

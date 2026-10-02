@@ -157,3 +157,30 @@ Les compétences vont de 1 à 99 : un citoyen débutant obtient 1 à 5, un exper
   échoué est défaite avant d'en créer une au même endroit. Les vérifications différées sont toutes
   inscrites d'avance : Minecraft range ces tâches par objet, et une tâche qui se réinscrit est
   aussitôt effacée.
+
+**P4 (3 octobre 2026)**
+
+- **L'or est une pièce, la pépite.** Au Coffre du Trésor : une pépite vaut 1, un lingot 9, un bloc 81
+  (réglable). Tous les montants du mod (impôts, salaires, requêtes, récompenses) sont dans cette unité.
+- **Impôts quotidiens, versés directement au trésor**, sans réclamation à la main : un barème par
+  bâtiment repris de War 'N Taxes (base + par niveau), multiplié par le bonheur (de 0,5 à 1,5), la
+  fiscalité, l'intendant et les recherches. Une colonie attaquée paie moitié. Les bâtiments militaires
+  ne paient rien, ils coûtent un entretien.
+- **Un bâtiment compte dès qu'il a un niveau**, comme MineColonies lui-même au chargement d'une
+  sauvegarde (son indicateur « construit » n'est posé qu'à la fin d'un chantier).
+- **Trois sortes de mouvements.** Recettes toujours acceptées. Dépenses choisies (requêtes,
+  récompenses, retraits) refusées si l'or manque. Dépenses dues (salaires, entretien) payées jusqu'à
+  la dette maximale (200 par défaut). Un retrait ne débite que ce qui entre dans l'inventaire.
+- **La dette coûte** : 2 prestige par jour, et les salariés impayés s'en souviennent (« Salaire impayé »).
+- **Lois** : fiscalité, autorité de la couronne, code chevaleresque, justice. Le conseil vote, de
+  façon déterministe : la prévision affichée est le résultat. Sans conseil, on décide seul. Une loi
+  rejetée s'impose contre 20 prestige par voix contre, et ces voix gardent rancune. Trois jours
+  d'attente entre deux changements d'une même loi.
+- **Recherches de gouvernance** : une branche « Gouvernance » ajoutée à l'Université par le datapack
+  du mod (Administration, Trésorerie royale, Chancellerie, Chevalerie, Autorité royale). On lit celles de
+  la capitale. **Retirer le mod ne gêne pas MineColonies** : à la lecture d'une colonie, il ignore une
+  recherche inconnue (`LocalResearchTree.readFromNBT`) et n'en applique pas les effets.
+- **Bonheur « Impôts »** : un second modificateur MineColonies, réappliqué comme celui de la couronne,
+  donc sans trace si l'on retire le mod.
+- **War 'N Taxes** : s'il est installé (et que l'option de cohabitation est active), nos impôts se
+  coupent ; le trésor, les salaires et les lois restent.

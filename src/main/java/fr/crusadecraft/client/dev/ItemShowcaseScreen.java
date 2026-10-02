@@ -20,7 +20,9 @@ public class ItemShowcaseScreen extends Screen {
     @Override
     public void render(GuiGraphics g, int mouseX, int mouseY, float partialTick) {
         renderBackground(g);
-        int cell = 70;
+        // Les cases rétrécissent avec le nombre d'objets pour toujours tenir dans la largeur.
+        int cell = Math.min(70, (width - 30) / Math.max(1, items.size()));
+        float scale = Math.min(3f, (cell - 8) / 16f);
         int total = items.size() * cell;
         int x0 = (width - total) / 2;
         int y0 = height / 2 - 40;
@@ -29,11 +31,11 @@ public class ItemShowcaseScreen extends Screen {
             ItemStack stack = items.get(i);
             int x = x0 + i * cell;
             g.pose().pushPose();
-            g.pose().translate(x + 11, y0, 0);
-            g.pose().scale(3f, 3f, 1f);
+            g.pose().translate(x + (cell - 16 * scale) / 2f, y0, 0);
+            g.pose().scale(scale, scale, 1f);
             g.renderItem(stack, 0, 0);
             g.pose().popPose();
-            Ui.wrappedCentered(g, font, stack.getHoverName(), x + cell / 2 - 5, y0 + 56, cell - 6, Ui.TEXT);
+            Ui.wrappedCentered(g, font, stack.getHoverName(), x + cell / 2, y0 + 56, cell - 4, Ui.TEXT);
         }
     }
 }

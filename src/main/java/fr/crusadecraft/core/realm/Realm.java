@@ -4,6 +4,8 @@ import fr.crusadecraft.core.ColonyRef;
 import fr.crusadecraft.core.character.CitizenRef;
 import fr.crusadecraft.core.character.Post;
 import fr.crusadecraft.core.council.CourtState;
+import fr.crusadecraft.core.law.LawState;
+import fr.crusadecraft.core.treasury.Ledger;
 import net.minecraft.nbt.CompoundTag;
 import net.minecraft.nbt.ListTag;
 import net.minecraft.nbt.Tag;
@@ -45,7 +47,13 @@ public final class Realm {
     /** Table du conseil, bureaux des maires, tâches, requêtes. */
     private CourtState court = new CourtState();
 
-    // Ressources du souverain. L'or passera par un registre atomique (P4) ; ici, il n'est que stocké.
+    /** Lois en vigueur. */
+    private LawState laws = new LawState();
+    /** Livre de comptes des derniers jours. */
+    private Ledger ledger = new Ledger();
+
+    // Ressources du souverain. L'or ne bouge que par TreasuryService, qui l'inscrit au livre de comptes ;
+    // il peut être négatif (dette), jusqu'à la limite fixée par la configuration.
     private long gold;
     private int prestige;
     private int piety;
@@ -97,6 +105,8 @@ public final class Realm {
     public Map<Post, CitizenRef> council() { return Collections.unmodifiableMap(council); }
     public Map<ColonyRef, CitizenRef> mayors() { return Collections.unmodifiableMap(mayors); }
     public CourtState court() { return court; }
+    public LawState laws() { return laws; }
+    public Ledger ledger() { return ledger; }
 
     /** Le poste qu'occupe ce citoyen dans ce royaume, s'il en a un. */
     public Post postOf(CitizenRef citizen) {
@@ -135,7 +145,8 @@ public final class Realm {
     public void setPrestige(int prestige) { this.prestige = prestige; }
     public void setPiety(int piety) { this.piety = piety; }
     public void setDread(int dread) { this.dread = dread; }
-    public void setGold(long gold) { this.gold = Math.max(0, gold); }
+    /** Valeur brute ; passer par {@code TreasuryService} pour que le mouvement soit inscrit. */
+    public void setGold(long gold) { this.gold = gold; }
 
     public void addProvince(ColonyRef colony) {
         if (!holds(colony)) provinces.add(colony);
@@ -173,6 +184,8 @@ public final class Realm {
         for (CitizenRef m : mayors.values()) mayorTag.add(m.save());
         tag.put("mayors", mayorTag);
         tag.put("court", court.save());
+        tag.put("laws", laws.save());
+        tag.put("ledger", ledger.save());
         tag.putLong("gold", gold);
         tag.putInt("prestige", prestige);
         tag.putInt("piety", piety);
@@ -205,6 +218,8 @@ public final class Realm {
             if (post != null && post.isCouncil()) realm.council.put(post, CitizenRef.load(p));
         }
         realm.court = CourtState.load(tag.getCompound("court"));
+        realm.laws = LawState.load(tag.getCompound("laws"));
+        realm.ledger = Ledger.load(tag, "ledger");
         ListTag mayorTag = tag.getList("mayors", Tag.TAG_COMPOUND);
         for (int i = 0; i < mayorTag.size(); i++) {
             CitizenRef m = CitizenRef.load(mayorTag.getCompound(i));

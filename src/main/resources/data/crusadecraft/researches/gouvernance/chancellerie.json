@@ -1,0 +1,16 @@
+{
+  "branch": "crusadecraft:gouvernance",
+  "name": "crusadecraft.research.gouvernance.chancellerie",
+  "subtitle": "crusadecraft.research.gouvernance.chancellerie.subtitle",
+  "parentResearch": "crusadecraft:gouvernance/administration",
+  "researchLevel": 2,
+  "sortOrder": 2,
+  "icon": "minecraft:writable_book",
+  "requirements": [ { "type": "minecolonies:single-building", "building": "minecolonies:townhall", "level": 3 } ],
+  "costs": [
+    { "type": "minecolonies:item_simple", "item": "minecraft:paper", "quantity": 64 },
+    { "type": "minecolonies:item_simple", "item": "minecraft:ink_sac", "quantity": 16 },
+    { "type": "minecolonies:item_simple", "item": "minecraft:feather", "quantity": 16 }
+  ],
+  "effects": [ { "id": "crusadecraft:effects/chancellerie", "level": 1 } ]
+}

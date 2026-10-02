@@ -56,6 +56,17 @@ public final class CourtBlocks {
         return Optional.empty();
     }
 
+    /** Le Coffre du Trésor se pose dans une colonie de son royaume. */
+    public static Optional<Component> checkTreasury(ServerPlayer player, Level level, BlockPos pos) {
+        Optional<Realm> realm = RealmService.realmOf(player.server, player.getUUID());
+        if (realm.isEmpty()) return Optional.of(Component.translatable("crusadecraft.realm.none"));
+        Optional<ColonyRef> colony = MineColoniesBridge.colonyAt(level, pos);
+        if (colony.isEmpty() || !realm.get().holds(colony.get())) {
+            return Optional.of(Component.translatable("crusadecraft.court.outside_realm"));
+        }
+        return Optional.empty();
+    }
+
     public static void registerTable(ServerPlayer player, Level level, BlockPos pos) {
         RealmService.realmOf(player.server, player.getUUID()).ifPresent(realm -> {
             realm.court().setTable(level.dimension().location(), pos);

@@ -3,6 +3,7 @@ package fr.crusadecraft.network;
 import fr.crusadecraft.CrusadeCraft;
 import fr.crusadecraft.network.packet.CharacterActionPacket;
 import fr.crusadecraft.network.packet.CourtPackets;
+import fr.crusadecraft.network.packet.EconomyPackets;
 import fr.crusadecraft.network.packet.FoundRealmPacket;
 import fr.crusadecraft.network.packet.OpenCharacterPacket;
 import fr.crusadecraft.network.packet.OpenFoundingScreenPacket;
@@ -25,7 +26,7 @@ import net.minecraftforge.network.simple.SimpleChannel;
  * (distance, droits, état) avant d'agir.
  */
 public final class CrusadeNetwork {
-    private static final String VERSION = "1";
+    private static final String VERSION = "2";
 
     public static final SimpleChannel CHANNEL = NetworkRegistry.newSimpleChannel(
             ResourceLocation.tryParse(CrusadeCraft.MOD_ID + ":main"),
@@ -85,6 +86,22 @@ public final class CrusadeNetwork {
         CHANNEL.messageBuilder(CourtPackets.OpenOffice.class, nextId++, NetworkDirection.PLAY_TO_SERVER)
                 .encoder(CourtPackets.OpenOffice::encode).decoder(CourtPackets.OpenOffice::decode)
                 .consumerMainThread(CourtPackets.OpenOffice::handle).add();
+        // P4 : trésor et lois
+        CHANNEL.messageBuilder(EconomyPackets.TreasuryData.class, nextId++, NetworkDirection.PLAY_TO_CLIENT)
+                .encoder(EconomyPackets.TreasuryData::encode).decoder(EconomyPackets.TreasuryData::decode)
+                .consumerMainThread(EconomyPackets.TreasuryData::handle).add();
+        CHANNEL.messageBuilder(EconomyPackets.LawsData.class, nextId++, NetworkDirection.PLAY_TO_CLIENT)
+                .encoder(EconomyPackets.LawsData::encode).decoder(EconomyPackets.LawsData::decode)
+                .consumerMainThread(EconomyPackets.LawsData::handle).add();
+        CHANNEL.messageBuilder(EconomyPackets.RequestTab.class, nextId++, NetworkDirection.PLAY_TO_SERVER)
+                .encoder(EconomyPackets.RequestTab::encode).decoder(EconomyPackets.RequestTab::decode)
+                .consumerMainThread(EconomyPackets.RequestTab::handle).add();
+        CHANNEL.messageBuilder(EconomyPackets.TreasuryAction.class, nextId++, NetworkDirection.PLAY_TO_SERVER)
+                .encoder(EconomyPackets.TreasuryAction::encode).decoder(EconomyPackets.TreasuryAction::decode)
+                .consumerMainThread(EconomyPackets.TreasuryAction::handle).add();
+        CHANNEL.messageBuilder(EconomyPackets.ProposeLaw.class, nextId++, NetworkDirection.PLAY_TO_SERVER)
+                .encoder(EconomyPackets.ProposeLaw::encode).decoder(EconomyPackets.ProposeLaw::decode)
+                .consumerMainThread(EconomyPackets.ProposeLaw::handle).add();
     }
 
     public static void toPlayer(ServerPlayer player, Object packet) {

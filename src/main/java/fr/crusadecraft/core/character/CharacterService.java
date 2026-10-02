@@ -4,6 +4,9 @@ import fr.crusadecraft.compat.minecolonies.MineColoniesBridge;
 import fr.crusadecraft.config.CrusadeConfig;
 import fr.crusadecraft.core.realm.Realm;
 import fr.crusadecraft.core.realm.RealmService;
+import fr.crusadecraft.core.law.LawEffects;
+import fr.crusadecraft.core.treasury.LedgerCategory;
+import fr.crusadecraft.core.treasury.TreasuryService;
 import fr.crusadecraft.data.CrusadeSavedData;
 import fr.crusadecraft.network.CrusadeNetwork;
 import fr.crusadecraft.network.packet.SyncTitlesPacket;
@@ -89,8 +92,11 @@ public final class CharacterService {
     /** Détail de l'opinion du personnage envers le souverain du royaume qui tient sa colonie. */
     public static List<Opinion.Line> opinionLines(MinecraftServer server, Realm realm, CharacterRecord rec) {
         double happiness = MineColoniesBridge.info(rec.ref().colony()).happiness();
-        Opinion.Context ctx = new Opinion.Context(rec.traits(), happiness, realm.postOf(rec.ref()) != null, rec.status());
-        return Opinion.breakdown(rec.modifiers(), ctx, RealmService.currentDay(server));
+        boolean holdsPost = realm.postOf(rec.ref()) != null;
+        Opinion.Context ctx = new Opinion.Context(rec.traits(), happiness, holdsPost, rec.status());
+        List<Opinion.Line> lines = Opinion.breakdown(rec.modifiers(), ctx, RealmService.currentDay(server));
+        lines.addAll(LawEffects.opinionLines(realm.laws(), rec.traits(), holdsPost));
+        return lines;
     }
 
     /** Opinion d'un citoyen envers son souverain ; 0 s'il est inconnu. */
@@ -192,7 +198,7 @@ public final class CharacterService {
                 yield Outcome.ok(Component.translatable("crusadecraft.character.dismissed", name,
                         Component.translatable(vacated.key(info.female()))));
             }
-            case REWARD -> reward(player, rec, info, today);
+            case REWARD -> reward(player, realm, rec, info, today);
             case REPRIMAND -> {
                 double mult = rec.traits().contains(Trait.ARROGANT) ? 1.5 : rec.traits().contains(Trait.HUMBLE) ? 0.5 : 1.0;
                 rec.addModifier(OpinionModifier.of(OpinionReason.REPRIMANDE, today, mult));
@@ -268,14 +274,23 @@ public final class CharacterService {
         return Outcome.ok(Component.translatable("crusadecraft.character.appointed", name, postName));
     }
 
-    private static Outcome reward(ServerPlayer player, CharacterRecord rec, CitizenInfo info, long today) {
+    private static Outcome reward(ServerPlayer player, Realm realm, CharacterRecord rec, CitizenInfo info, long today) {
+        // D'abord le trésor ; à défaut, l'inventaire du souverain.
+        int gold = CrusadeConfig.SERVER.rewardGold.get();
+        if (gold > 0 && TreasuryService.spend(player.server, realm, LedgerCategory.RECOMPENSES, gold)) {
+            return rewarded(rec, info, today);
+        }
         ResourceLocation id = ResourceLocation.tryParse(CrusadeConfig.SERVER.rewardItem.get());
         Item item = id == null ? null : ForgeRegistries.ITEMS.getValue(id);
         int count = CrusadeConfig.SERVER.rewardCount.get();
         if (item == null || item == net.minecraft.world.item.Items.AIR) return Outcome.no("crusadecraft.character.reward_misconfigured");
         if (!player.getAbilities().instabuild && !take(player, item, count)) {
-            return Outcome.no("crusadecraft.character.reward_missing", count, new ItemStack(item).getHoverName());
+            return Outcome.no("crusadecraft.character.reward_missing", gold, count, new ItemStack(item).getHoverName());
         }
+        return rewarded(rec, info, today);
+    }
+
+    private static Outcome rewarded(CharacterRecord rec, CitizenInfo info, long today) {
         double mult = rec.traits().contains(Trait.AVARE) ? 1.5 : 1.0;
         rec.addModifier(OpinionModifier.of(OpinionReason.RECOMPENSE, today, mult));
         rec.remember(today, "crusadecraft.history.rewarded");

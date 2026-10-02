@@ -18,8 +18,10 @@ import fr.crusadecraft.core.character.OpinionReason;
 import fr.crusadecraft.core.character.Post;
 import fr.crusadecraft.core.character.Stat;
 import fr.crusadecraft.core.character.Trait;
+import fr.crusadecraft.core.law.LawEffects;
 import fr.crusadecraft.core.realm.Realm;
 import fr.crusadecraft.core.realm.RealmService;
+import fr.crusadecraft.core.treasury.TreasuryService;
 import fr.crusadecraft.data.CrusadeSavedData;
 import fr.crusadecraft.network.CrusadeNetwork;
 import fr.crusadecraft.network.packet.ToastPacket;
@@ -223,6 +225,7 @@ public final class CouncilService {
         if (present == null || present.isEmpty()) return;
         CrusadeSavedData data = CrusadeSavedData.get(server);
         realm.court().setMeetingBonusDay(today);
+        realm.setPrestige(realm.prestige() + 1);
         for (CitizenRef ref : present) {
             data.character(ref).ifPresent(rec -> rec.addModifier(OpinionModifier.of(OpinionReason.REUNION, today, 1)));
         }
@@ -255,6 +258,8 @@ public final class CouncilService {
             grantRoleXp(mayor, Post.MAIRE.stat());
             data.character(mayor).ifPresent(rec -> rec.addStress(-5));
         }
+        // Impôts, domaine, salaires, entretien, effets quotidiens des lois.
+        TreasuryService.onNewDay(server, realm, day, bonus);
         data.setDirty();
     }
 
@@ -273,7 +278,7 @@ public final class CouncilService {
                 }
             }
             case ENTRAINER_TROUPES -> {
-                double xp = (1 + skill / 4.0) * bonus;
+                double xp = (1 + skill / 4.0) * bonus * LawEffects.trainingMultiplier(realm.laws());
                 for (ColonyRef colony : realm.allColonies()) {
                     for (CitizenRef guard : MineColoniesBridge.guards(colony)) {
                         MineColoniesBridge.addSkillXp(guard, CitizenSkill.Strength, xp / 2);
@@ -283,15 +288,10 @@ public final class CouncilService {
                     }
                 }
             }
-            case GERER_LE_DOMAINE -> {
-                int population = 0;
-                for (ColonyRef colony : realm.allColonies()) population += MineColoniesBridge.info(colony).citizens();
-                long income = Math.round(population * (0.2 + skill / 50.0) * bonus);
-                realm.setGold(realm.gold() + income);
-            }
             case LEGITIMITE -> realm.setPiety(realm.piety() + (int) Math.round((1 + skill / 5.0) * bonus));
             default -> {
-                // SURVEILLER_LES_TERRES et BONHEUR_DU_PEUPLE agissent en continu (requêtes, bonheur).
+                // SURVEILLER_LES_TERRES et BONHEUR_DU_PEUPLE agissent en continu (requêtes, bonheur) ;
+                // GERER_LE_DOMAINE et COLLECTER_IMPOTS passent par le trésor (TreasuryService).
             }
         }
     }
@@ -339,6 +339,7 @@ public final class CouncilService {
             double factor = realm.state().isActive() ? crownHappinessFactor(server, realm) : 1.0;
             for (ColonyRef colony : realm.allColonies()) MineColoniesBridge.applyCrownHappiness(colony, factor);
         }
+        TreasuryService.applyHappiness(server);
     }
 
     // ------------------------------------------------------------------ actions du souverain
