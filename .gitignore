@@ -1,0 +1,27 @@
+# Dépôts de référence étudiés (War 'N Taxes, MineColonies, wiki War 'n Nobility) : jamais versionnés
+reference/
+
+# Gradle / ForgeGradle
+.gradle/
+build/
+out/
+run/
+run-*/
+logs/
+*.log
+
+# IDE
+.idea/
+*.iml
+*.ipr
+*.iws
+.vscode/
+.classpath
+.project
+.settings/
+bin/
+
+# Système
+Thumbs.db
+desktop.ini
+.DS_Store
