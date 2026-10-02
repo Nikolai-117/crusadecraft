@@ -17,7 +17,16 @@ public enum OpinionReason {
     LIBERE(10, 6, true),
     RAPPELE(10, 6, true),
     POSTE_REFUSE_PAR_SOUVERAIN(-10, 6, true),
-    NOMME(15, 10, true);
+    NOMME(15, 10, true),
+    // P3 : cour et requêtes
+    COUR(5, 2, false),
+    REUNION(3, 1, false),
+    PROMESSE(5, 4, true),
+    REQUETE_SATISFAITE(8, 5, true),
+    REQUETE_IGNOREE(-10, 6, true),
+    FAVEUR(15, 8, true),
+    MENACE(-10, 8, true),
+    REFUS(-15, 8, true);
 
     private final int value;
     private final int durationDays;

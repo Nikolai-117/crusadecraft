@@ -1,6 +1,9 @@
 package fr.crusadecraft.client;
 
 import fr.crusadecraft.client.screen.CharacterScreen;
+import fr.crusadecraft.client.screen.CouncilScreen;
+import fr.crusadecraft.client.screen.MayorScreen;
+import fr.crusadecraft.client.screen.RequestScreen;
 import fr.crusadecraft.client.screen.DialogueScreen;
 import fr.crusadecraft.client.screen.FoundingScreen;
 import fr.crusadecraft.client.screen.RealmScreen;
@@ -9,6 +12,9 @@ import fr.crusadecraft.client.toast.CrusadeToast;
 import fr.crusadecraft.config.CrusadeConfig;
 import fr.crusadecraft.core.ColonyInfo;
 import fr.crusadecraft.core.character.CharacterView;
+import fr.crusadecraft.core.council.CouncilView;
+import fr.crusadecraft.core.council.MayorView;
+import fr.crusadecraft.core.council.RequestView;
 import fr.crusadecraft.core.realm.RealmView;
 import fr.crusadecraft.network.packet.OpenRealmScreenPacket;
 import fr.crusadecraft.network.packet.RequestCharacterPacket;
@@ -50,6 +56,22 @@ public final class ClientPackets {
         } else {
             mc.setScreen(new CharacterScreen(view, mode == RequestCharacterPacket.Mode.APPOINT));
         }
+    }
+
+    public static void openCouncil(CouncilView view) {
+        Minecraft mc = Minecraft.getInstance();
+        if (mc.screen instanceof CouncilScreen open) open.refresh(view);
+        else mc.setScreen(new CouncilScreen(view));
+    }
+
+    public static void openMayor(MayorView view) {
+        Minecraft mc = Minecraft.getInstance();
+        if (mc.screen instanceof MayorScreen open && open.isFor(view)) open.refresh(view);
+        else mc.setScreen(new MayorScreen(view));
+    }
+
+    public static void openRequest(RequestView view) {
+        Minecraft.getInstance().setScreen(new RequestScreen(view));
     }
 
     public static void openRealm(RealmView view, OpenRealmScreenPacket.Target target) {

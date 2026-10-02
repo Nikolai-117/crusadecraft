@@ -1,0 +1,11 @@
+{
+  "type": "minecraft:crafting_shaped",
+  "category": "misc",
+  "pattern": ["P  ", "PWP", "S S"],
+  "key": {
+    "P": { "item": "minecraft:dark_oak_planks" },
+    "W": { "item": "minecraft:red_wool" },
+    "S": { "item": "minecraft:stick" }
+  },
+  "result": { "item": "crusadecraft:council_seat", "count": 2 }
+}

@@ -3,6 +3,7 @@ package fr.crusadecraft.core.realm;
 import fr.crusadecraft.core.ColonyRef;
 import fr.crusadecraft.core.character.CitizenRef;
 import fr.crusadecraft.core.character.Post;
+import fr.crusadecraft.core.council.CourtState;
 import net.minecraft.nbt.CompoundTag;
 import net.minecraft.nbt.ListTag;
 import net.minecraft.nbt.Tag;
@@ -41,6 +42,8 @@ public final class Realm {
     private final Map<Post, CitizenRef> council = new EnumMap<>(Post.class);
     /** Maires : un par colonie du royaume. */
     private final Map<ColonyRef, CitizenRef> mayors = new LinkedHashMap<>();
+    /** Table du conseil, bureaux des maires, tâches, requêtes. */
+    private CourtState court = new CourtState();
 
     // Ressources du souverain. L'or passera par un registre atomique (P4) ; ici, il n'est que stocké.
     private long gold;
@@ -93,6 +96,7 @@ public final class Realm {
 
     public Map<Post, CitizenRef> council() { return Collections.unmodifiableMap(council); }
     public Map<ColonyRef, CitizenRef> mayors() { return Collections.unmodifiableMap(mayors); }
+    public CourtState court() { return court; }
 
     /** Le poste qu'occupe ce citoyen dans ce royaume, s'il en a un. */
     public Post postOf(CitizenRef citizen) {
@@ -131,7 +135,7 @@ public final class Realm {
     public void setPrestige(int prestige) { this.prestige = prestige; }
     public void setPiety(int piety) { this.piety = piety; }
     public void setDread(int dread) { this.dread = dread; }
-    void setGold(long gold) { this.gold = gold; }
+    public void setGold(long gold) { this.gold = Math.max(0, gold); }
 
     public void addProvince(ColonyRef colony) {
         if (!holds(colony)) provinces.add(colony);
@@ -168,6 +172,7 @@ public final class Realm {
         ListTag mayorTag = new ListTag();
         for (CitizenRef m : mayors.values()) mayorTag.add(m.save());
         tag.put("mayors", mayorTag);
+        tag.put("court", court.save());
         tag.putLong("gold", gold);
         tag.putInt("prestige", prestige);
         tag.putInt("piety", piety);
@@ -199,6 +204,7 @@ public final class Realm {
             Post post = Post.byName(p.getString("post"));
             if (post != null && post.isCouncil()) realm.council.put(post, CitizenRef.load(p));
         }
+        realm.court = CourtState.load(tag.getCompound("court"));
         ListTag mayorTag = tag.getList("mayors", Tag.TAG_COMPOUND);
         for (int i = 0; i < mayorTag.size(); i++) {
             CitizenRef m = CitizenRef.load(mayorTag.getCompound(i));

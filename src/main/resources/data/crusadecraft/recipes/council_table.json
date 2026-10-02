@@ -1,0 +1,11 @@
+{
+  "type": "minecraft:crafting_shaped",
+  "category": "misc",
+  "pattern": ["RRR", "PPP", "L L"],
+  "key": {
+    "R": { "item": "minecraft:red_carpet" },
+    "P": { "item": "minecraft:dark_oak_planks" },
+    "L": { "item": "minecraft:dark_oak_log" }
+  },
+  "result": { "item": "crusadecraft:council_table" }
+}

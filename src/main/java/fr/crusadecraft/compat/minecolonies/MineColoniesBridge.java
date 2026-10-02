@@ -8,8 +8,11 @@ import com.minecolonies.api.colony.buildings.workerbuildings.ITownHall;
 import com.minecolonies.api.colony.permissions.Rank;
 import com.minecolonies.api.entity.citizen.AbstractEntityCitizen;
 import com.minecolonies.api.entity.citizen.Skill;
+import com.minecolonies.api.entity.citizen.happiness.StaticHappinessModifier;
+import com.minecolonies.api.entity.citizen.happiness.StaticHappinessSupplier;
 import fr.crusadecraft.CrusadeCraft;
 import fr.crusadecraft.core.ColonyInfo;
+import fr.crusadecraft.core.ColonyReport;
 import fr.crusadecraft.core.ColonyRef;
 import fr.crusadecraft.core.character.CitizenInfo;
 import fr.crusadecraft.core.character.CitizenRef;
@@ -254,6 +257,102 @@ public final class MineColoniesBridge {
             breakBridge(e);
         }
         return out;
+    }
+
+    // ------------------------------------------------------------------ rapports et effets du conseil
+
+    /** Le rapport d'un maire : sans-logis, chômeurs, malades, affamés, gardes, menace de raid. */
+    public static ColonyReport report(ColonyRef ref) {
+        if (broken) return ColonyReport.missing(ref);
+        try {
+            IColony c = colony(ref);
+            if (c == null) return ColonyReport.missing(ref);
+            int homeless = 0, jobless = 0, sick = 0, hungry = 0, guards = 0;
+            List<ICitizenData> citizens = c.getCitizenManager().getCitizens();
+            for (ICitizenData d : citizens) {
+                if (d.getHomeBuilding() == null) homeless++;
+                if (!d.isChild() && d.getJob() == null) jobless++;
+                if (d.getCitizenDiseaseHandler().isSick()) sick++;
+                if (d.getSaturation() < HUNGRY_SATURATION) hungry++;
+                if (d.getJob() != null && d.getJob().isGuard()) guards++;
+            }
+            return new ColonyReport(ref, c.getName(), citizens.size(), c.getCitizenManager().getMaxCitizens(), homeless,
+                    jobless, sick, hungry, guards, c.getOverallHappiness(), c.getRaiderManager().willRaidTonight(),
+                    c.getRaiderManager().isRaided());
+        } catch (LinkageError e) {
+            breakBridge(e);
+            return ColonyReport.missing(ref);
+        }
+    }
+
+    /** En dessous, un citoyen a faim (la satiété de MineColonies va de 0 à 20). */
+    private static final double HUNGRY_SATURATION = 4.0;
+
+    /** Les gardes d'une colonie. */
+    public static List<CitizenRef> guards(ColonyRef ref) {
+        List<CitizenRef> out = new ArrayList<>();
+        if (broken) return out;
+        try {
+            IColony c = colony(ref);
+            if (c == null) return out;
+            for (ICitizenData d : c.getCitizenManager().getCitizens()) {
+                if (d.getJob() != null && d.getJob().isGuard()) out.add(new CitizenRef(ref, d.getId()));
+            }
+        } catch (LinkageError e) {
+            breakBridge(e);
+        }
+        return out;
+    }
+
+    /**
+     * Ajoute de l'expérience à une compétence, par l'API officielle (le rôle fait progresser). Écriture
+     * native de MineColonies : elle reste valable si CrusadeCraft est retiré.
+     */
+    public static void addSkillXp(CitizenRef ref, CitizenSkill skill, double xp) {
+        if (broken || xp <= 0) return;
+        try {
+            ICitizenData d = citizenData(ref);
+            if (d != null) d.getCitizenSkillHandler().addXpToSkill(Skill.valueOf(skill.name()), xp, d);
+        } catch (LinkageError e) {
+            breakBridge(e);
+        } catch (IllegalArgumentException ignored) {
+            // compétence absente de cette version de MineColonies
+        }
+    }
+
+    /** Identifiant du modificateur de bonheur de la couronne dans MineColonies (traduit dans nos langues). */
+    public static final String HAPPINESS_ID = "crusadecraft";
+
+    /**
+     * Applique le facteur de bonheur de la couronne aux adultes d'une colonie (1.0 = neutre, ignoré par
+     * MineColonies). MineColonies ne recharge pas les modificateurs qu'il ne connaît pas : celui-ci
+     * disparaît au redémarrage, et on le réapplique périodiquement. Retirer le mod ne laisse donc rien.
+     */
+    public static void applyCrownHappiness(ColonyRef ref, double factor) {
+        if (broken) return;
+        try {
+            IColony c = colony(ref);
+            if (c == null) return;
+            for (ICitizenData d : c.getCitizenManager().getCitizens()) {
+                if (d.isChild()) continue;
+                d.getCitizenHappinessHandler().addModifier(new StaticHappinessModifier(HAPPINESS_ID, 1.0,
+                        new StaticHappinessSupplier(factor)));
+            }
+        } catch (LinkageError e) {
+            breakBridge(e);
+        }
+    }
+
+    /** L'entité du citoyen si elle est chargée. */
+    public static Optional<Entity> citizenEntity(CitizenRef ref) {
+        if (broken) return Optional.empty();
+        try {
+            ICitizenData d = citizenData(ref);
+            return d == null ? Optional.empty() : d.getEntity().map(e -> (Entity) e);
+        } catch (LinkageError e) {
+            breakBridge(e);
+            return Optional.empty();
+        }
     }
 
     private static int colorOf(IColony c) {

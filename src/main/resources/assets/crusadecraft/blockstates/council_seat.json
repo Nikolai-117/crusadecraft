@@ -1,0 +1,8 @@
+{
+  "variants": {
+    "facing=north": { "model": "crusadecraft:block/council_seat" },
+    "facing=east": { "model": "crusadecraft:block/council_seat", "y": 90 },
+    "facing=south": { "model": "crusadecraft:block/council_seat", "y": 180 },
+    "facing=west": { "model": "crusadecraft:block/council_seat", "y": 270 }
+  }
+}

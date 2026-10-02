@@ -40,6 +40,21 @@ public final class CrusadeConfig {
         public final ForgeConfigSpec.ConfigValue<String> rewardItem;
         public final ForgeConfigSpec.IntValue rewardCount;
         public final ForgeConfigSpec.IntValue exileDays;
+        public final ForgeConfigSpec.IntValue councilMinTownHallLevel;
+        public final ForgeConfigSpec.IntValue meetingHour;
+        public final ForgeConfigSpec.IntValue meetingMinutes;
+        public final ForgeConfigSpec.IntValue officeHour;
+        public final ForgeConfigSpec.IntValue officeMinutes;
+        public final ForgeConfigSpec.BooleanValue npcMovement;
+        public final ForgeConfigSpec.BooleanValue roleXp;
+        public final ForgeConfigSpec.DoubleValue roleXpPerDay;
+        public final ForgeConfigSpec.IntValue homelessThreshold;
+        public final ForgeConfigSpec.IntValue joblessThreshold;
+        public final ForgeConfigSpec.IntValue sickThreshold;
+        public final ForgeConfigSpec.IntValue hungryThreshold;
+        public final ForgeConfigSpec.IntValue requestExpiryDays;
+        public final ForgeConfigSpec.IntValue maxPendingRequests;
+        public final ForgeConfigSpec.BooleanValue crownHappiness;
         public final ForgeConfigSpec.BooleanValue disableDuplicatesWithWarNTaxes;
         public final ForgeConfigSpec.BooleanValue disableDuplicatesWithWarNNobility;
 
@@ -71,6 +86,32 @@ public final class CrusadeConfig {
                     .define("objetRecompense", "minecraft:gold_ingot");
             rewardCount = b.comment("Quantité offerte.").defineInRange("quantiteRecompense", 1, 1, 64);
             exileDays = b.comment("Durée d'un exil, en jours du monde.").defineInRange("dureeExil", 30, 1, 3650);
+            b.pop();
+
+            b.comment("Conseil royal, maires et requêtes").push("conseil");
+            councilMinTownHallLevel = b.comment("Niveau d'Hôtel de ville requis dans la colonie où l'on pose la Table du Conseil.")
+                    .defineInRange("niveauHotelDeVilleTable", 3, 1, 5);
+            meetingHour = b.comment("Heure de la réunion quotidienne du conseil (0 à 23 ; 6 = lever du jour).")
+                    .defineInRange("heureReunion", 9, 0, 23);
+            meetingMinutes = b.comment("Durée de la réunion, en minutes du monde (une heure du monde = 50 secondes).")
+                    .defineInRange("dureeReunion", 90, 10, 600);
+            officeHour = b.comment("Heure à laquelle les maires rejoignent leur bureau.").defineInRange("heureBureau", 13, 0, 23);
+            officeMinutes = b.comment("Durée des heures de bureau, en minutes du monde.").defineInRange("dureeBureau", 120, 10, 600);
+            npcMovement = b.comment("Les dignitaires se déplacent (réunions, bureau, audiences). Sans cela, tout reste dans les écrans.")
+                    .define("deplacementsPnj", true);
+            roleXp = b.comment("Un poste fait progresser les compétences liées de son titulaire (écriture native MineColonies).")
+                    .define("xpDesPostes", true);
+            roleXpPerDay = b.comment("Expérience gagnée chaque jour par compétence liée au poste.")
+                    .defineInRange("xpParJour", 4.0, 0.0, 100.0);
+            homelessThreshold = b.comment("Sans-logis à partir desquels le maire vient se plaindre.").defineInRange("seuilSansLogis", 2, 1, 100);
+            joblessThreshold = b.comment("Chômeurs à partir desquels le maire vient se plaindre.").defineInRange("seuilChomeurs", 3, 1, 100);
+            sickThreshold = b.comment("Malades à partir desquels le maire vient se plaindre.").defineInRange("seuilMalades", 2, 1, 100);
+            hungryThreshold = b.comment("Affamés à partir desquels le maire vient se plaindre.").defineInRange("seuilAffames", 2, 1, 100);
+            requestExpiryDays = b.comment("Jours avant qu'une requête restée sans réponse soit considérée comme ignorée.")
+                    .defineInRange("expirationRequetes", 3, 1, 30);
+            maxPendingRequests = b.comment("Requêtes en attente au plus, par royaume.").defineInRange("requetesMax", 6, 1, 30);
+            crownHappiness = b.comment("Le chapelain peut agir sur le bonheur MineColonies (modificateur « Couronne », jamais enregistré chez MineColonies).")
+                    .define("bonheurCouronne", true);
             b.pop();
 
             b.comment("Cohabitation avec d'autres mods qui font la même chose").push("compatibilite");

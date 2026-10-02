@@ -55,11 +55,18 @@ minecraft {
         gameTestServer {
             workingDirectory project.file('run-gametest')
             property 'forge.enabledGameTestNamespaces', mod_id
+            property 'crusadecraft.debugai', 'true'
         }
     }
 }
 
 sourceSets.main.resources { srcDir 'src/generated/resources' }
+
+// Le serveur de GameTests repart toujours d'un monde neuf : un test interrompu ne doit pas laisser une
+// colonie qui fausserait les suivants. Ce monde est le nôtre (run-gametest/), jamais celui d'un joueur.
+tasks.matching { it.name == 'runGameTestServer' }.configureEach {
+    doFirst { delete file('run-gametest/world') }
+}
 
 repositories {
     mavenCentral()

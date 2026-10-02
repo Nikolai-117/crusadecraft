@@ -49,6 +49,8 @@ public final class ServerEvents {
     @SubscribeEvent
     public static void onServerStopped(ServerStoppedEvent event) {
         MineColoniesEvents.onServerStopped();
+        fr.crusadecraft.core.council.CouncilService.onServerStopped();
+        fr.crusadecraft.core.council.RequestService.onServerStopped();
     }
 
     @SubscribeEvent
@@ -60,12 +62,22 @@ public final class ServerEvents {
         }
     }
 
+    /** Chaque citoyen chargé reçoit l'état « service » (réunions, bureau, audiences). */
+    @SubscribeEvent
+    public static void onEntityJoin(net.minecraftforge.event.entity.EntityJoinLevelEvent event) {
+        if (!event.getLevel().isClientSide()) fr.crusadecraft.compat.minecolonies.DutyAI.install(event.getEntity());
+    }
+
     @SubscribeEvent
     public static void onServerTick(TickEvent.ServerTickEvent event) {
         if (event.phase != TickEvent.Phase.END) return;
-        if (event.getServer().getTickCount() % 600 == 0) {
-            CharacterService.periodic(event.getServer());
-        }
+        var server = event.getServer();
+        int t = server.getTickCount();
+        if (t % 600 == 0) CharacterService.periodic(server);
+        if (t % 40 == 0) fr.crusadecraft.core.council.CouncilService.tick(server);
+        if (t % 100 == 50) fr.crusadecraft.core.council.RequestService.deliver(server);
+        if (t % 1200 == 300) fr.crusadecraft.core.council.RequestService.periodic(server);
+        if (t % 2400 == 900) fr.crusadecraft.core.council.CouncilService.applyHappiness(server);
     }
 
     /**
@@ -91,6 +103,17 @@ public final class ServerEvents {
      */
     @SubscribeEvent
     public static void onPlace(BlockEvent.EntityPlaceEvent event) {
+        if (event.getEntity() instanceof ServerPlayer p && event.getLevel() instanceof Level lvl && MineColoniesBridge.isReady()
+                && !(p.isCreative() && p.hasPermissions(2))) {
+            Optional<Component> refusal = Optional.empty();
+            if (event.getPlacedBlock().is(ModBlocks.COUNCIL_TABLE.get())) refusal = fr.crusadecraft.block.CourtBlocks.checkTable(p, lvl, event.getPos());
+            else if (event.getPlacedBlock().is(ModBlocks.MAYOR_DESK.get())) refusal = fr.crusadecraft.block.CourtBlocks.checkDesk(p, lvl, event.getPos());
+            if (refusal.isPresent()) {
+                event.setCanceled(true);
+                p.displayClientMessage(refusal.get(), true);
+                return;
+            }
+        }
         if (!event.getPlacedBlock().is(ModBlocks.THRONE.get())) return;
         if (!(event.getEntity() instanceof ServerPlayer player)) return;
         if (!CrusadeConfig.SERVER.throneMustBeInTownHall.get() || !MineColoniesBridge.isReady()) return;

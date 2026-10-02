@@ -2,6 +2,7 @@ package fr.crusadecraft.network;
 
 import fr.crusadecraft.CrusadeCraft;
 import fr.crusadecraft.network.packet.CharacterActionPacket;
+import fr.crusadecraft.network.packet.CourtPackets;
 import fr.crusadecraft.network.packet.FoundRealmPacket;
 import fr.crusadecraft.network.packet.OpenCharacterPacket;
 import fr.crusadecraft.network.packet.OpenFoundingScreenPacket;
@@ -62,6 +63,28 @@ public final class CrusadeNetwork {
         CHANNEL.messageBuilder(CharacterActionPacket.class, nextId++, NetworkDirection.PLAY_TO_SERVER)
                 .encoder(CharacterActionPacket::encode).decoder(CharacterActionPacket::decode)
                 .consumerMainThread(CharacterActionPacket::handle).add();
+        // P3 : cour
+        CHANNEL.messageBuilder(CourtPackets.OpenCouncil.class, nextId++, NetworkDirection.PLAY_TO_CLIENT)
+                .encoder(CourtPackets.OpenCouncil::encode).decoder(CourtPackets.OpenCouncil::decode)
+                .consumerMainThread(CourtPackets.OpenCouncil::handle).add();
+        CHANNEL.messageBuilder(CourtPackets.OpenMayor.class, nextId++, NetworkDirection.PLAY_TO_CLIENT)
+                .encoder(CourtPackets.OpenMayor::encode).decoder(CourtPackets.OpenMayor::decode)
+                .consumerMainThread(CourtPackets.OpenMayor::handle).add();
+        CHANNEL.messageBuilder(CourtPackets.OpenRequest.class, nextId++, NetworkDirection.PLAY_TO_CLIENT)
+                .encoder(CourtPackets.OpenRequest::encode).decoder(CourtPackets.OpenRequest::decode)
+                .consumerMainThread(CourtPackets.OpenRequest::handle).add();
+        CHANNEL.messageBuilder(CourtPackets.CouncilAction.class, nextId++, NetworkDirection.PLAY_TO_SERVER)
+                .encoder(CourtPackets.CouncilAction::encode).decoder(CourtPackets.CouncilAction::decode)
+                .consumerMainThread(CourtPackets.CouncilAction::handle).add();
+        CHANNEL.messageBuilder(CourtPackets.MayorAction.class, nextId++, NetworkDirection.PLAY_TO_SERVER)
+                .encoder(CourtPackets.MayorAction::encode).decoder(CourtPackets.MayorAction::decode)
+                .consumerMainThread(CourtPackets.MayorAction::handle).add();
+        CHANNEL.messageBuilder(CourtPackets.AnswerRequest.class, nextId++, NetworkDirection.PLAY_TO_SERVER)
+                .encoder(CourtPackets.AnswerRequest::encode).decoder(CourtPackets.AnswerRequest::decode)
+                .consumerMainThread(CourtPackets.AnswerRequest::handle).add();
+        CHANNEL.messageBuilder(CourtPackets.OpenOffice.class, nextId++, NetworkDirection.PLAY_TO_SERVER)
+                .encoder(CourtPackets.OpenOffice::encode).decoder(CourtPackets.OpenOffice::decode)
+                .consumerMainThread(CourtPackets.OpenOffice::handle).add();
     }
 
     public static void toPlayer(ServerPlayer player, Object packet) {

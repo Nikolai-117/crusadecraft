@@ -41,9 +41,11 @@ public class DialogueScreen extends Screen {
         left = (width - W) / 2;
         top = (height - H) / 2;
         List<Button> buttons = new ArrayList<>();
-        Button order = Button.builder(Component.translatable("crusadecraft.dialogue.order"), b -> {}).build();
-        order.active = false;
-        order.setTooltip(Tooltip.create(Component.translatable("crusadecraft.dialogue.order.tip")));
+        Button order = Button.builder(Component.translatable("crusadecraft.dialogue.order"), b ->
+                CrusadeNetwork.toServer(new fr.crusadecraft.network.packet.CourtPackets.OpenOffice(view.ref()))).build();
+        order.active = view.canAct() && view.post() != null && !view.deceased();
+        order.setTooltip(Tooltip.create(Component.translatable(view.post() == null
+                ? "crusadecraft.dialogue.order.none" : "crusadecraft.dialogue.order.tip")));
         buttons.add(order);
         if (view.canAct() && !view.deceased()) {
             buttons.add(act("crusadecraft.action.reward", CharacterService.Action.REWARD, "crusadecraft.action.reward.tip"));

@@ -1,0 +1,12 @@
+{
+  "parent": "minecraft:block/block",
+  "textures": { "wood": "minecraft:block/spruce_planks", "side": "minecraft:block/stripped_spruce_log", "book": "minecraft:block/lectern_top", "quill": "minecraft:block/white_wool", "particle": "minecraft:block/spruce_planks" },
+  "elements": [
+    { "from": [0, 12, 2], "to": [16, 14, 14], "faces": {"north": {"texture": "#wood"}, "south": {"texture": "#wood"}, "east": {"texture": "#wood"}, "west": {"texture": "#wood"}, "up": {"texture": "#wood"}, "down": {"texture": "#wood"}} },
+    { "from": [0, 0, 2], "to": [4, 12, 14], "faces": {"north": {"texture": "#side"}, "south": {"texture": "#side"}, "east": {"texture": "#side"}, "west": {"texture": "#side"}, "up": {"texture": "#side"}, "down": {"texture": "#side"}} },
+    { "from": [12, 0, 2], "to": [16, 12, 14], "faces": {"north": {"texture": "#side"}, "south": {"texture": "#side"}, "east": {"texture": "#side"}, "west": {"texture": "#side"}, "up": {"texture": "#side"}, "down": {"texture": "#side"}} },
+    { "from": [4, 6, 13], "to": [12, 12, 14], "faces": {"north": {"texture": "#side"}, "south": {"texture": "#side"}, "east": {"texture": "#side"}, "west": {"texture": "#side"}, "up": {"texture": "#side"}, "down": {"texture": "#side"}} },
+    { "from": [5, 14, 5], "to": [11, 15, 10], "faces": {"north": {"texture": "#book"}, "south": {"texture": "#book"}, "east": {"texture": "#book"}, "west": {"texture": "#book"}, "up": {"texture": "#book"}, "down": {"texture": "#book"}} },
+    { "from": [11.5, 14, 4], "to": [12.5, 17, 5], "faces": {"north": {"texture": "#quill"}, "south": {"texture": "#quill"}, "east": {"texture": "#quill"}, "west": {"texture": "#quill"}, "up": {"texture": "#quill"}, "down": {"texture": "#quill"}} }
+  ]
+}

@@ -40,6 +40,7 @@ public final class CrusadeCraft {
         event.enqueueWork(() -> {
             CrusadeNetwork.register();
             MineColoniesEvents.register();
+            fr.crusadecraft.core.council.CouncilService.init();
         });
     }
 }

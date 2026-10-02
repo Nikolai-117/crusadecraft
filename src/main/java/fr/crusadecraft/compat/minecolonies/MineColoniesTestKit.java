@@ -66,6 +66,15 @@ public final class MineColoniesTestKit {
         if (data != null) c.getCitizenManager().removeCivilian(data);
     }
 
+    /** Fait apparaître l'entité d'un citoyen à une position (comme à l'arrivée d'un colon). */
+    public static java.util.Optional<net.minecraft.world.entity.Entity> spawnCitizen(CitizenRef ref, ServerLevel level, BlockPos pos) {
+        IColony c = colony(ref.colony());
+        ICitizenData data = c.getCitizenManager().getCivilian(ref.citizenId());
+        if (data == null) return java.util.Optional.empty();
+        c.getCitizenManager().spawnOrCreateCivilian(data, level, java.util.List.of(pos), true);
+        return data.getEntity().map(e -> (net.minecraft.world.entity.Entity) e);
+    }
+
     public static void deleteColony(ColonyRef ref) {
         ResourceKey<Level> key = ResourceKey.create(Registries.DIMENSION, ref.dimension());
         IMinecoloniesAPI.getInstance().getColonyManager().deleteColonyByDimension(ref.colonyId(), false, key);
