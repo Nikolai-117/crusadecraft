@@ -1,0 +1,11 @@
+{
+  "name": "crusadecraft.codex.name",
+  "landing_text": "crusadecraft.codex.landing",
+  "version": 1,
+  "i18n": true,
+  "use_resource_pack": true,
+  "show_progress": false,
+  "book_texture": "patchouli:textures/gui/book_brown.png",
+  "model": "patchouli:book_brown",
+  "subtitle": "crusadecraft.codex.subtitle"
+}

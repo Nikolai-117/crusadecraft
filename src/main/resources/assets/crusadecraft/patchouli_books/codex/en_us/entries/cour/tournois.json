@@ -1,0 +1,12 @@
+{
+  "name": "crusadecraft.codex.tournois",
+  "icon": "crusadecraft:tournament",
+  "category": "crusadecraft:cour",
+  "sortnum": 10,
+  "pages": [
+    {
+      "type": "patchouli:text",
+      "text": "crusadecraft.codex.tournois.p0"
+    }
+  ]
+}

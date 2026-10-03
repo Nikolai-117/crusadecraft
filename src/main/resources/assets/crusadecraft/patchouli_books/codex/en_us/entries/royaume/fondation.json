@@ -1,0 +1,16 @@
+{
+  "name": "crusadecraft.codex.fondation",
+  "icon": "crusadecraft:throne",
+  "category": "crusadecraft:royaume",
+  "sortnum": 0,
+  "pages": [
+    {
+      "type": "patchouli:text",
+      "text": "crusadecraft.codex.fondation.p0"
+    },
+    {
+      "type": "patchouli:text",
+      "text": "crusadecraft.codex.fondation.p1"
+    }
+  ]
+}

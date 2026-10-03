@@ -1,0 +1,16 @@
+{
+  "name": "crusadecraft.codex.conseil",
+  "icon": "crusadecraft:council_table",
+  "category": "crusadecraft:royaume",
+  "sortnum": 1,
+  "pages": [
+    {
+      "type": "patchouli:text",
+      "text": "crusadecraft.codex.conseil.p0"
+    },
+    {
+      "type": "patchouli:text",
+      "text": "crusadecraft.codex.conseil.p1"
+    }
+  ]
+}

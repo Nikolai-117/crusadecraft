@@ -50,7 +50,7 @@ public final class WorldShots {
     private static final boolean ENABLED = Boolean.getBoolean("crusadecraft.worldshots");
     private static final String WORLD = "crusadecraft-shots";
 
-    private enum Step { BOOT, LOADING, SETUP, WALL, MAP, SHEET, HERALD, REALM, LETTER, SEAL, CHANCERY, COLOMBIER, WAR, SIEGE, CAPTURE, CAPTURED, WAR_TABLE, RAID, DONE }
+    private enum Step { BOOT, LOADING, SETUP, WALL, MAP, SHEET, HERALD, REALM, LETTER, SEAL, CHANCERY, COLOMBIER, TOWNHALL, TOWNHALL_CLICK, WAR, SIEGE, CAPTURE, CAPTURED, WAR_TABLE, RAID, DONE }
 
     private static Step step = Step.BOOT;
     private static int wait;
@@ -158,6 +158,34 @@ public final class WorldShots {
             }
             case COLOMBIER -> {
                 grab(mc, "colombier_reel");
+                mc.setScreen(null);
+                // La fenêtre de l'Hôtel de ville de MineColonies, avec le bouton CrusadeCraft.
+                var realm = fr.crusadecraft.core.realm.RealmService.realmOf(mc.getSingleplayerServer(), mc.player.getUUID());
+                boolean opened = realm.isPresent() && fr.crusadecraft.compat.minecolonies.MineColoniesClientKit.openTownHall(realm.get().capital());
+                CrusadeCraft.LOGGER.info("WorldShots : fenêtre de l'Hôtel de ville {}", opened ? "ouverte" : "introuvable");
+                step = Step.TOWNHALL;
+                wait = 40;
+            }
+            case TOWNHALL -> {
+                if (mc.screen != null) {
+                    StringBuilder chain = new StringBuilder();
+                    for (Class<?> c = mc.screen.getClass(); c != null; c = c.getSuperclass()) chain.append(c.getName()).append(" < ");
+                    CrusadeCraft.LOGGER.info("WorldShots : écran {} ({} x {}) ; Hôtel de ville reconnu : {}", chain, mc.screen.width,
+                            mc.screen.height, fr.crusadecraft.compat.minecolonies.TownHallButton.isTownHall(mc.screen));
+                }
+                grab(mc, "hotel_de_ville");
+                // Un clic simulé sur le bouton « Mon royaume » : le menu royal doit s'ouvrir.
+                if (mc.screen != null) {
+                    double cx = mc.getWindow().getGuiScaledWidth() - 6 - 52, cy = 15;
+                    boolean handled = net.minecraftforge.client.ForgeHooksClient.onScreenMouseClickedPre(mc.screen, cx, cy, 0);
+                    CrusadeCraft.LOGGER.info("WorldShots : clic sur le bouton de l'Hôtel de ville {}", handled ? "intercepté" : "ignoré");
+                }
+                step = Step.TOWNHALL_CLICK;
+                wait = 30;
+            }
+            case TOWNHALL_CLICK -> {
+                CrusadeCraft.LOGGER.info("WorldShots : après le clic, écran {}", mc.screen == null ? "aucun" : mc.screen.getClass().getSimpleName());
+                grab(mc, "menu_depuis_hotel");
                 mc.setScreen(null);
                 MinecraftServer server = mc.getSingleplayerServer();
                 server.execute(() -> declareWar(server));

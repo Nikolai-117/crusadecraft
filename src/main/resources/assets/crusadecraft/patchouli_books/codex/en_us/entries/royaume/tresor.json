@@ -1,0 +1,16 @@
+{
+  "name": "crusadecraft.codex.tresor",
+  "icon": "crusadecraft:treasury",
+  "category": "crusadecraft:royaume",
+  "sortnum": 2,
+  "pages": [
+    {
+      "type": "patchouli:text",
+      "text": "crusadecraft.codex.tresor.p0"
+    },
+    {
+      "type": "patchouli:text",
+      "text": "crusadecraft.codex.tresor.p1"
+    }
+  ]
+}

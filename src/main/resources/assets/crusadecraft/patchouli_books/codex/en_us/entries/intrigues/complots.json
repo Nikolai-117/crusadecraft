@@ -1,0 +1,16 @@
+{
+  "name": "crusadecraft.codex.complots",
+  "icon": "minecraft:spyglass",
+  "category": "crusadecraft:intrigues",
+  "sortnum": 8,
+  "pages": [
+    {
+      "type": "patchouli:text",
+      "text": "crusadecraft.codex.complots.p0"
+    },
+    {
+      "type": "patchouli:text",
+      "text": "crusadecraft.codex.complots.p1"
+    }
+  ]
+}

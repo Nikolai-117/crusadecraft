@@ -1,0 +1,12 @@
+{
+  "name": "crusadecraft.codex.evenements",
+  "icon": "minecraft:writable_book",
+  "category": "crusadecraft:intrigues",
+  "sortnum": 7,
+  "pages": [
+    {
+      "type": "patchouli:text",
+      "text": "crusadecraft.codex.evenements.p0"
+    }
+  ]
+}

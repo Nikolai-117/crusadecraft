@@ -153,6 +153,27 @@ public final class RealmService {
         }
     }
 
+    /**
+     * La Borne de frontière posée dans une autre colonie que le souverain possède : elle devient une province de
+     * son royaume. Rien ne change côté MineColonies (CrusadeCraft ne crée ni ne transfère jamais de colonie).
+     * Renvoie le message à afficher, ou rien si la borne reste décorative (colonie déjà dans le royaume…).
+     */
+    public static Optional<Component> annexOwnColony(ServerPlayer player, ColonyRef colony) {
+        Optional<Realm> found = realmOf(player.server, player.getUUID());
+        if (found.isEmpty() || !found.get().state().isActive()) return Optional.empty();
+        Realm realm = found.get();
+        if (realm.holds(colony)) return Optional.empty();
+        if (!MineColoniesBridge.isOwner(colony, player.getUUID())) return Optional.of(Component.translatable("crusadecraft.annex.not_owner"));
+        if (CrusadeSavedData.get(player.server).realmHolding(colony).isPresent()) return Optional.of(Component.translatable("crusadecraft.annex.taken"));
+        realm.addProvince(colony);
+        CrusadeSavedData.get(player.server).setDirty();
+        String name = MineColoniesBridge.info(colony).name();
+        fr.crusadecraft.core.intrigue.Chronicle.record(player.server, realm, "crusadecraft.chronicle.annexed", Component.literal(name));
+        CrusadeNetwork.toPlayer(player, ToastPacket.of(ToastPacket.Kind.REALM, Component.translatable("crusadecraft.toast.annexed.title"),
+                Component.translatable("crusadecraft.toast.annexed.body", name, realm.name())));
+        return Optional.of(Component.translatable("crusadecraft.annex.done", name));
+    }
+
     /** Une colonie vient d'être supprimée dans MineColonies (elle peut encore être visible un instant). */
     public static void onColonyDeleted(MinecraftServer server, ColonyRef colony) {
         CrusadeSavedData.get(server).forgetColony(colony);

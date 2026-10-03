@@ -1,0 +1,16 @@
+{
+  "name": "crusadecraft.codex.maison",
+  "icon": "minecraft:golden_helmet",
+  "category": "crusadecraft:cour",
+  "sortnum": 11,
+  "pages": [
+    {
+      "type": "patchouli:text",
+      "text": "crusadecraft.codex.maison.p0"
+    },
+    {
+      "type": "patchouli:text",
+      "text": "crusadecraft.codex.maison.p1"
+    }
+  ]
+}

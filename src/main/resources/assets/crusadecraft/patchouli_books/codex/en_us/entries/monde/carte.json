@@ -1,0 +1,12 @@
+{
+  "name": "crusadecraft.codex.carte",
+  "icon": "crusadecraft:war_map",
+  "category": "crusadecraft:monde",
+  "sortnum": 3,
+  "pages": [
+    {
+      "type": "patchouli:text",
+      "text": "crusadecraft.codex.carte.p0"
+    }
+  ]
+}

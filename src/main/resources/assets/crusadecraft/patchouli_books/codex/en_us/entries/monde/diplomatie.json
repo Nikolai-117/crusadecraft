@@ -1,0 +1,16 @@
+{
+  "name": "crusadecraft.codex.diplomatie",
+  "icon": "crusadecraft:colombier",
+  "category": "crusadecraft:monde",
+  "sortnum": 4,
+  "pages": [
+    {
+      "type": "patchouli:text",
+      "text": "crusadecraft.codex.diplomatie.p0"
+    },
+    {
+      "type": "patchouli:text",
+      "text": "crusadecraft.codex.diplomatie.p1"
+    }
+  ]
+}

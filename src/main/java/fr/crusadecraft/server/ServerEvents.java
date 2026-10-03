@@ -135,11 +135,16 @@ public final class ServerEvents {
         }
     }
 
-    /** Ce qu'on pose en territoire ennemi (échelles, barricades) sera retiré à la paix. */
+    /** Ce qu'on pose en territoire ennemi (échelles, barricades) sera retiré à la paix. Une Borne de frontière annexe une colonie. */
     @SubscribeEvent(priority = EventPriority.LOWEST)
     public static void onPlaceInWar(BlockEvent.EntityPlaceEvent event) {
         if (event.isCanceled() || !(event.getEntity() instanceof ServerPlayer player) || !(event.getLevel() instanceof Level level)) return;
         WarFieldService.onPlace(player.server, player, level, event.getPos(), event.getBlockSnapshot().getReplacedBlock());
+        if (event.getPlacedBlock().is(ModBlocks.BOUNDARY_STONE.get()) && MineColoniesBridge.isReady()) {
+            MineColoniesBridge.colonyAt(level, event.getPos())
+                    .flatMap(c -> RealmService.annexOwnColony(player, c))
+                    .ifPresent(msg -> player.displayClientMessage(msg, true));
+        }
     }
 
     @SubscribeEvent

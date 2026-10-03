@@ -364,3 +364,25 @@ Les compétences vont de 1 à 99 : un citoyen débutant obtient 1 à 5, un exper
   sceller. Les maisons s'unissent (+20 d'opinion durable) et signent une alliance défensive. Les IA bien
   disposées proposent elles-mêmes des mariages. Le Colombier reste inchangé : les mariages se demandent depuis
   l'écran de la Maison (bouton dans l'onglet Royaume du menu royal).
+
+**P11 (3 octobre 2026)**
+
+- **Bouton « Mon royaume » sur la fenêtre de l'Hôtel de ville** de MineColonies, sans mixin : la fenêtre est un
+  écran BlockUI qu'on ne modifie pas ; on dessine le bouton par-dessus et on intercepte son clic. Deux pièges,
+  trouvés en monde réel : BlockUI garde le test de profondeur actif (il faut dessiner devant, sans profondeur),
+  et il donne à son écran sa propre largeur (524 au lieu de 427) — le bouton se cale donc sur la largeur de la
+  fenêtre du jeu. Si une version de MineColonies change sa fenêtre, le bouton disparaît simplement.
+- **Codex Patchouli** « Codex de CrusadeCraft » : cinq chapitres (royaume, monde, guerre, intrigues, cour), en
+  français et en anglais. Il n'existe que si Patchouli est installé (recette conditionnelle : livre, pépite
+  d'or, plume) ; CrusadeCraft n'en dépend pas.
+- **Annexer ses propres colonies** : la Borne de frontière, posée dans une autre colonie dont on est
+  propriétaire, en fait une province du royaume (rien ne change côté MineColonies). C'était le seul moyen qui
+  manquait pour grandir avec plusieurs colonies.
+- **Non faits, et pourquoi** : les armées IA pilotées par les commandes de Hundred Years War (le mod n'a pas
+  d'API publique pour commander ses unités ; ses troupes servent déjà aux sièges et aux raids) ; JourneyMap
+  (optionnel, absent de l'instance, qui utilise les cartes de Xaero, elles aussi sans API pour colorer des
+  territoires).
+- **Performances** : tout ce qui est lourd tourne une fois par jour du monde (IA, intrigues, campagne) ; les
+  tâches fréquentes (sièges chaque seconde, restauration des blocs) ne parcourent que les guerres en cours, et
+  l'anti-grief ne calcule rien en temps de paix. La simulation de 60 jours d'IA reste instantanée en GameTest.
+- **Traductions** : 1 470 clés, toutes présentes en français et en anglais.
