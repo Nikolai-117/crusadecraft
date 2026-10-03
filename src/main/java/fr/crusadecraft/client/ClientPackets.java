@@ -129,6 +129,13 @@ public final class ClientPackets {
         else if (open) mc.setScreen(new fr.crusadecraft.client.screen.ChanceryScreen(view));
     }
 
+    public static void war(fr.crusadecraft.core.war.WarView view, boolean open) {
+        Minecraft mc = Minecraft.getInstance();
+        if (mc.screen instanceof fr.crusadecraft.client.screen.WarScreen screen) screen.refresh(view);
+        else if (mc.screen instanceof RealmScreen realm && !open) realm.setWar(view);
+        else if (open) mc.setScreen(new fr.crusadecraft.client.screen.WarScreen(view));
+    }
+
     public static void openLetter(net.minecraft.world.item.ItemStack stack) {
         Minecraft.getInstance().setScreen(new fr.crusadecraft.client.screen.LetterScreen(fr.crusadecraft.item.LetterItem.data(stack).copy()));
     }

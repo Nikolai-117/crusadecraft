@@ -173,8 +173,8 @@ class WorldLogicTest {
                 0x1F4E9C, "Romain", false, null, 20);
         MapView.Territory ai = new MapView.Territory(UUID.randomUUID(), true, false, "Valcourt", TitleRank.COMTE,
                 0xB3261E, "Aldric", false, AiPersonality.MARCHAND, 40);
-        List<MapView.Seat> seats = List.of(new MapView.Seat(0, "Valbrume", 0, 0, true, 0, false),
-                new MapView.Seat(1, "Valcourt", 400, 0, true, 0, true));
+        List<MapView.Seat> seats = List.of(new MapView.Seat(0, "Valbrume", 0, 0, true, 0, false, false),
+                new MapView.Seat(1, "Valcourt", 400, 0, true, 0, true, true));
         MapView v = new MapView(OW, 0, 0, 0, 0, 160, 110, List.of(mine, ai), seats, List.of(new MapView.Dejure("Ambrevent", 0xC0A060)));
         // Un pixel = 10 blocs, carte de 200 × 100 centrée sur (200, 0).
         MapRaster.Result r = MapRaster.render(v, 200, 100, 200, 0, 10, false);

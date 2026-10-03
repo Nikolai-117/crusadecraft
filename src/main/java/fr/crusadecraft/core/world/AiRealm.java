@@ -86,9 +86,21 @@ public final class AiRealm {
         return provinces.isEmpty() ? null : provinces.get(0);
     }
 
+    /** Les provinces qu'il tient encore (les autres ont été conquises). */
+    public java.util.List<AiProvince> ownProvinces() {
+        java.util.List<AiProvince> out = new java.util.ArrayList<>();
+        for (AiProvince p : provinces) if (p.holder() == null || p.holder().equals(id)) out.add(p);
+        return out;
+    }
+
+    /** Un royaume sans plus aucune terre. */
+    public boolean landless() {
+        return ownProvinces().isEmpty();
+    }
+
     public int population() {
         int sum = 0;
-        for (AiProvince p : provinces) sum += p.population();
+        for (AiProvince p : ownProvinces()) sum += p.population();
         return sum;
     }
 

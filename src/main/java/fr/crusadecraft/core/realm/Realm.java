@@ -51,6 +51,9 @@ public final class Realm {
     private LawState laws = new LawState();
     /** Livre de comptes des derniers jours. */
     private Ledger ledger = new Ledger();
+    /** L'armée : levée ou non, et les hommes qu'il reste (ils se reconstituent en temps de paix). */
+    private boolean armyRaised;
+    private int armyMen = -1;
     /** Provinces IA revendiquées (identifiants de province). */
     private final java.util.Set<Integer> claims = new java.util.LinkedHashSet<>();
     /** Lettres en route ou arrivées au Colombier, et celles qui attendent une réponse. */
@@ -112,6 +115,11 @@ public final class Realm {
     public LawState laws() { return laws; }
     public Ledger ledger() { return ledger; }
     public java.util.Set<Integer> claims() { return claims; }
+    public boolean armyRaised() { return armyRaised; }
+    public void setArmyRaised(boolean raised) { this.armyRaised = raised; }
+    /** Hommes disponibles ; {@code -1} tant qu'on ne les a jamais comptés. */
+    public int armyMen() { return armyMen; }
+    public void setArmyMen(int men) { this.armyMen = men; }
     public List<fr.crusadecraft.core.diplomacy.Letter> mail() { return mail; }
 
     /** Le poste qu'occupe ce citoyen dans ce royaume, s'il en a un. */
@@ -193,6 +201,8 @@ public final class Realm {
         tag.put("laws", laws.save());
         tag.put("ledger", ledger.save());
         tag.putIntArray("claims", claims.stream().mapToInt(Integer::intValue).toArray());
+        tag.putBoolean("armyRaised", armyRaised);
+        tag.putInt("armyMen", armyMen);
         ListTag mailTag = new ListTag();
         for (fr.crusadecraft.core.diplomacy.Letter l : mail) mailTag.add(l.save());
         tag.put("mail", mailTag);
@@ -231,6 +241,8 @@ public final class Realm {
         realm.laws = LawState.load(tag.getCompound("laws"));
         realm.ledger = Ledger.load(tag, "ledger");
         for (int c : tag.getIntArray("claims")) realm.claims.add(c);
+        realm.armyRaised = tag.getBoolean("armyRaised");
+        realm.armyMen = tag.contains("armyMen") ? tag.getInt("armyMen") : -1;
         ListTag mailTag = tag.getList("mail", Tag.TAG_COMPOUND);
         for (int i = 0; i < mailTag.size(); i++) {
             try {

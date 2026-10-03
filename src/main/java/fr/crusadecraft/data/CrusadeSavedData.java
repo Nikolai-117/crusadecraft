@@ -29,7 +29,7 @@ import java.util.UUID;
  */
 public final class CrusadeSavedData extends AtomicSavedData {
     public static final String FILE_NAME = CrusadeCraft.MOD_ID;
-    public static final int DATA_VERSION = 6;
+    public static final int DATA_VERSION = 7;
 
     private final Map<UUID, Realm> realms = new LinkedHashMap<>();
     private final Map<CitizenRef, CharacterRecord> characters = new LinkedHashMap<>();
@@ -37,6 +37,8 @@ public final class CrusadeSavedData extends AtomicSavedData {
     private fr.crusadecraft.core.world.WorldState world = new fr.crusadecraft.core.world.WorldState();
     /** Relations entre royaumes : traités, vassalité, tributs, opinions. */
     private fr.crusadecraft.core.diplomacy.Diplomacy diplomacy = new fr.crusadecraft.core.diplomacy.Diplomacy();
+    /** Guerres en cours et registre des dégâts. */
+    private fr.crusadecraft.core.war.WarState wars = new fr.crusadecraft.core.war.WarState();
 
     public static CrusadeSavedData get(MinecraftServer server) {
         return server.getLevel(Level.OVERWORLD).getDataStorage()
@@ -72,6 +74,7 @@ public final class CrusadeSavedData extends AtomicSavedData {
             CrusadeCraft.LOGGER.error("CrusadeCraft : royaumes IA illisibles, ils seront régénérés", e);
         }
         data.diplomacy = fr.crusadecraft.core.diplomacy.Diplomacy.load(migrated, "diplomacy");
+        data.wars = fr.crusadecraft.core.war.WarState.load(migrated.getCompound("wars"));
         return data;
     }
 
@@ -86,6 +89,7 @@ public final class CrusadeSavedData extends AtomicSavedData {
         tag.put("characters", chars);
         tag.put("world", world.save());
         tag.put("diplomacy", diplomacy.save());
+        tag.put("wars", wars.save());
         return tag;
     }
 
@@ -95,6 +99,10 @@ public final class CrusadeSavedData extends AtomicSavedData {
 
     public fr.crusadecraft.core.diplomacy.Diplomacy diplomacy() {
         return diplomacy;
+    }
+
+    public fr.crusadecraft.core.war.WarState wars() {
+        return wars;
     }
 
     public Collection<Realm> realms() {

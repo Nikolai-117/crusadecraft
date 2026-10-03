@@ -32,6 +32,8 @@ public final class Relation {
     /** Opinion que chacun porte à l'autre (clé : celui qui juge). */
     private final Map<UUID, List<OpinionModifier>> opinion = new HashMap<>();
     private long lastAiLetterDay = Long.MIN_VALUE;
+    /** Pas de guerre entre eux avant ce jour (après une paix). */
+    private long truceUntil = Long.MIN_VALUE;
 
     public Relation(UUID x, UUID y) {
         if (x.compareTo(y) <= 0) {
@@ -159,6 +161,13 @@ public final class Relation {
         for (List<OpinionModifier> list : opinion.values()) list.removeIf(m -> m.expired(today));
     }
 
+    public long truceUntil() { return truceUntil; }
+    public void setTruceUntil(long day) { this.truceUntil = day; }
+
+    public boolean truce(long today) {
+        return truceUntil > today;
+    }
+
     public long lastAiLetterDay() { return lastAiLetterDay; }
     public void setLastAiLetterDay(long day) { this.lastAiLetterDay = day; }
 
@@ -199,6 +208,7 @@ public final class Relation {
         }
         t.put("opinion", op);
         t.putLong("aiLetter", lastAiLetterDay);
+        t.putLong("truce", truceUntil);
         return t;
     }
 
@@ -235,6 +245,7 @@ public final class Relation {
             }
         }
         r.lastAiLetterDay = t.contains("aiLetter") ? t.getLong("aiLetter") : Long.MIN_VALUE;
+        r.truceUntil = t.contains("truce") ? t.getLong("truce") : Long.MIN_VALUE;
         return r;
     }
 }

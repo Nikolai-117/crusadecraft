@@ -9,6 +9,8 @@ public enum LedgerCategory {
     VASSAUX(true),
     TRIBUTS(true),
     COMMERCE(true),
+    CONQUETES(true),
+    BUTIN(true),
     DEPOTS(true),
     RETRAITS(false),
     SALAIRES(false),
@@ -17,6 +19,8 @@ public enum LedgerCategory {
     RECOMPENSES(false),
     DIPLOMATIE(false),
     TITRES(false),
+    ARMEE(false),
+    PILLAGE(false),
     AUTRES(false);
 
     private final boolean income;

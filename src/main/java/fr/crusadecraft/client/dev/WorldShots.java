@@ -50,7 +50,7 @@ public final class WorldShots {
     private static final boolean ENABLED = Boolean.getBoolean("crusadecraft.worldshots");
     private static final String WORLD = "crusadecraft-shots";
 
-    private enum Step { BOOT, LOADING, SETUP, WALL, MAP, SHEET, HERALD, REALM, LETTER, SEAL, CHANCERY, COLOMBIER, DONE }
+    private enum Step { BOOT, LOADING, SETUP, WALL, MAP, SHEET, HERALD, REALM, LETTER, SEAL, CHANCERY, COLOMBIER, WAR, SIEGE, CAPTURE, CAPTURED, WAR_TABLE, RAID, DONE }
 
     private static Step step = Step.BOOT;
     private static int wait;
@@ -62,6 +62,8 @@ public final class WorldShots {
     public static void onTick(TickEvent.ClientTickEvent event) {
         if (!ENABLED || event.phase != TickEvent.Phase.END) return;
         Minecraft mc = Minecraft.getInstance();
+        // La fenêtre peut perdre le focus pendant les prises : le menu pause ne doit pas masquer les captures.
+        if (mc.screen instanceof net.minecraft.client.gui.screens.PauseScreen) mc.setScreen(null);
         if (wait > 0) {
             wait--;
             return;
@@ -156,6 +158,42 @@ public final class WorldShots {
             }
             case COLOMBIER -> {
                 grab(mc, "colombier_reel");
+                mc.setScreen(null);
+                MinecraftServer server = mc.getSingleplayerServer();
+                server.execute(() -> declareWar(server));
+                step = Step.WAR;
+                wait = 90;
+            }
+            case WAR -> {
+                // Le siège a commencé : garnison et bannière devant le joueur.
+                grab(mc, "siege");
+                MinecraftServer server = mc.getSingleplayerServer();
+                server.execute(() -> stormBanner(server));
+                step = Step.SIEGE;
+                wait = 110;
+            }
+            case SIEGE -> {
+                grab(mc, "prise_banniere");
+                step = Step.CAPTURE;
+                wait = 130;
+            }
+            case CAPTURE -> {
+                grab(mc, "place_prise");
+                MinecraftServer server = mc.getSingleplayerServer();
+                server.execute(() -> fr.crusadecraft.network.packet.WarPackets.sendWar(server.getPlayerList().getPlayers().get(0), true));
+                step = Step.CAPTURED;
+                wait = 30;
+            }
+            case CAPTURED -> {
+                grab(mc, "table_guerre_reelle");
+                mc.setScreen(null);
+                MinecraftServer server = mc.getSingleplayerServer();
+                server.execute(() -> callRaid(server));
+                step = Step.WAR_TABLE;
+                wait = 90;
+            }
+            case WAR_TABLE -> {
+                grab(mc, "raid");
                 step = Step.DONE;
                 wait = 20;
             }
@@ -256,6 +294,53 @@ public final class WorldShots {
         fr.crusadecraft.core.diplomacy.DiplomacyService.propose(player, barony.id(),
                 fr.crusadecraft.core.diplomacy.DiplomacyRules.Proposal.VASSALISATION, 15, 10);
         fr.crusadecraft.core.diplomacy.DiplomacyService.takeMail(player);
+    }
+
+    private static java.util.UUID enemy;
+
+    /** Guerre (humiliation) contre un royaume qui n'est pas notre vassal, armée levée, puis on marche sur sa capitale. */
+    private static void declareWar(MinecraftServer server) {
+        ServerPlayer player = server.getPlayerList().getPlayers().get(0);
+        server.setDifficulty(Difficulty.NORMAL, true);
+        var data = CrusadeSavedData.get(server);
+        var realm = fr.crusadecraft.core.realm.RealmService.realmOf(server, player.getUUID()).orElseThrow();
+        long today = fr.crusadecraft.core.realm.RealmService.currentDay(server);
+        AiRealm target = data.world().realms().stream()
+                .filter(r -> data.diplomacy().suzerainOf(r.id()).isEmpty() && !r.landless())
+                .findFirst().orElseThrow();
+        target.discover(player.getUUID(), today);
+        enemy = target.id();
+        data.diplomacy().between(target.id(), realm.id()).setHostile(true);
+        var out = fr.crusadecraft.core.war.WarService.declare(player, target.id(), fr.crusadecraft.core.war.CasusBelli.HUMILIATE, -1);
+        CrusadeCraft.LOGGER.info("WorldShots : déclaration — {}", out.message().getString());
+        realm.setArmyMen(60);
+        fr.crusadecraft.core.war.WarService.raise(player, true);
+        AiProvince capital = target.capital();
+        player.connection.teleport(capital.seat().getX() + 0.5, capital.seat().getY() + 1, capital.seat().getZ() + 16.5, 180f, 8f);
+    }
+
+    /** La garnison tombe ; le joueur se poste au pied de la bannière. */
+    private static void stormBanner(MinecraftServer server) {
+        ServerPlayer player = server.getPlayerList().getPlayers().get(0);
+        var source = server.createCommandSourceStack().withSuppressedOutput();
+        for (String type : new String[]{"vindicator", "pillager"}) {
+            server.getCommands().performPrefixedCommand(source, "kill @e[tag=" + fr.crusadecraft.core.war.WarFieldService.TAG + ",type=minecraft:" + type + "]");
+        }
+        AiProvince capital = CrusadeSavedData.get(server).world().realm(enemy).orElseThrow().capital();
+        BlockPos banner = fr.crusadecraft.core.war.WarFieldService.bannerOf(capital.id()).orElse(capital.seat());
+        CrusadeCraft.LOGGER.info("WorldShots : bannière du siège en {}", banner.toShortString());
+        player.connection.teleport(banner.getX() + 0.5, banner.getY(), banner.getZ() + 3.5, 180f, 25f);
+    }
+
+    /** Retour à la capitale ; le prochain raid ennemi est avancé à maintenant. */
+    private static void callRaid(MinecraftServer server) {
+        ServerPlayer player = server.getPlayerList().getPlayers().get(0);
+        var data = CrusadeSavedData.get(server);
+        var realm = fr.crusadecraft.core.realm.RealmService.realmOf(server, player.getUUID()).orElseThrow();
+        var center = fr.crusadecraft.compat.minecolonies.MineColoniesBridge.center(realm.capital()).orElse(player.blockPosition());
+        player.connection.teleport(center.getX() + 0.5, center.getY() + 1, center.getZ() + 4.5, 180f, 0f);
+        long interval = fr.crusadecraft.config.CrusadeConfig.SERVER.raidMinutes.get() * 1200L;
+        data.wars().between(realm.id(), enemy).ifPresent(w -> w.setLastRaidTick(player.serverLevel().getGameTime() - interval - 1));
     }
 
     private static void grab(Minecraft mc, String name) {

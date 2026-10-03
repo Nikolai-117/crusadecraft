@@ -33,12 +33,12 @@ public final class TitleService {
 
     private TitleService() {}
 
-    /** Les provinces d'un royaume : ses colonies, et celles de ses vassaux. */
+    /** Les provinces d'un royaume : ses colonies, ses conquêtes, et les terres de ses vassaux. */
     public static int provinces(MinecraftServer server, Realm realm) {
         CrusadeSavedData data = CrusadeSavedData.get(server);
-        int n = realm.allColonies().size();
+        int n = realm.allColonies().size() + fr.crusadecraft.core.war.WarService.provincesOf(server, realm.id()).size();
         for (UUID vassal : data.diplomacy().vassalsOf(realm.id())) {
-            n += data.world().realm(vassal).map(a -> a.provinces().size())
+            n += data.world().realm(vassal).map(a -> a.ownProvinces().size())
                     .orElseGet(() -> data.realm(vassal).map(r -> r.allColonies().size()).orElse(0));
         }
         return n;
@@ -179,7 +179,7 @@ public final class TitleService {
             Optional<AiRealm> ai = data.world().realm(v);
             if (ai.isPresent()) {
                 AiRealm a = ai.get();
-                vassals.add(new ChanceryView.Vassal(a.id(), true, a.place(), a.rank(), a.color(), a.provinces().size(), rel.vassalTax(),
+                vassals.add(new ChanceryView.Vassal(a.id(), true, a.place(), a.rank(), a.color(), a.ownProvinces().size(), rel.vassalTax(),
                         rel.vassalLevy(), DiplomacyService.opinion(server, a, realm), Math.round(a.lastIncome() * rel.vassalTax() / 100.0)));
             } else {
                 data.realm(v).ifPresent(o -> vassals.add(new ChanceryView.Vassal(o.id(), false, o.name(), o.rank(), o.color(),
@@ -191,6 +191,7 @@ public final class TitleService {
         for (AiRealm r : data.world().realms()) {
             if (!r.discoveredBy(player.getUUID()) || data.diplomacy().find(r.id(), realm.id()).map(x -> x.isVassalOf(r.id(), realm.id())).orElse(false)) continue;
             for (AiProvince p : r.provinces()) {
+                if (realm.id().equals(p.holder())) continue;
                 int distance = (int) Math.sqrt(p.distanceSqr(player.getX(), player.getZ()));
                 ChanceryView.Claim c = new ChanceryView.Claim(p.id(), p.name(), r.place(), r.rank(), distance);
                 if (realm.claims().contains(p.id())) claims.add(c);

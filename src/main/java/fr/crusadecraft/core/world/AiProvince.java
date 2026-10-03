@@ -36,6 +36,8 @@ public final class AiProvince {
     private final int dejureKingdom;
     private int population;
     private int development;
+    /** Le royaume qui la tient, s'il n'est pas le sien (conquête) ; {@code null} sinon. */
+    private java.util.UUID holder;
 
     public AiProvince(int id, String name, ResourceLocation dimension, BlockPos seat, Anchor anchor, boolean capital,
                       int dejureKingdom, int population, int development) {
@@ -60,6 +62,14 @@ public final class AiProvince {
     public int population() { return population; }
     public int development() { return development; }
 
+    public java.util.UUID holder() { return holder; }
+    public void setHolder(java.util.UUID holder) { this.holder = holder; }
+
+    /** Revenu quotidien de la province, pour qui la tient. */
+    public long income() {
+        return Math.round(population / 4.0 + development / 5.0);
+    }
+
     public void setPopulation(int population) { this.population = Math.max(1, population); }
     public void setDevelopment(int development) { this.development = Math.max(0, Math.min(100, development)); }
 
@@ -79,6 +89,7 @@ public final class AiProvince {
         t.putInt("dejure", dejureKingdom);
         t.putInt("population", population);
         t.putInt("development", development);
+        if (holder != null) t.putUUID("holder", holder);
         return t;
     }
 
@@ -90,8 +101,10 @@ public final class AiProvince {
             anchor = Anchor.LAND;
         }
         ResourceLocation dim = ResourceLocation.tryParse(t.getString("dim"));
-        return new AiProvince(t.getInt("id"), t.getString("name"), dim == null ? ResourceLocation.tryParse("minecraft:overworld") : dim,
+        AiProvince p = new AiProvince(t.getInt("id"), t.getString("name"), dim == null ? ResourceLocation.tryParse("minecraft:overworld") : dim,
                 NbtUtils.readBlockPos(t.getCompound("seat")), anchor, t.getBoolean("capital"), t.getInt("dejure"),
                 t.getInt("population"), t.getInt("development"));
+        if (t.hasUUID("holder")) p.holder = t.getUUID("holder");
+        return p;
     }
 }

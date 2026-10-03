@@ -137,6 +137,31 @@ public final class UiShots {
             s.setChancery(sampleChancery());
             return s;
         }, null));
+        fr.crusadecraft.core.war.WarView war = sampleWar();
+        list.add(new Shot("table_guerre", () -> {
+            fr.crusadecraft.client.screen.WarScreen s = new fr.crusadecraft.client.screen.WarScreen(war);
+            s.select(war.wars().get(0).id());
+            return s;
+        }, null));
+        list.add(new Shot("table_guerre_cible", () -> {
+            fr.crusadecraft.client.screen.WarScreen s = new fr.crusadecraft.client.screen.WarScreen(war);
+            s.select(war.targets().get(1).party().id());
+            return s;
+        }, null));
+        list.add(new Shot("table_guerre_allie", () -> {
+            fr.crusadecraft.client.screen.WarScreen s = new fr.crusadecraft.client.screen.WarScreen(war);
+            s.select(war.targets().get(2).party().id());
+            return s;
+        }, null));
+        list.add(new Shot("menu_guerre", () -> {
+            RealmScreen s = RealmScreen.withTab(view, RealmScreen.Tab.GUERRE);
+            s.setWar(war);
+            return s;
+        }, null));
+        list.add(new Shot("notification_raid", TitleScreen::new, () -> Minecraft.getInstance().getToasts().addToast(
+                new CrusadeToast(ToastPacket.Kind.ALERT, Component.translatable("crusadecraft.toast.war.raid.title"),
+                        Component.translatable("crusadecraft.toast.war.raid.body", fr.crusadecraft.core.world.AiNames.realmOf(TitleRank.COMTE, "Ambrevent"),
+                                "Hautemarche", 6)))));
         list.add(new Shot("objets", () -> new ItemShowcaseScreen(List.of(new ItemStack(ModItems.THRONE.get()),
                 new ItemStack(ModItems.REGISTRE.get()), new ItemStack(ModItems.SCEPTRE.get()),
                 new ItemStack(ModItems.COUNCIL_TABLE.get()), new ItemStack(ModItems.COUNCIL_SEAT.get()),
@@ -278,6 +303,48 @@ public final class UiShots {
                 1250, 140, true, "", true, vassals, claims, candidates, 7, 62);
     }
 
+    private static fr.crusadecraft.core.war.WarView sampleWar() {
+        UUID me = UUID.randomUUID(), ambrevent = UUID.randomUUID(), rochegarde = UUID.randomUUID(), cendrecourt = UUID.randomUUID();
+        var mine = new fr.crusadecraft.core.war.WarView.Party(me, false, "Royaume de Valbrume", TitleRank.COMTE, Heraldry.AZUR.rgb());
+        var amb = new fr.crusadecraft.core.war.WarView.Party(ambrevent, true, "Ambrevent", TitleRank.COMTE, Heraldry.GUEULES.rgb());
+        var roc = new fr.crusadecraft.core.war.WarView.Party(rochegarde, true, "Rochegarde", TitleRank.DUCHE, Heraldry.SINOPLE.rgb());
+        var cen = new fr.crusadecraft.core.war.WarView.Party(cendrecourt, true, "Cendrecourt", TitleRank.BARONNIE, Heraldry.POURPRE.rgb());
+        java.util.Map<fr.crusadecraft.core.war.WarRules.Peace, fr.crusadecraft.core.war.WarRules.Verdict> peace =
+                new java.util.EnumMap<>(fr.crusadecraft.core.war.WarRules.Peace.class);
+        for (var p : fr.crusadecraft.core.war.WarRules.Peace.values()) {
+            peace.put(p, fr.crusadecraft.core.war.WarRules.aiAnswer(p, -34, 40, 12));
+        }
+        List<fr.crusadecraft.core.war.War.Event> events = List.of(
+                new fr.crusadecraft.core.war.War.Event(57, "crusadecraft.war.log.captured", List.of("Ormesval"), 5),
+                new fr.crusadecraft.core.war.War.Event(56, "crusadecraft.war.log.skirmish", List.of("Royaume de Valbrume"), 4),
+                new fr.crusadecraft.core.war.War.Event(55, "crusadecraft.war.log.raid_repelled", List.of("Hautemarche"), 8),
+                new fr.crusadecraft.core.war.War.Event(54, "crusadecraft.war.log.skirmish", List.of("Comté d'Ambrevent"), -3),
+                new fr.crusadecraft.core.war.War.Event(46, "crusadecraft.war.log.declared", List.of("CLAIM", "Ormesval"), 0));
+        var line = new fr.crusadecraft.core.war.WarView.WarLine(UUID.randomUUID(), mine, amb, List.of("Baronnie de Cendrecourt"), List.of(),
+                fr.crusadecraft.core.war.CasusBelli.CLAIM, "Ormesval", 1, true, 34, 96, 120, 18, 40, List.of("Ormesval"), 11, events, peace);
+        List<fr.crusadecraft.core.war.WarView.CbOption> cbs = new ArrayList<>();
+        for (var cb : fr.crusadecraft.core.war.CasusBelli.values()) {
+            String problem = switch (cb) {
+                case CLAIM -> null;
+                case DEJURE -> "crusadecraft.war.cb.need_kingdom";
+                case CONQUEST -> "crusadecraft.war.cb.need_duchy";
+                case VASSALIZE -> "crusadecraft.war.cb.rank";
+                case HUMILIATE -> null;
+            };
+            List<fr.crusadecraft.core.war.WarView.ProvinceOption> provinces = cb == fr.crusadecraft.core.war.CasusBelli.CLAIM
+                    ? List.of(new fr.crusadecraft.core.war.WarView.ProvinceOption(4, "Saulepré"), new fr.crusadecraft.core.war.WarView.ProvinceOption(5, "Rochegarde"))
+                    : List.of();
+            cbs.add(new fr.crusadecraft.core.war.WarView.CbOption(cb, problem, provinces));
+        }
+        List<fr.crusadecraft.core.war.WarView.Target> targets = List.of(
+                new fr.crusadecraft.core.war.WarView.Target(amb, fr.crusadecraft.core.diplomacy.DiploStatus.GUERRE, 120,
+                        "crusadecraft.war.block.at_war", cbs),
+                new fr.crusadecraft.core.war.WarView.Target(roc, fr.crusadecraft.core.diplomacy.DiploStatus.HOSTILE, 210, null, cbs),
+                new fr.crusadecraft.core.war.WarView.Target(cen, fr.crusadecraft.core.diplomacy.DiploStatus.ALLIANCE, 40,
+                        "crusadecraft.war.block.alliance", cbs));
+        return new fr.crusadecraft.core.war.WarView(96, 132, true, 10, 1250, 180, true, "", List.of(line), targets);
+    }
+
     private static MapView sampleMap() {
         List<MapView.Territory> t = new ArrayList<>();
         t.add(new MapView.Territory(UUID.randomUUID(), false, true, "Royaume de Valbrume", TitleRank.BARONNIE, Heraldry.AZUR.rgb(),
@@ -289,15 +356,15 @@ public final class UiShots {
         t.add(new MapView.Territory(UUID.randomUUID(), true, false, "Cendrecourt", TitleRank.COMTE, Heraldry.POURPRE.rgb(),
                 "Thibaut", false, AiPersonality.FANATIQUE, 35));
         List<MapView.Seat> seats = List.of(
-                new MapView.Seat(0, "Valbrume", 0, 0, true, 0, false),
-                new MapView.Seat(0, "Hautemarche", 260, 120, false, 0, false),
-                new MapView.Seat(1, "Ambrevent", -1100, -350, true, 0, true),
-                new MapView.Seat(1, "Ormesval", -1400, -100, false, 0, true),
-                new MapView.Seat(1, "Givrefond", -900, -650, false, 1, false),
-                new MapView.Seat(1, "Brisemer", -1350, -600, false, 0, true),
-                new MapView.Seat(2, "Rochegarde", 900, -700, true, 1, true),
-                new MapView.Seat(2, "Saulepré", 1150, -450, false, 1, false),
-                new MapView.Seat(3, "Cendrecourt", 700, 800, true, 1, true));
+                new MapView.Seat(0, "Valbrume", 0, 0, true, 0, false, false),
+                new MapView.Seat(0, "Hautemarche", 260, 120, false, 0, false, false),
+                new MapView.Seat(1, "Ambrevent", -1100, -350, true, 0, true, true),
+                new MapView.Seat(1, "Ormesval", -1400, -100, false, 0, true, true),
+                new MapView.Seat(1, "Givrefond", -900, -650, false, 1, false, true),
+                new MapView.Seat(1, "Brisemer", -1350, -600, false, 0, true, true),
+                new MapView.Seat(2, "Rochegarde", 900, -700, true, 1, true, true),
+                new MapView.Seat(2, "Saulepré", 1150, -450, false, 1, false, true),
+                new MapView.Seat(3, "Cendrecourt", 700, 800, true, 1, true, true));
         return new MapView(ResourceLocation.tryParse("minecraft:overworld"), 0, 0, 40, 60, 160, 110, t, seats,
                 List.of(new MapView.Dejure("Aquilée", 0xD9A88E), new MapView.Dejure("Montvert", 0x9DB58C)));
     }

@@ -219,6 +219,43 @@ public final class MineColoniesBridge {
         }
     }
 
+    /**
+     * Passe un joueur « Hostile » dans une colonie, par l'API officielle (guerre entre joueurs). Renvoie le nom de
+     * son rang d'avant, pour le lui rendre à la paix, ou {@code null} si rien n'a changé.
+     */
+    public static String setHostile(ColonyRef ref, UUID player) {
+        if (broken) return null;
+        try {
+            IColony c = colony(ref);
+            if (c == null) return null;
+            Rank before = c.getPermissions().getRank(player);
+            Rank hostile = c.getPermissions().getRankHostile();
+            if (before == null || hostile == null || before.equals(hostile) || before.equals(c.getPermissions().getRankOwner())) return null;
+            c.getPermissions().setPlayerRank(player, hostile, c.getWorld());
+            return before.getName();
+        } catch (LinkageError e) {
+            breakBridge(e);
+            return null;
+        }
+    }
+
+    /** Rend à un joueur un rang retrouvé par son nom. */
+    public static void setRankByName(ColonyRef ref, UUID player, String rankName) {
+        if (broken || rankName == null) return;
+        try {
+            IColony c = colony(ref);
+            if (c == null) return;
+            for (Rank r : c.getPermissions().getRanks().values()) {
+                if (r.getName().equals(rankName)) {
+                    c.getPermissions().setPlayerRank(player, r, c.getWorld());
+                    return;
+                }
+            }
+        } catch (LinkageError e) {
+            breakBridge(e);
+        }
+    }
+
     /** Centre d'une colonie (son Hôtel de ville, ou à défaut son point de fondation). */
     public static Optional<BlockPos> center(ColonyRef ref) {
         if (broken) return Optional.empty();

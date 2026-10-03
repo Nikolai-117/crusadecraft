@@ -28,6 +28,8 @@ public final class Letter {
         SEAL_HOMAGE,
         /** Payer le tribut exigé. */
         PAY_TRIBUTE,
+        /** Sceller la paix aux termes de la lettre. */
+        SEAL_PEACE,
         /** Refuser. */
         REFUSE;
 
@@ -56,6 +58,9 @@ public final class Letter {
     private int tax;
     private int levy;
     private int claimProvince = -1;
+    /** Guerre concernée et termes de paix, pour une lettre de paix. */
+    private UUID war;
+    private String peace = "";
 
     public Letter(UUID id, UUID from, boolean fromAi, UUID to, Component sender, Component subject, Component body,
                   List<Choice> choices, long createdDay, long expiresDay, long arrivalTick) {
@@ -89,6 +94,10 @@ public final class Letter {
     public int tax() { return tax; }
     public int levy() { return levy; }
     public int claimProvince() { return claimProvince; }
+    public UUID war() { return war; }
+    public String peace() { return peace; }
+
+    public Letter withPeace(UUID war, String peace) { this.war = war; this.peace = peace; return this; }
 
     public boolean needsAnswer() {
         return !choices.isEmpty();
@@ -135,6 +144,8 @@ public final class Letter {
         t.putInt("tax", tax);
         t.putInt("levy", levy);
         t.putInt("claim", claimProvince);
+        if (war != null) t.putUUID("war", war);
+        t.putString("peace", peace);
         return t;
     }
 
@@ -157,6 +168,8 @@ public final class Letter {
         l.tax = t.getInt("tax");
         l.levy = t.getInt("levy");
         l.claimProvince = t.contains("claim") ? t.getInt("claim") : -1;
+        if (t.hasUUID("war")) l.war = t.getUUID("war");
+        l.peace = t.getString("peace");
         return l;
     }
 

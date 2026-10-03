@@ -27,7 +27,8 @@ public record MapView(ResourceLocation dimension, int focusX, int focusZ, int pl
                             boolean rulerFemale, AiPersonality personality, int population) {}
 
     /** Un siège (colonie d'un joueur, province d'un royaume IA). */
-    public record Seat(int territory, String name, int x, int z, boolean capital, int dejure, boolean village) {}
+    /** Un siège sur la carte. {@code province} : une province IA (même conquise), au territoire plus large qu'une colonie. */
+    public record Seat(int territory, String name, int x, int z, boolean capital, int dejure, boolean village, boolean province) {}
 
     public record Dejure(String place, int color) {}
 
@@ -62,6 +63,7 @@ public record MapView(ResourceLocation dimension, int focusX, int focusZ, int pl
             buf.writeBoolean(s.capital());
             buf.writeVarInt(s.dejure());
             buf.writeBoolean(s.village());
+            buf.writeBoolean(s.province());
         }
         buf.writeVarInt(dejure.size());
         for (Dejure d : dejure) {
@@ -91,7 +93,7 @@ public record MapView(ResourceLocation dimension, int focusX, int focusZ, int pl
         List<Seat> seats = new ArrayList<>(n);
         for (int i = 0; i < n; i++) {
             seats.add(new Seat(buf.readVarInt(), buf.readUtf(), buf.readVarInt(), buf.readVarInt(), buf.readBoolean(),
-                    buf.readVarInt(), buf.readBoolean()));
+                    buf.readVarInt(), buf.readBoolean(), buf.readBoolean()));
         }
         n = buf.readVarInt();
         List<Dejure> dejure = new ArrayList<>(n);

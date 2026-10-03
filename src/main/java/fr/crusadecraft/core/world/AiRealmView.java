@@ -49,7 +49,7 @@ public record AiRealmView(UUID id, String place, TitleRank rank, int color, Stri
         List<Seat> council = new ArrayList<>();
         for (var e : r.council().entrySet()) council.add(new Seat(e.getKey(), Person.of(e.getValue())));
         List<Province> provinces = new ArrayList<>();
-        for (AiProvince p : r.provinces()) {
+        for (AiProvince p : r.ownProvinces()) {
             provinces.add(new Province(p.name(), p.capital(), p.anchor(), p.population(), p.development(), p.seat().getX(), p.seat().getZ()));
         }
         return new AiRealmView(r.id(), r.place(), r.rank(), r.color(), r.house(), r.personality(), Person.of(r.ruler()),

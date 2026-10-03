@@ -237,3 +237,43 @@ Les compétences vont de 1 à 99 : un citoyen débutant obtient 1 à 5, un exper
 - **Personnages d'une colonie supprimée oubliés** : MineColonies peut redonner le numéro d'une colonie
   supprimée à une nouvelle ; sans cela, ses citoyens héritaient des souvenirs et du statut des anciens
   (bug trouvé par les GameTests).
+
+**P7 (3 octobre 2026)**
+
+- **Cinq motifs de guerre** : revendication (parchemin de la Chancery Table), droit de jure (royaume),
+  conquête (duc au moins, 100 de prestige), soumission (royaume moins titré), humiliation (rivalité ou
+  opinion à −20). La guerre sainte viendra avec les croisades. Chaque motif refusé dit pourquoi.
+- **Ce qui interdit de déclarer** : guerre déjà en cours, suzerain ou vassal, vassal d'un autre, trêve
+  (30 jours après chaque paix), alliance, non-agression. Les alliés (alliance totale de l'attaquant ;
+  alliances et alliances défensives du défenseur) et les vassaux suivent leur camp.
+- **Une armée par royaume** : six hommes par garde MineColonies et un pour trois citoyens. Levée, elle
+  compte en entier et coûte une pièce par dizaine d'hommes et par jour ; au repos, un tiers seulement, mais
+  elle se reconstitue (10 % par jour de paix). Les levées des vassaux s'ajoutent selon le contrat et leur humeur.
+- **La campagne se résout chaque jour** : une escarmouche (forces, Martial du maréchal, hasard), des
+  pertes, de la lassitude, un point par jour de tenue de la province visée, et l'occupation qui verse le
+  revenu de la province à l'occupant. Les batailles comptent au plus 60 points, l'occupation 60, le but 20.
+- **En jeu, deux combats** : le siège (approcher la capitale d'une province ennemie fait sortir sa garnison ;
+  tenir sa bannière dix secondes, sans défenseur à moins de 24 blocs, prend la place) et le raid (un
+  ennemi assez fort marche sur la colonie la plus proche de son souverain, s'il est là ; sinon le raid se
+  résout sur le papier, gardes contre pillards). Vos hommes d'armes vous suivent aux sièges si l'armée est levée.
+- **Hundred Years War, s'il est là** : ses bandits font les garnisons et les pillards, ses soldats vos
+  hommes d'armes (rattachés au joueur par sa méthode publique de propriétaire, cherchée par nom). Sans lui,
+  vindicateurs et pillards vanilla, et golems de fer. Rien n'est pris de son code.
+- **Les golems d'un village ne frappent pas sa garnison** : ni cible ni coups entre eux (le premier essai
+  en monde réel les a vus massacrer les neuf défenseurs avant l'arrivée du joueur).
+- **La bannière se plante au sol** : le point le plus bas autour du centre du village, jamais un toit (le
+  premier essai l'avait posée sur une maison, hors d'atteinte).
+- **Toutes les troupes sont temporaires**, marquées, suivies et retirées à la fin ; celles qui restent d'un
+  arrêt brutal sont refusées au chargement, comme les hérauts.
+- **Anti-grief** : en territoire ennemi, on ne casse rien à la main ; ce qu'on y pose se reprend. Les
+  explosions d'un théâtre de guerre sont notées bloc par bloc (coffres compris, vidés pour ne rien lâcher)
+  dans un registre enregistré avec le monde, et tout est remis en place à la paix, 48 blocs par
+  quart de seconde. La TNT elle-même reste au jeu normal.
+- **La paix** : blanche, victoire exigée ou capitulation. L'IA répond d'après le score, sa lassitude et
+  la durée ; une IA écrasée propose sa reddition, une IA victorieuse exige la vôtre, par lettre à sceller.
+  La victoire donne la province visée (elle change de mains et verse son revenu, compte pour les titres),
+  le vassal ou le quart du trésor ; l'attaquant vaincu paie 20 % en réparations.
+- **Guerre entre joueurs** : chaque souverain devient « Hostile » dans les colonies de l'autre
+  (option), rang rendu à la paix.
+- **Table de guerre** : le cadre ouvre désormais l'écran de guerre (armée, guerres, déclaration,
+  paix) ; la carte du monde s'ouvre de là. L'onglet Guerre du menu royal en donne le résumé.

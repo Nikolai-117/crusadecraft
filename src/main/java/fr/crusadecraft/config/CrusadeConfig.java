@@ -87,6 +87,15 @@ public final class CrusadeConfig {
         public final ForgeConfigSpec.ConfigValue<java.util.List<? extends Integer>> titleProvinces;
         public final ForgeConfigSpec.ConfigValue<java.util.List<? extends Integer>> titleGold;
         public final ForgeConfigSpec.ConfigValue<java.util.List<? extends Integer>> titlePrestige;
+        public final ForgeConfigSpec.IntValue truceDays;
+        public final ForgeConfigSpec.BooleanValue sieges;
+        public final ForgeConfigSpec.IntValue siegeRadius;
+        public final ForgeConfigSpec.IntValue captureSeconds;
+        public final ForgeConfigSpec.BooleanValue raids;
+        public final ForgeConfigSpec.IntValue raidMinutes;
+        public final ForgeConfigSpec.BooleanValue antiGrief;
+        public final ForgeConfigSpec.BooleanValue hostileRanks;
+        public final ForgeConfigSpec.BooleanValue hywTroops;
         public final ForgeConfigSpec.BooleanValue disableDuplicatesWithWarNTaxes;
         public final ForgeConfigSpec.BooleanValue disableDuplicatesWithWarNNobility;
 
@@ -209,6 +218,23 @@ public final class CrusadeConfig {
                     .defineList("orParTitre", java.util.List.of(200, 600, 1500, 4000), o -> o instanceof Integer i && i >= 0);
             titlePrestige = b.comment("Prestige demandé pour Comté, Duché, Royaume, Empire.")
                     .defineList("prestigeParTitre", java.util.List.of(100, 300, 800, 2000), o -> o instanceof Integer i && i >= 0);
+            b.pop();
+
+            b.comment("Guerre").push("guerre");
+            truceDays = b.comment("Jours de trêve après une paix.").defineInRange("joursDeTreve", 30, 0, 365);
+            sieges = b.comment("Sièges en jeu : approcher le siège d'un royaume ennemi fait paraître sa garnison et sa bannière à capturer.")
+                    .define("sieges", true);
+            siegeRadius = b.comment("Distance au siège ennemi à partir de laquelle le siège commence.").defineInRange("rayonSiege", 48, 16, 256);
+            captureSeconds = b.comment("Secondes à tenir la bannière, sans garnison autour, pour prendre la province.")
+                    .defineInRange("secondesCapture", 10, 3, 600);
+            raids = b.comment("Les ennemis lancent des raids sur vos colonies (vos gardes MineColonies les repoussent).").define("raids", true);
+            raidMinutes = b.comment("Minutes réelles entre deux raids d'une même guerre.").defineInRange("minutesEntreRaids", 20, 2, 600);
+            antiGrief = b.comment("En territoire ennemi, en guerre, on ne casse que par explosifs ; tout est noté et restauré à la paix.")
+                    .define("antiGrief", true);
+            hostileRanks = b.comment("Guerre entre joueurs : chaque souverain passe « Hostile » dans les colonies de l'autre, rang rendu à la paix.")
+                    .define("rangHostileEnGuerre", true);
+            hywTroops = b.comment("Si Hundred Years War est installé : ses bandits forment les garnisons et les raids, ses soldats vos levées.")
+                    .define("troupesHundredYearsWar", true);
             b.pop();
 
             b.comment("Cohabitation avec d'autres mods qui font la même chose").push("compatibilite");

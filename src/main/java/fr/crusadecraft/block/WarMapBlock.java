@@ -1,8 +1,5 @@
 package fr.crusadecraft.block;
 
-import fr.crusadecraft.core.world.WorldService;
-import fr.crusadecraft.network.CrusadeNetwork;
-import fr.crusadecraft.network.packet.WorldPackets;
 import net.minecraft.core.BlockPos;
 import net.minecraft.core.Direction;
 import net.minecraft.server.level.ServerPlayer;
@@ -66,7 +63,8 @@ public class WarMapBlock extends HorizontalDirectionalBlock implements EntityBlo
     public InteractionResult use(BlockState state, Level level, BlockPos pos, Player player, InteractionHand hand, BlockHitResult hit) {
         if (level.isClientSide) return InteractionResult.SUCCESS;
         if (player instanceof ServerPlayer sp) {
-            CrusadeNetwork.toPlayer(sp, new WorldPackets.MapData(WorldService.mapView(sp), true));
+            // La Table de guerre : armée, guerres et déclarations ; la carte du monde s'ouvre de là.
+            fr.crusadecraft.network.packet.WarPackets.sendWar(sp, true);
         }
         return InteractionResult.CONSUME;
     }

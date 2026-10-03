@@ -13,6 +13,7 @@ import fr.crusadecraft.network.packet.RequestCharacterPacket;
 import fr.crusadecraft.network.packet.RequestRealmPacket;
 import fr.crusadecraft.network.packet.SyncTitlesPacket;
 import fr.crusadecraft.network.packet.ToastPacket;
+import fr.crusadecraft.network.packet.WarPackets;
 import fr.crusadecraft.network.packet.WorldPackets;
 import net.minecraft.resources.ResourceLocation;
 import net.minecraft.server.level.ServerPlayer;
@@ -28,7 +29,7 @@ import net.minecraftforge.network.simple.SimpleChannel;
  * (distance, droits, état) avant d'agir.
  */
 public final class CrusadeNetwork {
-    private static final String VERSION = "4";
+    private static final String VERSION = "5";
 
     public static final SimpleChannel CHANNEL = NetworkRegistry.newSimpleChannel(
             ResourceLocation.tryParse(CrusadeCraft.MOD_ID + ":main"),
@@ -133,6 +134,14 @@ public final class CrusadeNetwork {
         CHANNEL.messageBuilder(DiplomacyPackets.ChanceryAction.class, nextId++, NetworkDirection.PLAY_TO_SERVER)
                 .encoder(DiplomacyPackets.ChanceryAction::encode).decoder(DiplomacyPackets.ChanceryAction::decode)
                 .consumerMainThread(DiplomacyPackets.ChanceryAction::handle).add();
+
+        // P7 : guerre
+        CHANNEL.messageBuilder(WarPackets.OpenWar.class, nextId++, NetworkDirection.PLAY_TO_CLIENT)
+                .encoder(WarPackets.OpenWar::encode).decoder(WarPackets.OpenWar::decode)
+                .consumerMainThread(WarPackets.OpenWar::handle).add();
+        CHANNEL.messageBuilder(WarPackets.WarAction.class, nextId++, NetworkDirection.PLAY_TO_SERVER)
+                .encoder(WarPackets.WarAction::encode).decoder(WarPackets.WarAction::decode)
+                .consumerMainThread(WarPackets.WarAction::handle).add();
     }
 
     public static void toPlayer(ServerPlayer player, Object packet) {

@@ -59,6 +59,7 @@ public class RealmScreen extends Screen {
     private LawsView laws;
     private fr.crusadecraft.core.diplomacy.DiplomacyView diplomacy;
     private fr.crusadecraft.core.diplomacy.ChanceryView chancery;
+    private fr.crusadecraft.core.war.WarView war;
     private Law selectedLaw;
     private int selectedLevel = -1;
 
@@ -94,6 +95,10 @@ public class RealmScreen extends Screen {
         this.chancery = v;
     }
 
+    public void setWar(fr.crusadecraft.core.war.WarView v) {
+        this.war = v;
+    }
+
     public void setLaws(LawsView v) {
         this.laws = v;
         if (minecraft != null) rebuildWidgets();
@@ -121,6 +126,7 @@ public class RealmScreen extends Screen {
         if (tab == Tab.LOIS && laws == null) request(EconomyPackets.RequestTab.Tab.LAWS);
         if (tab == Tab.DIPLOMATIE && diplomacy == null) request(EconomyPackets.RequestTab.Tab.DIPLOMACY);
         if (tab == Tab.VASSAUX && chancery == null) request(EconomyPackets.RequestTab.Tab.VASSALS);
+        if (tab == Tab.GUERRE && war == null) request(EconomyPackets.RequestTab.Tab.WAR);
         if (tab == Tab.LOIS) initLawButton();
     }
 
@@ -181,6 +187,8 @@ public class RealmScreen extends Screen {
             renderDiplomacyTab(g, left + 8, cy, w - 16, ch, mouseX, mouseY);
         } else if (tab == Tab.VASSAUX) {
             renderVassalsTab(g, left + 8, cy, w - 16, ch, mouseX, mouseY);
+        } else if (tab == Tab.GUERRE) {
+            renderWarTab(g, left + 8, cy, w - 16, ch, mouseX, mouseY);
         } else {
             renderEmpty(g, left + 8, cy, w - 16, ch);
         }
@@ -361,6 +369,41 @@ public class RealmScreen extends Screen {
             ry += 23;
         }
         Ui.text(g, font, Component.translatable("crusadecraft.chancery.hint"), x + 8, y + ch - 11, Ui.TEXT_MUTED);
+    }
+
+    /** L'onglet Guerre : l'armée et les guerres en cours ; les ordres se donnent à la Table de guerre. */
+    private void renderWarTab(GuiGraphics g, int x, int y, int cw, int ch, int mouseX, int mouseY) {
+        if (war == null) {
+            renderLoading(g, x, y, cw, ch);
+            return;
+        }
+        Component men = Component.translatable("crusadecraft.war.army.men", war.men(), war.maxMen());
+        Ui.text(g, font, men, x + 8, y + 7, Ui.TEXT_TITLE);
+        Component state = war.raised() ? Component.translatable("crusadecraft.war.army.state.raised", war.upkeep())
+                : Component.translatable("crusadecraft.war.army.state.home");
+        Ui.text(g, font, state, x + cw - 8 - font.width(state), y + 7, war.raised() ? 0xFFE0C060 : Ui.TEXT_MUTED);
+        int ry = y + 22;
+        Ui.text(g, font, Component.translatable("crusadecraft.war.list.wars", war.wars().size()), x + 8, ry, Ui.TEXT_TITLE);
+        ry += 13;
+        if (war.wars().isEmpty()) {
+            Ui.wrapped(g, font, Component.translatable("crusadecraft.war.peaceful"), x + 8, ry, cw - 16, Ui.TEXT_MUTED);
+        }
+        for (fr.crusadecraft.core.war.WarView.WarLine line : war.wars()) {
+            if (ry > y + ch - 34) break;
+            fr.crusadecraft.core.war.WarView.Party enemy = WarScreen.enemy(line);
+            g.fill(x + 8, ry + 2, x + 15, ry + 9, 0xFF000000 | enemy.color());
+            Ui.text(g, font, Component.translatable("crusadecraft.war.against", WarScreen.partyName(enemy)), x + 18, ry + 1, Ui.TEXT);
+            int score = WarScreen.myScore(line);
+            Component sc = Component.translatable("crusadecraft.war.score", WarScreen.signed(score));
+            Ui.text(g, font, sc, x + cw - 8 - font.width(sc), ry + 1, WarScreen.scoreColor(score));
+            Component goal = line.target().isEmpty() ? Component.translatable(line.cb().key())
+                    : Component.translatable("crusadecraft.war.goal", Component.translatable(line.cb().key()), line.target());
+            Component meta = Component.translatable("crusadecraft.war.meta", goal, line.days());
+            Ui.text(g, font, Component.literal(font.plainSubstrByWidth(meta.getString(), cw - 34)), x + 18, ry + 11, Ui.TEXT_MUTED);
+            ry += 24;
+        }
+        Ui.text(g, font, Component.literal(font.plainSubstrByWidth(Component.translatable("crusadecraft.war.tab.hint").getString(), cw - 16)),
+                x + 8, y + ch - 11, Ui.TEXT_MUTED);
     }
 
     private static final int CHIP_W = 64;
@@ -589,6 +632,7 @@ public class RealmScreen extends Screen {
                 if (t == Tab.LOIS) request(EconomyPackets.RequestTab.Tab.LAWS);
                 if (t == Tab.DIPLOMATIE) request(EconomyPackets.RequestTab.Tab.DIPLOMACY);
                 if (t == Tab.VASSAUX) request(EconomyPackets.RequestTab.Tab.VASSALS);
+                if (t == Tab.GUERRE) request(EconomyPackets.RequestTab.Tab.WAR);
                 selectedLaw = null;
                 selectedLevel = -1;
                 rebuildWidgets();

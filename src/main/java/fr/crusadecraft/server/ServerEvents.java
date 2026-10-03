@@ -13,12 +13,19 @@ import fr.crusadecraft.registry.ModItems;
 import fr.crusadecraft.core.realm.RealmService;
 import fr.crusadecraft.registry.ModBlocks;
 import net.minecraft.network.chat.Component;
+import net.minecraft.server.level.ServerLevel;
 import net.minecraft.server.level.ServerPlayer;
 import net.minecraft.world.level.Level;
 import net.minecraft.world.InteractionResult;
 import net.minecraftforge.event.RegisterCommandsEvent;
 import net.minecraftforge.event.TickEvent;
+import fr.crusadecraft.core.war.WarFieldService;
+import net.minecraftforge.event.entity.living.LivingAttackEvent;
+import net.minecraftforge.event.entity.living.LivingChangeTargetEvent;
+import net.minecraftforge.event.entity.living.LivingDeathEvent;
 import net.minecraftforge.event.entity.player.PlayerInteractEvent;
+import net.minecraftforge.event.level.ExplosionEvent;
+import net.minecraftforge.eventbus.api.EventPriority;
 import net.minecraftforge.event.entity.player.PlayerEvent;
 import net.minecraftforge.event.level.BlockEvent;
 import net.minecraftforge.event.server.ServerStartedEvent;
@@ -53,6 +60,7 @@ public final class ServerEvents {
         fr.crusadecraft.core.council.RequestService.onServerStopped();
         fr.crusadecraft.core.world.WorldService.onServerStopped();
         fr.crusadecraft.core.diplomacy.DiplomacyService.onServerStopped();
+        WarFieldService.onServerStopped();
     }
 
     @SubscribeEvent
@@ -69,7 +77,7 @@ public final class ServerEvents {
     public static void onEntityJoin(net.minecraftforge.event.entity.EntityJoinLevelEvent event) {
         if (event.getLevel().isClientSide()) return;
         // Un héraut resté d'une session interrompue n'a plus rien à faire là.
-        if (fr.crusadecraft.core.world.WorldService.isStrayHerald(event.getEntity())) {
+        if (fr.crusadecraft.core.world.WorldService.isStrayHerald(event.getEntity()) || WarFieldService.isStray(event.getEntity())) {
             event.setCanceled(true);
             return;
         }
@@ -89,6 +97,47 @@ public final class ServerEvents {
         if (t % 40 == 20) fr.crusadecraft.core.world.WorldService.tick(server);
         if (t % 40 == 30) fr.crusadecraft.core.diplomacy.DiplomacyService.tick(server);
         if (t % (CrusadeConfig.SERVER.aiLetterMinutes.get() * 1200) == 600) fr.crusadecraft.core.diplomacy.DiplomacyService.aiLetters(server);
+        if (t % 20 == 10) WarFieldService.tick(server);
+        if (t % 5 == 2) WarFieldService.restoreTick(server);
+    }
+
+    /** Les golems d'un village assiégé ne s'en prennent pas à sa garnison. */
+    @SubscribeEvent
+    public static void onChangeTarget(LivingChangeTargetEvent event) {
+        if (!event.getEntity().level().isClientSide() && WarFieldService.sameSide(event.getEntity(), event.getNewTarget())) event.setCanceled(true);
+    }
+
+    @SubscribeEvent
+    public static void onAttack(LivingAttackEvent event) {
+        if (!event.getEntity().level().isClientSide() && WarFieldService.sameSide(event.getSource().getEntity(), event.getEntity())) event.setCanceled(true);
+    }
+
+    /** Une troupe de guerre qui tombe compte au score de sa guerre. */
+    @SubscribeEvent
+    public static void onDeath(LivingDeathEvent event) {
+        if (event.getEntity().level() instanceof ServerLevel level) WarFieldService.onDeath(level.getServer(), event.getEntity());
+    }
+
+    /** En territoire ennemi, on ne démolit pas à la pioche : les murs tombent par explosifs, et se relèvent à la paix. */
+    @SubscribeEvent
+    public static void onBreak(BlockEvent.BreakEvent event) {
+        if (!(event.getPlayer() instanceof ServerPlayer player)) return;
+        if (!WarFieldService.breakAllowed(player.server, player, event.getPos())) {
+            event.setCanceled(true);
+            player.displayClientMessage(Component.translatable("crusadecraft.war.antigrief"), true);
+        }
+    }
+
+    /** Ce qu'on pose en territoire ennemi (échelles, barricades) sera retiré à la paix. */
+    @SubscribeEvent(priority = EventPriority.LOWEST)
+    public static void onPlaceInWar(BlockEvent.EntityPlaceEvent event) {
+        if (event.isCanceled() || !(event.getEntity() instanceof ServerPlayer player) || !(event.getLevel() instanceof Level level)) return;
+        WarFieldService.onPlace(player.server, player, level, event.getPos(), event.getBlockSnapshot().getReplacedBlock());
+    }
+
+    @SubscribeEvent
+    public static void onExplosion(ExplosionEvent.Detonate event) {
+        if (event.getLevel() instanceof ServerLevel level) WarFieldService.onExplosion(level.getServer(), level, event.getAffectedBlocks());
     }
 
     /**

@@ -396,6 +396,9 @@ public final class DiplomacyService {
                         Component.literal(realm.name()));
                 return CouncilActions.Outcome.ok(Component.translatable("crusadecraft.diplo.homage_sealed", other));
             }
+            case SEAL_PEACE -> {
+                return fr.crusadecraft.core.war.WarService.sealPeace(server, realm, l);
+            }
             case PAY_TRIBUTE -> {
                 rel.setTribute(realm.id(), l.amount(), today + 20);
                 if (l.fromAi()) ai(server, l.from()).ifPresent(a -> rel.setHostile(false));

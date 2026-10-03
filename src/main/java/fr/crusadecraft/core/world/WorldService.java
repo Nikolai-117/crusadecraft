@@ -263,6 +263,7 @@ public final class WorldService {
         while (world.lastEconomyDay() < today && guard++ < 3) {
             long day = world.lastEconomyDay() + 1;
             for (AiRealm r : world.realms()) simulateDay(r, day);
+            fr.crusadecraft.core.war.WarService.onNewDay(server, day);
             world.setLastEconomyDay(day);
         }
         if (world.lastEconomyDay() < today) world.setLastEconomyDay(today);
@@ -273,7 +274,7 @@ public final class WorldService {
     static void simulateDay(AiRealm r, long day) {
         double income = 0;
         for (AiProvince p : r.provinces()) {
-            income += p.population() / 4.0 + p.development() / 5.0;
+            if (p.holder() == null || p.holder().equals(r.id())) income += p.population() / 4.0 + p.development() / 5.0;
             int cap = p.capital() ? 80 : 45;
             if (p.population() < cap && Math.floorMod(day * 31 + p.id(), 3) == 0) p.setPopulation(p.population() + Math.max(1, p.population() / 40));
             if (Math.floorMod(day + p.id(), 5) == 0) p.setDevelopment(p.development() + 1);
@@ -306,8 +307,10 @@ public final class WorldService {
         List<MapView.Seat> seats = new ArrayList<>();
         int focusX = player.getBlockX(), focusZ = player.getBlockZ();
 
+        Map<UUID, Integer> index = new HashMap<>();
         for (Realm r : data.realms()) {
-            int index = territories.size();
+            int i = territories.size();
+            index.put(r.id(), i);
             boolean mine = r.ruler().equals(player.getUUID());
             int population = 0;
             for (ColonyRef colony : r.allColonies()) {
@@ -321,22 +324,28 @@ public final class WorldService {
                     focusX = center.get().getX();
                     focusZ = center.get().getZ();
                 }
-                seats.add(new MapView.Seat(index, info.isMissing() ? "?" : info.name(), center.get().getX(), center.get().getZ(),
-                        capital, nearestDejure(world, center.get().getX(), center.get().getZ()), false));
+                seats.add(new MapView.Seat(i, info.isMissing() ? "?" : info.name(), center.get().getX(), center.get().getZ(),
+                        capital, nearestDejure(world, center.get().getX(), center.get().getZ()), false, false));
             }
             territories.add(new MapView.Territory(r.id(), false, mine, r.name(), r.rank(), r.color(), r.rulerName(),
                     r.feminineTitle(), null, population));
         }
         for (AiRealm r : world.realms()) {
             if (!r.discoveredBy(player.getUUID())) continue;
-            int index = territories.size();
-            for (AiProvince p : r.provinces()) {
-                if (!p.dimension().equals(dim)) continue;
-                seats.add(new MapView.Seat(index, p.name(), p.seat().getX(), p.seat().getZ(), p.capital(), p.dejureKingdom(),
-                        p.anchor() != AiProvince.Anchor.LAND));
-            }
+            index.put(r.id(), territories.size());
             territories.add(new MapView.Territory(r.id(), true, false, r.place(), r.rank(), r.color(), r.ruler().name(),
                     r.ruler().female(), r.personality(), r.population()));
+        }
+        // Chaque province sous la bannière de celui qui la tient : une conquête change la carte.
+        for (AiRealm r : world.realms()) {
+            if (!r.discoveredBy(player.getUUID())) continue;
+            for (AiProvince p : r.provinces()) {
+                if (!p.dimension().equals(dim)) continue;
+                Integer i = index.get(p.holder() == null ? r.id() : p.holder());
+                if (i == null) continue;
+                seats.add(new MapView.Seat(i, p.name(), p.seat().getX(), p.seat().getZ(), p.capital() && p.holder() == null, p.dejureKingdom(),
+                        p.anchor() != AiProvince.Anchor.LAND, true));
+            }
         }
         List<MapView.Dejure> dejure = new ArrayList<>();
         for (WorldState.DejureKingdom k : world.dejure()) dejure.add(new MapView.Dejure(k.place(), k.color()));

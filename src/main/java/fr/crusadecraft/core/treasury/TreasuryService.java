@@ -197,6 +197,8 @@ public final class TreasuryService {
 
         credit(server, realm, LedgerCategory.IMPOTS, f.taxes());
         credit(server, realm, LedgerCategory.DOMAINE, f.domain());
+        long conquests = fr.crusadecraft.core.war.WarService.conquestIncome(server, realm);
+        credit(server, realm, LedgerCategory.CONQUETES, conquests);
         charge(server, realm, LedgerCategory.ENTRETIEN, f.upkeep());
         long paid = charge(server, realm, LedgerCategory.SALAIRES, f.salaries());
         boolean unpaid = paid < f.salaries();
@@ -221,10 +223,10 @@ public final class TreasuryService {
         data.setDirty();
 
         ServerPlayer ruler = server.getPlayerList().getPlayer(realm.ruler());
-        if (ruler != null && (f.taxes() + f.domain() + f.upkeep() + f.salaries()) > 0) {
+        if (ruler != null && (f.taxes() + f.domain() + conquests + f.upkeep() + f.salaries()) > 0) {
             long delta = realm.gold() - before;
             Component body = Component.translatable(unpaid ? "crusadecraft.toast.treasury.unpaid" : "crusadecraft.toast.treasury.body",
-                    f.taxes() + f.domain(), signed(delta), realm.gold());
+                    f.taxes() + f.domain() + conquests, signed(delta), realm.gold());
             CrusadeNetwork.toPlayer(ruler, ToastPacket.of(realm.gold() < 0 ? ToastPacket.Kind.ALERT : ToastPacket.Kind.TREASURY,
                     Component.translatable("crusadecraft.toast.treasury.title"), body));
         }

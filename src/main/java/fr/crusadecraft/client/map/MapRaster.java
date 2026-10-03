@@ -40,7 +40,7 @@ public final class MapRaster {
             MapView.Territory t = v.territories().get(s.territory());
             sx[i] = s.x();
             sz[i] = s.z();
-            double r = t.ai() ? v.territoryRadius() : v.colonyRadius();
+            double r = s.province() ? v.territoryRadius() : v.colonyRadius();
             r2[i] = r * r;
             reveal2[i] = (r * 2.2) * (r * 2.2);
             if (dejure && s.dejure() >= 0 && s.dejure() < v.dejure().size()) {
