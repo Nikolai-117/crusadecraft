@@ -79,6 +79,14 @@ public final class CrusadeConfig {
         public final ForgeConfigSpec.IntValue discoveryRadius;
         public final ForgeConfigSpec.BooleanValue heralds;
         public final ForgeConfigSpec.IntValue heraldSeconds;
+        public final ForgeConfigSpec.IntValue baronyCount;
+        public final ForgeConfigSpec.IntValue letterDelaySeconds;
+        public final ForgeConfigSpec.IntValue aiLetterMinutes;
+        public final ForgeConfigSpec.IntValue mailboxMax;
+        public final ForgeConfigSpec.BooleanValue chanceryNeedsResearch;
+        public final ForgeConfigSpec.ConfigValue<java.util.List<? extends Integer>> titleProvinces;
+        public final ForgeConfigSpec.ConfigValue<java.util.List<? extends Integer>> titleGold;
+        public final ForgeConfigSpec.ConfigValue<java.util.List<? extends Integer>> titlePrestige;
         public final ForgeConfigSpec.BooleanValue disableDuplicatesWithWarNTaxes;
         public final ForgeConfigSpec.BooleanValue disableDuplicatesWithWarNNobility;
 
@@ -183,6 +191,24 @@ public final class CrusadeConfig {
             heralds = b.comment("Un héraut temporaire vient saluer le joueur qui découvre un royaume (il repart ensuite).")
                     .define("herauts", true);
             heraldSeconds = b.comment("Durée de présence du héraut, en secondes.").defineInRange("dureeHeraut", 45, 10, 600);
+            baronyCount = b.comment("Seigneuries indépendantes (une province) autour de la capitale : les premières que l'on peut vassaliser.")
+                    .defineInRange("seigneuriesIndependantes", 4, 0, 24);
+            b.pop();
+
+            b.comment("Diplomatie, titres et vassalité").push("diplomatie");
+            letterDelaySeconds = b.comment("Temps de vol d'un pigeon : délai avant qu'une réponse arrive au Colombier.")
+                    .defineInRange("delaiLettresSecondes", 40, 0, 3600);
+            aiLetterMinutes = b.comment("Tous les combien de minutes les royaumes IA peuvent écrire (propositions, exigences, présents).")
+                    .defineInRange("lettresIAMinutes", 5, 1, 600);
+            mailboxMax = b.comment("Lettres en attente au plus au Colombier.").defineInRange("courrierMax", 8, 1, 50);
+            chanceryNeedsResearch = b.comment("La Chancery Table et le Sceau royal demandent la recherche « Chancellerie » de l'Université.")
+                    .define("chancellerieDemandeRecherche", true);
+            titleProvinces = b.comment("Provinces requises pour Comté, Duché, Royaume, Empire (colonies et provinces des vassaux).")
+                    .defineList("provincesParTitre", java.util.List.of(2, 4, 8, 16), o -> o instanceof Integer i && i > 0);
+            titleGold = b.comment("Or demandé pour Comté, Duché, Royaume, Empire.")
+                    .defineList("orParTitre", java.util.List.of(200, 600, 1500, 4000), o -> o instanceof Integer i && i >= 0);
+            titlePrestige = b.comment("Prestige demandé pour Comté, Duché, Royaume, Empire.")
+                    .defineList("prestigeParTitre", java.util.List.of(100, 300, 800, 2000), o -> o instanceof Integer i && i >= 0);
             b.pop();
 
             b.comment("Cohabitation avec d'autres mods qui font la même chose").push("compatibilite");

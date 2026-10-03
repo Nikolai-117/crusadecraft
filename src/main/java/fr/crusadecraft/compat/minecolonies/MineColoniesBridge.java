@@ -205,6 +205,20 @@ public final class MineColoniesBridge {
         return out;
     }
 
+    /** Nom du rang MineColonies d'un joueur dans une colonie (« Neutral », « Friend », « Hostile »…), vide si inconnu. */
+    public static String rankName(ColonyRef ref, UUID player) {
+        if (broken) return "";
+        try {
+            IColony c = colony(ref);
+            if (c == null) return "";
+            Rank rank = c.getPermissions().getRank(player);
+            return rank == null ? "" : rank.getName();
+        } catch (LinkageError e) {
+            breakBridge(e);
+            return "";
+        }
+    }
+
     /** Centre d'une colonie (son Hôtel de ville, ou à défaut son point de fondation). */
     public static Optional<BlockPos> center(ColonyRef ref) {
         if (broken) return Optional.empty();

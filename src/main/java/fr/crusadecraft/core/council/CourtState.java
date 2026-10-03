@@ -35,6 +35,9 @@ public final class CourtState {
     private long lastConveneDay = -1;
     private final List<Request> requests = new ArrayList<>();
     private final Map<String, Long> cooldowns = new HashMap<>();
+    /** Cible d'une tâche (royaume, province), sous forme de texte. */
+    private final Map<Post, String> taskTargets = new EnumMap<>(Post.class);
+    private int claimProgress;
 
     public boolean hasTable() { return tablePos != null; }
     public ResourceLocation tableDimension() { return tableDimension; }
@@ -73,6 +76,16 @@ public final class CourtState {
     public void setTask(Post post, CouncilTask task) {
         if (task != null && task.post() == post) tasks.put(post, task);
     }
+
+    public String taskTarget(Post post) { return taskTargets.get(post); }
+
+    public void setTaskTarget(Post post, String target) {
+        if (target == null) taskTargets.remove(post);
+        else taskTargets.put(post, target);
+    }
+
+    public int claimProgress() { return claimProgress; }
+    public void setClaimProgress(int progress) { this.claimProgress = Math.max(0, progress); }
 
     public boolean onCooldown(RequestType type, CitizenRef from, long today) {
         Long last = cooldowns.get(cooldownKey(type, from));
@@ -113,6 +126,10 @@ public final class CourtState {
         CompoundTag cd = new CompoundTag();
         for (Map.Entry<String, Long> e : cooldowns.entrySet()) cd.putLong(e.getKey(), e.getValue());
         t.put("cooldowns", cd);
+        CompoundTag targets = new CompoundTag();
+        for (Map.Entry<Post, String> e : taskTargets.entrySet()) targets.putString(e.getKey().name(), e.getValue());
+        t.put("targets", targets);
+        t.putInt("claimProgress", claimProgress);
         return t;
     }
 
@@ -145,6 +162,12 @@ public final class CourtState {
         }
         CompoundTag cd = t.getCompound("cooldowns");
         for (String key : cd.getAllKeys()) s.cooldowns.put(key, cd.getLong(key));
+        CompoundTag targets = t.getCompound("targets");
+        for (String key : targets.getAllKeys()) {
+            Post post = Post.byName(key);
+            if (post != null) s.taskTargets.put(post, targets.getString(key));
+        }
+        s.claimProgress = t.getInt("claimProgress");
         return s;
     }
 }

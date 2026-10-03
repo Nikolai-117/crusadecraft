@@ -23,7 +23,6 @@ import net.minecraft.world.entity.EntityType;
 import net.minecraft.world.entity.npc.Villager;
 import net.minecraft.world.entity.npc.VillagerProfession;
 import net.minecraft.world.level.Level;
-import net.minecraft.world.level.levelgen.Heightmap;
 import net.minecraft.world.phys.Vec3;
 
 import java.util.ArrayList;
@@ -75,9 +74,7 @@ public final class WorldService {
         int min = CrusadeConfig.SERVER.aiMinDistance.get();
         int max = Math.max(min + 200, CrusadeConfig.SERVER.aiMaxDistance.get());
         int radius = CrusadeConfig.SERVER.territoryRadius.get();
-        WorldPlanner.Settings settings = new WorldPlanner.Settings(CrusadeConfig.SERVER.aiRealmCount.get(), min, max,
-                Math.max(radius * 3, (max - min) / 3), Math.max(radius * 3, 300), Math.max(radius + 20, 180),
-                Math.max(radius * 2, 250));
+        WorldPlanner.Settings settings = settings(min, max, radius);
         List<WorldPlanner.Candidate> villages = VillageScanner.scan(level, cx, cz, max + settings.provinceRadius());
         List<Integer> taken = new ArrayList<>();
         for (Realm r : data.realms()) taken.add(r.color());
@@ -92,6 +89,39 @@ public final class WorldService {
         return plan.realms().size();
     }
 
+    private static WorldPlanner.Settings settings(int min, int max, int radius) {
+        return new WorldPlanner.Settings(CrusadeConfig.SERVER.aiRealmCount.get(), min, max,
+                Math.max(radius * 3, (max - min) / 3), Math.max(radius * 3, 300), Math.max(radius + 20, 180),
+                Math.max(radius * 2, 250), CrusadeConfig.SERVER.baronyCount.get());
+    }
+
+    /** Un monde généré avant les seigneuries indépendantes les reçoit maintenant, sans rien déplacer. */
+    private static void upgrade(MinecraftServer server, WorldState world) {
+        if (world.version() >= 2) return;
+        world.setVersion(2);
+        ServerLevel level = server.getLevel(Level.OVERWORLD);
+        if (level == null || CrusadeConfig.SERVER.baronyCount.get() <= 0) return;
+        int min = CrusadeConfig.SERVER.aiMinDistance.get();
+        int max = Math.max(min + 200, CrusadeConfig.SERVER.aiMaxDistance.get());
+        WorldPlanner.Settings settings = settings(min, max, CrusadeConfig.SERVER.territoryRadius.get());
+        List<int[]> seats = new ArrayList<>();
+        int nextId = 0;
+        for (AiRealm r : world.realms()) {
+            for (AiProvince p : r.provinces()) {
+                seats.add(new int[]{p.seat().getX(), p.seat().getZ()});
+                nextId = Math.max(nextId, p.id() + 1);
+            }
+        }
+        List<WorldPlanner.Candidate> villages = VillageScanner.scan(level, world.centerX(), world.centerZ(), settings.minRing() + 600);
+        long seed = level.getSeed() ^ 0xBA2017L;
+        List<AiRealm> baronies = new WorldPlanner(settings, seed, VillageScanner.landProbe(level), level.dimension().location())
+                .baronies(world.centerX(), world.centerZ(), WorldPlanner.points(villages), MineColoniesBridge.colonyCenters(level),
+                        seats, List.of(), nextId, settings.baronies(), world.dejure(), RealmService.currentDay(server));
+        for (AiRealm b : baronies) world.add(b);
+        CrusadeSavedData.get(server).setDirty();
+        CrusadeCraft.LOGGER.info("CrusadeCraft : {} seigneuries indépendantes ajoutées au monde existant", baronies.size());
+    }
+
     // ------------------------------------------------------------------ boucle
 
     /** Appelé toutes les deux secondes environ. */
@@ -104,6 +134,7 @@ public final class WorldService {
             return;
         }
         for (ServerPlayer player : server.getPlayerList().getPlayers()) discoverNear(player);
+        upgrade(server, world);
         long today = RealmService.currentDay(server);
         cleanupHeralds(server);
         economy(server, world, today);
@@ -159,8 +190,7 @@ public final class WorldService {
             z = player.getZ() + 1;
             spot = BlockPos.containing(x, player.getY(), z);
         }
-        int y = level.hasChunkAt(spot) ? level.getHeight(Heightmap.Types.MOTION_BLOCKING_NO_LEAVES, spot.getX(), spot.getZ())
-                : player.getBlockY();
+        int y = standableY(level, spot, player.getBlockY());
         float yaw = (float) Math.toDegrees(Math.atan2(player.getZ() - z, player.getX() - x)) - 90f;
         herald.moveTo(x, y, z, yaw, 0);
         herald.setYHeadRot(yaw);
@@ -180,6 +210,19 @@ public final class WorldService {
         }
         Component ruler = Component.translatable(realm.rank().holderKey(realm.ruler().female())).append(" " + realm.ruler().name());
         player.sendSystemMessage(Component.translatable("crusadecraft.herald.greeting", realmName, ruler));
+    }
+
+    /** Une hauteur où tenir debout près de celle du joueur : jamais sur un toit ni au fond d'une cave. */
+    private static int standableY(ServerLevel level, BlockPos spot, int playerY) {
+        if (!level.hasChunkAt(spot)) return playerY;
+        for (int dy : new int[]{0, 1, -1, 2, -2, 3, -3, 4, -4}) {
+            BlockPos p = spot.atY(playerY + dy);
+            if (level.getBlockState(p).isAir() && level.getBlockState(p.above()).isAir()
+                    && level.getBlockState(p.below()).isFaceSturdy(level, p.below(), net.minecraft.core.Direction.UP)) {
+                return p.getY();
+            }
+        }
+        return playerY;
     }
 
     private static void cleanupHeralds(MinecraftServer server) {
@@ -235,7 +278,9 @@ public final class WorldService {
             if (p.population() < cap && Math.floorMod(day * 31 + p.id(), 3) == 0) p.setPopulation(p.population() + Math.max(1, p.population() / 40));
             if (Math.floorMod(day + p.id(), 5) == 0) p.setDevelopment(p.development() + 1);
         }
-        r.setGold(r.gold() + Math.round(income * r.personality().incomeFactor()));
+        long earned = Math.round(income * r.personality().incomeFactor());
+        r.setLastIncome(earned);
+        r.setGold(r.gold() + earned);
         r.setPrestige(r.prestige() + r.rank().ordinal());
         if (r.personality() == AiPersonality.FANATIQUE) r.setPiety(r.piety() + 2);
     }

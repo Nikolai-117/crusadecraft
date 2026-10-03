@@ -29,12 +29,14 @@ import java.util.UUID;
  */
 public final class CrusadeSavedData extends AtomicSavedData {
     public static final String FILE_NAME = CrusadeCraft.MOD_ID;
-    public static final int DATA_VERSION = 5;
+    public static final int DATA_VERSION = 6;
 
     private final Map<UUID, Realm> realms = new LinkedHashMap<>();
     private final Map<CitizenRef, CharacterRecord> characters = new LinkedHashMap<>();
     /** Les royaumes IA et les royaumes de jure. */
     private fr.crusadecraft.core.world.WorldState world = new fr.crusadecraft.core.world.WorldState();
+    /** Relations entre royaumes : traités, vassalité, tributs, opinions. */
+    private fr.crusadecraft.core.diplomacy.Diplomacy diplomacy = new fr.crusadecraft.core.diplomacy.Diplomacy();
 
     public static CrusadeSavedData get(MinecraftServer server) {
         return server.getLevel(Level.OVERWORLD).getDataStorage()
@@ -69,6 +71,7 @@ public final class CrusadeSavedData extends AtomicSavedData {
             // Le monde IA se régénère ; mieux vaut le perdre que perdre les royaumes des joueurs.
             CrusadeCraft.LOGGER.error("CrusadeCraft : royaumes IA illisibles, ils seront régénérés", e);
         }
+        data.diplomacy = fr.crusadecraft.core.diplomacy.Diplomacy.load(migrated, "diplomacy");
         return data;
     }
 
@@ -82,11 +85,16 @@ public final class CrusadeSavedData extends AtomicSavedData {
         for (CharacterRecord c : characters.values()) chars.add(c.save());
         tag.put("characters", chars);
         tag.put("world", world.save());
+        tag.put("diplomacy", diplomacy.save());
         return tag;
     }
 
     public fr.crusadecraft.core.world.WorldState world() {
         return world;
+    }
+
+    public fr.crusadecraft.core.diplomacy.Diplomacy diplomacy() {
+        return diplomacy;
     }
 
     public Collection<Realm> realms() {
@@ -120,6 +128,14 @@ public final class CrusadeSavedData extends AtomicSavedData {
 
     public Optional<CharacterRecord> character(CitizenRef ref) {
         return Optional.ofNullable(characters.get(ref));
+    }
+
+    /**
+     * Oublie les personnages d'une colonie supprimée. MineColonies peut redonner son numéro à une nouvelle
+     * colonie : sans cela, ses premiers citoyens hériteraient des souvenirs, des traits et du statut des anciens.
+     */
+    public void forgetColony(ColonyRef colony) {
+        if (characters.keySet().removeIf(ref -> ref.colony().equals(colony))) setDirty();
     }
 
     public Collection<CharacterRecord> characters() {

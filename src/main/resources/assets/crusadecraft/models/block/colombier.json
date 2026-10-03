@@ -1,0 +1,11 @@
+{
+  "parent": "minecraft:block/block",
+  "textures": { "wall": "minecraft:block/birch_planks", "roof": "minecraft:block/dark_oak_planks", "hole": "minecraft:block/black_wool", "perch": "minecraft:block/spruce_planks", "particle": "minecraft:block/birch_planks" },
+  "elements": [
+    { "from": [2, 0, 2], "to": [14, 12, 14], "faces": {"north": {"texture": "#wall"}, "south": {"texture": "#wall"}, "east": {"texture": "#wall"}, "west": {"texture": "#wall"}, "up": {"texture": "#wall"}, "down": {"texture": "#wall"}} },
+    { "from": [1, 12, 1], "to": [15, 16, 15], "faces": {"north": {"texture": "#roof"}, "south": {"texture": "#roof"}, "east": {"texture": "#roof"}, "west": {"texture": "#roof"}, "up": {"texture": "#roof"}, "down": {"texture": "#roof"}} },
+    { "from": [4, 6, 1.9], "to": [7, 9, 2], "faces": {"north": {"texture": "#hole"}} },
+    { "from": [9, 6, 1.9], "to": [12, 9, 2], "faces": {"north": {"texture": "#hole"}} },
+    { "from": [3, 5, 0], "to": [13, 6, 2], "faces": {"north": {"texture": "#perch"}, "south": {"texture": "#perch"}, "east": {"texture": "#perch"}, "west": {"texture": "#perch"}, "up": {"texture": "#perch"}, "down": {"texture": "#perch"}} }
+  ]
+}

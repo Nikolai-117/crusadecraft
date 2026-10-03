@@ -123,11 +123,28 @@ public final class UiShots {
             return s;
         }, null));
         list.add(new Shot("fiche_royaume_ia", () -> new AiRealmScreen(sampleAiRealm()), null));
+        fr.crusadecraft.core.diplomacy.DiplomacyView diplo = sampleDiplomacy();
+        list.add(new Shot("colombier", () -> new fr.crusadecraft.client.screen.DiplomacyScreen(diplo), null));
+        list.add(new Shot("lettre", () -> new fr.crusadecraft.client.screen.LetterScreen(sampleLetter()), null));
+        list.add(new Shot("chancellerie", () -> new fr.crusadecraft.client.screen.ChanceryScreen(sampleChancery()), null));
+        list.add(new Shot("menu_diplomatie", () -> {
+            RealmScreen s = RealmScreen.withTab(view, RealmScreen.Tab.DIPLOMATIE);
+            s.setDiplomacy(diplo);
+            return s;
+        }, null));
+        list.add(new Shot("menu_vassaux", () -> {
+            RealmScreen s = RealmScreen.withTab(view, RealmScreen.Tab.VASSAUX);
+            s.setChancery(sampleChancery());
+            return s;
+        }, null));
         list.add(new Shot("objets", () -> new ItemShowcaseScreen(List.of(new ItemStack(ModItems.THRONE.get()),
                 new ItemStack(ModItems.REGISTRE.get()), new ItemStack(ModItems.SCEPTRE.get()),
                 new ItemStack(ModItems.COUNCIL_TABLE.get()), new ItemStack(ModItems.COUNCIL_SEAT.get()),
                 new ItemStack(ModItems.MAYOR_DESK.get()), new ItemStack(ModItems.TREASURY.get()),
                 new ItemStack(ModItems.WAR_MAP.get()), new ItemStack(ModItems.BOUNDARY_STONE.get()))), null));
+        list.add(new Shot("objets_diplomatie", () -> new ItemShowcaseScreen(List.of(new ItemStack(ModItems.COLOMBIER.get()),
+                new ItemStack(ModItems.CHANCERY.get()), new ItemStack(ModItems.SEAL.get()), new ItemStack(ModItems.LETTER.get()),
+                new ItemStack(ModItems.CLAIM_SCROLL.get()))), null));
         list.add(new Shot("notification", TitleScreen::new, () -> Minecraft.getInstance().getToasts().addToast(
                 new CrusadeToast(ToastPacket.Kind.REALM, Component.translatable("crusadecraft.toast.founded.title"),
                         Component.translatable("crusadecraft.toast.founded.body", view.name())))));
@@ -200,6 +217,65 @@ public final class UiShots {
             choices.add(new RequestView.ChoiceView(c, true, gold, prestige));
         }
         return new RequestView(UUID.randomUUID(), type, "Ysolde", true, Post.MAIRE, "Valbrume", 3, -1, false, choices);
+    }
+
+    private static fr.crusadecraft.core.diplomacy.DiplomacyView sampleDiplomacy() {
+        java.util.Map<fr.crusadecraft.core.diplomacy.DiplomacyRules.Proposal, fr.crusadecraft.core.diplomacy.DiplomacyRules.Verdict> verdicts =
+                new java.util.EnumMap<>(fr.crusadecraft.core.diplomacy.DiplomacyRules.Proposal.class);
+        for (var p : fr.crusadecraft.core.diplomacy.DiplomacyRules.Proposal.values()) {
+            boolean ok = p.threshold() <= 20;
+            verdicts.put(p, new fr.crusadecraft.core.diplomacy.DiplomacyRules.Verdict(ok, ok ? 12 : -18, List.of(
+                    new fr.crusadecraft.core.diplomacy.DiplomacyRules.Factor("crusadecraft.diplo.f.opinion", 22),
+                    new fr.crusadecraft.core.diplomacy.DiplomacyRules.Factor("crusadecraft.diplo.f.threshold", -p.threshold())), null));
+        }
+        verdicts.put(fr.crusadecraft.core.diplomacy.DiplomacyRules.Proposal.COMMERCE,
+                fr.crusadecraft.core.diplomacy.DiplomacyRules.Verdict.blocked("crusadecraft.diplo.block.already"));
+        java.util.Map<fr.crusadecraft.core.diplomacy.Treaty, Long> treaties = new java.util.EnumMap<>(fr.crusadecraft.core.diplomacy.Treaty.class);
+        treaties.put(fr.crusadecraft.core.diplomacy.Treaty.COMMERCE, 31L);
+        List<Opinion.Line> lines = List.of(new Opinion.Line("crusadecraft.diplo.op.personality", "crusadecraft.personality.marchand", 5),
+                new Opinion.Line("crusadecraft.treaty.commerce", null, 20), new Opinion.Line("crusadecraft.opinion.cadeau", null, 9),
+                new Opinion.Line("crusadecraft.diplo.op.rank", null, -5));
+        List<fr.crusadecraft.core.diplomacy.DiplomacyView.Entry> entries = new ArrayList<>();
+        entries.add(new fr.crusadecraft.core.diplomacy.DiplomacyView.Entry(UUID.randomUUID(), true, "Rochegarde", TitleRank.DUCHE,
+                Heraldry.SINOPLE.rgb(), "Mathilde", true, AiPersonality.MARCHAND, fr.crusadecraft.core.diplomacy.DiploStatus.COMMERCE, 29,
+                lines, treaties, 20, 20, false, false, 0, 1.3, "", verdicts));
+        entries.add(new fr.crusadecraft.core.diplomacy.DiplomacyView.Entry(UUID.randomUUID(), true, "Ambrevent", TitleRank.ROYAUME,
+                Heraldry.GUEULES.rgb(), "Godefroy", false, AiPersonality.EXPANSIONNISTE, fr.crusadecraft.core.diplomacy.DiploStatus.HOSTILE, -34,
+                List.of(), java.util.Map.of(), 20, 20, false, true, 6, 0.4, "", verdicts));
+        entries.add(new fr.crusadecraft.core.diplomacy.DiplomacyView.Entry(UUID.randomUUID(), true, "Saulepré", TitleRank.BARONNIE,
+                Heraldry.OR.rgb(), "Hugues", false, AiPersonality.PACIFIQUE, fr.crusadecraft.core.diplomacy.DiploStatus.SUZERAIN, 41,
+                List.of(), java.util.Map.of(), 15, 10, false, false, 0, 3.2, "", verdicts));
+        entries.add(new fr.crusadecraft.core.diplomacy.DiplomacyView.Entry(UUID.randomUUID(), true, "Cendrecourt", TitleRank.COMTE,
+                Heraldry.POURPRE.rgb(), "Thibaut", false, AiPersonality.FANATIQUE, fr.crusadecraft.core.diplomacy.DiploStatus.NEUTRE, 3,
+                List.of(), java.util.Map.of(), 20, 20, false, false, 0, 1.1, "", verdicts));
+        return new fr.crusadecraft.core.diplomacy.DiplomacyView(1250, 140, 2, 1, true, "", null, true, entries);
+    }
+
+    private static net.minecraft.nbt.CompoundTag sampleLetter() {
+        fr.crusadecraft.core.diplomacy.Letter l = new fr.crusadecraft.core.diplomacy.Letter(UUID.randomUUID(), UUID.randomUUID(), true,
+                UUID.randomUUID(), Component.translatable("crusadecraft.letter.sender", "Hugues", Component.translatable("crusadecraft.rank.barony.holder.m"),
+                        fr.crusadecraft.core.world.AiNames.realm(TitleRank.BARONNIE, "Saulepré")),
+                Component.translatable("crusadecraft.letter.homage.subject"),
+                Component.translatable("crusadecraft.letter.homage.body", fr.crusadecraft.core.world.AiNames.realmThe(TitleRank.BARONNIE, "Saulepré"), 15, 10),
+                List.of(new fr.crusadecraft.core.diplomacy.Letter.Choice(fr.crusadecraft.core.diplomacy.Letter.Action.SEAL_VASSALAGE, true),
+                        new fr.crusadecraft.core.diplomacy.Letter.Choice(fr.crusadecraft.core.diplomacy.Letter.Action.REFUSE, false)), 57, 60, 0);
+        return fr.crusadecraft.item.LetterItem.data(fr.crusadecraft.item.LetterItem.create(l));
+    }
+
+    private static fr.crusadecraft.core.diplomacy.ChanceryView sampleChancery() {
+        List<fr.crusadecraft.core.diplomacy.ChanceryView.Vassal> vassals = List.of(
+                new fr.crusadecraft.core.diplomacy.ChanceryView.Vassal(UUID.randomUUID(), true, "Saulepré", TitleRank.BARONNIE, Heraldry.OR.rgb(),
+                        1, 15, 10, 41, 4),
+                new fr.crusadecraft.core.diplomacy.ChanceryView.Vassal(UUID.randomUUID(), true, "Givrefond", TitleRank.BARONNIE, Heraldry.CELESTE.rgb(),
+                        1, 30, 25, -6, 7));
+        List<fr.crusadecraft.core.diplomacy.ChanceryView.Claim> claims = List.of(
+                new fr.crusadecraft.core.diplomacy.ChanceryView.Claim(4, "Brisemer", "Ambrevent", TitleRank.ROYAUME, 1320));
+        List<fr.crusadecraft.core.diplomacy.ChanceryView.Claim> candidates = List.of(
+                new fr.crusadecraft.core.diplomacy.ChanceryView.Claim(7, "Cendrecourt", "Cendrecourt", TitleRank.COMTE, 910),
+                new fr.crusadecraft.core.diplomacy.ChanceryView.Claim(2, "Ormesval", "Ambrevent", TitleRank.ROYAUME, 1240),
+                new fr.crusadecraft.core.diplomacy.ChanceryView.Claim(9, "Saulepré", "Rochegarde", TitleRank.DUCHE, 1410));
+        return new fr.crusadecraft.core.diplomacy.ChanceryView("Royaume de Valbrume", TitleRank.COMTE, 3, TitleRank.DUCHE, 4, 600, 300,
+                1250, 140, true, "", true, vassals, claims, candidates, 7, 62);
     }
 
     private static MapView sampleMap() {

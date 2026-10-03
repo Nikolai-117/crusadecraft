@@ -29,6 +29,12 @@ public final class AiNames {
                 Component.translatable(rank.ofKey()), place);
     }
 
+    /** « le Comté de Valcourt », « la Baronnie d'Ambrevent » : en milieu de phrase, comme sujet ou complément. */
+    public static Component realmThe(TitleRank rank, String place) {
+        return Component.translatable(elides(place) ? "crusadecraft.ai.realm.elided" : "crusadecraft.ai.realm",
+                Component.translatable(rank.theKey()), place);
+    }
+
     public static Component house(String place) {
         return Component.translatable(elides(place) ? "crusadecraft.ai.house.elided" : "crusadecraft.ai.house", place);
     }

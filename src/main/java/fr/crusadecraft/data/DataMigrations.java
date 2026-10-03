@@ -27,6 +27,7 @@ public final class DataMigrations {
         // v2 → v3 : ajout de la cour (table du conseil, bureaux, tâches, requêtes). Lue vide si absente.
         // v3 → v4 : ajout des lois et du livre de comptes. Lois absentes = niveaux par défaut.
         // v4 → v5 : ajout du monde (royaumes IA, royaumes de jure). Absent = pas encore généré.
+        // v5 → v6 : diplomatie, courrier, revendications. Absents = aucune relation, aucune lettre.
         if (version < CrusadeSavedData.DATA_VERSION) {
             CrusadeCraft.LOGGER.info("CrusadeCraft : données mises à niveau de la version {} à {}", version,
                     CrusadeSavedData.DATA_VERSION);

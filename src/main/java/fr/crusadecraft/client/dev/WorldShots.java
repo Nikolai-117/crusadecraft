@@ -50,7 +50,7 @@ public final class WorldShots {
     private static final boolean ENABLED = Boolean.getBoolean("crusadecraft.worldshots");
     private static final String WORLD = "crusadecraft-shots";
 
-    private enum Step { BOOT, LOADING, SETUP, WALL, MAP, SHEET, HERALD, DONE }
+    private enum Step { BOOT, LOADING, SETUP, WALL, MAP, SHEET, HERALD, REALM, LETTER, SEAL, CHANCERY, COLOMBIER, DONE }
 
     private static Step step = Step.BOOT;
     private static int wait;
@@ -107,6 +107,55 @@ public final class WorldShots {
             }
             case HERALD -> {
                 grab(mc, "heraut");
+                MinecraftServer server = mc.getSingleplayerServer();
+                server.execute(() -> foundAndWrite(server));
+                step = Step.REALM;
+                wait = 80;
+            }
+            case REALM -> {
+                // La lettre d'hommage est dans l'inventaire : on la lit comme un joueur.
+                var inv = mc.player.getInventory();
+                for (int i = 0; i < inv.getContainerSize(); i++) {
+                    var stack = inv.getItem(i);
+                    if (stack.is(fr.crusadecraft.registry.ModItems.LETTER.get()) && fr.crusadecraft.item.LetterItem.awaitsAnswer(stack)) {
+                        fr.crusadecraft.client.ClientPackets.openLetter(stack);
+                        break;
+                    }
+                }
+                step = Step.LETTER;
+                wait = 20;
+            }
+            case LETTER -> {
+                grab(mc, "lettre_reelle");
+                var data = mc.screen instanceof fr.crusadecraft.client.screen.LetterScreen ? findLetter(mc) : null;
+                if (data != null) CrusadeNetwork.toServer(new fr.crusadecraft.network.packet.DiplomacyPackets.AnswerLetter(data, 0));
+                mc.setScreen(null);
+                step = Step.SEAL;
+                wait = 30;
+            }
+            case SEAL -> {
+                MinecraftServer server = mc.getSingleplayerServer();
+                server.execute(() -> {
+                    ServerPlayer player = server.getPlayerList().getPlayers().get(0);
+                    CrusadeNetwork.toPlayer(player, new fr.crusadecraft.network.packet.DiplomacyPackets.OpenChancery(
+                            fr.crusadecraft.core.diplomacy.TitleService.view(player), true));
+                });
+                step = Step.CHANCERY;
+                wait = 30;
+            }
+            case CHANCERY -> {
+                grab(mc, "chancellerie_reelle");
+                MinecraftServer server = mc.getSingleplayerServer();
+                server.execute(() -> {
+                    ServerPlayer player = server.getPlayerList().getPlayers().get(0);
+                    CrusadeNetwork.toPlayer(player, new fr.crusadecraft.network.packet.DiplomacyPackets.OpenDiplomacy(
+                            fr.crusadecraft.core.diplomacy.DiplomacyService.view(player), true));
+                });
+                step = Step.COLOMBIER;
+                wait = 30;
+            }
+            case COLOMBIER -> {
+                grab(mc, "colombier_reel");
                 step = Step.DONE;
                 wait = 20;
             }
@@ -164,6 +213,49 @@ public final class WorldShots {
         AiRealm first = CrusadeSavedData.get(server).world().realms().iterator().next();
         AiProvince capital = first.capital();
         player.connection.teleport(capital.seat().getX() + 0.5, capital.seat().getY() + 1, capital.seat().getZ() + 12.5, 180f, 5f);
+    }
+
+    /** Identifiant de la lettre qui attend une réponse, dans l'inventaire du joueur. */
+    private static java.util.UUID findLetter(Minecraft mc) {
+        var inv = mc.player.getInventory();
+        for (int i = 0; i < inv.getContainerSize(); i++) {
+            var stack = inv.getItem(i);
+            if (stack.is(fr.crusadecraft.registry.ModItems.LETTER.get()) && fr.crusadecraft.item.LetterItem.awaitsAnswer(stack)) {
+                return fr.crusadecraft.item.LetterItem.data(stack).getUUID("id");
+            }
+        }
+        return null;
+    }
+
+    /**
+     * Une colonie MineColonies au pied du joueur, un royaume fondé dessus, puis une proposition d'hommage à une
+     * seigneurie voisine (bien disposée) ; la réponse arrive aussitôt et le courrier est pris.
+     */
+    private static void foundAndWrite(MinecraftServer server) {
+        ServerPlayer player = server.getPlayerList().getPlayers().get(0);
+        ServerLevel level = player.serverLevel();
+        fr.crusadecraft.config.CrusadeConfig.SERVER.throneMustBeInTownHall.set(false);
+        fr.crusadecraft.config.CrusadeConfig.SERVER.chanceryNeedsResearch.set(false);
+        fr.crusadecraft.config.CrusadeConfig.SERVER.letterDelaySeconds.set(0);
+        BlockPos center = player.blockPosition().south(6);
+        fr.crusadecraft.compat.minecolonies.MineColoniesTestKit.createColony(level, center, player, "Valbrume", 3);
+        player.connection.teleport(center.getX() + 0.5, center.getY(), center.getZ() + 2.5, 180f, 0f);
+        var realm = fr.crusadecraft.core.realm.RealmService.found(player, new fr.crusadecraft.core.realm.RealmService.FoundingRequest(
+                center.east(), "Royaume de Valbrume", "Par le fer et la foi", "Aubépine", 1, false)).orElseThrow();
+        realm.setGold(800);
+        realm.setPrestige(400);
+        realm.setDread(30);
+        AiRealm barony = CrusadeSavedData.get(server).world().realms().stream()
+                .filter(r -> r.rank() == fr.crusadecraft.core.realm.TitleRank.BARONNIE).findFirst().orElseThrow();
+        long today = fr.crusadecraft.core.realm.RealmService.currentDay(server);
+        barony.discover(player.getUUID(), today);
+        var rel = CrusadeSavedData.get(server).diplomacy().between(barony.id(), realm.id());
+        for (int i = 0; i < 4; i++) rel.addOpinion(barony.id(), fr.crusadecraft.core.character.OpinionModifier.of(
+                fr.crusadecraft.core.character.OpinionReason.CADEAU, today, 3));
+        player.getInventory().add(new net.minecraft.world.item.ItemStack(fr.crusadecraft.registry.ModItems.SEAL.get()));
+        fr.crusadecraft.core.diplomacy.DiplomacyService.propose(player, barony.id(),
+                fr.crusadecraft.core.diplomacy.DiplomacyRules.Proposal.VASSALISATION, 15, 10);
+        fr.crusadecraft.core.diplomacy.DiplomacyService.takeMail(player);
     }
 
     private static void grab(Minecraft mc, String name) {

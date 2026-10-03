@@ -210,3 +210,30 @@ Les compétences vont de 1 à 99 : un citoyen débutant obtient 1 à 5, un exper
   Pas d'intégration ; la carte du mod et la Table de guerre en tiennent lieu.
 - **Banc d'essai en monde réel** (`./gradlew runWorldShots`) : monde plat jetable dans
   `run-worldshots/saves`, Table de guerre, royaumes IA, héraut, puis captures et fermeture.
+
+**P6 (3 octobre 2026)**
+
+- **Une relation par paire de royaumes** (joueurs et IA) : traités datés, hostilité, vassalité et
+  contrat, tribut, et l'opinion que chacun porte à l'autre (motifs datés, comme pour les personnages).
+- **L'opinion d'un souverain IA se calcule** : tempérament, traits, votre prestige et votre rang, rivalité
+  pour un même royaume de jure, renommée de votre chancelier, traités, cadeaux, insultes, contrat de
+  vassalité. Le Colombier affiche le détail.
+- **Réponses déterministes** : le Colombier montre, pour chaque proposition, la réponse qui viendra et ses
+  raisons. La réponse arrive par pigeon (40 s par défaut) au Colombier, où on la prend en objet « Lettre ».
+- **Le Sceau royal scelle** traités, hommages, titres et contrats. Il se grave aux armes du premier
+  souverain qui s'en sert. Comme la Chancery Table, il demande la recherche « Chancellerie » (réglable).
+- **Seigneuries indépendantes** : 4 baronnies d'une province, plus proches que les grands royaumes. Un baron
+  peut s'en faire prêter hommage ; un royaume IA plus titré refuse (il faut d'abord monter en rang). C'est
+  la première façon de grandir en solo : une seigneurie vassale + la capitale = 2 provinces = Comté.
+- **Les mondes déjà générés** (P5) reçoivent leurs seigneuries au chargement, sans rien déplacer.
+- **Titres** : Comté 2 provinces / 200 or / 100 prestige, puis Duché 4 / 600 / 300, Royaume 8 / 1500 / 800,
+  Empire 16 / 4000 / 2000 (réglables). Les provinces des vassaux comptent.
+- **Vassaux IA** : ils versent chaque jour leur part (impôt du contrat) de leur revenu simulé. Un contrat
+  dur fait baisser leur opinion. Entre joueurs, la vassalité se propose et se scelle par lettre.
+- **Revendications** : le chancelier les fabrique jour après jour sur une province choisie à la
+  Chancery Table ; un parchemin arrive au Colombier. Elles serviront de motif de guerre (P7).
+- **Statut MineColonies** : lu et affiché pour les royaumes des autres joueurs. Le refléter (rang
+  « Hostile » en guerre) viendra avec la P7, derrière une option.
+- **Personnages d'une colonie supprimée oubliés** : MineColonies peut redonner le numéro d'une colonie
+  supprimée à une nouvelle ; sans cela, ses citoyens héritaient des souvenirs et du statut des anciens
+  (bug trouvé par les GameTests).

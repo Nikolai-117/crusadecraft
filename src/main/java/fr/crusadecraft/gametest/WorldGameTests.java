@@ -28,7 +28,7 @@ public final class WorldGameTests {
 
     private WorldGameTests() {}
 
-    @GameTest(template = TestWorld.TEMPLATE, batch = "p5_monde", timeoutTicks = 200)
+    @GameTest(template = TestWorld.TEMPLATE, batch = "p5_monde", timeoutTicks = 260)
     public static void generationDecouverteEtCarte(GameTestHelper h) {
         TestWorld w = TestWorld.realm(h, "Valbrume");
         var server = h.getLevel().getServer();
@@ -51,7 +51,8 @@ public final class WorldGameTests {
             int n = WorldService.generate(server, level, w.center.getX(), w.center.getZ());
             WorldState world = CrusadeSavedData.get(server).world();
             w.check(world.generated(), "monde non généré");
-            w.check(n == CrusadeConfig.SERVER.aiRealmCount.get(), "royaumes IA : " + n);
+            int expected = CrusadeConfig.SERVER.aiRealmCount.get() + CrusadeConfig.SERVER.baronyCount.get();
+            w.check(n == expected, "royaumes IA : " + n + " au lieu de " + expected);
             int avoid = Math.max(CrusadeConfig.SERVER.territoryRadius.get() * 2, 250);
             for (AiRealm r : world.realms()) {
                 for (AiProvince p : r.provinces()) {
@@ -77,7 +78,24 @@ public final class WorldGameTests {
         }
 
         AiRealm t = target, o = other;
-        h.runAfterDelay(30, () -> {
+        // On attend que le terrain autour de la capitale soit vraiment chargé (une génération peut prendre du
+        // temps). Les vérifications sont inscrites d'avance, chacune par un objet distinct.
+        net.minecraft.core.BlockPos spot = net.minecraft.core.BlockPos.containing(t.capital().seat().getX() + 0.5,
+                t.capital().seat().getY() + 1, t.capital().seat().getZ() + 10.5);
+        boolean[] done = {false};
+        for (int i = 1; i <= 15; i++) {
+            boolean last = i == 15;
+            h.runAfterDelay(10L * i + 10, () -> {
+                if (done[0] || (!level.isPositionEntityTicking(spot) && !last)) return;
+                done[0] = true;
+                verify(h, w, level, t, o, spawned, cleanup);
+            });
+        }
+    }
+
+    private static void verify(GameTestHelper h, TestWorld w, net.minecraft.server.level.ServerLevel level, AiRealm t, AiRealm o,
+                               List<Villager> spawned, Runnable cleanup) {
+        {
             try {
                 AiProvince capital = t.capital();
                 w.ruler.setPos(capital.seat().getX() + 0.5, capital.seat().getY() + 1, capital.seat().getZ() + 10.5);
@@ -106,6 +124,6 @@ public final class WorldGameTests {
             } finally {
                 cleanup.run();
             }
-        });
+        }
     }
 }

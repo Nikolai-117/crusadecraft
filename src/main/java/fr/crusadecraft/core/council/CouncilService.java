@@ -258,8 +258,9 @@ public final class CouncilService {
             grantRoleXp(mayor, Post.MAIRE.stat());
             data.character(mayor).ifPresent(rec -> rec.addStress(-5));
         }
-        // Impôts, domaine, salaires, entretien, effets quotidiens des lois.
+        // Impôts, domaine, salaires, entretien, effets quotidiens des lois ; puis traités, tributs, vassaux.
         TreasuryService.onNewDay(server, realm, day, bonus);
+        fr.crusadecraft.core.diplomacy.DiplomacyService.onNewDay(server, realm, day);
         data.setDirty();
     }
 
@@ -289,6 +290,20 @@ public final class CouncilService {
                 }
             }
             case LEGITIMITE -> realm.setPiety(realm.piety() + (int) Math.round((1 + skill / 5.0) * bonus));
+            case AMELIORER_RELATIONS -> {
+                String target = realm.court().taskTarget(Post.CHANCELIER);
+                if (target == null) break;
+                try {
+                    UUID id = UUID.fromString(target);
+                    if (CrusadeSavedData.get(server).world().realm(id).isPresent()) {
+                        CrusadeSavedData.get(server).diplomacy().between(id, realm.id()).addOpinion(id,
+                                OpinionModifier.of(OpinionReason.CHANCELIER_RELATIONS, day, (1 + skill / 8.0) * bonus));
+                    }
+                } catch (IllegalArgumentException ignored) {
+                    // cible illisible : sans effet
+                }
+            }
+            case FABRIQUER_REVENDICATION -> fr.crusadecraft.core.diplomacy.TitleService.advanceClaim(server, realm, skill, bonus);
             default -> {
                 // SURVEILLER_LES_TERRES et BONHEUR_DU_PEUPLE agissent en continu (requêtes, bonheur) ;
                 // GERER_LE_DOMAINE et COLLECTER_IMPOTS passent par le trésor (TreasuryService).

@@ -78,7 +78,7 @@ public final class EconomyPackets {
 
     /** Demande les données d'un onglet du menu royal. */
     public record RequestTab(Tab tab) {
-        public enum Tab { TREASURY, LAWS }
+        public enum Tab { TREASURY, LAWS, DIPLOMACY, VASSALS }
 
         public static void encode(RequestTab p, FriendlyByteBuf buf) { buf.writeEnum(p.tab); }
         public static RequestTab decode(FriendlyByteBuf buf) { return new RequestTab(buf.readEnum(Tab.class)); }
@@ -86,8 +86,12 @@ public final class EconomyPackets {
         public static void handle(RequestTab p, Supplier<NetworkEvent.Context> ctx) {
             ServerPlayer player = ctx.get().getSender();
             if (player == null) return;
-            if (p.tab == Tab.TREASURY) sendTreasury(player, null);
-            else sendLaws(player);
+            switch (p.tab) {
+                case TREASURY -> sendTreasury(player, null);
+                case LAWS -> sendLaws(player);
+                case DIPLOMACY -> DiplomacyPackets.sendDiplomacy(player, false);
+                case VASSALS -> DiplomacyPackets.sendChancery(player, false);
+            }
         }
     }
 

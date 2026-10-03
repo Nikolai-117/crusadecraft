@@ -52,6 +52,7 @@ public final class ServerEvents {
         fr.crusadecraft.core.council.CouncilService.onServerStopped();
         fr.crusadecraft.core.council.RequestService.onServerStopped();
         fr.crusadecraft.core.world.WorldService.onServerStopped();
+        fr.crusadecraft.core.diplomacy.DiplomacyService.onServerStopped();
     }
 
     @SubscribeEvent
@@ -86,6 +87,8 @@ public final class ServerEvents {
         if (t % 1200 == 300) fr.crusadecraft.core.council.RequestService.periodic(server);
         if (t % 2400 == 900) fr.crusadecraft.core.council.CouncilService.applyHappiness(server);
         if (t % 40 == 20) fr.crusadecraft.core.world.WorldService.tick(server);
+        if (t % 40 == 30) fr.crusadecraft.core.diplomacy.DiplomacyService.tick(server);
+        if (t % (CrusadeConfig.SERVER.aiLetterMinutes.get() * 1200) == 600) fr.crusadecraft.core.diplomacy.DiplomacyService.aiLetters(server);
     }
 
     /**
@@ -126,6 +129,9 @@ public final class ServerEvents {
             else if (event.getPlacedBlock().is(ModBlocks.MAYOR_DESK.get())) refusal = fr.crusadecraft.block.CourtBlocks.checkDesk(p, lvl, event.getPos());
             else if (event.getPlacedBlock().is(ModBlocks.TREASURY.get())) refusal = fr.crusadecraft.block.CourtBlocks.checkTreasury(p, lvl, event.getPos());
             else if (event.getPlacedBlock().is(ModBlocks.WAR_MAP.get())) refusal = fr.crusadecraft.block.CourtBlocks.checkWarMap(p, lvl, event.getPos());
+            else if (event.getPlacedBlock().is(ModBlocks.COLOMBIER.get()) || event.getPlacedBlock().is(ModBlocks.CHANCERY.get())) {
+                refusal = fr.crusadecraft.block.CourtBlocks.checkTreasury(p, lvl, event.getPos());
+            }
             if (refusal.isPresent()) {
                 event.setCanceled(true);
                 p.displayClientMessage(refusal.get(), true);

@@ -31,6 +31,8 @@ public final class AiRealm {
     private long gold;
     private int prestige;
     private int piety;
+    /** Revenu du dernier jour simulé (sert aux tributs et aux impôts des vassaux). */
+    private long lastIncome;
     private final long foundedDay;
     /** Joueurs qui ont découvert ce royaume, et le jour de la découverte. */
     private final Map<UUID, Long> discoveredBy = new LinkedHashMap<>();
@@ -67,6 +69,8 @@ public final class AiRealm {
     public void setGold(long gold) { this.gold = gold; }
     public void setPrestige(int prestige) { this.prestige = prestige; }
     public void setPiety(int piety) { this.piety = piety; }
+    public long lastIncome() { return lastIncome; }
+    public void setLastIncome(long income) { this.lastIncome = income; }
 
     public boolean discoveredBy(UUID player) {
         return discoveredBy.containsKey(player);
@@ -106,6 +110,7 @@ public final class AiRealm {
         t.putLong("gold", gold);
         t.putInt("prestige", prestige);
         t.putInt("piety", piety);
+        t.putLong("income", lastIncome);
         t.putLong("founded", foundedDay);
         CompoundTag d = new CompoundTag();
         for (Map.Entry<UUID, Long> e : discoveredBy.entrySet()) d.putLong(e.getKey().toString(), e.getValue());
@@ -127,6 +132,7 @@ public final class AiRealm {
         r.gold = t.getLong("gold");
         r.prestige = t.getInt("prestige");
         r.piety = t.getInt("piety");
+        r.lastIncome = t.getLong("income");
         CompoundTag d = t.getCompound("discovered");
         for (String k : d.getAllKeys()) {
             try {

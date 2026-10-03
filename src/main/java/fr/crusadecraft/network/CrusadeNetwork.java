@@ -3,6 +3,7 @@ package fr.crusadecraft.network;
 import fr.crusadecraft.CrusadeCraft;
 import fr.crusadecraft.network.packet.CharacterActionPacket;
 import fr.crusadecraft.network.packet.CourtPackets;
+import fr.crusadecraft.network.packet.DiplomacyPackets;
 import fr.crusadecraft.network.packet.EconomyPackets;
 import fr.crusadecraft.network.packet.FoundRealmPacket;
 import fr.crusadecraft.network.packet.OpenCharacterPacket;
@@ -27,7 +28,7 @@ import net.minecraftforge.network.simple.SimpleChannel;
  * (distance, droits, état) avant d'agir.
  */
 public final class CrusadeNetwork {
-    private static final String VERSION = "3";
+    private static final String VERSION = "4";
 
     public static final SimpleChannel CHANNEL = NetworkRegistry.newSimpleChannel(
             ResourceLocation.tryParse(CrusadeCraft.MOD_ID + ":main"),
@@ -116,6 +117,22 @@ public final class CrusadeNetwork {
         CHANNEL.messageBuilder(WorldPackets.RequestAiRealm.class, nextId++, NetworkDirection.PLAY_TO_SERVER)
                 .encoder(WorldPackets.RequestAiRealm::encode).decoder(WorldPackets.RequestAiRealm::decode)
                 .consumerMainThread(WorldPackets.RequestAiRealm::handle).add();
+        // P6 : diplomatie
+        CHANNEL.messageBuilder(DiplomacyPackets.OpenDiplomacy.class, nextId++, NetworkDirection.PLAY_TO_CLIENT)
+                .encoder(DiplomacyPackets.OpenDiplomacy::encode).decoder(DiplomacyPackets.OpenDiplomacy::decode)
+                .consumerMainThread(DiplomacyPackets.OpenDiplomacy::handle).add();
+        CHANNEL.messageBuilder(DiplomacyPackets.OpenChancery.class, nextId++, NetworkDirection.PLAY_TO_CLIENT)
+                .encoder(DiplomacyPackets.OpenChancery::encode).decoder(DiplomacyPackets.OpenChancery::decode)
+                .consumerMainThread(DiplomacyPackets.OpenChancery::handle).add();
+        CHANNEL.messageBuilder(DiplomacyPackets.DiploAction.class, nextId++, NetworkDirection.PLAY_TO_SERVER)
+                .encoder(DiplomacyPackets.DiploAction::encode).decoder(DiplomacyPackets.DiploAction::decode)
+                .consumerMainThread(DiplomacyPackets.DiploAction::handle).add();
+        CHANNEL.messageBuilder(DiplomacyPackets.AnswerLetter.class, nextId++, NetworkDirection.PLAY_TO_SERVER)
+                .encoder(DiplomacyPackets.AnswerLetter::encode).decoder(DiplomacyPackets.AnswerLetter::decode)
+                .consumerMainThread(DiplomacyPackets.AnswerLetter::handle).add();
+        CHANNEL.messageBuilder(DiplomacyPackets.ChanceryAction.class, nextId++, NetworkDirection.PLAY_TO_SERVER)
+                .encoder(DiplomacyPackets.ChanceryAction::encode).decoder(DiplomacyPackets.ChanceryAction::decode)
+                .consumerMainThread(DiplomacyPackets.ChanceryAction::handle).add();
     }
 
     public static void toPlayer(ServerPlayer player, Object packet) {

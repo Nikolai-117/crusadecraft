@@ -79,7 +79,11 @@ final class TestWorld {
         CrusadeSavedData data = CrusadeSavedData.get(helper.getLevel().getServer());
         data.realmOfRuler(ruler.getUUID()).ifPresent(r -> data.remove(r.id()));
         MineColoniesTestKit.deleteColony(colony);
-        for (ColonyRef c : extraColonies) MineColoniesTestKit.deleteColony(c);
+        data.forgetColony(colony);
+        for (ColonyRef c : extraColonies) {
+            MineColoniesTestKit.deleteColony(c);
+            data.forgetColony(c);
+        }
         CrusadeConfig.SERVER.throneMustBeInTownHall.set(previousTownHallRule);
     }
 }

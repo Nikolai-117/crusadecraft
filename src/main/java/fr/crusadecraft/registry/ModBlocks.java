@@ -45,6 +45,12 @@ public final class ModBlocks {
                     .requiresCorrectToolForDrops(),
             new double[][]{{5, 0, 5, 11, 13, 11}, {4, 13, 4, 12, 16, 12}}));
 
+    public static final RegistryObject<Block> COLOMBIER = BLOCKS.register("colombier", () -> new fr.crusadecraft.block.ColombierBlock(
+            BlockBehaviour.Properties.of().mapColor(MapColor.WOOD).strength(2.0F, 3.0F).sound(SoundType.WOOD).noOcclusion()));
+
+    public static final RegistryObject<Block> CHANCERY = BLOCKS.register("chancery", () -> new fr.crusadecraft.block.ChanceryBlock(
+            BlockBehaviour.Properties.of().mapColor(MapColor.COLOR_BROWN).strength(2.5F, 6.0F).sound(SoundType.WOOD).noOcclusion()));
+
     private ModBlocks() {}
 
     public static void register(IEventBus modBus) {

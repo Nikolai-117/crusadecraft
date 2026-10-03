@@ -16,8 +16,8 @@ import java.util.Locale;
 public enum CouncilTask {
     // Chancelier
     GERER_LA_COUR(Post.CHANCELIER, true),
-    AMELIORER_RELATIONS(Post.CHANCELIER, false),
-    FABRIQUER_REVENDICATION(Post.CHANCELIER, false),
+    AMELIORER_RELATIONS(Post.CHANCELIER, true),
+    FABRIQUER_REVENDICATION(Post.CHANCELIER, true),
     // Maréchal
     ENTRAINER_TROUPES(Post.MARECHAL, true),
     ORGANISER_LEVEES(Post.MARECHAL, false),

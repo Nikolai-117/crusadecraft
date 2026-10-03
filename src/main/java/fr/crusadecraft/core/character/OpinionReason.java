@@ -29,7 +29,15 @@ public enum OpinionReason {
     REFUS(-15, 8, true),
     // P4 : trésor et lois
     SALAIRE_IMPAYE(-10, 5, true),
-    LOI_IMPOSEE(-15, 10, true);
+    LOI_IMPOSEE(-15, 10, true),
+    // P6 : diplomatie (opinion d'un souverain envers un autre royaume)
+    CADEAU(10, 20, true),
+    INSULTE(-30, 20, true),
+    TRAITE_SIGNE(10, 20, true),
+    REFUS_DIPLOMATIQUE(-8, 8, true),
+    CHANCELIER_RELATIONS(5, 10, true),
+    EXIGENCE(-15, 20, true),
+    HOMMAGE(10, 30, true);
 
     private final int value;
     private final int durationDays;

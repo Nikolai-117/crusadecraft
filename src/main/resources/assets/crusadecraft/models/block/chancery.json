@@ -1,0 +1,14 @@
+{
+  "parent": "minecraft:block/block",
+  "textures": { "top": "minecraft:block/dark_oak_planks", "leg": "minecraft:block/dark_oak_log", "cloth": "minecraft:block/green_wool", "book": "minecraft:block/lectern_top", "ink": "minecraft:block/black_wool", "quill": "minecraft:block/white_wool", "particle": "minecraft:block/dark_oak_planks" },
+  "elements": [
+    { "from": [0, 12, 0], "to": [16, 15, 16], "faces": {"north": {"texture": "#top"}, "south": {"texture": "#top"}, "east": {"texture": "#top"}, "west": {"texture": "#top"}, "up": {"texture": "#cloth"}, "down": {"texture": "#top"}} },
+    { "from": [1, 0, 1], "to": [4, 12, 4], "faces": {"north": {"texture": "#leg"}, "south": {"texture": "#leg"}, "east": {"texture": "#leg"}, "west": {"texture": "#leg"}, "down": {"texture": "#leg"}} },
+    { "from": [12, 0, 1], "to": [15, 12, 4], "faces": {"north": {"texture": "#leg"}, "south": {"texture": "#leg"}, "east": {"texture": "#leg"}, "west": {"texture": "#leg"}, "down": {"texture": "#leg"}} },
+    { "from": [1, 0, 12], "to": [4, 12, 15], "faces": {"north": {"texture": "#leg"}, "south": {"texture": "#leg"}, "east": {"texture": "#leg"}, "west": {"texture": "#leg"}, "down": {"texture": "#leg"}} },
+    { "from": [12, 0, 12], "to": [15, 12, 15], "faces": {"north": {"texture": "#leg"}, "south": {"texture": "#leg"}, "east": {"texture": "#leg"}, "west": {"texture": "#leg"}, "down": {"texture": "#leg"}} },
+    { "from": [3, 15, 4], "to": [10, 16, 11], "faces": {"north": {"texture": "#book"}, "south": {"texture": "#book"}, "east": {"texture": "#book"}, "west": {"texture": "#book"}, "up": {"texture": "#book"}} },
+    { "from": [11, 15, 5], "to": [13, 17, 7], "faces": {"north": {"texture": "#ink"}, "south": {"texture": "#ink"}, "east": {"texture": "#ink"}, "west": {"texture": "#ink"}, "up": {"texture": "#ink"}} },
+    { "from": [12, 17, 5.5], "to": [12.6, 20, 6.1], "faces": {"north": {"texture": "#quill"}, "south": {"texture": "#quill"}, "east": {"texture": "#quill"}, "west": {"texture": "#quill"}, "up": {"texture": "#quill"}} }
+  ]
+}

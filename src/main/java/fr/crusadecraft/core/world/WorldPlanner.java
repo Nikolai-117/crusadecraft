@@ -33,10 +33,14 @@ public final class WorldPlanner {
     }
 
     public record Settings(int realmCount, int minRing, int maxRing, int capitalSpacing, int provinceRadius,
-                           int seatSpacing, int avoidRadius) {
+                           int seatSpacing, int avoidRadius, int baronies) {
         public static Settings defaults() {
-            return new Settings(6, 600, 2500, 700, 450, 180, 320);
+            return new Settings(6, 600, 2500, 700, 450, 180, 320, 4);
         }
+
+        /** Les seigneuries indépendantes se tiennent plus près de la capitale que les grands royaumes. */
+        int baronyMin() { return Math.max(avoidRadius + 20, minRing / 2); }
+        int baronyMax() { return Math.max(baronyMin() + 300, minRing + 500); }
     }
 
     public record Plan(List<AiRealm> realms, List<WorldState.DejureKingdom> dejure) {}
@@ -55,7 +59,7 @@ public final class WorldPlanner {
         this.dimension = dimension;
     }
 
-    private record Point(int x, int y, int z, AiProvince.Anchor anchor) {
+    public record Point(int x, int y, int z, AiProvince.Anchor anchor) {
         double dist(double ox, double oz) {
             return Math.hypot(x - ox, z - oz);
         }
@@ -147,7 +151,77 @@ public final class WorldPlanner {
             realm.setPiety(personality == AiPersonality.FANATIQUE ? 150 + random.nextInt(100) : random.nextInt(100));
             realms.add(realm);
         }
+        List<int[]> taken = new ArrayList<>();
+        for (Point p : seats) taken.add(new int[]{p.x(), p.z()});
+        realms.addAll(baronies(cx, cz, pool, avoid, taken, takenColors, provinceId, settings.baronies(), dejure, today));
         return new Plan(realms, dejure);
+    }
+
+    /**
+     * Seigneuries indépendantes : une seule province, un village de préférence, entre la colonie du joueur et
+     * les grands royaumes. Ce sont les premières qu'un baron peut s'attacher.
+     */
+    public List<AiRealm> baronies(int cx, int cz, List<Point> pool, List<int[]> avoid, List<int[]> takenSeats,
+                                  List<Integer> takenColors, int firstProvinceId, int count,
+                                  List<WorldState.DejureKingdom> dejure, long today) {
+        List<AiRealm> out = new ArrayList<>();
+        List<Point> seats = new ArrayList<>();
+        for (int[] s : takenSeats) seats.add(new Point(s[0], 0, s[1], AiProvince.Anchor.LAND));
+        List<Integer> colors = colors(takenColors);
+        int provinceId = firstProvinceId;
+        for (int i = 0; i < count; i++) {
+            Point seat = null;
+            for (Point p : new ArrayList<>(pool)) {
+                double d = p.dist(cx, cz);
+                if (d < settings.baronyMin() || d > settings.baronyMax()) continue;
+                if (!farFrom(p, seats, settings.seatSpacing()) || !farFromColonies(p, avoid)) continue;
+                seat = p;
+                pool.remove(p);
+                break;
+            }
+            for (int attempt = 0; seat == null && attempt < 60; attempt++) {
+                double a = random.nextDouble() * Math.PI * 2;
+                double d = settings.baronyMin() + random.nextDouble() * (settings.baronyMax() - settings.baronyMin());
+                Point p = probe((int) (cx + Math.cos(a) * d), (int) (cz + Math.sin(a) * d));
+                if (p != null && farFrom(p, seats, settings.seatSpacing()) && farFromColonies(p, avoid)) seat = p;
+            }
+            if (seat == null) break;
+            seats.add(seat);
+            String place = names.place();
+            AiPersonality personality = AiPersonality.values()[random.nextInt(AiPersonality.values().length)];
+            AiRealm realm = new AiRealm(new UUID(random.nextLong(), random.nextLong()), place, TitleRank.BARONNIE,
+                    colors.get((i + 3) % colors.size()), names.place(), personality, character(28 + random.nextInt(35), true), today);
+            for (Post post : Post.values()) {
+                if (post.isCouncil()) realm.council().put(post, character(22 + random.nextInt(40), false));
+            }
+            realm.provinces().add(new AiProvince(provinceId++, place, dimension, new BlockPos(seat.x(), seat.y(), seat.z()),
+                    seat.anchor(), true, nearestDejure(dejure, seat.x(), seat.z()), 10 + random.nextInt(20), 5 + random.nextInt(20)));
+            realm.setGold(40 + random.nextInt(80));
+            realm.setPrestige(10 + random.nextInt(40));
+            realm.setPiety(random.nextInt(60));
+            out.add(realm);
+        }
+        return out;
+    }
+
+    private static int nearestDejure(List<WorldState.DejureKingdom> dejure, int x, int z) {
+        int best = 0;
+        double bestD = Double.MAX_VALUE;
+        for (int i = 0; i < dejure.size(); i++) {
+            double d = Math.hypot(dejure.get(i).centerX() - x, dejure.get(i).centerZ() - z);
+            if (d < bestD) {
+                bestD = d;
+                best = i;
+            }
+        }
+        return best;
+    }
+
+    /** Les villages candidats, sous la forme qu'attend {@link #baronies}. */
+    public static List<Point> points(List<Candidate> villages) {
+        List<Point> out = new ArrayList<>();
+        for (Candidate c : villages) out.add(new Point(c.x(), c.y(), c.z(), c.anchor()));
+        return out;
     }
 
     /** Un royaume, deux ou trois duchés, et des comtés pour le reste. */

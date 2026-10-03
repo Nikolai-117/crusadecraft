@@ -34,6 +34,8 @@ public final class WorldState {
         }
     }
 
+    /** 1 : royaumes IA (P5) ; 2 : avec les seigneuries indépendantes (P6). */
+    private int version = 2;
     private boolean generated;
     private long generatedDay;
     private int centerX, centerZ;
@@ -42,6 +44,12 @@ public final class WorldState {
     private long lastEconomyDay = Long.MIN_VALUE;
 
     public boolean generated() { return generated; }
+    public int version() { return version; }
+    public void setVersion(int version) { this.version = version; }
+
+    public void add(AiRealm realm) {
+        realms.put(realm.id(), realm);
+    }
     public long generatedDay() { return generatedDay; }
     public int centerX() { return centerX; }
     public int centerZ() { return centerZ; }
@@ -93,6 +101,7 @@ public final class WorldState {
     public CompoundTag save() {
         CompoundTag t = new CompoundTag();
         t.putBoolean("generated", generated);
+        t.putInt("version", version);
         t.putLong("day", generatedDay);
         t.putInt("cx", centerX);
         t.putInt("cz", centerZ);
@@ -109,6 +118,7 @@ public final class WorldState {
     public static WorldState load(CompoundTag t) {
         WorldState s = new WorldState();
         s.generated = t.getBoolean("generated");
+        s.version = t.contains("version") ? t.getInt("version") : 1;
         s.generatedDay = t.getLong("day");
         s.centerX = t.getInt("cx");
         s.centerZ = t.getInt("cz");

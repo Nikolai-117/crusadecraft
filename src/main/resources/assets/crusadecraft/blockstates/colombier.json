@@ -1,0 +1,8 @@
+{
+  "variants": {
+    "facing=north": { "model": "crusadecraft:block/colombier" },
+    "facing=east": { "model": "crusadecraft:block/colombier", "y": 90 },
+    "facing=south": { "model": "crusadecraft:block/colombier", "y": 180 },
+    "facing=west": { "model": "crusadecraft:block/colombier", "y": 270 }
+  }
+}

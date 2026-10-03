@@ -153,6 +153,7 @@ public final class RealmService {
 
     /** Une colonie vient d'être supprimée dans MineColonies (elle peut encore être visible un instant). */
     public static void onColonyDeleted(MinecraftServer server, ColonyRef colony) {
+        CrusadeSavedData.get(server).forgetColony(colony);
         for (Realm realm : CrusadeSavedData.get(server).realms()) {
             if (realm.capital().equals(colony)) {
                 setState(server, realm, RealmState.DORMANT_NO_CAPITAL);

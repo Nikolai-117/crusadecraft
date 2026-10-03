@@ -1,0 +1,8 @@
+{
+  "variants": {
+    "facing=north": { "model": "crusadecraft:block/chancery" },
+    "facing=east": { "model": "crusadecraft:block/chancery", "y": 90 },
+    "facing=south": { "model": "crusadecraft:block/chancery", "y": 180 },
+    "facing=west": { "model": "crusadecraft:block/chancery", "y": 270 }
+  }
+}

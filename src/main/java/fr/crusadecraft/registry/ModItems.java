@@ -33,6 +33,16 @@ public final class ModItems {
             () -> new BlockItem(ModBlocks.WAR_MAP.get(), new Item.Properties()));
     public static final RegistryObject<Item> BOUNDARY_STONE = ITEMS.register("boundary_stone",
             () -> new BlockItem(ModBlocks.BOUNDARY_STONE.get(), new Item.Properties()));
+    public static final RegistryObject<Item> COLOMBIER = ITEMS.register("colombier",
+            () -> new BlockItem(ModBlocks.COLOMBIER.get(), new Item.Properties()));
+    public static final RegistryObject<Item> CHANCERY = ITEMS.register("chancery",
+            () -> new BlockItem(ModBlocks.CHANCERY.get(), new Item.Properties().rarity(Rarity.UNCOMMON)));
+    public static final RegistryObject<Item> LETTER = ITEMS.register("letter",
+            () -> new fr.crusadecraft.item.LetterItem(new Item.Properties().stacksTo(1)));
+    public static final RegistryObject<Item> SEAL = ITEMS.register("seal",
+            () -> new fr.crusadecraft.item.SealItem(new Item.Properties().rarity(Rarity.RARE)));
+    public static final RegistryObject<Item> CLAIM_SCROLL = ITEMS.register("claim_scroll",
+            () -> new fr.crusadecraft.item.ClaimScrollItem(new Item.Properties().rarity(Rarity.UNCOMMON)));
     public static final RegistryObject<Item> TREASURY = ITEMS.register("treasury",
             () -> new BlockItem(ModBlocks.TREASURY.get(), new Item.Properties().rarity(Rarity.UNCOMMON)));
 

@@ -149,7 +149,8 @@ public final class TreasuryGameTests {
             w.check(w.realm.gold() == -limit, "la dette a dépassé la limite : " + w.realm.gold());
             w.check(w.realm.prestige() == prestige - CrusadeConfig.SERVER.debtPrestigeLoss.get(), "prestige après un jour de dette : " + w.realm.prestige());
             boolean unpaid = record(w, marshal).modifiers().stream().anyMatch(m -> m.reason() == OpinionReason.SALAIRE_IMPAYE);
-            w.check(unpaid, "le maréchal ne s'est pas plaint de son salaire");
+            w.check(unpaid, "le maréchal ne s'est pas plaint de son salaire (motifs : " + record(w, marshal).modifiers()
+                    + ", comptes : " + w.realm.ledger().peek(today).amounts() + ", or : " + w.realm.gold() + ")");
             w.check(!TreasuryService.spend(server, w.realm, LedgerCategory.REQUETES, 1), "dépense choisie acceptée en pleine dette");
             h.succeed();
         } finally {

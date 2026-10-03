@@ -1,0 +1,11 @@
+{
+  "type": "minecraft:crafting_shaped",
+  "category": "misc",
+  "pattern": [" W ", "PFP", "PPP"],
+  "key": {
+    "W": { "item": "minecraft:wheat_seeds" },
+    "P": { "tag": "minecraft:planks" },
+    "F": { "item": "minecraft:feather" }
+  },
+  "result": { "item": "crusadecraft:colombier" }
+}

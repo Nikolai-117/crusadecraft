@@ -6,12 +6,17 @@ import java.util.Locale;
 public enum LedgerCategory {
     IMPOTS(true),
     DOMAINE(true),
+    VASSAUX(true),
+    TRIBUTS(true),
+    COMMERCE(true),
     DEPOTS(true),
     RETRAITS(false),
     SALAIRES(false),
     ENTRETIEN(false),
     REQUETES(false),
     RECOMPENSES(false),
+    DIPLOMATIE(false),
+    TITRES(false),
     AUTRES(false);
 
     private final boolean income;

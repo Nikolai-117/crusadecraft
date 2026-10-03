@@ -11,6 +11,72 @@ const REGALIA = {
 };
 
 export const TEXTURES = {
+  // Lettre scellée de cire rouge.
+  'item/letter': {
+    palette: { k: '5a4630', p: 'efe3c4', P: 'd8c79e', r: 'a8241c', R: 'd8463a', l: 'b8a47a' },
+    pixels: [
+      '................',
+      '................',
+      '..kkkkkkkkkkkk..',
+      '..kpppppppppPk..',
+      '..kPpppppppPpk..',
+      '..kpPllllllPpk..',
+      '..kppPpppPpppk..',
+      '..kpppPrRPpppk..',
+      '..kppppRrppppk..',
+      '..kpllllllllpk..',
+      '..kppppppppppk..',
+      '..kPlllllllpPk..',
+      '..kkkkkkkkkkkk..',
+      '................',
+      '................',
+      '................',
+    ],
+  },
+  // Sceau royal : une matrice d'or au manche de bois.
+  'item/seal': {
+    palette: { k: '3b2610', w: '7a5230', W: 'a07040', g: 'c9a24a', G: 'f4d77a', d: '8a6a1e', r: 'b3261e' },
+    pixels: [
+      '................',
+      '......kkkk......',
+      '.....kwWWwk.....',
+      '.....kwWWwk.....',
+      '......kwwk......',
+      '......kWwk......',
+      '......kwwk......',
+      '.....kdggdk.....',
+      '....kgGGGGgk....',
+      '...kgGgrrgGgk...',
+      '...kgGrGGrGgk...',
+      '...kgGgrrgGgk...',
+      '....kgGGGGgk....',
+      '.....kddddk.....',
+      '......kkkk......',
+      '................',
+    ],
+  },
+  // Parchemin de revendication roulé, ruban rouge.
+  'item/claim_scroll': {
+    palette: { k: '5a4630', p: 'efe3c4', P: 'd8c79e', d: 'b8a47a', r: 'a8241c', R: 'd8463a' },
+    pixels: [
+      '................',
+      '...........kk...',
+      '..........kPPk..',
+      '.........kpPdk..',
+      '........kppPk...',
+      '.......kpppk....',
+      '......krRrk.....',
+      '.....kpRrpk.....',
+      '....kpppk.......',
+      '...kpppk........',
+      '..kdPpk.........',
+      '.kPPpk..........',
+      '.kdPk...........',
+      '..kk............',
+      '................',
+      '................',
+    ],
+  },
   // Cadre de la Table de guerre : parchemin dans un liseré de chêne noir, avec un tracé de carte.
   'block/war_map': {
     palette: { k: '2b1d12', w: '5a3d24', p: 'e8d9b0', P: 'd6c393', b: '6d8fb3', r: 'a8443a', g: '7a8c4e', d: '8a7650' },

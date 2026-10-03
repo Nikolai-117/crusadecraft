@@ -114,4 +114,22 @@ public final class ClientPackets {
     public static void aiRealm(AiRealmView view) {
         Minecraft.getInstance().setScreen(new fr.crusadecraft.client.screen.AiRealmScreen(view));
     }
+
+    public static void diplomacy(fr.crusadecraft.core.diplomacy.DiplomacyView view, boolean open) {
+        Minecraft mc = Minecraft.getInstance();
+        if (mc.screen instanceof fr.crusadecraft.client.screen.DiplomacyScreen screen) screen.refresh(view);
+        else if (mc.screen instanceof RealmScreen realm && !open) realm.setDiplomacy(view);
+        else if (open) mc.setScreen(new fr.crusadecraft.client.screen.DiplomacyScreen(view));
+    }
+
+    public static void chancery(fr.crusadecraft.core.diplomacy.ChanceryView view, boolean open) {
+        Minecraft mc = Minecraft.getInstance();
+        if (mc.screen instanceof fr.crusadecraft.client.screen.ChanceryScreen screen) screen.refresh(view);
+        else if (mc.screen instanceof RealmScreen realm && !open) realm.setChancery(view);
+        else if (open) mc.setScreen(new fr.crusadecraft.client.screen.ChanceryScreen(view));
+    }
+
+    public static void openLetter(net.minecraft.world.item.ItemStack stack) {
+        Minecraft.getInstance().setScreen(new fr.crusadecraft.client.screen.LetterScreen(fr.crusadecraft.item.LetterItem.data(stack).copy()));
+    }
 }

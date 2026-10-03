@@ -1,0 +1,13 @@
+{
+  "type": "minecraft:crafting_shaped",
+  "category": "misc",
+  "pattern": ["WIB", "PPP", "L L"],
+  "key": {
+    "W": { "item": "minecraft:writable_book" },
+    "I": { "item": "minecraft:ink_sac" },
+    "B": { "item": "minecraft:book" },
+    "P": { "item": "minecraft:dark_oak_planks" },
+    "L": { "item": "minecraft:dark_oak_log" }
+  },
+  "result": { "item": "crusadecraft:chancery" }
+}

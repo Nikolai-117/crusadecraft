@@ -37,7 +37,8 @@ class WorldLogicTest {
     void planCompletEtReproductible() {
         WorldPlanner.Plan a = plan(42, grid(300, 3000), List.of());
         WorldPlanner.Plan b = plan(42, grid(300, 3000), List.of());
-        assertEquals(6, a.realms().size());
+        assertEquals(10, a.realms().size(), "six royaumes et quatre seigneuries");
+        assertEquals(4, a.realms().stream().filter(r -> r.rank() == TitleRank.BARONNIE).count());
         assertEquals(a.realms().get(0).place(), b.realms().get(0).place(), "même graine, même monde");
         assertEquals(a.realms().get(3).capital().seat(), b.realms().get(3).capital().seat());
         assertEquals(TitleRank.ROYAUME, a.realms().get(0).rank(), "un royaume en tête");
@@ -57,8 +58,12 @@ class WorldLogicTest {
             assertNotNull(cap);
             assertTrue(cap.capital());
             double d = Math.hypot(cap.seat().getX(), cap.seat().getZ());
-            assertTrue(d >= s.minRing() && d <= s.maxRing(), "capitale hors de l'anneau : " + d);
-            capitals.add(cap);
+            if (r.rank() == TitleRank.BARONNIE) {
+                assertTrue(d >= s.baronyMin() && d <= s.baronyMax(), "seigneurie hors de son anneau : " + d);
+            } else {
+                assertTrue(d >= s.minRing() && d <= s.maxRing(), "capitale hors de l'anneau : " + d);
+                capitals.add(cap);
+            }
             all.addAll(r.provinces());
             assertEquals(5, r.council().size(), "cinq conseillers");
             assertTrue(r.council().containsKey(Post.CHANCELIER));
@@ -72,6 +77,7 @@ class WorldLogicTest {
             switch (r.rank()) {
                 case ROYAUME -> assertTrue(n >= 3 && n <= 5, "royaume : " + n);
                 case DUCHE -> assertTrue(n >= 2 && n <= 3, "duché : " + n);
+                case BARONNIE -> assertEquals(1, n, "seigneurie : une province");
                 default -> assertTrue(n >= 1 && n <= 2, "comté : " + n);
             }
         }
@@ -95,7 +101,7 @@ class WorldLogicTest {
     @Test
     void sansVillagesOnPrendLaTerreFerme() {
         WorldPlanner.Plan p = plan(11, List.of(), List.of());
-        assertEquals(6, p.realms().size());
+        assertEquals(10, p.realms().size());
         for (AiRealm r : p.realms()) {
             for (AiProvince prov : r.provinces()) assertEquals(AiProvince.Anchor.LAND, prov.anchor());
         }
@@ -109,7 +115,7 @@ class WorldLogicTest {
         List<WorldPlanner.Candidate> villages = new ArrayList<>();
         villages.add(new WorldPlanner.Candidate(1000, 70, 0, AiProvince.Anchor.VILLAGE_PREDICTED));
         villages.add(new WorldPlanner.Candidate(-1000, 70, 0, AiProvince.Anchor.VILLAGE));
-        WorldPlanner.Plan p = new WorldPlanner(new WorldPlanner.Settings(1, 600, 2500, 700, 450, 180, 320), 3, ALL_LAND, OW)
+        WorldPlanner.Plan p = new WorldPlanner(new WorldPlanner.Settings(1, 600, 2500, 700, 450, 180, 320, 0), 3, ALL_LAND, OW)
                 .plan(0, 0, villages, List.of(), List.of(), 0);
         assertEquals(-1000, p.realms().get(0).capital().seat().getX(), "le village déjà généré l'emporte");
     }

@@ -57,6 +57,8 @@ public class RealmScreen extends Screen {
     /** Données des onglets Trésor et Lois, demandées au serveur à l'ouverture de l'onglet. */
     private TreasuryView treasury;
     private LawsView laws;
+    private fr.crusadecraft.core.diplomacy.DiplomacyView diplomacy;
+    private fr.crusadecraft.core.diplomacy.ChanceryView chancery;
     private Law selectedLaw;
     private int selectedLevel = -1;
 
@@ -84,6 +86,14 @@ public class RealmScreen extends Screen {
         this.treasury = v;
     }
 
+    public void setDiplomacy(fr.crusadecraft.core.diplomacy.DiplomacyView v) {
+        this.diplomacy = v;
+    }
+
+    public void setChancery(fr.crusadecraft.core.diplomacy.ChanceryView v) {
+        this.chancery = v;
+    }
+
     public void setLaws(LawsView v) {
         this.laws = v;
         if (minecraft != null) rebuildWidgets();
@@ -109,6 +119,8 @@ public class RealmScreen extends Screen {
         top = (height - h) / 2;
         if (tab == Tab.TRESOR && treasury == null) request(EconomyPackets.RequestTab.Tab.TREASURY);
         if (tab == Tab.LOIS && laws == null) request(EconomyPackets.RequestTab.Tab.LAWS);
+        if (tab == Tab.DIPLOMATIE && diplomacy == null) request(EconomyPackets.RequestTab.Tab.DIPLOMACY);
+        if (tab == Tab.VASSAUX && chancery == null) request(EconomyPackets.RequestTab.Tab.VASSALS);
         if (tab == Tab.LOIS) initLawButton();
     }
 
@@ -165,6 +177,10 @@ public class RealmScreen extends Screen {
             renderTreasuryTab(g, left + 8, cy, w - 16, ch, mouseX, mouseY);
         } else if (tab == Tab.LOIS) {
             renderLawsTab(g, left + 8, cy, w - 16, ch, mouseX, mouseY);
+        } else if (tab == Tab.DIPLOMATIE) {
+            renderDiplomacyTab(g, left + 8, cy, w - 16, ch, mouseX, mouseY);
+        } else if (tab == Tab.VASSAUX) {
+            renderVassalsTab(g, left + 8, cy, w - 16, ch, mouseX, mouseY);
         } else {
             renderEmpty(g, left + 8, cy, w - 16, ch);
         }
@@ -280,6 +296,71 @@ public class RealmScreen extends Screen {
             Ui.text(g, font, Component.literal(hint), x + 8, y + ch - 11, Ui.TEXT_MUTED);
         }
         if (tip != null) g.renderComponentTooltip(font, tip, mouseX, mouseY);
+    }
+
+    private void renderDiplomacyTab(GuiGraphics g, int x, int y, int cw, int ch, int mouseX, int mouseY) {
+        if (diplomacy == null) {
+            renderLoading(g, x, y, cw, ch);
+            return;
+        }
+        Ui.text(g, font, Component.translatable("crusadecraft.diplo.known", diplomacy.entries().size()), x + 8, y + 7, Ui.TEXT_TITLE);
+        if (diplomacy.mailArrived() > 0) {
+            Component mail = Component.translatable("crusadecraft.diplo.mail_waiting", diplomacy.mailArrived());
+            Ui.text(g, font, mail, x + cw - 8 - font.width(mail), y + 7, 0xFFE0C060);
+        }
+        int ry = y + 20;
+        int colW = (cw - 24) / 2;
+        int i = 0;
+        for (fr.crusadecraft.core.diplomacy.DiplomacyView.Entry e : diplomacy.entries()) {
+            int col = i % 2, row = i / 2;
+            int ex = x + 8 + col * (colW + 8), ey = ry + row * 14;
+            if (ey > y + ch - 24) break;
+            g.fill(ex, ey + 2, ex + 7, ey + 9, 0xFF000000 | e.color());
+            String name = font.plainSubstrByWidth(fr.crusadecraft.client.screen.DiplomacyScreen.entryName(e).getString(), colW - 90);
+            Ui.text(g, font, Component.literal(name), ex + 10, ey + 1, Ui.TEXT);
+            Component st = Component.translatable(e.status().key());
+            Ui.text(g, font, st, ex + colW - font.width(st) - (e.ai() ? 26 : 0), ey + 1, e.status().color());
+            if (e.ai()) {
+                String op = (e.opinion() > 0 ? "+" : "") + e.opinion();
+                Ui.text(g, font, Component.literal(op), ex + colW - font.width(op), ey + 1, e.opinion() >= 20 ? Ui.GREEN : e.opinion() <= -20 ? Ui.RED : 0xFFC99A3C);
+            }
+            i++;
+        }
+        if (diplomacy.entries().isEmpty()) Ui.wrapped(g, font, Component.translatable("crusadecraft.diplo.nobody"), x + 8, ry, cw - 16, Ui.TEXT_MUTED);
+        Ui.text(g, font, Component.translatable("crusadecraft.diplo.hint"), x + 8, y + ch - 11, Ui.TEXT_MUTED);
+    }
+
+    private void renderVassalsTab(GuiGraphics g, int x, int y, int cw, int ch, int mouseX, int mouseY) {
+        if (chancery == null) {
+            renderLoading(g, x, y, cw, ch);
+            return;
+        }
+        Ui.text(g, font, Component.translatable("crusadecraft.chancery.rank", Component.translatable(chancery.rank().titleKey())), x + 8, y + 7, Ui.TEXT_TITLE);
+        Component prov = Component.translatable("crusadecraft.chancery.provinces", chancery.provinces());
+        Ui.text(g, font, prov, x + cw - 8 - font.width(prov), y + 7, Ui.TEXT_MUTED);
+        int ry = y + 22;
+        if (chancery.nextRank() != null) {
+            Component next = Component.translatable("crusadecraft.chancery.next.short", Component.translatable(chancery.nextRank().titleKey()),
+                    chancery.needProvinces(), chancery.needGold(), chancery.needPrestige());
+            Ui.text(g, font, Component.literal(font.plainSubstrByWidth(next.getString(), cw - 16)), x + 8, ry, Ui.TEXT_MUTED);
+            ry += 14;
+        }
+        Ui.text(g, font, Component.translatable("crusadecraft.chancery.vassals", chancery.vassals().size()), x + 8, ry, Ui.TEXT_TITLE);
+        ry += 12;
+        if (chancery.vassals().isEmpty()) {
+            Ui.wrapped(g, font, Component.translatable("crusadecraft.chancery.no_vassals"), x + 8, ry, cw - 16, Ui.TEXT_MUTED);
+        }
+        for (fr.crusadecraft.core.diplomacy.ChanceryView.Vassal v : chancery.vassals()) {
+            if (ry > y + ch - 24) break;
+            Component name = v.ai() ? fr.crusadecraft.core.world.AiNames.realm(v.rank(), v.label()) : Component.literal(v.label());
+            g.fill(x + 8, ry + 2, x + 15, ry + 9, 0xFF000000 | v.color());
+            Ui.text(g, font, name, x + 18, ry + 1, Ui.TEXT);
+            Component terms = Component.translatable("crusadecraft.diplo.contract", v.tax(), v.levy())
+                    .append(" · ").append(Component.translatable("crusadecraft.chancery.vassal.share", v.dailyShare()));
+            Ui.text(g, font, terms, x + 18, ry + 11, Ui.TEXT_MUTED);
+            ry += 23;
+        }
+        Ui.text(g, font, Component.translatable("crusadecraft.chancery.hint"), x + 8, y + ch - 11, Ui.TEXT_MUTED);
     }
 
     private static final int CHIP_W = 64;
@@ -506,6 +587,8 @@ public class RealmScreen extends Screen {
                 lastTab = t;
                 if (t == Tab.TRESOR) request(EconomyPackets.RequestTab.Tab.TREASURY);
                 if (t == Tab.LOIS) request(EconomyPackets.RequestTab.Tab.LAWS);
+                if (t == Tab.DIPLOMATIE) request(EconomyPackets.RequestTab.Tab.DIPLOMACY);
+                if (t == Tab.VASSAUX) request(EconomyPackets.RequestTab.Tab.VASSALS);
                 selectedLaw = null;
                 selectedLevel = -1;
                 rebuildWidgets();

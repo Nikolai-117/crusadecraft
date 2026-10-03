@@ -1,0 +1,11 @@
+{
+  "type": "minecraft:crafting_shapeless",
+  "category": "misc",
+  "ingredients": [
+    { "item": "minecraft:gold_ingot" },
+    { "item": "minecraft:honeycomb" },
+    { "item": "minecraft:red_dye" },
+    { "item": "minecraft:stick" }
+  ],
+  "result": { "item": "crusadecraft:seal" }
+}

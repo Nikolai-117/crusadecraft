@@ -51,6 +51,10 @@ public final class Realm {
     private LawState laws = new LawState();
     /** Livre de comptes des derniers jours. */
     private Ledger ledger = new Ledger();
+    /** Provinces IA revendiquées (identifiants de province). */
+    private final java.util.Set<Integer> claims = new java.util.LinkedHashSet<>();
+    /** Lettres en route ou arrivées au Colombier, et celles qui attendent une réponse. */
+    private final List<fr.crusadecraft.core.diplomacy.Letter> mail = new ArrayList<>();
 
     // Ressources du souverain. L'or ne bouge que par TreasuryService, qui l'inscrit au livre de comptes ;
     // il peut être négatif (dette), jusqu'à la limite fixée par la configuration.
@@ -107,6 +111,8 @@ public final class Realm {
     public CourtState court() { return court; }
     public LawState laws() { return laws; }
     public Ledger ledger() { return ledger; }
+    public java.util.Set<Integer> claims() { return claims; }
+    public List<fr.crusadecraft.core.diplomacy.Letter> mail() { return mail; }
 
     /** Le poste qu'occupe ce citoyen dans ce royaume, s'il en a un. */
     public Post postOf(CitizenRef citizen) {
@@ -186,6 +192,10 @@ public final class Realm {
         tag.put("court", court.save());
         tag.put("laws", laws.save());
         tag.put("ledger", ledger.save());
+        tag.putIntArray("claims", claims.stream().mapToInt(Integer::intValue).toArray());
+        ListTag mailTag = new ListTag();
+        for (fr.crusadecraft.core.diplomacy.Letter l : mail) mailTag.add(l.save());
+        tag.put("mail", mailTag);
         tag.putLong("gold", gold);
         tag.putInt("prestige", prestige);
         tag.putInt("piety", piety);
@@ -220,6 +230,15 @@ public final class Realm {
         realm.court = CourtState.load(tag.getCompound("court"));
         realm.laws = LawState.load(tag.getCompound("laws"));
         realm.ledger = Ledger.load(tag, "ledger");
+        for (int c : tag.getIntArray("claims")) realm.claims.add(c);
+        ListTag mailTag = tag.getList("mail", Tag.TAG_COMPOUND);
+        for (int i = 0; i < mailTag.size(); i++) {
+            try {
+                realm.mail.add(fr.crusadecraft.core.diplomacy.Letter.load(mailTag.getCompound(i)));
+            } catch (RuntimeException ignored) {
+                // lettre illisible : perdue
+            }
+        }
         ListTag mayorTag = tag.getList("mayors", Tag.TAG_COMPOUND);
         for (int i = 0; i < mayorTag.size(); i++) {
             CitizenRef m = CitizenRef.load(mayorTag.getCompound(i));

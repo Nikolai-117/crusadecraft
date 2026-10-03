@@ -24,6 +24,11 @@ public enum TitleRank {
         return "crusadecraft.rank." + key;
     }
 
+    /** Clé du titre précédé de l'article (« le Comté », « la Baronnie »), en milieu de phrase. */
+    public String theKey() {
+        return "crusadecraft.rank." + key + ".the";
+    }
+
     /** Clé du titre précédé de « de » (« du Comté », « de la Baronnie »), pour « les terres du Comté de… ». */
     public String ofKey() {
         return "crusadecraft.rank." + key + ".of";
