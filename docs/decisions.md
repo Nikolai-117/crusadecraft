@@ -420,3 +420,34 @@ Demandé par Romain : « faire mes propres frontières, créer des royaumes, mes
   emplacements). La colonie ratée est désormais supprimée aussitôt, et l'erreur journalisée en entier.
 - **Corrigé au passage** : dans le menu royal, le bouton « Maison » recouvrait les ressources du souverain sur
   les petits écrans ; il est passé dans l'en-tête, et la devise s'arrête avant les boutons.
+
+**P13 (3 octobre 2026) — le registre des lignées et Minecraft Comes Alive**
+
+Demandé par Romain : créer et générer personnages, familles et lignées dynastiques, populations, dirigeants,
+générations, relations et communautés, en s'appuyant sur Comes Alive (MCA Reborn 7.6.16, installé dans son instance).
+
+- **Un registre, pas un nouvel objet** : maisons, personnes et communautés vivent dans la sauvegarde de CrusadeCraft
+  (version 12). On l'ouvre depuis l'écran « Maison » du menu royal, l'éditeur de la carte (« Registre des lignées »,
+  et « Lignée du royaume » sur un royaume choisi) ou `/crusade lignees`. Le modifier demande les droits de
+  l'éditeur ; le consulter est ouvert à tous (sans les royaumes IA pas encore découverts).
+- **Chaque royaume IA a sa cour**, créée la première fois qu'on ouvre le registre : son souverain tel que le monde le
+  connaît (nom, sexe, âge), ses parents, son conjoint, ses enfants et son héritier, ses conseillers. Le nom de la
+  maison est celui que le royaume portait déjà. Un royaume effacé dans l'éditeur laisse sa maison, qui ne règne plus.
+- **Le générateur n'écrit que des faits** (noms, âges, liens, rôles), tirés d'une graine : maisons de 1 à 5
+  générations, conjoints nobles « de Valcourt », roturiers « Lefèvre », villages et clans en foyers, ordres,
+  compagnies et monastères en membres seuls. Un parent a toujours au moins 18 ans de plus que son enfant ; les
+  ancêtres trop vieux sont morts. Les âges ne bougent pas seuls : les générations s'ajoutent (« Agrandir »).
+- **Comes Alive** : compilé contre le jar exact de l'instance (copié dans `libs/local`, ignoré par git, jamais
+  redistribué), utilisé seulement dans `compat/mca` (garde d'architecture étendue). Sous Forge, ses classes sont dans
+  `forge.net.mca`. « Faire venir » crée un villageois Comes Alive qui porte le même identifiant que la personne, son
+  nom complet, son sexe, son âge (bébé à adulte) et un métier selon son rôle (garde, archer, clerc…). L'arbre
+  généalogique de Comes Alive accepte des membres absents du monde : on y inscrit toute la lignée, parents, conjoints
+  et défunts compris. « Inscrire » fait l'inverse : les villageois Comes Alive alentour entrent au registre, avec
+  leurs liens. La mort d'un villageois est inscrite au registre. Sans Comes Alive, le registre fonctionne seul.
+- **Bug corrigé, présent chez Romain** : Comes Alive remplace tout villageois de la classe exacte `Villager` ; le
+  héraut disparaissait, remplacé par un villageois ordinaire qui restait pour toujours. Le héraut est désormais une
+  sous-classe, que Comes Alive laisse tranquille.
+- **Banc d'essai** : le fichier de réglages de CrusadeCraft n'est plus relu à chaud sur le serveur de test (les
+  réglages changés par les tests pouvaient revenir un instant en arrière, d'où des échecs au hasard). Comes Alive et
+  Architectury sont chargés en développement (sauf `-Pwith_mca=false`) ; son écran « Qui es-tu ? » est coupé dans le
+  monde jetable des captures.

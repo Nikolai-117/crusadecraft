@@ -119,10 +119,13 @@ public final class ServerEvents {
         if (!event.getEntity().level().isClientSide() && WarFieldService.sameSide(event.getSource().getEntity(), event.getEntity())) event.setCanceled(true);
     }
 
-    /** Une troupe de guerre qui tombe compte au score de sa guerre. */
+    /** Une troupe de guerre qui tombe compte au score de sa guerre ; un villageois du registre des lignées y meurt aussi. */
     @SubscribeEvent
     public static void onDeath(LivingDeathEvent event) {
-        if (event.getEntity().level() instanceof ServerLevel level) WarFieldService.onDeath(level.getServer(), event.getEntity());
+        if (event.getEntity().level() instanceof ServerLevel level) {
+            WarFieldService.onDeath(level.getServer(), event.getEntity());
+            fr.crusadecraft.core.lineage.LineageService.onDeath(level.getServer(), event.getEntity());
+        }
     }
 
     /** En territoire ennemi, on ne démolit pas à la pioche : les murs tombent par explosifs, et se relèvent à la paix. */

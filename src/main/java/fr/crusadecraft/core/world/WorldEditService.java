@@ -221,6 +221,7 @@ public final class WorldEditService {
         }
         for (Realm r : data.realms()) r.claims().removeAll(gone);
         world.borders().forget(id);
+        fr.crusadecraft.core.lineage.LineageService.onRealmRemoved(server, id);
         data.setDirty();
         CrusadeCraft.LOGGER.info("CrusadeCraft : royaume IA {} effacé dans l'éditeur de la carte", realm.place());
     }

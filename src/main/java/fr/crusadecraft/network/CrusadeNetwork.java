@@ -8,6 +8,7 @@ import fr.crusadecraft.network.packet.DiplomacyPackets;
 import fr.crusadecraft.network.packet.EconomyPackets;
 import fr.crusadecraft.network.packet.FoundRealmPacket;
 import fr.crusadecraft.network.packet.IntriguePackets;
+import fr.crusadecraft.network.packet.LineagePackets;
 import fr.crusadecraft.network.packet.MapEditPackets;
 import fr.crusadecraft.network.packet.OpenCharacterPacket;
 import fr.crusadecraft.network.packet.OpenFoundingScreenPacket;
@@ -32,7 +33,7 @@ import net.minecraftforge.network.simple.SimpleChannel;
  * (distance, droits, état) avant d'agir.
  */
 public final class CrusadeNetwork {
-    private static final String VERSION = "9";
+    private static final String VERSION = "10";
 
     public static final SimpleChannel CHANNEL = NetworkRegistry.newSimpleChannel(
             ResourceLocation.tryParse(CrusadeCraft.MOD_ID + ":main"),
@@ -184,6 +185,19 @@ public final class CrusadeNetwork {
         CHANNEL.messageBuilder(CourtLifePackets.HouseAction.class, nextId++, NetworkDirection.PLAY_TO_SERVER)
                 .encoder(CourtLifePackets.HouseAction::encode).decoder(CourtLifePackets.HouseAction::decode)
                 .consumerMainThread(CourtLifePackets.HouseAction::handle).add();
+        // P13 : registre des lignées
+        CHANNEL.messageBuilder(LineagePackets.Open.class, nextId++, NetworkDirection.PLAY_TO_CLIENT)
+                .encoder(LineagePackets.Open::encode).decoder(LineagePackets.Open::decode)
+                .consumerMainThread(LineagePackets.Open::handle).add();
+        CHANNEL.messageBuilder(LineagePackets.Result.class, nextId++, NetworkDirection.PLAY_TO_CLIENT)
+                .encoder(LineagePackets.Result::encode).decoder(LineagePackets.Result::decode)
+                .consumerMainThread(LineagePackets.Result::handle).add();
+        CHANNEL.messageBuilder(LineagePackets.Request.class, nextId++, NetworkDirection.PLAY_TO_SERVER)
+                .encoder(LineagePackets.Request::encode).decoder(LineagePackets.Request::decode)
+                .consumerMainThread(LineagePackets.Request::handle).add();
+        CHANNEL.messageBuilder(LineagePackets.Action.class, nextId++, NetworkDirection.PLAY_TO_SERVER)
+                .encoder(LineagePackets.Action::encode).decoder(LineagePackets.Action::decode)
+                .consumerMainThread(LineagePackets.Action::handle).add();
         // P12 : éditeur de la carte
         CHANNEL.messageBuilder(MapEditPackets.CreateRealm.class, nextId++, NetworkDirection.PLAY_TO_SERVER)
                 .encoder(MapEditPackets.CreateRealm::encode).decoder(MapEditPackets.CreateRealm::decode)

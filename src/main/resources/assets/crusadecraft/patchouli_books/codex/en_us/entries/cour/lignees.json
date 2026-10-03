@@ -1,0 +1,16 @@
+{
+  "name": "crusadecraft.codex.lignees",
+  "icon": "crusadecraft:chroniques",
+  "category": "crusadecraft:cour",
+  "sortnum": 13,
+  "pages": [
+    {
+      "type": "patchouli:text",
+      "text": "crusadecraft.codex.lignees.p0"
+    },
+    {
+      "type": "patchouli:text",
+      "text": "crusadecraft.codex.lignees.p1"
+    }
+  ]
+}

@@ -1,4 +1,4 @@
-# CrusadeCraft 1.1.0 — installer et tester
+# CrusadeCraft 1.2.0 — installer et tester
 
 ## 1. Ce qu'il faut
 
@@ -17,7 +17,7 @@ Optionnels, déjà présents chez toi, donc activés automatiquement :
 
 ## 2. Installer
 
-1. Le fichier du mod est `E:\crusadecraft\build\libs\crusadecraft-1.1.0.jar`.
+1. Le fichier du mod est `E:\crusadecraft\build\libs\crusadecraft-1.2.0.jar`.
 2. Mets-le dans le dossier des mods de l'instance : `D:\MultiMC\instances\1.20.1\.minecraft\mods\`.
    Dans MultiMC, tu peux aussi faire clic droit sur l'instance → *Modifier* → *Mods* → *Ajouter un fichier*.
 3. Lance l'instance comme d'habitude.
@@ -95,6 +95,17 @@ données du mod (fichier `crusadecraft.dat` du monde) restent sur place, sans ef
     supprimer son royaume. Les suppressions demandent un second clic.
 25. **Monde vierge** (outil Choisir, rien de sélectionné) : efface tous les royaumes créés par le jeu. Les tiens
     restent, et le jeu n'en recrée plus.
+
+### Familles, dynasties et populations (avec Minecraft Comes Alive)
+26. Ouvre le **Registre des lignées** : bouton dans l'écran « Maison » du menu royal, ou dans l'éditeur de la carte.
+    Chaque royaume IA que tu connais y a déjà sa cour (souverain, famille, héritier, conseillers).
+27. **+ Nouvelle maison** : un nom, un royaume (ou aucun), de 1 à 5 générations, une couleur, puis **Générer**.
+    **+ Communauté** : un village, une guilde, un clan, une compagnie, un ordre ou un monastère, et sa taille.
+28. Clique sur une personne : **Renommer**, **Rôle**, **+ Enfant**, **Marier**, **Mort/Vivant**, **Supprimer**.
+    **Agrandir** ajoute une génération (ou trois foyers).
+29. **Faire venir** fait apparaître les gens près de toi en villageois Comes Alive (16 au plus d'un coup), avec leur
+    nom, leur âge et leur métier ; **Arbre** remplit l'arbre généalogique de Comes Alive ; **Inscrire** ajoute au
+    registre les villageois Comes Alive qui t'entourent.
 
 ## 4. Réglages
 

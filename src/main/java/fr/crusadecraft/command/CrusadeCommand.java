@@ -38,6 +38,10 @@ public final class CrusadeCommand {
                         .then(Commands.argument("joueur", EntityArgument.player())
                                 .executes(ctx -> info(ctx, EntityArgument.getPlayer(ctx, "joueur")))))
                 .then(Commands.literal("colonie").executes(CrusadeCommand::colonyHere))
+                .then(Commands.literal("lignees").executes(ctx -> {
+                    fr.crusadecraft.network.packet.LineagePackets.send(ctx.getSource().getPlayerOrException(), null, true);
+                    return 1;
+                }))
                 .then(Commands.literal("reconcilier").executes(ctx -> {
                     RealmService.reconcileAll(ctx.getSource().getServer());
                     ctx.getSource().sendSuccess(() -> Component.translatable("crusadecraft.command.reconciled"), true);

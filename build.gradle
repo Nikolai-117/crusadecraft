@@ -76,6 +76,8 @@ tasks.matching { it.name == 'runGameTestServer' }.configureEach {
 
 repositories {
     mavenCentral()
+    // Jars copiés de l'instance de Romain (dossier ignoré par git) : Comes Alive n'a pas sa version exacte sur CurseMaven.
+    flatDir { dirs 'libs/local' }
     maven {
         name = 'CurseMaven'
         url = 'https://cursemaven.com'
@@ -92,6 +94,14 @@ dependencies {
     runtimeOnly fg.deobf("curse.maven:blockui-522992:${blockui_file}")
     runtimeOnly fg.deobf("curse.maven:domum-ornamentum-527361:${domum_file}")
     runtimeOnly fg.deobf("curse.maven:jei-238222:${jei_file}")
+
+    // Minecraft Comes Alive (P13), aux versions exactes de l'instance. Compilé contre lui pour la compatibilité
+    // (compat/mca, jamais chargée sans lui) ; chargé en développement pour les tests, sauf -Pwith_mca=false.
+    compileOnly fg.deobf("local:minecraft-comes-alive:${mca_version}")
+    if (project.findProperty('with_mca') != 'false') {
+        runtimeOnly fg.deobf("local:minecraft-comes-alive:${mca_version}")
+        runtimeOnly fg.deobf("local:architectury:${architectury_version}")
+    }
 
     // Tests de la logique pure (aucun démarrage de Minecraft).
     testImplementation platform('org.junit:junit-bom:5.10.2')
@@ -134,6 +144,8 @@ def architectureGuard = tasks.register('checkArchitecture') {
             [pkg: 'journeymap.',       allowed: '/fr/crusadecraft/compat/journeymap/'],
             [pkg: 'dev.ftb.',          allowed: '/fr/crusadecraft/compat/ftbteams/'],
             [pkg: 'vazkii.patchouli.', allowed: '/fr/crusadecraft/compat/patchouli/'],
+            [pkg: 'forge.net.mca.',    allowed: '/fr/crusadecraft/compat/mca/'],
+            [pkg: 'dev.architectury.', allowed: '/fr/crusadecraft/compat/mca/'],
         ]
         def rankPattern = ~/(?i)\brank\w*\s*\.\s*getId\s*\(\s*\)\s*(<=|>=|<|>)/
         def ownerPattern = ~/\.\s*getOwner\s*\(\s*\)\s*\.\s*equals\s*\(/

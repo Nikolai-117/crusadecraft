@@ -190,8 +190,9 @@ public final class WorldService {
 
     private static void sendHerald(ServerPlayer player, AiRealm realm) {
         ServerLevel level = player.serverLevel();
-        Villager herald = EntityType.VILLAGER.create(level);
-        if (herald == null) return;
+        // Une sous-classe, et non un villageois ordinaire : Minecraft Comes Alive remplace tout villageois de la classe
+        // exacte Villager par l'un des siens, et le héraut aurait disparu (puis serait resté à sa place pour toujours).
+        Villager herald = new Villager(EntityType.VILLAGER, level) {};
         Vec3 look = player.getLookAngle();
         double x = player.getX() + look.x * 3, z = player.getZ() + look.z * 3;
         BlockPos spot = BlockPos.containing(x, player.getY(), z);

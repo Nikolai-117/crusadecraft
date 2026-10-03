@@ -29,7 +29,7 @@ import java.util.UUID;
  */
 public final class CrusadeSavedData extends AtomicSavedData {
     public static final String FILE_NAME = CrusadeCraft.MOD_ID;
-    public static final int DATA_VERSION = 11;
+    public static final int DATA_VERSION = 12;
 
     private final Map<UUID, Realm> realms = new LinkedHashMap<>();
     private final Map<CitizenRef, CharacterRecord> characters = new LinkedHashMap<>();
@@ -39,6 +39,8 @@ public final class CrusadeSavedData extends AtomicSavedData {
     private fr.crusadecraft.core.diplomacy.Diplomacy diplomacy = new fr.crusadecraft.core.diplomacy.Diplomacy();
     /** Guerres en cours et registre des dégâts. */
     private fr.crusadecraft.core.war.WarState wars = new fr.crusadecraft.core.war.WarState();
+    /** Le registre des lignées : personnes, maisons, communautés (P13). */
+    private fr.crusadecraft.core.lineage.LineageState lineage = new fr.crusadecraft.core.lineage.LineageState();
 
     public static CrusadeSavedData get(MinecraftServer server) {
         return server.getLevel(Level.OVERWORLD).getDataStorage()
@@ -75,6 +77,7 @@ public final class CrusadeSavedData extends AtomicSavedData {
         }
         data.diplomacy = fr.crusadecraft.core.diplomacy.Diplomacy.load(migrated, "diplomacy");
         data.wars = fr.crusadecraft.core.war.WarState.load(migrated.getCompound("wars"));
+        data.lineage = fr.crusadecraft.core.lineage.LineageState.load(migrated.getCompound("lineage"));
         return data;
     }
 
@@ -90,6 +93,7 @@ public final class CrusadeSavedData extends AtomicSavedData {
         tag.put("world", world.save());
         tag.put("diplomacy", diplomacy.save());
         tag.put("wars", wars.save());
+        tag.put("lineage", lineage.save());
         return tag;
     }
 
@@ -99,6 +103,10 @@ public final class CrusadeSavedData extends AtomicSavedData {
 
     public fr.crusadecraft.core.diplomacy.Diplomacy diplomacy() {
         return diplomacy;
+    }
+
+    public fr.crusadecraft.core.lineage.LineageState lineage() {
+        return lineage;
     }
 
     public fr.crusadecraft.core.war.WarState wars() {

@@ -187,6 +187,15 @@ public final class UiShots {
                 List.of(Heraldry.AZUR.rgb(), Heraldry.GUEULES.rgb())), null));
         list.add(new Shot("carte_editeur_ville", () -> fr.crusadecraft.client.screen.MapEditForm.newCity(new MapScreen(edit), edit.territories().get(2),
                 fr.crusadecraft.core.world.AiNames.realm(TitleRank.DUCHE, "Rochegarde"), 1050, -820), null));
+        fr.crusadecraft.core.lineage.LineageView lineage = sampleLineage(true);
+        list.add(new Shot("registre_lignees", () -> {
+            fr.crusadecraft.client.screen.LineageScreen s = new fr.crusadecraft.client.screen.LineageScreen(lineage);
+            s.previewPerson(2);
+            return s;
+        }, null));
+        list.add(new Shot("registre_communaute", () -> new fr.crusadecraft.client.screen.LineageScreen(sampleLineage(false)), null));
+        list.add(new Shot("registre_nouvelle_maison", () -> fr.crusadecraft.client.screen.LineageForm.newHouse(
+                new fr.crusadecraft.client.screen.LineageScreen(lineage), lineage.realms()), null));
         list.add(new Shot("livre_chroniques", () -> {
             List<fr.crusadecraft.network.packet.WorldPackets.NewsLine> lines = new ArrayList<>(sampleChronicle());
             java.util.Collections.reverse(lines);
@@ -507,6 +516,54 @@ public final class UiShots {
                 new MapView.Seat(3, "Cendrecourt", 700, 800, true, 1, true, true));
         return new MapView(ResourceLocation.tryParse("minecraft:overworld"), 0, 0, 40, 60, 160, 110, t, seats,
                 List.of(new MapView.Dejure("Aquilée", 0xD9A88E), new MapView.Dejure("Montvert", 0x9DB58C)), true, false, MapView.Borders.EMPTY);
+    }
+
+    /** Le registre des lignées : la maison Aubépine sur trois générations, ou le village de Saint-Aubin. */
+    private static fr.crusadecraft.core.lineage.LineageView sampleLineage(boolean house) {
+        java.util.function.BiFunction<String, Object[], fr.crusadecraft.core.lineage.LineageView.Row> row = (n, o) ->
+                new fr.crusadecraft.core.lineage.LineageView.Row(UUID.randomUUID(), n, (boolean) o[0], (int) o[1], (boolean) o[2],
+                        (fr.crusadecraft.core.lineage.Role) o[3], (int) o[4], (String) o[5], (boolean) o[6], (boolean) o[7]);
+        List<fr.crusadecraft.core.lineage.LineageView.Row> rows = new ArrayList<>();
+        if (house) {
+            rows.add(row.apply("Hugues d'Aubépine", new Object[]{false, 81, false, fr.crusadecraft.core.lineage.Role.FAMILLE, 0, "Blanche", false, true}));
+            rows.add(row.apply("Blanche de Valcourt", new Object[]{true, 77, false, fr.crusadecraft.core.lineage.Role.FAMILLE, 0, "Hugues", false, false}));
+            rows.add(row.apply("Godefroy d'Aubépine", new Object[]{false, 54, true, fr.crusadecraft.core.lineage.Role.SOUVERAIN, 1, "Mathilde", true, true}));
+            rows.add(row.apply("Mathilde de Rochegarde", new Object[]{true, 51, true, fr.crusadecraft.core.lineage.Role.CONSORT, 1, "Godefroy", true, false}));
+            rows.add(row.apply("Aliénor d'Aubépine", new Object[]{true, 49, true, fr.crusadecraft.core.lineage.Role.FAMILLE, 1, "", false, true}));
+            rows.add(row.apply("Raoul d'Aubépine", new Object[]{false, 29, true, fr.crusadecraft.core.lineage.Role.HERITIER, 2, "Ysolde", true, true}));
+            rows.add(row.apply("Ysolde de Brisemer", new Object[]{true, 27, true, fr.crusadecraft.core.lineage.Role.FAMILLE, 2, "Raoul", false, false}));
+            rows.add(row.apply("Aude d'Aubépine", new Object[]{true, 24, true, fr.crusadecraft.core.lineage.Role.CHEVALIER, 2, "", false, true}));
+            rows.add(row.apply("Thibaut d'Aubépine", new Object[]{false, 19, true, fr.crusadecraft.core.lineage.Role.FAMILLE, 2, "", false, true}));
+        } else {
+            rows.add(row.apply("Josselin Lefèvre", new Object[]{false, 41, true, fr.crusadecraft.core.lineage.Role.ARTISAN, 0, "Margot", true, true}));
+            rows.add(row.apply("Margot Lefèvre", new Object[]{true, 38, true, fr.crusadecraft.core.lineage.Role.PAYSAN, 0, "Josselin", true, true}));
+            rows.add(row.apply("Agnès Lefèvre", new Object[]{true, 16, true, fr.crusadecraft.core.lineage.Role.AUCUN, 0, "", false, true}));
+            rows.add(row.apply("Amaury Lefèvre", new Object[]{false, 9, true, fr.crusadecraft.core.lineage.Role.AUCUN, 0, "", false, true}));
+            rows.add(row.apply("Eudes Meunier", new Object[]{false, 52, true, fr.crusadecraft.core.lineage.Role.PAYSAN, 1, "Pernelle", false, true}));
+            rows.add(row.apply("Pernelle Meunier", new Object[]{true, 50, true, fr.crusadecraft.core.lineage.Role.MARCHAND, 1, "Eudes", false, true}));
+            rows.add(row.apply("Anseau Meunier", new Object[]{false, 77, false, fr.crusadecraft.core.lineage.Role.AUCUN, 1, "", false, true}));
+            rows.add(row.apply("Clémence Fontaine", new Object[]{true, 33, true, fr.crusadecraft.core.lineage.Role.PAYSAN, 2, "", false, true}));
+        }
+        UUID selected = UUID.randomUUID();
+        var houses = List.of(
+                new fr.crusadecraft.core.lineage.LineageView.HouseLine(house ? selected : UUID.randomUUID(), "Aubépine", Heraldry.SINOPLE.rgb(),
+                        Component.literal("Comté de Valcourt"), 7, 9),
+                new fr.crusadecraft.core.lineage.LineageView.HouseLine(UUID.randomUUID(), "Ambrevent", Heraldry.GUEULES.rgb(),
+                        Component.literal("Royaume d'Ambrevent"), 6, 8),
+                new fr.crusadecraft.core.lineage.LineageView.HouseLine(UUID.randomUUID(), "Rochegarde", Heraldry.AZUR.rgb(),
+                        Component.literal("Duché de Rochegarde"), 9, 13));
+        var communities = List.of(
+                new fr.crusadecraft.core.lineage.LineageView.CommunityLine(house ? UUID.randomUUID() : selected, "Saint-Aubin",
+                        fr.crusadecraft.core.lineage.CommunityKind.VILLAGE, Component.literal("Royaume de Valbrume"), 8),
+                new fr.crusadecraft.core.lineage.LineageView.CommunityLine(UUID.randomUUID(), "Ordre du Lys",
+                        fr.crusadecraft.core.lineage.CommunityKind.ORDRE, Component.literal("Duché de Rochegarde"), 6));
+        var realms = List.of(new fr.crusadecraft.core.lineage.LineageView.RealmChoice(UUID.randomUUID(), Component.literal("Royaume de Valbrume")),
+                new fr.crusadecraft.core.lineage.LineageView.RealmChoice(UUID.randomUUID(), Component.literal("Comté de Valcourt")));
+        var selection = house
+                ? new fr.crusadecraft.core.lineage.LineageView.Selection(true, selected, "Aubépine", Component.literal("Comté de Valcourt"), null, rows)
+                : new fr.crusadecraft.core.lineage.LineageView.Selection(false, selected, "Saint-Aubin", Component.literal("Royaume de Valbrume"),
+                        fr.crusadecraft.core.lineage.CommunityKind.VILLAGE, rows);
+        return new fr.crusadecraft.core.lineage.LineageView(true, true, houses, communities, realms, selection);
     }
 
     /** La carte de l'éditeur : des provinces numérotées, une frontière peinte pour Rochegarde et une terre libre. */

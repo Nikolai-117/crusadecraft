@@ -51,7 +51,7 @@ public final class WorldShots {
     private static final boolean ENABLED = Boolean.getBoolean("crusadecraft.worldshots");
     private static final String WORLD = "crusadecraft-shots";
 
-    private enum Step { BOOT, LOADING, SETUP, WALL, MAP, SHEET, HERALD, REALM, LETTER, SEAL, CHANCERY, COLOMBIER, TOWNHALL, TOWNHALL_CLICK, WAR, SIEGE, CAPTURE, CAPTURED, WAR_TABLE, RAID, EDITOR, EDITOR_REALM, EDITOR_PAINT, DONE }
+    private enum Step { BOOT, LOADING, SETUP, WALL, MAP, SHEET, HERALD, REALM, LETTER, SEAL, CHANCERY, COLOMBIER, TOWNHALL, TOWNHALL_CLICK, WAR, SIEGE, CAPTURE, CAPTURED, WAR_TABLE, RAID, EDITOR, EDITOR_REALM, EDITOR_PAINT, LINEAGE_OPEN, LINEAGE_HOUSE, LINEAGE_SPAWN, LINEAGE_SHOT, DONE }
 
     private static Step step = Step.BOOT;
     private static int wait;
@@ -65,6 +65,8 @@ public final class WorldShots {
         Minecraft mc = Minecraft.getInstance();
         // La fenêtre peut perdre le focus pendant les prises : le menu pause ne doit pas masquer les captures.
         if (mc.screen instanceof net.minecraft.client.gui.screens.PauseScreen) mc.setScreen(null);
+        // Comes Alive demande au joueur qui il est à son premier monde : le banc d'essai passe cet écran.
+        if (mc.screen != null && mc.screen.getClass().getName().startsWith("forge.net.mca")) mc.setScreen(null);
         if (wait > 0) {
             wait--;
             return;
@@ -261,6 +263,45 @@ public final class WorldShots {
                 CrusadeCraft.LOGGER.info("WorldShots : côté serveur, Bois-Joli {} avec {} province(s), {} case(s) peinte(s)",
                         made.isPresent() ? "existe" : "manque", made.map(r -> r.provinces().size()).orElse(0), data.world().borders().size());
                 grab(mc, "editeur_carte");
+                // Le registre des lignées (P13), par les vrais paquets, avec Minecraft Comes Alive.
+                mc.setScreen(null);
+                CrusadeNetwork.toServer(new fr.crusadecraft.network.packet.LineagePackets.Request(null, null));
+                step = Step.LINEAGE_OPEN;
+                wait = 20;
+            }
+            case LINEAGE_OPEN -> {
+                CrusadeCraft.LOGGER.info("WorldShots : registre des lignées {}", mc.screen instanceof fr.crusadecraft.client.screen.LineageScreen ? "ouvert" : "absent");
+                CrusadeNetwork.toServer(new fr.crusadecraft.network.packet.LineagePackets.Action(
+                        fr.crusadecraft.network.packet.LineagePackets.Action.Op.NEW_HOUSE, null, "Aubépine", 2, 3, null, null));
+                step = Step.LINEAGE_HOUSE;
+                wait = 20;
+            }
+            case LINEAGE_HOUSE -> {
+                grab(mc, "registre_reel");
+                var data = fr.crusadecraft.data.CrusadeSavedData.get(mc.getSingleplayerServer());
+                var house = data.lineage().houses().stream().filter(x -> x.name().equals("Aubépine")).findFirst();
+                CrusadeCraft.LOGGER.info("WorldShots : maison Aubépine {} ({} membres)", house.isPresent() ? "générée" : "absente",
+                        house.map(x -> data.lineage().members(x.id()).size()).orElse(0));
+                house.ifPresent(x -> CrusadeNetwork.toServer(fr.crusadecraft.network.packet.LineagePackets.Action.of(
+                        fr.crusadecraft.network.packet.LineagePackets.Action.Op.SPAWN, x.id(), x.id())));
+                step = Step.LINEAGE_SPAWN;
+                wait = 30;
+            }
+            case LINEAGE_SPAWN -> {
+                mc.setScreen(null);
+                mc.player.setXRot(18f);
+                step = Step.LINEAGE_SHOT;
+                wait = 60;
+            }
+            case LINEAGE_SHOT -> {
+                MinecraftServer server = mc.getSingleplayerServer();
+                var data = fr.crusadecraft.data.CrusadeSavedData.get(server);
+                long incarnated = data.lineage().persons().stream().filter(p -> p.inWorld()).count();
+                ServerPlayer sp = server.getPlayerList().getPlayers().get(0);
+                long tagged = sp.serverLevel().getEntities(sp, sp.getBoundingBox().inflate(16), e -> e.getTags().contains(
+                        fr.crusadecraft.compat.mca.McaBridge.TAG)).size();
+                CrusadeCraft.LOGGER.info("WorldShots : {} personne(s) incarnée(s), {} villageois Comes Alive marqués autour du joueur", incarnated, tagged);
+                grab(mc, "famille_comes_alive");
                 step = Step.DONE;
                 wait = 20;
             }

@@ -55,6 +55,14 @@ public class HouseScreen extends Screen {
         top = (height - h) / 2;
         int cw = colW(), rx = left + 20 + cw;
         addRenderableWidget(Button.builder(Component.translatable("gui.done"), b -> onClose()).bounds(left + w - 88, top + h - 22, 80, 16).build());
+        // Le registre des lignées (P13) : les maisons et les communautés du monde, au-delà de la vôtre.
+        Button lineages = Button.builder(Component.translatable("crusadecraft.lineage.open"), b -> {
+            if (minecraft != null && minecraft.getConnection() != null) {
+                fr.crusadecraft.network.CrusadeNetwork.toServer(new fr.crusadecraft.network.packet.LineagePackets.Request(null, null));
+            }
+        }).bounds(left + w / 2 - 60, top + h - 22, 120, 16).build();
+        lineages.setTooltip(net.minecraft.client.gui.components.Tooltip.create(Component.translatable("crusadecraft.lineage.open.tip")));
+        addRenderableWidget(lineages);
         HouseView.Member m = selectedMember();
         Button heir = Button.builder(Component.translatable("crusadecraft.house.make_heir"), b -> {
             HouseView.Member s = selectedMember();

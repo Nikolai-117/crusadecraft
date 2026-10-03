@@ -236,8 +236,8 @@ public class MapScreen extends Screen {
     /** Hauteur du panneau : l'en-tête, les retouches de la ville (ou le mot sur la colonie), puis le royaume. */
     private int panelHeight() {
         int i = selectedIndex();
-        if (i < 0) return Math.min(72, mapH - 8);
-        return Math.min(panelRealmTop(view.seats().get(i)) + 14 + 2 * 16 + 4, mapH - 8);
+        if (i < 0) return Math.min(90, mapH - 8);
+        return Math.min(panelRealmTop(view.seats().get(i)) + 14 + 3 * 16 + 4, mapH - 8);
     }
 
     /** Où commence la partie « royaume » du panneau, relativement à son bord haut. */
@@ -262,6 +262,10 @@ public class MapScreen extends Screen {
             }).bounds(px, y, bw, 15).build();
             wipe.setTooltip(Tooltip.create(Component.translatable("crusadecraft.mapedit.wipe.tip")));
             addRenderableWidget(wipe);
+            Button lineages = Button.builder(Component.translatable("crusadecraft.lineage.open"),
+                    b -> CrusadeNetwork.toServer(new fr.crusadecraft.network.packet.LineagePackets.Request(null, null))).bounds(px, y + 17, bw, 15).build();
+            lineages.setTooltip(Tooltip.create(Component.translatable("crusadecraft.lineage.open.tip")));
+            addRenderableWidget(lineages);
             return;
         }
         MapView.Seat s = view.seats().get(seatIndex);
@@ -313,6 +317,11 @@ public class MapScreen extends Screen {
                 }
                 rebuildWidgets();
             }).bounds(px, y, bw, 15).build());
+            y += 16;
+            Button lineage = Button.builder(Component.translatable("crusadecraft.lineage.of_realm"),
+                    b -> CrusadeNetwork.toServer(new fr.crusadecraft.network.packet.LineagePackets.Request(null, owner.id()))).bounds(px, y, bw, 15).build();
+            lineage.setTooltip(Tooltip.create(Component.translatable("crusadecraft.lineage.of_realm.tip")));
+            addRenderableWidget(lineage);
         }
     }
 

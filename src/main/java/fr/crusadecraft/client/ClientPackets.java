@@ -112,6 +112,21 @@ public final class ClientPackets {
         else if (open) mc.setScreen(new fr.crusadecraft.client.screen.MapScreen(view));
     }
 
+    /** Le registre des lignées : rafraîchit l'écran ouvert, ou l'ouvre. */
+    public static void lineage(fr.crusadecraft.core.lineage.LineageView view, boolean open) {
+        Minecraft mc = Minecraft.getInstance();
+        if (mc.screen instanceof fr.crusadecraft.client.screen.LineageScreen screen) screen.refresh(view);
+        else if (mc.screen instanceof fr.crusadecraft.client.screen.LineageForm form) form.parent().refresh(view);
+        else if (open) mc.setScreen(new fr.crusadecraft.client.screen.LineageScreen(view));
+    }
+
+    public static void lineageResult(boolean success, net.minecraft.network.chat.Component message) {
+        Minecraft mc = Minecraft.getInstance();
+        if (mc.screen instanceof fr.crusadecraft.client.screen.LineageScreen screen) screen.showStatus(success, message);
+        else if (mc.screen instanceof fr.crusadecraft.client.screen.LineageForm form) form.parent().showStatus(success, message);
+        else if (mc.player != null) mc.player.displayClientMessage(message, true);
+    }
+
     /** La réponse du serveur à une retouche de l'éditeur : au pied de la carte si elle est ouverte. */
     public static void mapEditResult(boolean success, net.minecraft.network.chat.Component message) {
         Minecraft mc = Minecraft.getInstance();
