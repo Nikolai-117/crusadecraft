@@ -8,6 +8,7 @@ import fr.crusadecraft.network.packet.DiplomacyPackets;
 import fr.crusadecraft.network.packet.EconomyPackets;
 import fr.crusadecraft.network.packet.FoundRealmPacket;
 import fr.crusadecraft.network.packet.IntriguePackets;
+import fr.crusadecraft.network.packet.MapEditPackets;
 import fr.crusadecraft.network.packet.OpenCharacterPacket;
 import fr.crusadecraft.network.packet.OpenFoundingScreenPacket;
 import fr.crusadecraft.network.packet.OpenRealmScreenPacket;
@@ -31,7 +32,7 @@ import net.minecraftforge.network.simple.SimpleChannel;
  * (distance, droits, état) avant d'agir.
  */
 public final class CrusadeNetwork {
-    private static final String VERSION = "8";
+    private static final String VERSION = "9";
 
     public static final SimpleChannel CHANNEL = NetworkRegistry.newSimpleChannel(
             ResourceLocation.tryParse(CrusadeCraft.MOD_ID + ":main"),
@@ -183,6 +184,31 @@ public final class CrusadeNetwork {
         CHANNEL.messageBuilder(CourtLifePackets.HouseAction.class, nextId++, NetworkDirection.PLAY_TO_SERVER)
                 .encoder(CourtLifePackets.HouseAction::encode).decoder(CourtLifePackets.HouseAction::decode)
                 .consumerMainThread(CourtLifePackets.HouseAction::handle).add();
+        // P12 : éditeur de la carte
+        CHANNEL.messageBuilder(MapEditPackets.CreateRealm.class, nextId++, NetworkDirection.PLAY_TO_SERVER)
+                .encoder(MapEditPackets.CreateRealm::encode).decoder(MapEditPackets.CreateRealm::decode)
+                .consumerMainThread(MapEditPackets.CreateRealm::handle).add();
+        CHANNEL.messageBuilder(MapEditPackets.EditRealm.class, nextId++, NetworkDirection.PLAY_TO_SERVER)
+                .encoder(MapEditPackets.EditRealm::encode).decoder(MapEditPackets.EditRealm::decode)
+                .consumerMainThread(MapEditPackets.EditRealm::handle).add();
+        CHANNEL.messageBuilder(MapEditPackets.DeleteRealm.class, nextId++, NetworkDirection.PLAY_TO_SERVER)
+                .encoder(MapEditPackets.DeleteRealm::encode).decoder(MapEditPackets.DeleteRealm::decode)
+                .consumerMainThread(MapEditPackets.DeleteRealm::handle).add();
+        CHANNEL.messageBuilder(MapEditPackets.CreateCity.class, nextId++, NetworkDirection.PLAY_TO_SERVER)
+                .encoder(MapEditPackets.CreateCity::encode).decoder(MapEditPackets.CreateCity::decode)
+                .consumerMainThread(MapEditPackets.CreateCity::handle).add();
+        CHANNEL.messageBuilder(MapEditPackets.CityAction.class, nextId++, NetworkDirection.PLAY_TO_SERVER)
+                .encoder(MapEditPackets.CityAction::encode).decoder(MapEditPackets.CityAction::decode)
+                .consumerMainThread(MapEditPackets.CityAction::handle).add();
+        CHANNEL.messageBuilder(MapEditPackets.Paint.class, nextId++, NetworkDirection.PLAY_TO_SERVER)
+                .encoder(MapEditPackets.Paint::encode).decoder(MapEditPackets.Paint::decode)
+                .consumerMainThread(MapEditPackets.Paint::handle).add();
+        CHANNEL.messageBuilder(MapEditPackets.Wipe.class, nextId++, NetworkDirection.PLAY_TO_SERVER)
+                .encoder(MapEditPackets.Wipe::encode).decoder(MapEditPackets.Wipe::decode)
+                .consumerMainThread(MapEditPackets.Wipe::handle).add();
+        CHANNEL.messageBuilder(MapEditPackets.Result.class, nextId++, NetworkDirection.PLAY_TO_CLIENT)
+                .encoder(MapEditPackets.Result::encode).decoder(MapEditPackets.Result::decode)
+                .consumerMainThread(MapEditPackets.Result::handle).add();
     }
 
     public static void toPlayer(ServerPlayer player, Object packet) {

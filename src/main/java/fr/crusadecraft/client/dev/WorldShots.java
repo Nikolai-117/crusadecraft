@@ -5,6 +5,7 @@ import fr.crusadecraft.block.WarMapBlock;
 import fr.crusadecraft.client.map.ClientMapData;
 import fr.crusadecraft.core.world.AiRealm;
 import fr.crusadecraft.core.world.AiProvince;
+import fr.crusadecraft.core.realm.TitleRank;
 import fr.crusadecraft.core.world.MapView;
 import fr.crusadecraft.core.world.WorldService;
 import fr.crusadecraft.data.CrusadeSavedData;
@@ -50,7 +51,7 @@ public final class WorldShots {
     private static final boolean ENABLED = Boolean.getBoolean("crusadecraft.worldshots");
     private static final String WORLD = "crusadecraft-shots";
 
-    private enum Step { BOOT, LOADING, SETUP, WALL, MAP, SHEET, HERALD, REALM, LETTER, SEAL, CHANCERY, COLOMBIER, TOWNHALL, TOWNHALL_CLICK, WAR, SIEGE, CAPTURE, CAPTURED, WAR_TABLE, RAID, DONE }
+    private enum Step { BOOT, LOADING, SETUP, WALL, MAP, SHEET, HERALD, REALM, LETTER, SEAL, CHANCERY, COLOMBIER, TOWNHALL, TOWNHALL_CLICK, WAR, SIEGE, CAPTURE, CAPTURED, WAR_TABLE, RAID, EDITOR, EDITOR_REALM, EDITOR_PAINT, DONE }
 
     private static Step step = Step.BOOT;
     private static int wait;
@@ -222,6 +223,44 @@ public final class WorldShots {
             }
             case WAR_TABLE -> {
                 grab(mc, "raid");
+                // L'éditeur de la carte (P12), par les vrais paquets : l'hôte de la partie solo y a droit sans réglage.
+                fr.crusadecraft.client.screen.MapScreen.centerNextOn(mc.player.getBlockX() + 260, mc.player.getBlockZ() + 120);
+                CrusadeNetwork.toServer(new WorldPackets.RequestMap(true, true));
+                step = Step.EDITOR;
+                wait = 40;
+            }
+            case EDITOR -> {
+                boolean editing = mc.screen instanceof fr.crusadecraft.client.screen.MapScreen m && m.currentView().editing();
+                CrusadeCraft.LOGGER.info("WorldShots : éditeur de la carte {}", editing ? "ouvert" : "refusé");
+                CrusadeNetwork.toServer(new fr.crusadecraft.network.packet.MapEditPackets.CreateRealm("Bois-Joli", "Aymeric",
+                        TitleRank.DUCHE.ordinal(), 12, 1, 0, mc.player.getBlockX() + 320, mc.player.getBlockZ() + 140));
+                step = Step.EDITOR_REALM;
+                wait = 30;
+            }
+            case EDITOR_REALM -> {
+                MapView view = mc.screen instanceof fr.crusadecraft.client.screen.MapScreen m ? m.currentView() : null;
+                MapView.Territory made = view == null ? null
+                        : view.territories().stream().filter(t -> t.label().equals("Bois-Joli")).findFirst().orElse(null);
+                CrusadeCraft.LOGGER.info("WorldShots : royaume posé à la main {}", made != null ? "reçu sur la carte" : "absent");
+                if (made != null) {
+                    int px = mc.player.getBlockX(), pz = mc.player.getBlockZ();
+                    CrusadeNetwork.toServer(new fr.crusadecraft.network.packet.MapEditPackets.CreateCity(made.id(), "Clairfontaine", 1, px + 420, pz + 60));
+                    java.util.List<Long> cells = new java.util.ArrayList<>();
+                    for (int cx = (px + 180) >> 4; cx <= (px + 470) >> 4; cx++) {
+                        for (int cz = (pz + 20) >> 4; cz <= (pz + 230) >> 4; cz++) cells.add(fr.crusadecraft.core.world.TerritoryMap.key(cx, cz));
+                    }
+                    CrusadeNetwork.toServer(new fr.crusadecraft.network.packet.MapEditPackets.Paint(made.id(), false,
+                            cells.stream().mapToLong(Long::longValue).toArray()));
+                }
+                step = Step.EDITOR_PAINT;
+                wait = 30;
+            }
+            case EDITOR_PAINT -> {
+                var data = fr.crusadecraft.data.CrusadeSavedData.get(mc.getSingleplayerServer());
+                var made = data.world().realms().stream().filter(r -> r.place().equals("Bois-Joli")).findFirst();
+                CrusadeCraft.LOGGER.info("WorldShots : côté serveur, Bois-Joli {} avec {} province(s), {} case(s) peinte(s)",
+                        made.isPresent() ? "existe" : "manque", made.map(r -> r.provinces().size()).orElse(0), data.world().borders().size());
+                grab(mc, "editeur_carte");
                 step = Step.DONE;
                 wait = 20;
             }

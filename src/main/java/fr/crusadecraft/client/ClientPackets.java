@@ -105,10 +105,19 @@ public final class ClientPackets {
     }
 
     public static void map(MapView view, boolean open) {
-        fr.crusadecraft.client.map.ClientMapData.set(view);
+        // La carte de l'éditeur montre tout le monde IA : elle ne remplace pas celle de la Table de guerre.
+        if (!view.editing()) fr.crusadecraft.client.map.ClientMapData.set(view);
         Minecraft mc = Minecraft.getInstance();
         if (mc.screen instanceof fr.crusadecraft.client.screen.MapScreen screen) screen.refresh(view);
         else if (open) mc.setScreen(new fr.crusadecraft.client.screen.MapScreen(view));
+    }
+
+    /** La réponse du serveur à une retouche de l'éditeur : au pied de la carte si elle est ouverte. */
+    public static void mapEditResult(boolean success, net.minecraft.network.chat.Component message) {
+        Minecraft mc = Minecraft.getInstance();
+        if (mc.screen instanceof fr.crusadecraft.client.screen.MapScreen screen) screen.showStatus(success, message);
+        else if (mc.screen instanceof fr.crusadecraft.client.screen.MapEditForm form) form.showStatus(success, message);
+        else if (mc.player != null) mc.player.displayClientMessage(message, true);
     }
 
     public static void aiRealm(AiRealmView view) {

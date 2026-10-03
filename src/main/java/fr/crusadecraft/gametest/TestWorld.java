@@ -39,7 +39,17 @@ final class TestWorld {
         this.ruler = fakePlayer(helper, "souverain");
         this.center = helper.absolutePos(new BlockPos(4, 1, 4));
         ruler.setPos(center.getX() + 0.5, center.getY(), center.getZ() + 2.5);
-        this.colony = MineColoniesTestKit.createColony(helper.getLevel(), center, ruler, colonyName, townHallLevel);
+        ColonyRef created;
+        try {
+            created = MineColoniesTestKit.createColony(helper.getLevel(), center, ruler, colonyName, townHallLevel);
+        } catch (RuntimeException e) {
+            // Une colonie à moitié créée resterait sur place et ferait échouer tous les tests suivants en cascade.
+            fr.crusadecraft.CrusadeCraft.LOGGER.error("CrusadeCraft : colonie de test impossible à créer en {}", center, e);
+            MineColoniesTestKit.deleteColonyAt(helper.getLevel(), center);
+            CrusadeConfig.SERVER.throneMustBeInTownHall.set(previousTownHallRule);
+            throw e;
+        }
+        this.colony = created;
     }
 
     static TestWorld colony(GameTestHelper helper, String name, int townHallLevel) {

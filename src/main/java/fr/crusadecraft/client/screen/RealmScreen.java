@@ -157,7 +157,8 @@ public class RealmScreen extends Screen {
                     CrusadeNetwork.toServer(fr.crusadecraft.network.packet.CourtLifePackets.HouseAction.of(
                             fr.crusadecraft.network.packet.CourtLifePackets.HouseAction.Kind.REFRESH));
                 }
-            }).bounds(left + 18, cy + ch - 22, 110, 16).build();
+            }).bounds(left + w - 8 - (view.pendingEvents() > 0 ? 124 : 0) - 64, top + 34, 64, 16).build();
+            // Dans l'en-tête, à côté des événements : en bas de l'onglet, il recouvrait les ressources du souverain.
             house.setTooltip(Tooltip.create(Component.translatable("crusadecraft.house.open.tip")));
             addRenderableWidget(house);
         }
@@ -262,9 +263,11 @@ public class RealmScreen extends Screen {
         Component rankTitle = Component.translatable(view.rank().titleKey());
         Ui.scaled(g, font, Component.literal(view.name()), left + 56, top + 12, 1.6f, Ui.TEXT_TITLE, false);
         Component sub = Component.translatable("crusadecraft.realm.header.sub", rankTitle, view.house());
-        Ui.text(g, font, sub, left + 56, top + 29, Ui.TEXT);
+        // La devise et la ligne du rang s'arrêtent avant les boutons de l'en-tête.
+        int room = left + w - 8 - (view.pendingEvents() > 0 ? 124 : 0) - (tab == Tab.ROYAUME ? 68 : 0) - (left + 56) - 4;
+        Ui.text(g, font, Component.literal(font.plainSubstrByWidth(sub.getString(), room)), left + 56, top + 29, Ui.TEXT);
         if (!view.motto().isEmpty()) {
-            Ui.text(g, font, Component.literal("« " + view.motto() + " »").withStyle(ChatFormatting.ITALIC),
+            Ui.text(g, font, Component.literal(font.plainSubstrByWidth("« " + view.motto() + " »", room)).withStyle(ChatFormatting.ITALIC),
                     left + 56, top + 41, Ui.TEXT_MUTED);
         }
         if (!view.state().isActive()) {

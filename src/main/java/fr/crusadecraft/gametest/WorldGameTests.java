@@ -51,8 +51,11 @@ public final class WorldGameTests {
             int n = WorldService.generate(server, level, w.center.getX(), w.center.getZ());
             WorldState world = CrusadeSavedData.get(server).world();
             w.check(world.generated(), "monde non généré");
-            int expected = CrusadeConfig.SERVER.aiRealmCount.get() + CrusadeConfig.SERVER.baronyCount.get();
-            w.check(n == expected, "royaumes IA : " + n + " au lieu de " + expected);
+            // Les grands royaumes sont tous posés ; les seigneuries le sont au mieux (le planificateur renonce quand
+            // il ne trouve plus de place), et leur nombre dépend donc de l'emplacement du test.
+            int majors = CrusadeConfig.SERVER.aiRealmCount.get();
+            int expected = majors + CrusadeConfig.SERVER.baronyCount.get();
+            w.check(n >= majors + 1 && n <= expected, "royaumes IA : " + n + " (attendu de " + (majors + 1) + " à " + expected + ")");
             int avoid = Math.max(CrusadeConfig.SERVER.territoryRadius.get() * 2, 250);
             for (AiRealm r : world.realms()) {
                 for (AiProvince p : r.provinces()) {

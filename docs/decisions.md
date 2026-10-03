@@ -386,3 +386,37 @@ Les compétences vont de 1 à 99 : un citoyen débutant obtient 1 à 5, un exper
   tâches fréquentes (sièges chaque seconde, restauration des blocs) ne parcourent que les guerres en cours, et
   l'anti-grief ne calcule rien en temps de paix. La simulation de 60 jours d'IA reste instantanée en GameTest.
 - **Traductions** : 1 470 clés, toutes présentes en français et en anglais.
+
+**P12 (3 octobre 2026) — l'éditeur de la carte**
+
+Demandé par Romain : « faire mes propres frontières, créer des royaumes, mes villes ou celles adverses ».
+
+- **Où** : un bouton « Modifier » sur la carte du royaume, pas un nouvel objet. Tout se fait là où l'on regarde
+  déjà le monde. Quatre outils : Choisir (renommer, déplacer, donner, supprimer une ville ; modifier ou
+  supprimer un royaume), + Royaume, + Ville, Pinceau. Un formulaire court pour les noms.
+- **Qui** : réglage `monde.editeurCarte`. Par défaut l'hôte d'une partie solo (ou ouverte en LAN) et les
+  opérateurs : en solo, rien à régler. `TOUS` ou `PERSONNE` au choix.
+- **Les royaumes faits main sont des royaumes IA comme les autres** (souverain, conseil, trésor, diplomatie,
+  guerre, foi), marqués `handMade`. Une régénération du monde (`/crusade monde generer`, ou la génération à
+  la fondation) les garde, s'en écarte et ne reprend ni leurs couleurs ni leurs numéros de province.
+  « Monde vierge » efface tous les royaumes créés par le jeu et empêche toute régénération automatique.
+- **« Mes villes »** : une colonie MineColonies ne se crée pas depuis une carte (CrusadeCraft ne crée jamais de
+  colonie). Une ville « à vous » est donc une province IA que vous tenez, comme une conquête : elle compte pour
+  vos titres et vous rapporte son revenu. Elle dépend du royaume IA dont on a peint les terres à cet endroit,
+  sinon du plus proche, qui pourra la revendiquer.
+- **Frontières peintes** : par cases de 16 blocs (deux points à l'échelle habituelle), par dimension. Une case
+  peinte l'emporte sur les cercles automatiques autour des sièges : sur la carte, pour l'annonce « Vous entrez
+  sur les terres de… », et pour la guerre (anti-grief et réparation des dégâts). « Terre libre » efface un
+  territoire ; la gomme rend les cercles. Les joueurs ne reçoivent que les cases des royaumes qu'ils
+  connaissent : le brouillard reste vrai. Dans l'éditeur, en revanche, ni brouillard ni secret.
+- **Supprimer un royaume proprement** : ses guerres finissent en paix blanche, ses relations, ses coalitions,
+  ses lettres en attente et ses frontières disparaissent ; ce qu'il avait conquis revient à ses
+  propriétaires, ce que d'autres lui avaient pris reste à ceux qui le tiennent (rattaché au royaume voisin).
+  Une capitale ne se supprime pas seule.
+- **Sauvegarde** : version 11 (frontières et marque `handMade`). Une ancienne sauvegarde se lit sans rien
+  perdre : aucune frontière peinte, aucun royaume fait main.
+- **Banc d'essai** : les tests en jeu laissaient une colonie à moitié créée quand MineColonies échouait à la
+  créer, et tous les tests suivants tombaient en cascade (vu en ajoutant ceux de P12, qui décalent les
+  emplacements). La colonie ratée est désormais supprimée aussitôt, et l'erreur journalisée en entier.
+- **Corrigé au passage** : dans le menu royal, le bouton « Maison » recouvrait les ressources du souverain sur
+  les petits écrans ; il est passé dans l'en-tête, et la devise s'arrête avant les boutons.

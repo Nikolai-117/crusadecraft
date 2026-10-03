@@ -54,6 +54,14 @@ public final class MineColoniesTestKit {
         return new ColonyRef(colony.getDimension().location(), colony.getID());
     }
 
+    /** Supprime la colonie qui occupe cet endroit, s'il y en a une (test qui a échoué en chemin). */
+    public static void deleteColonyAt(ServerLevel level, BlockPos center) {
+        IColony leftover = IMinecoloniesAPI.getInstance().getColonyManager().getColonyByPosFromWorld(level, center);
+        if (leftover != null) {
+            IMinecoloniesAPI.getInstance().getColonyManager().deleteColonyByDimension(leftover.getID(), false, level.dimension());
+        }
+    }
+
     private static IColony colony(ColonyRef ref) {
         ResourceKey<Level> key = ResourceKey.create(Registries.DIMENSION, ref.dimension());
         return IMinecoloniesAPI.getInstance().getColonyManager().getColonyByDimension(ref.colonyId(), key);

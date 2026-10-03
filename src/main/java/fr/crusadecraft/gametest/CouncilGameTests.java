@@ -144,12 +144,18 @@ public final class CouncilGameTests {
     public static void unCitoyenRejointLaReunion(GameTestHelper h) {
         TestWorld w = TestWorld.realm(h, "Marchefort");
         CitizenRef walker = MineColoniesTestKit.addCitizen(w.colony);
-        Optional<Entity> entity = MineColoniesTestKit.spawnCitizen(walker, h.getLevel(), h.absolutePos(new BlockPos(1, 1, 1)));
+        // MineColonies refuse parfois un point d'apparition (selon l'emplacement du test) : on en essaie plusieurs.
+        Optional<Entity> entity = Optional.empty();
+        for (BlockPos spot : new BlockPos[]{new BlockPos(1, 1, 1), new BlockPos(2, 1, 1), new BlockPos(1, 1, 2), new BlockPos(2, 1, 6)}) {
+            entity = MineColoniesTestKit.spawnCitizen(walker, h.getLevel(), h.absolutePos(spot));
+            if (entity.isPresent()) break;
+        }
         if (entity.isEmpty()) {
             w.cleanup();
             h.fail("MineColonies n'a pas fait apparaître le citoyen");
             return;
         }
+        Optional<Entity> spawned = entity;
         BlockPos target = h.absolutePos(new BlockPos(7, 1, 7));
         DutyOrders.give(walker, new DutyOrders.Order(DutyOrders.Kind.MEETING, h.getLevel().dimension().location(), target,
                 null, target, null, null, h.getLevel().getGameTime() + 2000));
@@ -162,12 +168,12 @@ public final class CouncilGameTests {
             boolean last = i == checks;
             h.runAfterDelay(20L * i, () -> {
                 if (done[0]) return;
-                double d = entity.get().distanceToSqr(target.getX() + 0.5, target.getY(), target.getZ() + 0.5);
+                double d = spawned.get().distanceToSqr(target.getX() + 0.5, target.getY(), target.getZ() + 0.5);
                 boolean arrived = d <= 3.2 * 3.2;
                 if (!arrived && !last) return;
                 done[0] = true;
                 DutyOrders.cancel(walker);
-                entity.get().discard();
+                spawned.get().discard();
                 w.cleanup();
                 if (arrived) h.succeed();
                 else h.fail("le citoyen n'est pas arrivé (distance² " + Math.round(d) + ")");

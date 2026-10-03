@@ -28,9 +28,9 @@ public final class AiProvince {
     }
 
     private final int id;
-    private final String name;
+    private String name;
     private final ResourceLocation dimension;
-    private final BlockPos seat;
+    private BlockPos seat;
     private final Anchor anchor;
     private final boolean capital;
     private final int dejureKingdom;
@@ -61,6 +61,10 @@ public final class AiProvince {
     public int dejureKingdom() { return dejureKingdom; }
     public int population() { return population; }
     public int development() { return development; }
+
+    public void setName(String name) { this.name = name; }
+    /** Déplace le siège (éditeur de la carte). */
+    public void setSeat(BlockPos seat) { this.seat = seat.immutable(); }
 
     public java.util.UUID holder() { return holder; }
     public void setHolder(java.util.UUID holder) { this.holder = holder; }

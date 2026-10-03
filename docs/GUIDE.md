@@ -1,4 +1,4 @@
-# CrusadeCraft 1.0.0 — installer et tester
+# CrusadeCraft 1.1.0 — installer et tester
 
 ## 1. Ce qu'il faut
 
@@ -17,7 +17,7 @@ Optionnels, déjà présents chez toi, donc activés automatiquement :
 
 ## 2. Installer
 
-1. Le fichier du mod est `E:\crusadecraft\build\libs\crusadecraft-1.0.0.jar`.
+1. Le fichier du mod est `E:\crusadecraft\build\libs\crusadecraft-1.1.0.jar`.
 2. Mets-le dans le dossier des mods de l'instance : `D:\MultiMC\instances\1.20.1\.minecraft\mods\`.
    Dans MultiMC, tu peux aussi faire clic droit sur l'instance → *Modifier* → *Mods* → *Ajouter un fichier*.
 3. Lance l'instance comme d'habitude.
@@ -82,6 +82,20 @@ données du mod (fichier `crusadecraft.dat` du monde) restent sur place, sans ef
 19. **Croisade** : il faut être comte et avoir 100 de piété, contre un royaume païen ou hérétique (la foi
     s'affiche sur sa fiche). Choisis le motif « Guerre sainte » à la Table de guerre.
 
+### Dessiner son propre monde (éditeur de la carte)
+20. Ouvre la carte (touche `;` sur un clavier français, ou le bouton « Carte » de la Table de guerre), puis
+    **Modifier**. En solo, l'hôte y a droit sans rien régler.
+21. **+ Royaume** : clique sur la carte, choisis le nom, le souverain (au hasard si vide), le rang, la foi, le
+    caractère et la couleur, puis **Créer**. C'est un vrai royaume IA : il écrit, commerce et fait la guerre.
+22. **+ Ville** : choisis à droite à qui elle appartient (un royaume IA, ou le tien), puis clique sur la carte.
+    Une ville à toi compte pour tes titres et te rapporte son revenu, comme une conquête.
+23. **Pinceau** : choisis à droite le royaume (ou « Terre libre », ou la gomme) et la taille, puis peins en
+    maintenant le clic. Le clic droit glissé déplace la carte. Les frontières peintes comptent aussi pour la guerre.
+24. **Choisir** : clique sur une ville pour la renommer, la déplacer, la donner ou la supprimer, et modifier ou
+    supprimer son royaume. Les suppressions demandent un second clic.
+25. **Monde vierge** (outil Choisir, rien de sélectionné) : efface tous les royaumes créés par le jeu. Les tiens
+    restent, et le jeu n'en recrée plus.
+
 ## 4. Réglages
 
 Tout se règle dans `saves/<ton monde>/serverconfig/crusadecraft-server.toml`, à modifier monde fermé. Les
@@ -89,7 +103,7 @@ sections principales :
 
 - `fondation`, `personnages` et `conseil` ;
 - `economie` et `lois` ;
-- `monde` (royaumes IA) ;
+- `monde` (royaumes IA, et `editeurCarte` : qui peut ouvrir l'éditeur de la carte) ;
 - `diplomatie` ;
 - `guerre` (sièges, raids, anti-grief, rang Hostile entre joueurs, troupes Hundred Years War) ;
 - `ia` (fréquence des décisions, guerres entre IA et contre toi, répit après la fondation, coalitions) ;

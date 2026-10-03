@@ -20,11 +20,13 @@ import java.util.UUID;
  */
 public final class AiRealm {
     private final UUID id;
-    private final String place;
-    private final TitleRank rank;
-    private final int color;
+    private String place;
+    private TitleRank rank;
+    private int color;
     private final String house;
-    private final AiPersonality personality;
+    private AiPersonality personality;
+    /** Posé à la main dans l'éditeur de la carte (P12) : une régénération du monde ne l'efface pas. */
+    private boolean handMade;
     private AiCharacter ruler;
     private final Map<Post, AiCharacter> council = new EnumMap<>(Post.class);
     private final List<AiProvince> provinces = new ArrayList<>();
@@ -73,6 +75,12 @@ public final class AiRealm {
     public Map<UUID, Long> discoveredBy() { return Collections.unmodifiableMap(discoveredBy); }
 
     public void setRuler(AiCharacter ruler) { this.ruler = ruler; }
+    public void setPlace(String place) { this.place = place; }
+    public void setRank(TitleRank rank) { this.rank = rank; }
+    public void setColor(int color) { this.color = color; }
+    public void setPersonality(AiPersonality personality) { this.personality = personality; }
+    public boolean handMade() { return handMade; }
+    public void setHandMade(boolean handMade) { this.handMade = handMade; }
     public void setGold(long gold) { this.gold = gold; }
     public void setPrestige(int prestige) { this.prestige = prestige; }
     public void setPiety(int piety) { this.piety = piety; }
@@ -135,6 +143,7 @@ public final class AiRealm {
         CompoundTag d = new CompoundTag();
         for (Map.Entry<UUID, Long> e : discoveredBy.entrySet()) d.putLong(e.getKey().toString(), e.getValue());
         t.put("discovered", d);
+        if (handMade) t.putBoolean("handMade", true);
         return t;
     }
 
@@ -162,6 +171,7 @@ public final class AiRealm {
             }
         }
         if (t.contains("faith")) r.faith = AiFaith.byName(t.getString("faith"), r.faith);
+        r.handMade = t.getBoolean("handMade");
         return r;
     }
 }

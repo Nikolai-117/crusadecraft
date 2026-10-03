@@ -7,6 +7,10 @@
     {
       "type": "patchouli:text",
       "text": "crusadecraft.codex.carte.p0"
+    },
+    {
+      "type": "patchouli:text",
+      "text": "crusadecraft.codex.carte.p1"
     }
   ]
 }

@@ -46,6 +46,8 @@ public final class WorldState {
     private final List<fr.crusadecraft.core.ai.Coalition> coalitions = new ArrayList<>();
     /** Les nouvelles du monde, les plus récentes en tête. */
     private final List<WorldNews> news = new ArrayList<>();
+    /** Les frontières peintes à la main dans l'éditeur de la carte (P12). */
+    private TerritoryMap borders = new TerritoryMap();
 
     public boolean generated() { return generated; }
     public int version() { return version; }
@@ -76,14 +78,44 @@ public final class WorldState {
 
     public List<WorldNews> news() { return news; }
 
+    public TerritoryMap borders() { return borders; }
+
+    /** Le premier identifiant de province libre, tous royaumes confondus. */
+    public int nextProvinceId() {
+        int next = 0;
+        for (AiRealm r : realms.values()) for (AiProvince p : r.provinces()) next = Math.max(next, p.id() + 1);
+        return next;
+    }
+
+    /** Retire un royaume IA de la liste (le ménage des guerres et des relations est fait par l'éditeur). */
+    public Optional<AiRealm> remove(UUID id) {
+        return Optional.ofNullable(realms.remove(id));
+    }
+
+    /** Les royaumes posés à la main dans l'éditeur, qu'une régénération ne doit jamais effacer. */
+    public List<AiRealm> handMade() {
+        List<AiRealm> out = new ArrayList<>();
+        for (AiRealm r : realms.values()) if (r.handMade()) out.add(r);
+        return out;
+    }
+
+    /** Le monde n'a plus à être généré : les royaumes de l'éditeur suffisent (« monde vierge »). */
+    public void markGenerated(long day) {
+        if (!generated) generatedDay = day;
+        generated = true;
+    }
+
     public void addNews(WorldNews n) {
         news.add(0, n);
         while (news.size() > WorldNews.KEPT) news.remove(news.size() - 1);
     }
 
-    /** Remplace tout le monde généré (génération, ou régénération par un administrateur). */
+    /**
+     * Remplace tout le monde généré (génération, ou régénération par un administrateur). Les royaumes posés à la main
+     * dans l'éditeur restent : ce sont ceux du joueur, pas ceux du hasard.
+     */
     public void replace(List<AiRealm> newRealms, List<DejureKingdom> newDejure, int cx, int cz, long day) {
-        realms.clear();
+        realms.values().removeIf(r -> !r.handMade());
         for (AiRealm r : newRealms) realms.put(r.id(), r);
         dejure.clear();
         dejure.addAll(newDejure);
@@ -98,6 +130,7 @@ public final class WorldState {
         dejure.clear();
         coalitions.clear();
         news.clear();
+        borders = new TerritoryMap();
         generated = false;
     }
 
@@ -138,6 +171,7 @@ public final class WorldState {
         ListTag n = new ListTag();
         for (WorldNews w : news) n.add(w.save());
         t.put("news", n);
+        t.put("borders", borders.save());
         return t;
     }
 
@@ -160,6 +194,7 @@ public final class WorldState {
         for (int i = 0; i < c.size(); i++) s.coalitions.add(fr.crusadecraft.core.ai.Coalition.load(c.getCompound(i)));
         ListTag n = t.getList("news", Tag.TAG_COMPOUND);
         for (int i = 0; i < n.size(); i++) s.news.add(WorldNews.load(n.getCompound(i)));
+        s.borders = TerritoryMap.load(t.getList("borders", Tag.TAG_COMPOUND));
         return s;
     }
 }

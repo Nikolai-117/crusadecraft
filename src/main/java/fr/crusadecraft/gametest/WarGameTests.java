@@ -102,6 +102,11 @@ public final class WarGameTests {
             var server = h.getLevel().getServer();
             var data = CrusadeSavedData.get(server);
             AiRealm county = generateAndPick(w, TitleRank.COMTE);
+            // Un souverain tiré au hasard peut détester d'emblée (caractère, traits) : on le veut neutre, sinon
+            // l'humiliation s'ouvre sans affront selon la graine du monde, donc selon l'emplacement du test.
+            county.setPersonality(fr.crusadecraft.core.world.AiPersonality.PACIFIQUE);
+            var ruler = county.ruler();
+            county.setRuler(new fr.crusadecraft.core.world.AiCharacter(ruler.name(), ruler.female(), ruler.age(), ruler.stats(), List.of()));
             Relation rel = data.diplomacy().between(county.id(), w.realm.id());
             long today = RealmService.currentDay(server);
 

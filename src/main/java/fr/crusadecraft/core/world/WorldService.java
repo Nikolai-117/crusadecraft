@@ -78,9 +78,16 @@ public final class WorldService {
         List<WorldPlanner.Candidate> villages = VillageScanner.scan(level, cx, cz, max + settings.provinceRadius());
         List<Integer> taken = new ArrayList<>();
         for (Realm r : data.realms()) taken.add(r.color());
+        // Les royaumes posés à la main restent : les nouveaux s'en écartent et ne reprennent ni leurs couleurs ni leurs numéros.
+        List<int[]> avoid = new ArrayList<>(MineColoniesBridge.colonyCenters(level));
+        for (AiRealm r : data.world().handMade()) {
+            taken.add(r.color());
+            for (AiProvince p : r.provinces()) if (p.dimension().equals(level.dimension().location())) avoid.add(new int[]{p.seat().getX(), p.seat().getZ()});
+        }
         long seed = level.getSeed() ^ ((long) cx * 341873128712L) ^ ((long) cz * 132897987541L);
         WorldPlanner.Plan plan = new WorldPlanner(settings, seed, VillageScanner.landProbe(level), level.dimension().location())
-                .plan(cx, cz, villages, MineColoniesBridge.colonyCenters(level), taken, RealmService.currentDay(server));
+                .startingAt(data.world().nextProvinceId())
+                .plan(cx, cz, villages, avoid, taken, RealmService.currentDay(server));
         data.world().replace(plan.realms(), plan.dejure(), cx, cz, RealmService.currentDay(server));
         data.setDirty();
         int provinces = plan.realms().stream().mapToInt(r -> r.provinces().size()).sum();
@@ -166,11 +173,15 @@ public final class WorldService {
                     Component.translatable("crusadecraft.toast.discovered.body", name)));
             if (CrusadeConfig.SERVER.heralds.get()) sendHerald(player, realm);
         }
-        UUID current = dist <= CrusadeConfig.SERVER.territoryRadius.get() ? realm.id() : null;
+        // Une frontière peinte décide seule ; sinon, le cercle autour du siège le plus proche.
+        Optional<UUID> painted = world.borders().at(dim, player.getX(), player.getZ());
+        AiRealm here = painted.isPresent() ? world.realm(painted.get()).orElse(null)
+                : dist <= CrusadeConfig.SERVER.territoryRadius.get() ? realm : null;
+        UUID current = here == null ? null : here.id();
         UUID previous = current == null ? LAST_TERRITORY.remove(player.getUUID()) : LAST_TERRITORY.put(player.getUUID(), current);
-        if (current != null && !current.equals(previous) && !fresh && realm.discoveredBy(player.getUUID())) {
+        if (here != null && !current.equals(previous) && !(fresh && here == realm) && here.discoveredBy(player.getUUID())) {
             player.displayClientMessage(Component.translatable("crusadecraft.world.entering",
-                    AiNames.realmOf(realm.rank(), realm.place())), true);
+                    AiNames.realmOf(here.rank(), here.place())), true);
         }
         return fresh ? Optional.of(realm) : Optional.empty();
     }
@@ -317,7 +328,17 @@ public final class WorldService {
     }
 
     public static MapView mapView(ServerPlayer player) {
+        return mapView(player, false);
+    }
+
+    /**
+     * La carte de ce joueur. {@code editing} (accordé seulement à qui peut éditer) : tout le monde IA, découvert ou non,
+     * avec ce qu'il faut pour le modifier.
+     */
+    public static MapView mapView(ServerPlayer player, boolean editing) {
         MinecraftServer server = player.server;
+        boolean canEdit = WorldEditService.canEdit(player);
+        editing = editing && canEdit;
         CrusadeSavedData data = CrusadeSavedData.get(server);
         WorldState world = data.world();
         ResourceLocation dim = player.level().dimension().location();
@@ -349,29 +370,44 @@ public final class WorldService {
                     r.feminineTitle(), null, population));
         }
         for (AiRealm r : world.realms()) {
-            if (!r.discoveredBy(player.getUUID())) continue;
+            if (!editing && !r.discoveredBy(player.getUUID())) continue;
             index.put(r.id(), territories.size());
             territories.add(new MapView.Territory(r.id(), true, false, r.place(), r.rank(), r.color(), r.ruler().name(),
-                    r.ruler().female(), r.personality(), r.population()));
+                    r.ruler().female(), r.personality(), r.population(), r.faith(), r.handMade()));
         }
         // Chaque province sous la bannière de celui qui la tient : une conquête change la carte.
         for (AiRealm r : world.realms()) {
-            if (!r.discoveredBy(player.getUUID())) continue;
+            if (!editing && !r.discoveredBy(player.getUUID())) continue;
             for (AiProvince p : r.provinces()) {
                 if (!p.dimension().equals(dim)) continue;
                 Integer i = index.get(p.holder() == null ? r.id() : p.holder());
                 if (i == null) continue;
                 seats.add(new MapView.Seat(i, p.name(), p.seat().getX(), p.seat().getZ(), p.capital() && p.holder() == null, p.dejureKingdom(),
-                        p.anchor() != AiProvince.Anchor.LAND, true));
+                        p.anchor() != AiProvince.Anchor.LAND, true, p.id(), index.get(r.id())));
             }
         }
         List<MapView.Dejure> dejure = new ArrayList<>();
         for (WorldState.DejureKingdom k : world.dejure()) dejure.add(new MapView.Dejure(k.place(), k.color()));
         return new MapView(dim, focusX, focusZ, player.getBlockX(), player.getBlockZ(), CrusadeConfig.SERVER.territoryRadius.get(),
-                CrusadeConfig.SERVER.colonyRadius.get(), territories, seats, dejure);
+                CrusadeConfig.SERVER.colonyRadius.get(), territories, seats, dejure, canEdit, editing, borders(world, dim, index));
     }
 
-    private static int nearestDejure(WorldState world, int x, int z) {
+    /** Les cases peintes des royaumes de cette carte (les autres restent dans le brouillard), et les terres libres. */
+    private static MapView.Borders borders(WorldState world, ResourceLocation dim, Map<UUID, Integer> index) {
+        var cells = world.borders().cells(dim);
+        long[] keys = new long[cells.size()];
+        int[] owners = new int[cells.size()];
+        int n = 0;
+        for (var c : cells.long2ObjectEntrySet()) {
+            Integer i = TerritoryMap.NEUTRAL.equals(c.getValue()) ? Integer.valueOf(MapView.Borders.NEUTRAL) : index.get(c.getValue());
+            if (i == null) continue;
+            keys[n] = c.getLongKey();
+            owners[n++] = i;
+        }
+        return new MapView.Borders(java.util.Arrays.copyOf(keys, n), java.util.Arrays.copyOf(owners, n));
+    }
+
+    static int nearestDejure(WorldState world, int x, int z) {
         int best = 0;
         double bestD = Double.MAX_VALUE;
         for (int i = 0; i < world.dejure().size(); i++) {

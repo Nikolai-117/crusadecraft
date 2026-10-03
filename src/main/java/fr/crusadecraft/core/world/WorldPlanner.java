@@ -50,6 +50,8 @@ public final class WorldPlanner {
     private final NameGenerator names;
     private final LandProbe land;
     private final ResourceLocation dimension;
+    /** Premier identifiant de province : après ceux des royaumes posés à la main, qui restent. */
+    private int firstProvinceId;
 
     public WorldPlanner(Settings settings, long seed, LandProbe land, ResourceLocation dimension) {
         this.settings = settings;
@@ -105,7 +107,7 @@ public final class WorldPlanner {
         }
 
         List<AiRealm> realms = new ArrayList<>();
-        int provinceId = 0;
+        int provinceId = firstProvinceId;
         for (int i = 0; i < capitals.size(); i++) {
             TitleRank rank = ranks.get(i);
             Point capital = capitals.get(i);
@@ -288,6 +290,36 @@ public final class WorldPlanner {
         Collections.shuffle(out, random);
         if (out.isEmpty()) out.add(Heraldry.ACIER.rgb());
         return out;
+    }
+
+    public WorldPlanner startingAt(int firstProvinceId) {
+        this.firstProvinceId = firstProvinceId;
+        return this;
+    }
+
+    /**
+     * Un royaume posé à la main dans l'éditeur de la carte : nom, rang, couleur, foi et caractère choisis par le
+     * joueur ; souverain (nommé s'il le souhaite), conseil, trésor et capitale tirés comme pour les autres.
+     */
+    public AiRealm handMade(String place, TitleRank rank, int color, AiFaith faith, AiPersonality personality, String rulerName,
+                            int provinceId, BlockPos seat, int dejure, int population, long today) {
+        AiCharacter ruler = character(30 + random.nextInt(31), true);
+        if (rulerName != null && !rulerName.isBlank()) {
+            ruler = new AiCharacter(rulerName, ruler.female(), ruler.age(), ruler.stats(), ruler.traits());
+        }
+        AiRealm realm = new AiRealm(new UUID(random.nextLong(), random.nextLong()), place, rank, color, names.place(),
+                personality, ruler, today);
+        realm.setFaith(faith);
+        realm.setHandMade(true);
+        for (Post post : Post.values()) {
+            if (post.isCouncil()) realm.council().put(post, character(22 + random.nextInt(40), false));
+        }
+        realm.provinces().add(new AiProvince(provinceId, place, dimension, seat, AiProvince.Anchor.LAND, true, dejure,
+                population, 10 + random.nextInt(30)));
+        realm.setGold(100L * (rank.ordinal() + 1) + random.nextInt(200));
+        realm.setPrestige(50 * (rank.ordinal() + 1) + random.nextInt(100));
+        realm.setPiety(personality == AiPersonality.FANATIQUE ? 150 + random.nextInt(100) : random.nextInt(100));
+        return realm;
     }
 
     /** Mélange à moitié avec le parchemin : les royaumes de jure ont des teintes passées. */

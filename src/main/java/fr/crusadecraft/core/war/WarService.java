@@ -752,7 +752,10 @@ public final class WarService {
         return out;
     }
 
-    static boolean inTerritory(MinecraftServer server, UUID id, ResourceLocation dim, BlockPos pos) {
+    public static boolean inTerritory(MinecraftServer server, UUID id, ResourceLocation dim, BlockPos pos) {
+        // Une frontière peinte à la main décide seule, à la place des cercles autour des sièges.
+        Optional<UUID> painted = data(server).world().borders().at(dim, pos.getX() + 0.5, pos.getZ() + 0.5);
+        if (painted.isPresent()) return painted.get().equals(id);
         int radius = CrusadeConfig.SERVER.territoryRadius.get();
         for (AiProvince p : provincesOf(server, id)) {
             if (p.dimension().equals(dim) && p.distanceSqr(pos.getX() + 0.5, pos.getZ() + 0.5) <= (double) radius * radius) return true;

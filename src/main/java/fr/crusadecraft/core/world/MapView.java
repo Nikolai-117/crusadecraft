@@ -13,24 +13,63 @@ import java.util.UUID;
  * des autres joueurs, les royaumes IA découverts), leurs sièges, et les royaumes de jure. Ce qu'il n'a pas
  * découvert n'est jamais envoyé : le brouillard n'est pas un simple voile.
  *
- * @param focusX centre de la vue par défaut (sa capitale, sinon sa position)
+ * <p>Dans l'éditeur de la carte ({@code editing}), tout le monde IA est envoyé : on ne dessine pas à l'aveugle.
+ *
+ * @param focusX  centre de la vue par défaut (sa capitale, sinon sa position)
+ * @param canEdit ce joueur a le droit d'ouvrir l'éditeur de la carte
+ * @param borders les frontières peintes à la main, pour les royaumes de cette carte
  */
 public record MapView(ResourceLocation dimension, int focusX, int focusZ, int playerX, int playerZ, int territoryRadius,
-                      int colonyRadius, List<Territory> territories, List<Seat> seats, List<Dejure> dejure) {
+                      int colonyRadius, List<Territory> territories, List<Seat> seats, List<Dejure> dejure,
+                      boolean canEdit, boolean editing, Borders borders) {
+
+    public MapView(ResourceLocation dimension, int focusX, int focusZ, int playerX, int playerZ, int territoryRadius,
+                   int colonyRadius, List<Territory> territories, List<Seat> seats, List<Dejure> dejure) {
+        this(dimension, focusX, focusZ, playerX, playerZ, territoryRadius, colonyRadius, territories, seats, dejure, false, false, Borders.EMPTY);
+    }
 
     /**
      * Un royaume sur la carte.
      *
-     * @param label nom complet d'un royaume de joueur, ou nom de lieu d'un royaume IA (à composer avec le rang)
+     * @param label    nom complet d'un royaume de joueur, ou nom de lieu d'un royaume IA (à composer avec le rang)
+     * @param faith    sa foi (royaume IA), sinon {@code null}
+     * @param handMade posé à la main dans l'éditeur
      */
     public record Territory(UUID id, boolean ai, boolean mine, String label, TitleRank rank, int color, String ruler,
-                            boolean rulerFemale, AiPersonality personality, int population) {}
+                            boolean rulerFemale, AiPersonality personality, int population, AiFaith faith, boolean handMade) {
+        public Territory(UUID id, boolean ai, boolean mine, String label, TitleRank rank, int color, String ruler,
+                         boolean rulerFemale, AiPersonality personality, int population) {
+            this(id, ai, mine, label, rank, color, ruler, rulerFemale, personality, population, null, false);
+        }
+    }
 
-    /** Un siège (colonie d'un joueur, province d'un royaume IA). */
-    /** Un siège sur la carte. {@code province} : une province IA (même conquise), au territoire plus large qu'une colonie. */
-    public record Seat(int territory, String name, int x, int z, boolean capital, int dejure, boolean village, boolean province) {}
+    /**
+     * Un siège sur la carte. {@code province} : une province IA (même conquise), au territoire plus large qu'une colonie.
+     *
+     * @param provinceId l'identifiant de la province IA, −1 pour une colonie
+     * @param origin     l'indice du royaume IA d'origine d'une province (celui qui la tient s'il n'a pas été conquis), sinon −1
+     */
+    public record Seat(int territory, String name, int x, int z, boolean capital, int dejure, boolean village, boolean province,
+                       int provinceId, int origin) {
+        public Seat(int territory, String name, int x, int z, boolean capital, int dejure, boolean village, boolean province) {
+            this(territory, name, x, z, capital, dejure, village, province, -1, -1);
+        }
+    }
 
     public record Dejure(String place, int color) {}
+
+    /**
+     * Les cases peintes : la clé de chaque case (voir {@link TerritoryMap#key}) et l'indice de son royaume dans
+     * {@link #territories()}, ou {@link #NEUTRAL} pour une terre libre.
+     */
+    public record Borders(long[] keys, int[] owners) {
+        public static final int NEUTRAL = -1;
+        public static final Borders EMPTY = new Borders(new long[0], new int[0]);
+
+        public int size() {
+            return keys.length;
+        }
+    }
 
     public void write(FriendlyByteBuf buf) {
         buf.writeResourceLocation(dimension);
@@ -53,6 +92,9 @@ public record MapView(ResourceLocation dimension, int focusX, int focusZ, int pl
             buf.writeBoolean(t.personality() != null);
             if (t.personality() != null) buf.writeEnum(t.personality());
             buf.writeVarInt(t.population());
+            buf.writeBoolean(t.faith() != null);
+            if (t.faith() != null) buf.writeEnum(t.faith());
+            buf.writeBoolean(t.handMade());
         }
         buf.writeVarInt(seats.size());
         for (Seat s : seats) {
@@ -64,11 +106,20 @@ public record MapView(ResourceLocation dimension, int focusX, int focusZ, int pl
             buf.writeVarInt(s.dejure());
             buf.writeBoolean(s.village());
             buf.writeBoolean(s.province());
+            buf.writeVarInt(s.provinceId());
+            buf.writeVarInt(s.origin());
         }
         buf.writeVarInt(dejure.size());
         for (Dejure d : dejure) {
             buf.writeUtf(d.place());
             buf.writeInt(d.color());
+        }
+        buf.writeBoolean(canEdit);
+        buf.writeBoolean(editing);
+        buf.writeVarInt(borders.size());
+        for (int i = 0; i < borders.size(); i++) {
+            buf.writeLong(borders.keys()[i]);
+            buf.writeVarInt(borders.owners()[i] + 1);
         }
     }
 
@@ -87,17 +138,27 @@ public record MapView(ResourceLocation dimension, int focusX, int focusZ, int pl
             String ruler = buf.readUtf();
             boolean female = buf.readBoolean();
             AiPersonality personality = buf.readBoolean() ? buf.readEnum(AiPersonality.class) : null;
-            territories.add(new Territory(id, ai, mine, label, rank, color, ruler, female, personality, buf.readVarInt()));
+            int population = buf.readVarInt();
+            AiFaith faith = buf.readBoolean() ? buf.readEnum(AiFaith.class) : null;
+            territories.add(new Territory(id, ai, mine, label, rank, color, ruler, female, personality, population, faith, buf.readBoolean()));
         }
         n = buf.readVarInt();
         List<Seat> seats = new ArrayList<>(n);
         for (int i = 0; i < n; i++) {
             seats.add(new Seat(buf.readVarInt(), buf.readUtf(), buf.readVarInt(), buf.readVarInt(), buf.readBoolean(),
-                    buf.readVarInt(), buf.readBoolean(), buf.readBoolean()));
+                    buf.readVarInt(), buf.readBoolean(), buf.readBoolean(), buf.readVarInt(), buf.readVarInt()));
         }
         n = buf.readVarInt();
         List<Dejure> dejure = new ArrayList<>(n);
         for (int i = 0; i < n; i++) dejure.add(new Dejure(buf.readUtf(), buf.readInt()));
-        return new MapView(dim, fx, fz, px, pz, radius, colonyRadius, territories, seats, dejure);
+        boolean canEdit = buf.readBoolean(), editing = buf.readBoolean();
+        n = buf.readVarInt();
+        long[] keys = new long[n];
+        int[] owners = new int[n];
+        for (int i = 0; i < n; i++) {
+            keys[i] = buf.readLong();
+            owners[i] = buf.readVarInt() - 1;
+        }
+        return new MapView(dim, fx, fz, px, pz, radius, colonyRadius, territories, seats, dejure, canEdit, editing, new Borders(keys, owners));
     }
 }

@@ -32,6 +32,7 @@ public final class DataMigrations {
         // v7 → v8 : menace des royaumes, coalitions, nouvelles du monde. Absents = aucune menace, rien à dire.
         // v8 → v9 : factions, complots, secrets, événements, chronique du règne. Absents = une cour paisible.
         // v9 → v10 : foi des royaumes IA (tirée de leur identifiant si absente), croisades, maison et mariages, tournois.
+        // v10 → v11 : éditeur de la carte : frontières peintes et royaumes faits main. Absents = aucune frontière peinte.
         if (version < CrusadeSavedData.DATA_VERSION) {
             CrusadeCraft.LOGGER.info("CrusadeCraft : données mises à niveau de la version {} à {}", version,
                     CrusadeSavedData.DATA_VERSION);

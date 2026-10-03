@@ -104,14 +104,23 @@ public final class WorldPackets {
 
     // ------------------------------------------------------------------ client → serveur
 
-    public record RequestMap(boolean open) {
-        public static void encode(RequestMap p, FriendlyByteBuf buf) { buf.writeBoolean(p.open); }
-        public static RequestMap decode(FriendlyByteBuf buf) { return new RequestMap(buf.readBoolean()); }
+    /** {@code edit} : la carte de l'éditeur (accordée seulement à qui peut éditer). */
+    public record RequestMap(boolean open, boolean edit) {
+        public RequestMap(boolean open) {
+            this(open, false);
+        }
+
+        public static void encode(RequestMap p, FriendlyByteBuf buf) {
+            buf.writeBoolean(p.open);
+            buf.writeBoolean(p.edit);
+        }
+
+        public static RequestMap decode(FriendlyByteBuf buf) { return new RequestMap(buf.readBoolean(), buf.readBoolean()); }
 
         public static void handle(RequestMap p, Supplier<NetworkEvent.Context> ctx) {
             ServerPlayer player = ctx.get().getSender();
             if (player == null) return;
-            CrusadeNetwork.toPlayer(player, new MapData(WorldService.mapView(player), p.open));
+            CrusadeNetwork.toPlayer(player, new MapData(WorldService.mapView(player, p.edit), p.open));
         }
     }
 

@@ -1,11 +1,20 @@
 package fr.crusadecraft.client.map;
 
 import fr.crusadecraft.core.world.MapView;
+import fr.crusadecraft.core.world.TerritoryMap;
+import it.unimi.dsi.fastutil.longs.Long2IntMap;
+import it.unimi.dsi.fastutil.longs.Long2IntOpenHashMap;
+
+import java.util.ArrayList;
+import java.util.List;
 
 /**
  * Calcule l'image de la carte, pixel par pixel, sans rien de graphique : chaque pixel prend la couleur du
  * siège le plus proche dans son rayon (vue politique : le royaume ; vue de jure : le royaume de jure), les
  * frontières s'assombrissent, le parchemin entoure ce qui est connu et le brouillard couvre le reste.
+ *
+ * <p>Une case peinte à la main l'emporte sur ces cercles : elle prend la couleur de son royaume (et son pixel, le
+ * siège de ce royaume le plus proche), ou redevient terre libre.
  */
 public final class MapRaster {
     public static final int PARCHMENT = 0xE8D9B0;
@@ -14,6 +23,9 @@ public final class MapRaster {
     public static final int NONE = -1;
     /** Indice de propriétaire d'un pixel dans le brouillard. */
     public static final int FOGGED = -2;
+    /** Dans une retouche en cours ({@code overlay}) : la case est effacée, le territoire automatique revient. */
+    public static final int ERASED = -2;
+    private static final int UNPAINTED = Integer.MIN_VALUE;
 
     /**
      * @param pixels  couleurs ARGB, ligne par ligne
@@ -29,6 +41,31 @@ public final class MapRaster {
     private MapRaster() {}
 
     public static Result render(MapView v, int w, int h, double centerX, double centerZ, double blocksPerPixel, boolean dejure) {
+        return render(v, w, h, centerX, centerZ, blocksPerPixel, dejure, null);
+    }
+
+    /**
+     * @param overlay retouches que le serveur n'a pas encore confirmées (case → royaume, {@link MapView.Borders#NEUTRAL}
+     *                ou {@link #ERASED}), ou {@code null}
+     */
+    public static Result render(MapView v, int w, int h, double centerX, double centerZ, double blocksPerPixel, boolean dejure,
+                                Long2IntMap overlay) {
+        Long2IntOpenHashMap painted = new Long2IntOpenHashMap(v.borders().size() + (overlay == null ? 0 : overlay.size()));
+        painted.defaultReturnValue(UNPAINTED);
+        for (int i = 0; i < v.borders().size(); i++) painted.put(v.borders().keys()[i], v.borders().owners()[i]);
+        if (overlay != null) {
+            for (Long2IntMap.Entry e : overlay.long2IntEntrySet()) {
+                if (e.getIntValue() == ERASED) painted.remove(e.getLongKey());
+                else painted.put(e.getLongKey(), e.getIntValue());
+            }
+        }
+        int territories = v.territories().size();
+        List<List<Integer>> seatsOf = new ArrayList<>(territories);
+        for (int t = 0; t < territories; t++) seatsOf.add(new ArrayList<>());
+        for (int i = 0; i < v.seats().size(); i++) {
+            int t = v.seats().get(i).territory();
+            if (t >= 0 && t < territories) seatsOf.get(t).add(i);
+        }
         int[] pixels = new int[w * h];
         int[] owners = new int[w * h];
         int n = v.seats().size();
@@ -59,7 +96,8 @@ public final class MapRaster {
                 double wx = centerX + (x - w / 2.0) * blocksPerPixel;
                 int best = -1;
                 double bestD = Double.MAX_VALUE;
-                boolean revealed = sq(wx - v.playerX()) + sq(wz - v.playerZ()) <= playerReveal2;
+                // Dans l'éditeur, pas de brouillard : c'est souvent en terre inconnue qu'on pose ses royaumes.
+                boolean revealed = v.editing() || sq(wx - v.playerX()) + sq(wz - v.playerZ()) <= playerReveal2;
                 for (int i = 0; i < n; i++) {
                     double d = sq(wx - sx[i]) + sq(wz - sz[i]);
                     if (d <= r2[i] && d < bestD) {
@@ -70,6 +108,29 @@ public final class MapRaster {
                 }
                 int idx = y * w + x;
                 int noise = grain(wx, wz);
+                int paint = painted.isEmpty() ? UNPAINTED
+                        : painted.get(TerritoryMap.key(TerritoryMap.cellOf(wx), TerritoryMap.cellOf(wz)));
+                if (paint != UNPAINTED) {
+                    // Une case peinte : son royaume, ou personne. Le siège retenu est le plus proche de ce royaume.
+                    best = -1;
+                    if (paint >= 0 && paint < territories) {
+                        double near = Double.MAX_VALUE;
+                        for (int i : seatsOf.get(paint)) {
+                            double d = sq(wx - sx[i]) + sq(wz - sz[i]);
+                            if (d < near) {
+                                near = d;
+                                best = i;
+                            }
+                        }
+                        if (best < 0) {
+                            owners[idx] = NONE;
+                            groups[idx] = 1000 + paint;
+                            pixels[idx] = 0xFF000000 | shade(mix(v.territories().get(paint).color(), PARCHMENT, 0.45), noise);
+                            continue;
+                        }
+                        revealed = true;
+                    }
+                }
                 if (best >= 0) {
                     owners[idx] = best;
                     groups[idx] = group[best];

@@ -76,6 +76,7 @@ public final class CrusadeConfig {
         public final ForgeConfigSpec.IntValue aiMaxDistance;
         public final ForgeConfigSpec.IntValue territoryRadius;
         public final ForgeConfigSpec.IntValue colonyRadius;
+        public final ForgeConfigSpec.EnumValue<fr.crusadecraft.core.world.WorldEditService.Access> mapEditor;
         public final ForgeConfigSpec.IntValue discoveryRadius;
         public final ForgeConfigSpec.BooleanValue heralds;
         public final ForgeConfigSpec.IntValue heraldSeconds;
@@ -217,6 +218,9 @@ public final class CrusadeConfig {
             heraldSeconds = b.comment("Durée de présence du héraut, en secondes.").defineInRange("dureeHeraut", 45, 10, 600);
             baronyCount = b.comment("Seigneuries indépendantes (une province) autour de la capitale : les premières que l'on peut vassaliser.")
                     .defineInRange("seigneuriesIndependantes", 4, 0, 24);
+            mapEditor = b.comment("Qui peut ouvrir l'éditeur de la carte (poser royaumes et villes, peindre les frontières) :",
+                            "TOUS, HOTE_ET_OPERATEURS (l'hôte d'une partie solo et les opérateurs) ou PERSONNE.")
+                    .defineEnum("editeurCarte", fr.crusadecraft.core.world.WorldEditService.Access.HOTE_ET_OPERATEURS);
             b.pop();
 
             b.comment("Diplomatie, titres et vassalité").push("diplomatie");

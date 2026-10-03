@@ -172,6 +172,21 @@ public final class UiShots {
             s.preview(0, true);
             return s;
         }, null));
+        MapView edit = sampleEditMap();
+        list.add(new Shot("carte_editeur", () -> {
+            MapScreen s = new MapScreen(edit);
+            s.previewEditor(0, 7);
+            return s;
+        }, null));
+        list.add(new Shot("carte_editeur_pinceau", () -> {
+            MapScreen s = new MapScreen(edit);
+            s.previewEditor(3, -1);
+            return s;
+        }, null));
+        list.add(new Shot("carte_editeur_royaume", () -> fr.crusadecraft.client.screen.MapEditForm.newRealm(new MapScreen(edit), 420, -980,
+                List.of(Heraldry.AZUR.rgb(), Heraldry.GUEULES.rgb())), null));
+        list.add(new Shot("carte_editeur_ville", () -> fr.crusadecraft.client.screen.MapEditForm.newCity(new MapScreen(edit), edit.territories().get(2),
+                fr.crusadecraft.core.world.AiNames.realm(TitleRank.DUCHE, "Rochegarde"), 1050, -820), null));
         list.add(new Shot("livre_chroniques", () -> {
             List<fr.crusadecraft.network.packet.WorldPackets.NewsLine> lines = new ArrayList<>(sampleChronicle());
             java.util.Collections.reverse(lines);
@@ -491,7 +506,47 @@ public final class UiShots {
                 new MapView.Seat(2, "Saulepré", 1150, -450, false, 1, false, true),
                 new MapView.Seat(3, "Cendrecourt", 700, 800, true, 1, true, true));
         return new MapView(ResourceLocation.tryParse("minecraft:overworld"), 0, 0, 40, 60, 160, 110, t, seats,
-                List.of(new MapView.Dejure("Aquilée", 0xD9A88E), new MapView.Dejure("Montvert", 0x9DB58C)));
+                List.of(new MapView.Dejure("Aquilée", 0xD9A88E), new MapView.Dejure("Montvert", 0x9DB58C)), true, false, MapView.Borders.EMPTY);
+    }
+
+    /** La carte de l'éditeur : des provinces numérotées, une frontière peinte pour Rochegarde et une terre libre. */
+    private static MapView sampleEditMap() {
+        MapView base = sampleMap();
+        List<MapView.Territory> t = new ArrayList<>();
+        for (MapView.Territory x : base.territories()) {
+            t.add(new MapView.Territory(x.id(), x.ai(), x.mine(), x.label(), x.rank(), x.color(), x.ruler(), x.rulerFemale(), x.personality(),
+                    x.population(), x.ai() ? fr.crusadecraft.core.world.AiFaith.FIDELE : null, x.label().equals("Rochegarde")));
+        }
+        List<MapView.Seat> seats = new ArrayList<>();
+        int id = 0;
+        for (MapView.Seat s : base.seats()) {
+            seats.add(new MapView.Seat(s.territory(), s.name(), s.x(), s.z(), s.capital(), s.dejure(), s.village(), s.province(),
+                    s.province() ? id++ : -1, s.province() ? s.territory() : -1));
+        }
+        List<Long> keys = new ArrayList<>();
+        List<Integer> owners = new ArrayList<>();
+        // Une marche peinte pour Rochegarde, en biais vers Valbrume, et une forêt laissée libre chez Ambrevent.
+        for (int cx = 30; cx <= 60; cx++) {
+            for (int cz = -50; cz <= -28; cz++) {
+                if (cz > -60 + (60 - cx) && cz < -20 + (60 - cx) / 2) {
+                    keys.add(fr.crusadecraft.core.world.TerritoryMap.key(cx, cz));
+                    owners.add(2);
+                }
+            }
+        }
+        for (int cx = -78; cx <= -66; cx++) {
+            for (int cz = -30; cz <= -20; cz++) {
+                keys.add(fr.crusadecraft.core.world.TerritoryMap.key(cx, cz));
+                owners.add(MapView.Borders.NEUTRAL);
+            }
+        }
+        long[] k = new long[keys.size()];
+        int[] o = new int[owners.size()];
+        for (int i = 0; i < k.length; i++) {
+            k[i] = keys.get(i);
+            o[i] = owners.get(i);
+        }
+        return new MapView(base.dimension(), 0, 0, 40, 60, 160, 110, t, seats, base.dejure(), true, true, new MapView.Borders(k, o));
     }
 
     private static AiRealmView sampleAiRealm() {
