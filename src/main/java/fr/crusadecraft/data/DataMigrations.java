@@ -29,6 +29,7 @@ public final class DataMigrations {
         // v4 → v5 : ajout du monde (royaumes IA, royaumes de jure). Absent = pas encore généré.
         // v5 → v6 : diplomatie, courrier, revendications. Absents = aucune relation, aucune lettre.
         // v6 → v7 : guerres, registre des dégâts, armées, provinces conquises. Absents = la paix.
+        // v7 → v8 : menace des royaumes, coalitions, nouvelles du monde. Absents = aucune menace, rien à dire.
         if (version < CrusadeSavedData.DATA_VERSION) {
             CrusadeCraft.LOGGER.info("CrusadeCraft : données mises à niveau de la version {} à {}", version,
                     CrusadeSavedData.DATA_VERSION);

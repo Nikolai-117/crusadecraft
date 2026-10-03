@@ -21,7 +21,7 @@ public final class DiplomacyRules {
     /** Ce que le souverain IA sait de son interlocuteur. */
     public record Context(AiPersonality personality, List<Trait> rulerTraits, TitleRank aiRank, TitleRank playerRank,
                           int playerPrestige, int playerDread, boolean sameDejure, int chancellorDiplomacy,
-                          int playerStrength, int aiStrength) {
+                          int playerStrength, int aiStrength, int playerThreat) {
         /** Rapport de forces, du point de vue du joueur (2 = deux fois plus fort). */
         public double ratio() {
             return Math.max(1, playerStrength) / (double) Math.max(1, aiStrength);
@@ -53,6 +53,7 @@ public final class DiplomacyRules {
         add(lines, "crusadecraft.diplo.op.prestige", null, Math.min(15, Math.max(0, c.playerPrestige()) / 40));
         add(lines, "crusadecraft.diplo.op.rank", null, 5 * (c.playerRank().ordinal() - c.aiRank().ordinal()));
         if (c.sameDejure()) add(lines, "crusadecraft.diplo.op.dejure", null, -10);
+        add(lines, "crusadecraft.diplo.op.threat", null, fr.crusadecraft.core.ai.AiRules.threatOpinion(c.playerThreat()));
         add(lines, "crusadecraft.diplo.op.chancellor", null, Math.max(0, c.chancellorDiplomacy()) / 3);
         if (rel.has(Treaty.ALLIANCE, today)) add(lines, Treaty.ALLIANCE.key(), null, 25);
         if (rel.has(Treaty.ALLIANCE_DEFENSIVE, today)) add(lines, Treaty.ALLIANCE_DEFENSIVE.key(), null, 15);

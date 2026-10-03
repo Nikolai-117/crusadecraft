@@ -25,7 +25,7 @@ class DiplomacyLogicTest {
 
     private static DiplomacyRules.Context ctx(AiPersonality p, TitleRank aiRank, TitleRank playerRank, int playerStrength, int aiStrength,
                                               int dread, Trait... traits) {
-        return new DiplomacyRules.Context(p, List.of(traits), aiRank, playerRank, 50, dread, false, 0, playerStrength, aiStrength);
+        return new DiplomacyRules.Context(p, List.of(traits), aiRank, playerRank, 50, dread, false, 0, playerStrength, aiStrength, 0);
     }
 
     @Test

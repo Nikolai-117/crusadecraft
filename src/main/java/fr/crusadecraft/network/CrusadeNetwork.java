@@ -29,7 +29,7 @@ import net.minecraftforge.network.simple.SimpleChannel;
  * (distance, droits, état) avant d'agir.
  */
 public final class CrusadeNetwork {
-    private static final String VERSION = "5";
+    private static final String VERSION = "6";
 
     public static final SimpleChannel CHANNEL = NetworkRegistry.newSimpleChannel(
             ResourceLocation.tryParse(CrusadeCraft.MOD_ID + ":main"),
@@ -142,6 +142,11 @@ public final class CrusadeNetwork {
         CHANNEL.messageBuilder(WarPackets.WarAction.class, nextId++, NetworkDirection.PLAY_TO_SERVER)
                 .encoder(WarPackets.WarAction::encode).decoder(WarPackets.WarAction::decode)
                 .consumerMainThread(WarPackets.WarAction::handle).add();
+
+        // P8 : nouvelles du monde
+        CHANNEL.messageBuilder(WorldPackets.NewsData.class, nextId++, NetworkDirection.PLAY_TO_CLIENT)
+                .encoder(WorldPackets.NewsData::encode).decoder(WorldPackets.NewsData::decode)
+                .consumerMainThread(WorldPackets.NewsData::handle).add();
     }
 
     public static void toPlayer(ServerPlayer player, Object packet) {

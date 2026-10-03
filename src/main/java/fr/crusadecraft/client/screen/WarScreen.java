@@ -301,6 +301,7 @@ public class WarScreen extends Screen {
         Ui.scaled(g, font, title, left + 10, top + 8, 1.3f, Ui.TEXT_TITLE, false);
         Component res = Component.translatable("crusadecraft.diplo.resources", view.gold(), view.prestige());
         Ui.text(g, font, res, left + w - 10 - font.width(res), top + 10, Ui.TEXT_MUTED);
+        renderThreat(g, left + w - 18 - font.width(res), top + 10, mouseX, mouseY);
 
         renderList(g, mouseX, mouseY);
         renderArmy(g, mouseX, mouseY);
@@ -311,6 +312,24 @@ public class WarScreen extends Screen {
         else Ui.wrapped(g, font, Component.translatable("crusadecraft.war.nobody"), left + 186, top + 34, w - 196, Ui.TEXT_MUTED);
         super.render(g, mouseX, mouseY, partialTick);
         if (pendingTooltip != null) g.renderComponentTooltip(font, pendingTooltip, mouseX, mouseY);
+    }
+
+    /** La menace que vous faites peser sur vos voisins, et la coalition qu'elle a fait naître. */
+    private void renderThreat(GuiGraphics g, int right, int y, int mouseX, int mouseY) {
+        boolean coalition = !view.coalition().isEmpty();
+        Component label = Component.translatable(coalition ? "crusadecraft.war.threat.coalition" : "crusadecraft.war.threat", view.threat());
+        int color = coalition || view.threat() >= view.threatThreshold() ? Ui.RED : view.threat() >= view.threatThreshold() / 2 ? 0xFFE0A070 : Ui.TEXT_MUTED;
+        int x = right - font.width(label);
+        Ui.text(g, font, label, x, y, color);
+        if (Ui.inside(mouseX, mouseY, x, y - 1, font.width(label), 10)) {
+            List<Component> tip = new ArrayList<>();
+            tip.add(Component.translatable("crusadecraft.war.threat.title").withStyle(ChatFormatting.GOLD));
+            for (String part : Component.translatable("crusadecraft.war.threat.desc", view.threatThreshold()).getString().split("\\n")) {
+                tip.add(Component.literal(part).withStyle(ChatFormatting.GRAY));
+            }
+            if (coalition) tip.add(Component.translatable("crusadecraft.war.threat.members", String.join(", ", view.coalition())).withStyle(ChatFormatting.RED));
+            pendingTooltip = tip;
+        }
     }
 
     private int listHeight() {

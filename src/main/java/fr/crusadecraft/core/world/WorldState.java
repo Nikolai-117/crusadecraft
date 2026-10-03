@@ -42,6 +42,10 @@ public final class WorldState {
     private final Map<UUID, AiRealm> realms = new LinkedHashMap<>();
     private final List<DejureKingdom> dejure = new ArrayList<>();
     private long lastEconomyDay = Long.MIN_VALUE;
+    /** Les coalitions formées contre des joueurs (P8). */
+    private final List<fr.crusadecraft.core.ai.Coalition> coalitions = new ArrayList<>();
+    /** Les nouvelles du monde, les plus récentes en tête. */
+    private final List<WorldNews> news = new ArrayList<>();
 
     public boolean generated() { return generated; }
     public int version() { return version; }
@@ -63,6 +67,20 @@ public final class WorldState {
 
     public void setLastEconomyDay(long day) { this.lastEconomyDay = day; }
 
+    public List<fr.crusadecraft.core.ai.Coalition> coalitions() { return coalitions; }
+
+    public Optional<fr.crusadecraft.core.ai.Coalition> coalitionAgainst(UUID target) {
+        for (fr.crusadecraft.core.ai.Coalition c : coalitions) if (c.target().equals(target)) return Optional.of(c);
+        return Optional.empty();
+    }
+
+    public List<WorldNews> news() { return news; }
+
+    public void addNews(WorldNews n) {
+        news.add(0, n);
+        while (news.size() > WorldNews.KEPT) news.remove(news.size() - 1);
+    }
+
     /** Remplace tout le monde généré (génération, ou régénération par un administrateur). */
     public void replace(List<AiRealm> newRealms, List<DejureKingdom> newDejure, int cx, int cz, long day) {
         realms.clear();
@@ -78,6 +96,8 @@ public final class WorldState {
     public void clear() {
         realms.clear();
         dejure.clear();
+        coalitions.clear();
+        news.clear();
         generated = false;
     }
 
@@ -112,6 +132,12 @@ public final class WorldState {
         for (DejureKingdom k : dejure) d.add(k.save());
         t.put("dejure", d);
         t.putLong("economyDay", lastEconomyDay);
+        ListTag c = new ListTag();
+        for (fr.crusadecraft.core.ai.Coalition co : coalitions) c.add(co.save());
+        t.put("coalitions", c);
+        ListTag n = new ListTag();
+        for (WorldNews w : news) n.add(w.save());
+        t.put("news", n);
         return t;
     }
 
@@ -130,6 +156,10 @@ public final class WorldState {
         ListTag d = t.getList("dejure", Tag.TAG_COMPOUND);
         for (int i = 0; i < d.size(); i++) s.dejure.add(DejureKingdom.load(d.getCompound(i)));
         s.lastEconomyDay = t.contains("economyDay") ? t.getLong("economyDay") : Long.MIN_VALUE;
+        ListTag c = t.getList("coalitions", Tag.TAG_COMPOUND);
+        for (int i = 0; i < c.size(); i++) s.coalitions.add(fr.crusadecraft.core.ai.Coalition.load(c.getCompound(i)));
+        ListTag n = t.getList("news", Tag.TAG_COMPOUND);
+        for (int i = 0; i < n.size(); i++) s.news.add(WorldNews.load(n.getCompound(i)));
         return s;
     }
 }

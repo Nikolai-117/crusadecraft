@@ -96,6 +96,15 @@ public final class CrusadeConfig {
         public final ForgeConfigSpec.BooleanValue antiGrief;
         public final ForgeConfigSpec.BooleanValue hostileRanks;
         public final ForgeConfigSpec.BooleanValue hywTroops;
+        public final ForgeConfigSpec.BooleanValue aiDecisions;
+        public final ForgeConfigSpec.IntValue aiDecisionChance;
+        public final ForgeConfigSpec.BooleanValue aiWars;
+        public final ForgeConfigSpec.BooleanValue aiWarsOnPlayers;
+        public final ForgeConfigSpec.IntValue aiGraceDays;
+        public final ForgeConfigSpec.IntValue aiWarRange;
+        public final ForgeConfigSpec.BooleanValue coalitions;
+        public final ForgeConfigSpec.IntValue coalitionThreshold;
+        public final ForgeConfigSpec.BooleanValue worldNewsToasts;
         public final ForgeConfigSpec.BooleanValue disableDuplicatesWithWarNTaxes;
         public final ForgeConfigSpec.BooleanValue disableDuplicatesWithWarNNobility;
 
@@ -235,6 +244,25 @@ public final class CrusadeConfig {
                     .define("rangHostileEnGuerre", true);
             hywTroops = b.comment("Si Hundred Years War est installé : ses bandits forment les garnisons et les raids, ses soldats vos levées.")
                     .define("troupesHundredYearsWar", true);
+            b.pop();
+
+            b.comment("Les royaumes IA : leurs décisions, leurs guerres, leurs coalitions").push("ia");
+            aiDecisions = b.comment("Les royaumes IA prennent leurs décisions (traités, guerres, coalitions). Désactivé : un monde figé.")
+                    .define("decisions", true);
+            aiDecisionChance = b.comment("Chance, en pour cent, qu'un royaume IA réfléchisse à sa politique un jour donné.")
+                    .defineInRange("chanceDecisionParJour", 30, 0, 100);
+            aiWars = b.comment("Les royaumes IA se font la guerre entre eux, et leurs frontières bougent.").define("guerresEntreIA", true);
+            aiWarsOnPlayers = b.comment("Un royaume IA peut déclarer la guerre à un joueur (seulement s'il est en rivalité ouverte ou haï).")
+                    .define("guerresContreJoueurs", true);
+            aiGraceDays = b.comment("Jours de répit après la fondation d'un royaume : aucune IA ne l'attaque avant.")
+                    .defineInRange("joursDeRepit", 10, 0, 1000);
+            aiWarRange = b.comment("Distance maximale entre deux capitales pour qu'une IA envisage la guerre, en blocs.")
+                    .defineInRange("porteeGuerre", 2500, 200, 100000);
+            coalitions = b.comment("Les royaumes IA se liguent contre un joueur trop menaçant.").define("coalitions", true);
+            coalitionThreshold = b.comment("Menace à partir de laquelle une coalition peut se former (une province conquise en vaut 20).")
+                    .defineInRange("seuilCoalition", 60, 10, 200);
+            worldNewsToasts = b.comment("Annoncer par notification les guerres et paix entre royaumes que vous connaissez.")
+                    .define("notificationsNouvelles", true);
             b.pop();
 
             b.comment("Cohabitation avec d'autres mods qui font la même chose").push("compatibilite");

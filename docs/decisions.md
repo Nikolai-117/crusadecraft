@@ -277,3 +277,35 @@ Les compétences vont de 1 à 99 : un citoyen débutant obtient 1 à 5, un exper
   (option), rang rendu à la paix.
 - **Table de guerre** : le cadre ouvre désormais l'écran de guerre (armée, guerres, déclaration,
   paix) ; la carte du monde s'ouvre de là. L'onglet Guerre du menu royal en donne le résumé.
+
+**P8 (3 octobre 2026)**
+
+- **Un jour, une réflexion** : chaque royaume IA libre (qui tient une terre et ne prête hommage à personne) a
+  30 % de chances par jour de réfléchir à sa politique (réglable). Il cherche d'abord une guerre à sa mesure,
+  sinon un traité avec un voisin. Tout se coupe dans la configuration, section « ia ».
+- **L'envie de guerre dépend du tempérament** : un expansionniste attaque à 1,3 contre 1 (1,1 s'il hait sa
+  cible), un opportuniste à 1,6, un fanatique à 1,3 s'il hait, sinon 2 ; un marchand ou un pacifique seulement
+  s'il hait franchement. On compte les alliés qui suivraient de chaque côté, et la distance entre capitales.
+- **On ne s'acharne pas** : une IA n'attaque pas un royaume déjà en guerre (la première simulation a vu
+  quatre royaumes tomber le même jour sur une baronnie). Une province déjà passée à un autre ne se cède pas
+  une seconde fois : le vainqueur reçoit de l'or à la place.
+- **Les joueurs ne sont visés que s'ils l'ont cherché** : rivalité ouverte, ou opinion à −40 ou moins, et
+  jamais pendant les 10 jours qui suivent la fondation. Une IA ne soumet pas un joueur : elle l'humilie, ou
+  reprend une province qu'il a conquise. Une lettre de déclaration arrive au Colombier.
+- **Les guerres entre IA se jouent seules** : escarmouches quotidiennes, places prises sur le papier (la
+  province visée d'abord, et l'on reprend les siennes avant d'avancer), paix quand un camp est écrasé (±50) ou
+  que la guerre dure trop (30 jours) ou lasse les deux camps. Une IA lasse propose la paix blanche au joueur.
+- **Les frontières bougent** : une province conquise passe sous la bannière de son vainqueur sur la carte,
+  lui verse son revenu et compte dans sa force. Les vassaux IA d'un suzerain IA lui paient l'impôt du contrat.
+- **La menace** : chaque déclaration de guerre d'un joueur ajoute 5, chaque province conquise 20, chaque
+  royaume soumis 15 ; elle retombe chaque jour, et d'un coup de 30 après une défaite. Elle pèse dans l'opinion
+  de tous les souverains IA (jusqu'à −40), et la Table de guerre l'affiche.
+- **Coalitions** : au-delà du seuil (60), les royaumes qui craignent le joueur et que rien ne lie à lui se
+  liguent. Annoncée dès deux membres, la coalition défend chacun des siens ; si elle pèse 1,2 fois plus que le
+  joueur et ses alliés, elle attaque, menée par son plus fort membre. Elle tient tant que dure la guerre et se
+  défait quand la menace est retombée sous la moitié du seuil.
+- **Nouvelles du monde** : guerres, paix, frontières, alliances et coalitions, gardées (40 au plus) et lisibles
+  dans l'onglet Chroniques du menu royal ; un joueur n'apprend que ce qui touche des royaumes qu'il connaît. Les
+  guerres et les paix sont aussi annoncées par notification (réglable). Les mariages viendront en P10.
+- **Simulation de 60 jours** en GameTest, toutes les IA réfléchissant chaque jour : aucune guerre ne dure plus
+  de 31 jours, aucun état incohérent.

@@ -1,0 +1,39 @@
+{
+  "crusadecraft.tab.chroniques.empty.title": "No news yet.",
+  "crusadecraft.tab.chroniques.empty.body": "The wars, peaces and alliances of the realms you know are recorded here. The chronicle of your reign will join them.",
+
+  "crusadecraft.news.title": "News of the world",
+  "crusadecraft.news.more": "+ %s (scroll)",
+  "crusadecraft.news.war": "War declared — %s against %s (%s).",
+  "crusadecraft.news.peace.white": "White peace — %s and %s go home.",
+  "crusadecraft.news.peace.victory": "Peace signed — victor: %s; vanquished: %s.",
+  "crusadecraft.news.province": "Border — %1$s · former lord: %3$s · new lord: %2$s.",
+  "crusadecraft.news.alliance": "Treaty — %s and %s: %s.",
+  "crusadecraft.news.coalition": "Coalition — target: %1$s · %2$s realms allied.",
+  "crusadecraft.news.coalition_end": "Coalition dissolved — target: %s.",
+  "crusadecraft.news.coalition_war": "Coalition war — leader: %1$s · target: %2$s.",
+
+  "crusadecraft.toast.news.title": "News of the world",
+  "crusadecraft.toast.coalition.title": "A coalition forms!",
+  "crusadecraft.toast.coalition.body": "%s realms band together against you: your expansion worries them.",
+  "crusadecraft.toast.coalition_end.title": "Coalition dissolved",
+  "crusadecraft.toast.coalition_end.body": "Your neighbours feel safer: the coalition against you breaks up.",
+  "crusadecraft.toast.war.occupied.title": "Stronghold occupied",
+  "crusadecraft.toast.war.occupied.body": "%s · occupier: %s",
+
+  "crusadecraft.war.log.occupied": "Stronghold taken: %s (%s)",
+  "crusadecraft.war.log.liberated": "Stronghold retaken: %s (%s)",
+
+  "crusadecraft.letter.ai_war.subject": "Declaration of war",
+  "crusadecraft.letter.ai_war.body": "By this letter, %s declares war on you. Casus belli: %s. Look to your defences: our armies are on the march.",
+  "crusadecraft.letter.peace_white.subject": "An offer of white peace",
+  "crusadecraft.letter.peace_white.body": "This war has lasted long enough. By this letter, %s proposes that everyone goes home, giving nothing up. Seal it, and peace will be made.",
+
+  "crusadecraft.diplo.op.threat": "Your expansion worries them",
+
+  "crusadecraft.war.threat": "Threat %s",
+  "crusadecraft.war.threat.coalition": "Threat %s · coalition",
+  "crusadecraft.war.threat.title": "Threat",
+  "crusadecraft.war.threat.desc": "Your conquests and wars worry your neighbours, and their opinion suffers for it.\nEach conquered province adds 20, each declaration of war 5; it falls back every day.\nAbove %s, those who fear you band together in a coalition.",
+  "crusadecraft.war.threat.members": "Coalition against you: %s"
+}

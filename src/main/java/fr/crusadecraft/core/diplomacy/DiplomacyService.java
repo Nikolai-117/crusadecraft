@@ -137,7 +137,8 @@ public final class DiplomacyService {
 
     public static DiplomacyRules.Context context(MinecraftServer server, AiRealm ai, Realm player) {
         return new DiplomacyRules.Context(ai.personality(), ai.ruler().traits(), ai.rank(), player.rank(), player.prestige(),
-                player.dread(), sameDejure(server, ai, player), chancellorDiplomacy(server, player), strength(player), strength(ai));
+                player.dread(), sameDejure(server, ai, player), chancellorDiplomacy(server, player), strength(player), strength(ai),
+                player.threat());
     }
 
     public static List<Opinion.Line> opinionLines(MinecraftServer server, AiRealm ai, Realm player) {

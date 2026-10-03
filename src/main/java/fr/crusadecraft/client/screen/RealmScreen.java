@@ -60,6 +60,8 @@ public class RealmScreen extends Screen {
     private fr.crusadecraft.core.diplomacy.DiplomacyView diplomacy;
     private fr.crusadecraft.core.diplomacy.ChanceryView chancery;
     private fr.crusadecraft.core.war.WarView war;
+    private java.util.List<fr.crusadecraft.network.packet.WorldPackets.NewsLine> news;
+    private int newsScroll;
     private Law selectedLaw;
     private int selectedLevel = -1;
 
@@ -95,6 +97,10 @@ public class RealmScreen extends Screen {
         this.chancery = v;
     }
 
+    public void setNews(java.util.List<fr.crusadecraft.network.packet.WorldPackets.NewsLine> lines) {
+        this.news = lines;
+    }
+
     public void setWar(fr.crusadecraft.core.war.WarView v) {
         this.war = v;
     }
@@ -127,6 +133,7 @@ public class RealmScreen extends Screen {
         if (tab == Tab.DIPLOMATIE && diplomacy == null) request(EconomyPackets.RequestTab.Tab.DIPLOMACY);
         if (tab == Tab.VASSAUX && chancery == null) request(EconomyPackets.RequestTab.Tab.VASSALS);
         if (tab == Tab.GUERRE && war == null) request(EconomyPackets.RequestTab.Tab.WAR);
+        if (tab == Tab.CHRONIQUES && news == null) request(EconomyPackets.RequestTab.Tab.NEWS);
         if (tab == Tab.LOIS) initLawButton();
     }
 
@@ -189,6 +196,8 @@ public class RealmScreen extends Screen {
             renderVassalsTab(g, left + 8, cy, w - 16, ch, mouseX, mouseY);
         } else if (tab == Tab.GUERRE) {
             renderWarTab(g, left + 8, cy, w - 16, ch, mouseX, mouseY);
+        } else if (tab == Tab.CHRONIQUES && news != null && !news.isEmpty()) {
+            renderNewsTab(g, left + 8, cy, w - 16, ch);
         } else {
             renderEmpty(g, left + 8, cy, w - 16, ch);
         }
@@ -369,6 +378,42 @@ public class RealmScreen extends Screen {
             ry += 23;
         }
         Ui.text(g, font, Component.translatable("crusadecraft.chancery.hint"), x + 8, y + ch - 11, Ui.TEXT_MUTED);
+    }
+
+    /** Les nouvelles du monde : guerres, paix, frontières qui bougent, alliances, coalitions. */
+    private void renderNewsTab(GuiGraphics g, int x, int y, int cw, int ch) {
+        Ui.text(g, font, Component.translatable("crusadecraft.news.title"), x + 8, y + 7, Ui.TEXT_TITLE);
+        int ry = y + 21;
+        int bottom = y + ch - 4;
+        int visible = 0;
+        newsScroll = Math.max(0, Math.min(newsScroll, news.size() - 1));
+        for (int i = newsScroll; i < news.size(); i++) {
+            fr.crusadecraft.network.packet.WorldPackets.NewsLine line = news.get(i);
+            Component day = Component.translatable("crusadecraft.war.log.day", line.day());
+            int dw = font.width(day) + 4;
+            java.util.List<net.minecraft.util.FormattedCharSequence> parts = font.split(line.text(), cw - 16 - dw);
+            if (ry + parts.size() * 10 > bottom) break;
+            Ui.text(g, font, day, x + 8, ry, Ui.TEXT_MUTED);
+            for (net.minecraft.util.FormattedCharSequence part : parts) {
+                g.drawString(font, part, x + 8 + dw, ry, Ui.TEXT, false);
+                ry += 10;
+            }
+            ry += 3;
+            visible++;
+        }
+        if (newsScroll + visible < news.size()) {
+            Component more = Component.translatable("crusadecraft.news.more", news.size() - newsScroll - visible);
+            Ui.text(g, font, more, x + cw - 8 - font.width(more), y + 7, Ui.TEXT_MUTED);
+        }
+    }
+
+    @Override
+    public boolean mouseScrolled(double mouseX, double mouseY, double delta) {
+        if (tab == Tab.CHRONIQUES && news != null) {
+            newsScroll -= (int) Math.signum(delta);
+            return true;
+        }
+        return super.mouseScrolled(mouseX, mouseY, delta);
     }
 
     /** L'onglet Guerre : l'armée et les guerres en cours ; les ordres se donnent à la Table de guerre. */
@@ -633,6 +678,7 @@ public class RealmScreen extends Screen {
                 if (t == Tab.DIPLOMATIE) request(EconomyPackets.RequestTab.Tab.DIPLOMACY);
                 if (t == Tab.VASSAUX) request(EconomyPackets.RequestTab.Tab.VASSALS);
                 if (t == Tab.GUERRE) request(EconomyPackets.RequestTab.Tab.WAR);
+                if (t == Tab.CHRONIQUES) request(EconomyPackets.RequestTab.Tab.NEWS);
                 selectedLaw = null;
                 selectedLevel = -1;
                 rebuildWidgets();

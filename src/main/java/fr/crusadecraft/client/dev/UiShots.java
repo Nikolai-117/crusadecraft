@@ -158,6 +158,14 @@ public final class UiShots {
             s.setWar(war);
             return s;
         }, null));
+        list.add(new Shot("menu_chroniques", () -> {
+            RealmScreen s = RealmScreen.withTab(view, RealmScreen.Tab.CHRONIQUES);
+            s.setNews(sampleNews());
+            return s;
+        }, null));
+        list.add(new Shot("notification_coalition", TitleScreen::new, () -> Minecraft.getInstance().getToasts().addToast(
+                new CrusadeToast(ToastPacket.Kind.ALERT, Component.translatable("crusadecraft.toast.coalition.title"),
+                        Component.translatable("crusadecraft.toast.coalition.body", 3)))));
         list.add(new Shot("notification_raid", TitleScreen::new, () -> Minecraft.getInstance().getToasts().addToast(
                 new CrusadeToast(ToastPacket.Kind.ALERT, Component.translatable("crusadecraft.toast.war.raid.title"),
                         Component.translatable("crusadecraft.toast.war.raid.body", fr.crusadecraft.core.world.AiNames.realmOf(TitleRank.COMTE, "Ambrevent"),
@@ -303,6 +311,23 @@ public final class UiShots {
                 1250, 140, true, "", true, vassals, claims, candidates, 7, 62);
     }
 
+    private static List<fr.crusadecraft.network.packet.WorldPackets.NewsLine> sampleNews() {
+        var amb = fr.crusadecraft.core.world.AiNames.realm(TitleRank.COMTE, "Ambrevent");
+        var roc = fr.crusadecraft.core.world.AiNames.realm(TitleRank.DUCHE, "Rochegarde");
+        var cen = fr.crusadecraft.core.world.AiNames.realm(TitleRank.BARONNIE, "Cendrecourt");
+        return List.of(
+                new fr.crusadecraft.network.packet.WorldPackets.NewsLine(61, Component.translatable("crusadecraft.news.coalition",
+                        Component.literal("Royaume de Valbrume"), Component.literal("3"))),
+                new fr.crusadecraft.network.packet.WorldPackets.NewsLine(58, Component.translatable("crusadecraft.news.province",
+                        Component.literal("Saulepré"), roc, cen)),
+                new fr.crusadecraft.network.packet.WorldPackets.NewsLine(58, Component.translatable("crusadecraft.news.peace.victory", roc, cen)),
+                new fr.crusadecraft.network.packet.WorldPackets.NewsLine(52, Component.translatable("crusadecraft.news.alliance", amb, roc,
+                        Component.translatable("crusadecraft.treaty.alliance_defensive"))),
+                new fr.crusadecraft.network.packet.WorldPackets.NewsLine(47, Component.translatable("crusadecraft.news.war", roc, cen,
+                        Component.translatable("crusadecraft.cb.conquest"))),
+                new fr.crusadecraft.network.packet.WorldPackets.NewsLine(40, Component.translatable("crusadecraft.news.peace.white", amb, cen)));
+    }
+
     private static fr.crusadecraft.core.war.WarView sampleWar() {
         UUID me = UUID.randomUUID(), ambrevent = UUID.randomUUID(), rochegarde = UUID.randomUUID(), cendrecourt = UUID.randomUUID();
         var mine = new fr.crusadecraft.core.war.WarView.Party(me, false, "Royaume de Valbrume", TitleRank.COMTE, Heraldry.AZUR.rgb());
@@ -342,7 +367,8 @@ public final class UiShots {
                 new fr.crusadecraft.core.war.WarView.Target(roc, fr.crusadecraft.core.diplomacy.DiploStatus.HOSTILE, 210, null, cbs),
                 new fr.crusadecraft.core.war.WarView.Target(cen, fr.crusadecraft.core.diplomacy.DiploStatus.ALLIANCE, 40,
                         "crusadecraft.war.block.alliance", cbs));
-        return new fr.crusadecraft.core.war.WarView(96, 132, true, 10, 1250, 180, true, "", List.of(line), targets);
+        return new fr.crusadecraft.core.war.WarView(96, 132, true, 10, 1250, 180, true, "", List.of(line), targets, 72, 60,
+                List.of("Duché de Rochegarde", "Comté d'Ambrevent"));
     }
 
     private static MapView sampleMap() {

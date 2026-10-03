@@ -262,19 +262,37 @@ public final class WorldService {
         int guard = 0;
         while (world.lastEconomyDay() < today && guard++ < 3) {
             long day = world.lastEconomyDay() + 1;
-            for (AiRealm r : world.realms()) simulateDay(r, day);
+            Map<UUID, List<AiProvince>> held = heldProvinces(world);
+            for (AiRealm r : world.realms()) simulateDay(r, held.getOrDefault(r.id(), List.of()), day);
             fr.crusadecraft.core.war.WarService.onNewDay(server, day);
+            fr.crusadecraft.core.ai.AiBrain.onNewDay(server, day);
             world.setLastEconomyDay(day);
         }
         if (world.lastEconomyDay() < today) world.setLastEconomyDay(today);
         CrusadeSavedData.get(server).setDirty();
     }
 
-    /** Un jour de vie d'un royaume IA : revenus, croissance, prestige. */
+    /** Qui tient quoi : chaque province rangée sous le royaume qui la tient, conquêtes comprises. */
+    static Map<UUID, List<AiProvince>> heldProvinces(WorldState world) {
+        Map<UUID, List<AiProvince>> held = new HashMap<>();
+        for (AiRealm r : world.realms()) {
+            for (AiProvince p : r.provinces()) held.computeIfAbsent(p.holder() == null ? r.id() : p.holder(), k -> new ArrayList<>()).add(p);
+        }
+        return held;
+    }
+
     static void simulateDay(AiRealm r, long day) {
+        simulateDay(r, r.ownProvinces(), day);
+    }
+
+    /**
+     * Un jour de vie d'un royaume IA : le revenu des provinces qu'il tient (conquêtes comprises), la croissance
+     * des siennes, le prestige.
+     */
+    static void simulateDay(AiRealm r, List<AiProvince> held, long day) {
         double income = 0;
+        for (AiProvince p : held) income += p.population() / 4.0 + p.development() / 5.0;
         for (AiProvince p : r.provinces()) {
-            if (p.holder() == null || p.holder().equals(r.id())) income += p.population() / 4.0 + p.development() / 5.0;
             int cap = p.capital() ? 80 : 45;
             if (p.population() < cap && Math.floorMod(day * 31 + p.id(), 3) == 0) p.setPopulation(p.population() + Math.max(1, p.population() / 40));
             if (Math.floorMod(day + p.id(), 5) == 0) p.setDevelopment(p.development() + 1);

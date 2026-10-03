@@ -1,6 +1,8 @@
 package fr.crusadecraft.core.war;
 
 import fr.crusadecraft.CrusadeCraft;
+import fr.crusadecraft.core.ai.AiBrain;
+import fr.crusadecraft.core.ai.AiRules;
 import fr.crusadecraft.compat.minecolonies.MineColoniesBridge;
 import fr.crusadecraft.config.CrusadeConfig;
 import fr.crusadecraft.core.ColonyRef;
@@ -28,6 +30,7 @@ import fr.crusadecraft.core.treasury.TreasuryService;
 import fr.crusadecraft.core.world.AiNames;
 import fr.crusadecraft.core.world.AiProvince;
 import fr.crusadecraft.core.world.AiRealm;
+import fr.crusadecraft.core.world.WorldNews;
 import fr.crusadecraft.core.world.WorldState;
 import fr.crusadecraft.data.CrusadeSavedData;
 import fr.crusadecraft.item.SealItem;
@@ -147,7 +150,7 @@ public final class WarService {
             if (a.isPresent()) {
                 int opinion = DiplomacyService.opinion(server, a.get(), r);
                 double factor = opinion < -50 ? 0 : opinion < 0 ? 0.5 : 1.0;
-                levies += (int) Math.round(strength(a.get(), 0) * rel.vassalLevy() / 100.0 * factor);
+                levies += (int) Math.round(strength(server, a.get(), 0) * rel.vassalLevy() / 100.0 * factor);
             } else {
                 Optional<Realm> o = player(server, v);
                 if (o.isPresent()) levies += (int) Math.round(maxMen(o.get()) * rel.vassalLevy() / 100.0);
@@ -156,15 +159,22 @@ public final class WarService {
         return levies;
     }
 
-    /** Force d'un royaume IA : sa population selon son tempérament, entamée par la fatigue. */
-    static int strength(AiRealm a, int exhaustion) {
-        return (int) Math.round(a.population() * a.personality().levyFactor() * 0.8 * (1 - exhaustion / 200.0));
+    /** La population des provinces qu'un royaume IA tient, conquêtes comprises. */
+    static int heldPopulation(MinecraftServer server, UUID id) {
+        int sum = 0;
+        for (AiProvince p : provincesOf(server, id)) sum += p.population();
+        return sum;
+    }
+
+    /** Force d'un royaume IA : la population qu'il tient selon son tempérament, entamée par la fatigue. */
+    static int strength(MinecraftServer server, AiRealm a, int exhaustion) {
+        return (int) Math.round(heldPopulation(server, a.id()) * a.personality().levyFactor() * 0.8 * (1 - exhaustion / 200.0));
     }
 
     /** Force sur le terrain d'un royaume engagé : une armée non levée ne compte que pour un tiers. */
     public static int strength(MinecraftServer server, UUID id, int exhaustion) {
         Optional<AiRealm> a = ai(server, id);
-        if (a.isPresent()) return strength(a.get(), exhaustion);
+        if (a.isPresent()) return strength(server, a.get(), exhaustion);
         Optional<Realm> r = player(server, id);
         if (r.isEmpty()) return 0;
         int men = men(r.get());
@@ -232,6 +242,11 @@ public final class WarService {
                 rel.has(Treaty.ALLIANCE, today) || rel.has(Treaty.ALLIANCE_DEFENSIVE, today), rel.suzerain() != null, vassalOfOther);
     }
 
+    /** Ce qui interdit à {@code a} de déclarer la guerre à {@code b} (trêve, traité, vassalité…), ou {@code null}. */
+    public static String declarationProblem(MinecraftServer server, UUID a, UUID b) {
+        return WarRules.declarationProblem(bonds(server, a, b, RealmService.currentDay(server)));
+    }
+
     /** Ce qu'on peut tenter contre un royaume : interdiction générale, motifs ouverts et provinces visables. */
     public static WarView.Target target(MinecraftServer server, Realm me, UUID other) {
         long today = RealmService.currentDay(server);
@@ -283,23 +298,39 @@ public final class WarService {
         if (cb.targetsProvince()) {
             province = option.provinces().stream().anyMatch(p -> p.id() == provinceId) ? provinceId : option.provinces().get(0).id();
         }
-        long today = RealmService.currentDay(server);
         me.setPrestige(me.prestige() - cb.prestigeCost());
-        War war = new War(UUID.randomUUID(), me.id(), target, cb, province, today);
+        me.setThreat(AiRules.addThreat(me.threat(), AiRules.THREAT_DECLARE));
+        declareBetween(server, me.id(), target, cb, province);
+        return CouncilActions.Outcome.ok(Component.translatable("crusadecraft.war.declared", name(server, target)));
+    }
+
+    /**
+     * Une guerre déclarée, par un joueur ou par une IA : les alliés et les vassaux de chacun suivent, une
+     * coalition défend chacun des siens contre celui qu'elle surveille, la relation passe en guerre, et la
+     * nouvelle court.
+     */
+    public static War declareBetween(MinecraftServer server, UUID attacker, UUID target, CasusBelli cb, int province) {
+        long today = RealmService.currentDay(server);
+        War war = new War(UUID.randomUUID(), attacker, target, cb, province, today);
         Diplomacy d = data(server).diplomacy();
-        // Les alliés : les vôtres (alliance totale) et ceux de l'adversaire (alliances, y compris défensives).
+        // Les alliés : ceux de l'attaquant (alliance totale) et ceux du défenseur (alliances, y compris défensives).
         for (Relation rel : d.all()) {
-            if (!rel.involves(me.id()) && !rel.involves(target)) continue;
-            if (rel.involves(me.id()) && !rel.involves(target) && rel.has(Treaty.ALLIANCE, today)) war.attackerAllies().add(rel.other(me.id()));
-            if (rel.involves(target) && !rel.involves(me.id()) && (rel.has(Treaty.ALLIANCE, today) || rel.has(Treaty.ALLIANCE_DEFENSIVE, today))) {
+            if (!rel.involves(attacker) && !rel.involves(target)) continue;
+            if (rel.involves(attacker) && !rel.involves(target) && rel.has(Treaty.ALLIANCE, today)) war.attackerAllies().add(rel.other(attacker));
+            if (rel.involves(target) && !rel.involves(attacker) && (rel.has(Treaty.ALLIANCE, today) || rel.has(Treaty.ALLIANCE_DEFENSIVE, today))) {
                 UUID ally = rel.other(target);
                 if (!war.attackerAllies().contains(ally)) war.defenderAllies().add(ally);
             }
         }
         // Les vassaux suivent leur suzerain.
-        for (UUID v : d.vassalsOf(me.id())) if (!v.equals(target)) war.attackerAllies().add(v);
-        for (UUID v : d.vassalsOf(target)) if (!v.equals(me.id())) war.defenderAllies().add(v);
-        Relation rel = d.between(me.id(), target);
+        for (UUID v : d.vassalsOf(attacker)) if (!v.equals(target) && war.side(v) == 0) war.attackerAllies().add(v);
+        for (UUID v : d.vassalsOf(target)) if (!v.equals(attacker) && war.side(v) == 0) war.defenderAllies().add(v);
+        // Une coalition défend chacun de ses membres contre le royaume qu'elle surveille.
+        data(server).world().coalitionAgainst(attacker).ifPresent(c -> {
+            if (!c.active() || !c.members().contains(target)) return;
+            for (UUID m : c.members()) if (war.side(m) == 0) war.defenderAllies().add(m);
+        });
+        Relation rel = d.between(attacker, target);
         rel.setWar(true);
         rel.setHostile(true);
         if (ai(server, target).isPresent()) rel.addOpinion(target, OpinionModifier.of(OpinionReason.INSULTE, today, 1));
@@ -308,15 +339,19 @@ public final class WarService {
         war.log(today, "crusadecraft.war.log.declared", 0, cb.name(), goal);
         hostileRanks(server, war, true);
         data(server).setDirty();
-        CrusadeCraft.LOGGER.info("CrusadeCraft : {} déclare la guerre ({}) à {}", me.name(), cb, name(server, target).getString());
-        Component enemy = name(server, target);
-        notify(server, me.id(), ToastPacket.Kind.WAR, Component.translatable("crusadecraft.toast.war.declared.title"),
+        Component attackerName = name(server, attacker), enemy = name(server, target);
+        CrusadeCraft.LOGGER.info("CrusadeCraft : {} déclare la guerre ({}) à {}", attackerName.getString(), cb, enemy.getString());
+        notify(server, attacker, ToastPacket.Kind.WAR, Component.translatable("crusadecraft.toast.war.declared.title"),
                 Component.translatable("crusadecraft.toast.war.declared.body", enemy, Component.translatable(cb.key())));
         notify(server, target, ToastPacket.Kind.WAR, Component.translatable("crusadecraft.toast.war.attacked.title"),
-                Component.translatable("crusadecraft.toast.war.attacked.body", Component.literal(me.name())));
+                Component.translatable("crusadecraft.toast.war.attacked.body", attackerName));
         for (UUID ally : war.attackerAllies()) notify(server, ally, ToastPacket.Kind.WAR, Component.translatable("crusadecraft.toast.war.called.title"),
-                Component.translatable("crusadecraft.toast.war.called.body", Component.literal(me.name()), enemy));
-        return CouncilActions.Outcome.ok(Component.translatable("crusadecraft.war.declared", enemy));
+                Component.translatable("crusadecraft.toast.war.called.body", attackerName, enemy));
+        for (UUID ally : war.defenderAllies()) notify(server, ally, ToastPacket.Kind.WAR, Component.translatable("crusadecraft.toast.war.called.title"),
+                Component.translatable("crusadecraft.toast.war.called.body", enemy, attackerName));
+        AiBrain.publish(server, WorldNews.of(today, "crusadecraft.news.war", List.of(attacker, target), attackerName, enemy,
+                Component.translatable(cb.key())), true);
+        return war;
     }
 
     /** En guerre entre joueurs, chaque souverain devient « Hostile » dans les colonies de l'autre ; rendu à la paix. */
@@ -389,8 +424,10 @@ public final class WarService {
                 Component body = Component.translatable("crusadecraft.toast.war.skirmish.body", name(server, winner), Math.abs(s.delta()));
                 notifyBoth(server, w, ToastPacket.Kind.WAR, Component.translatable("crusadecraft.toast.war.skirmish.title"), body);
             }
+            aiCampaign(server, w, day, random);
             if (w.targetProvince() >= 0 && w.occupied().contains(w.targetProvince())) w.tickGoal();
             occupationIncome(server, w);
+            if (aiPeace(server, w, day)) continue;
             aiOffers(server, w, day);
         }
         // Solde des armées levées et reconstitution en temps de paix.
@@ -401,6 +438,50 @@ public final class WarService {
             else r.setArmyMen(Math.min(max, men(r)));
         }
         data(server).setDirty();
+    }
+
+    /**
+     * Les camps menés par une IA prennent des places sur le papier : d'abord ils reprennent les leurs, puis ils
+     * occupent celles de l'ennemi, la province visée en premier. Un joueur, lui, prend les siennes par le siège ;
+     * ses alliés IA l'aident à moitié.
+     */
+    private static void aiCampaign(MinecraftServer server, War w, long day, Random random) {
+        for (int side : new int[]{1, -1}) {
+            UUID main = side > 0 ? w.attacker() : w.defender();
+            UUID enemy = side > 0 ? w.defender() : w.attacker();
+            double factor = ai(server, main).isPresent() ? 1.0
+                    : (side > 0 ? w.attackerAllies() : w.defenderAllies()).stream().anyMatch(a -> ai(server, a).isPresent()) ? 0.5 : 0;
+            if (factor == 0) continue;
+            double chance = AiRules.occupationChance(sideStrength(server, w, side), sideStrength(server, w, -side)) * factor;
+            if (random.nextDouble() >= chance) continue;
+            List<AiProvince> lost = new ArrayList<>();
+            for (AiProvince p : provincesOf(server, main)) if (w.occupied().contains(p.id())) lost.add(p);
+            if (!lost.isEmpty()) {
+                AiProvince p = lost.get(random.nextInt(lost.size()));
+                w.occupied().remove(p.id());
+                w.log(day, "crusadecraft.war.log.liberated", side * 3, p.name(), name(server, main).getString());
+                w.addBattle(side * 3);
+                continue;
+            }
+            List<AiProvince> open = new ArrayList<>();
+            for (AiProvince p : provincesOf(server, enemy)) if (!w.occupied().contains(p.id())) open.add(p);
+            if (open.isEmpty()) continue;
+            AiProvince p = open.stream().filter(x -> x.id() == w.targetProvince()).findFirst().orElse(open.get(random.nextInt(open.size())));
+            w.occupied().add(p.id());
+            w.addBattle(side * 3);
+            w.log(day, "crusadecraft.war.log.occupied", side * 3, p.name(), name(server, main).getString());
+            notifyBoth(server, w, ToastPacket.Kind.WAR, Component.translatable("crusadecraft.toast.war.occupied.title"),
+                    Component.translatable("crusadecraft.toast.war.occupied.body", p.name(), name(server, main)));
+        }
+    }
+
+    /** Deux IA font la paix d'elles-mêmes : un camp écrasé cède, une guerre trop longue ou trop lasse s'arrête. */
+    private static boolean aiPeace(MinecraftServer server, War w, long day) {
+        if (ai(server, w.attacker()).isEmpty() || ai(server, w.defender()).isEmpty()) return false;
+        Integer winner = AiRules.peaceBetweenAis(score(server, w), w.attackerExhaustion(), w.defenderExhaustion(), day - w.startDay());
+        if (winner == null) return false;
+        endWar(server, w, winner);
+        return true;
     }
 
     private static void losses(MinecraftServer server, UUID id, int percent) {
@@ -438,10 +519,15 @@ public final class WarService {
             WarRules.Peace offer = null;
             if (aiScore <= -50 || (aiScore <= -25 && exhaustion >= 60)) offer = WarRules.Peace.SURRENDER;
             else if (aiScore >= 60) offer = WarRules.Peace.VICTORY;
+            else if (AiRules.offersWhitePeace(aiScore, exhaustion, day - w.startDay())) offer = WarRules.Peace.WHITE;
             if (offer == null) continue;
             w.setLastAiOfferDay(day);
             Component realm = AiNames.realmThe(ai.get().rank(), ai.get().place());
-            String key = offer == WarRules.Peace.SURRENDER ? "surrender" : "demand";
+            String key = switch (offer) {
+                case SURRENDER -> "surrender";
+                case VICTORY -> "demand";
+                case WHITE -> "white";
+            };
             DiplomacyService.post(server, player.get(), new Letter(UUID.randomUUID(), main, true, player.get().id(),
                     Component.translatable("crusadecraft.letter.sender", ai.get().ruler().name(),
                             Component.translatable(ai.get().rank().holderKey(ai.get().ruler().female())), AiNames.realm(ai.get().rank(), ai.get().place())),
@@ -547,28 +633,49 @@ public final class WarService {
         UUID win = winner > 0 ? w.attacker() : w.defender();
         UUID lose = winner > 0 ? w.defender() : w.attacker();
         Component outcome;
+        Component winName = name(server, win), loseName = name(server, lose);
         if (winner == 0) {
             outcome = Component.translatable("crusadecraft.war.result.white");
+            AiBrain.publish(server, WorldNews.of(today, "crusadecraft.news.peace.white", List.of(w.attacker(), w.defender()),
+                    name(server, w.attacker()), name(server, w.defender())), true);
         } else {
+            AiBrain.publish(server, WorldNews.of(today, "crusadecraft.news.peace.victory", List.of(win, lose), winName, loseName), true);
             int prestige = WarRules.victoryPrestige(w.cb());
             addPrestige(server, win, prestige);
             addPrestige(server, lose, -prestige);
             if (winner > 0) {
                 switch (w.cb()) {
                     case CLAIM, DEJURE, CONQUEST -> province(server, w.targetProvince()).ifPresent(p -> {
+                        // La province a pu changer de mains entre-temps : on ne cède que ce que le vaincu tient encore.
+                        UUID holder = holderOf(server, p);
+                        if (holder == null || w.side(holder) != -1) {
+                            transferGold(server, w.defender(), w.attacker(), 0.25);
+                            return;
+                        }
+                        Component previous = name(server, holder);
                         p.setHolder(w.attacker());
-                        player(server, w.attacker()).ifPresent(r -> r.claims().remove(p.id()));
+                        player(server, w.attacker()).ifPresent(r -> {
+                            r.claims().remove(p.id());
+                            r.setThreat(AiRules.addThreat(r.threat(), AiRules.THREAT_PROVINCE));
+                        });
+                        AiBrain.publish(server, WorldNews.of(today, "crusadecraft.news.province", List.of(w.attacker(), w.defender()),
+                                Component.literal(p.name()), winName, previous), false);
                     });
-                    case VASSALIZE -> data.diplomacy().between(w.defender(), w.attacker()).makeVassal(w.attacker(), 25, 25);
+                    case VASSALIZE -> {
+                        data.diplomacy().between(w.defender(), w.attacker()).makeVassal(w.attacker(), 25, 25);
+                        player(server, w.attacker()).ifPresent(r -> r.setThreat(AiRules.addThreat(r.threat(), AiRules.THREAT_VASSAL)));
+                    }
                     case HUMILIATE -> transferGold(server, w.defender(), w.attacker(), 0.25);
                 }
             } else {
                 // L'attaquant vaincu paie réparation.
                 transferGold(server, w.attacker(), w.defender(), 0.2);
             }
-            outcome = Component.translatable("crusadecraft.war.result.victory", name(server, win));
+            // Un royaume vaincu inquiète moins ses voisins.
+            player(server, lose).ifPresent(r -> r.setThreat(r.threat() - 30));
+            outcome = Component.translatable("crusadecraft.war.result.victory", winName);
         }
-        w.log(today, "crusadecraft.war.log.peace", 0, winner == 0 ? "WHITE" : name(server, win).getString());
+        w.log(today, "crusadecraft.war.log.peace", 0, winner == 0 ? "WHITE" : winName.getString());
         hostileRanks(server, w, false);
         data.wars().damage().release(w.id());
         data.wars().remove(w.id());
@@ -684,7 +791,11 @@ public final class WarService {
         }
         for (Realm r : data(server).realms()) if (!r.id().equals(me.id())) targets.add(target(server, me, r.id()));
         Optional<Component> seal = SealItem.problem(player, me);
+        List<String> coalition = new ArrayList<>();
+        data(server).world().coalitionAgainst(me.id()).filter(c -> c.active())
+                .ifPresent(c -> c.members().forEach(m -> coalition.add(name(server, m).getString())));
         return new WarView(men(me), maxMen(me), me.armyRaised(), (int) Math.ceil(men(me) / 10.0), me.gold(), me.prestige(),
-                seal.isEmpty(), seal.map(Component::getString).orElse(""), lines, targets);
+                seal.isEmpty(), seal.map(Component::getString).orElse(""), lines, targets, me.threat(),
+                CrusadeConfig.SERVER.coalitionThreshold.get(), coalition);
     }
 }

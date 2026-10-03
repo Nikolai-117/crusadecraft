@@ -129,6 +129,10 @@ public final class ClientPackets {
         else if (open) mc.setScreen(new fr.crusadecraft.client.screen.ChanceryScreen(view));
     }
 
+    public static void news(java.util.List<fr.crusadecraft.network.packet.WorldPackets.NewsLine> lines) {
+        if (Minecraft.getInstance().screen instanceof RealmScreen realm) realm.setNews(lines);
+    }
+
     public static void war(fr.crusadecraft.core.war.WarView view, boolean open) {
         Minecraft mc = Minecraft.getInstance();
         if (mc.screen instanceof fr.crusadecraft.client.screen.WarScreen screen) screen.refresh(view);

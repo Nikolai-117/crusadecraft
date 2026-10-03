@@ -48,6 +48,41 @@ public final class WorldPackets {
         }
     }
 
+    /** Une ligne des nouvelles du monde : son jour et son texte. */
+    public record NewsLine(long day, Component text) {}
+
+    public static void sendNews(ServerPlayer player) {
+        java.util.List<NewsLine> lines = new java.util.ArrayList<>();
+        fr.crusadecraft.core.realm.RealmService.realmOf(player.server, player.getUUID()).ifPresent(r -> {
+            for (fr.crusadecraft.core.world.WorldNews n : fr.crusadecraft.core.ai.AiBrain.newsFor(player.server, r)) {
+                lines.add(new NewsLine(n.day(), n.text()));
+            }
+        });
+        CrusadeNetwork.toPlayer(player, new NewsData(lines));
+    }
+
+    /** Les nouvelles du monde que ce souverain peut connaître, pour l'onglet Chroniques. */
+    public record NewsData(java.util.List<NewsLine> lines) {
+        public static void encode(NewsData p, FriendlyByteBuf buf) {
+            buf.writeVarInt(p.lines.size());
+            for (NewsLine l : p.lines) {
+                buf.writeLong(l.day());
+                buf.writeComponent(l.text());
+            }
+        }
+
+        public static NewsData decode(FriendlyByteBuf buf) {
+            int n = buf.readVarInt();
+            java.util.List<NewsLine> lines = new java.util.ArrayList<>(n);
+            for (int i = 0; i < n; i++) lines.add(new NewsLine(buf.readLong(), buf.readComponent()));
+            return new NewsData(lines);
+        }
+
+        public static void handle(NewsData p, Supplier<NetworkEvent.Context> ctx) {
+            DistExecutor.unsafeRunWhenOn(Dist.CLIENT, () -> () -> ClientPackets.news(p.lines));
+        }
+    }
+
     public record AiRealmData(AiRealmView view) {
         public static void encode(AiRealmData p, FriendlyByteBuf buf) { p.view.write(buf); }
         public static AiRealmData decode(FriendlyByteBuf buf) { return new AiRealmData(AiRealmView.read(buf)); }
