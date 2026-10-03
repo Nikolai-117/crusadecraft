@@ -144,6 +144,18 @@ public final class ClientPackets {
         mc.setScreen(new fr.crusadecraft.client.screen.EventScreen(view));
     }
 
+    public static void tournament(fr.crusadecraft.core.court.TournamentView view, boolean open) {
+        Minecraft mc = Minecraft.getInstance();
+        if (mc.screen instanceof fr.crusadecraft.client.screen.TournamentScreen screen) screen.refresh(view);
+        else if (open) mc.setScreen(new fr.crusadecraft.client.screen.TournamentScreen(view));
+    }
+
+    public static void house(fr.crusadecraft.core.court.HouseView view, boolean open) {
+        Minecraft mc = Minecraft.getInstance();
+        if (mc.screen instanceof fr.crusadecraft.client.screen.HouseScreen screen) screen.refresh(view);
+        else if (open) mc.setScreen(new fr.crusadecraft.client.screen.HouseScreen(view));
+    }
+
     public static void chronicleBook(String realm, String house, java.util.List<fr.crusadecraft.network.packet.WorldPackets.NewsLine> lines) {
         Minecraft.getInstance().setScreen(new net.minecraft.client.gui.screens.inventory.BookViewScreen(
                 new fr.crusadecraft.client.screen.ChronicleBook(realm, house, lines)));

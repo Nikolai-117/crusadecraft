@@ -151,6 +151,16 @@ public class RealmScreen extends Screen {
             addRenderableWidget(events);
         }
         int cy = top + 82, ch = h - 82 - 10;
+        if (tab == Tab.ROYAUME) {
+            Button house = Button.builder(Component.translatable("crusadecraft.house.open"), b -> {
+                if (minecraft != null && minecraft.getConnection() != null) {
+                    CrusadeNetwork.toServer(fr.crusadecraft.network.packet.CourtLifePackets.HouseAction.of(
+                            fr.crusadecraft.network.packet.CourtLifePackets.HouseAction.Kind.REFRESH));
+                }
+            }).bounds(left + 18, cy + ch - 22, 110, 16).build();
+            house.setTooltip(Tooltip.create(Component.translatable("crusadecraft.house.open.tip")));
+            addRenderableWidget(house);
+        }
         if (tab == Tab.CONSEIL) {
             Button intrigues = Button.builder(Component.translatable("crusadecraft.intrigue.open"), b -> {
                 if (minecraft != null && minecraft.getConnection() != null) {

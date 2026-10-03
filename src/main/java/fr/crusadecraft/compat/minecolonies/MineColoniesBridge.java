@@ -317,6 +317,26 @@ public final class MineColoniesBridge {
         }
     }
 
+    /** Le conjoint et les enfants d'un citoyen, s'ils vivent dans sa colonie (généalogie MineColonies). */
+    public static fr.crusadecraft.core.character.Family family(CitizenRef ref) {
+        if (broken) return fr.crusadecraft.core.character.Family.NONE;
+        try {
+            ICitizenData d = citizenData(ref);
+            if (d == null) return fr.crusadecraft.core.character.Family.NONE;
+            ICitizenData partner = d.getPartner();
+            CitizenRef p = partner == null ? null : new CitizenRef(ref.colony(), partner.getId());
+            List<CitizenRef> children = new ArrayList<>();
+            IColony c = colony(ref.colony());
+            for (Integer id : d.getChildren()) {
+                if (id != null && c != null && c.getCitizenManager().getCivilian(id) != null) children.add(new CitizenRef(ref.colony(), id));
+            }
+            return new fr.crusadecraft.core.character.Family(p, children);
+        } catch (LinkageError e) {
+            breakBridge(e);
+            return fr.crusadecraft.core.character.Family.NONE;
+        }
+    }
+
     public static boolean citizenExists(CitizenRef ref) {
         if (broken) return false;
         try {

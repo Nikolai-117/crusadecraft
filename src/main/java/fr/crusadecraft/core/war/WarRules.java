@@ -28,7 +28,8 @@ public final class WarRules {
 
     /** Pourquoi un motif est fermé ; {@code null} s'il est ouvert. */
     public record CbContext(TitleRank attackerRank, TitleRank defenderRank, boolean hasClaim, boolean dejureMatch,
-                            boolean hostile, int defenderOpinion, int attackerPrestige, boolean defenderIsVassal) {}
+                            boolean hostile, int defenderOpinion, int attackerPrestige, boolean defenderIsVassal,
+                            boolean defenderInfidel, int attackerPiety) {}
 
     public static String cbProblem(CasusBelli cb, CbContext c) {
         return switch (cb) {
@@ -40,6 +41,9 @@ public final class WarRules {
             case VASSALIZE -> c.defenderIsVassal() ? "crusadecraft.war.cb.already_vassal"
                     : c.defenderRank().ordinal() < c.attackerRank().ordinal() ? null : "crusadecraft.war.cb.rank";
             case HUMILIATE -> c.hostile() || c.defenderOpinion() <= -20 ? null : "crusadecraft.war.cb.no_rivalry";
+            case GUERRE_SAINTE -> !c.defenderInfidel() ? "crusadecraft.war.cb.not_infidel"
+                    : !c.attackerRank().isAtLeast(TitleRank.COMTE) ? "crusadecraft.war.cb.need_county"
+                    : c.attackerPiety() < CasusBelli.CRUSADE_PIETY ? "crusadecraft.war.cb.no_piety" : null;
         };
     }
 
@@ -143,7 +147,7 @@ public final class WarRules {
     public static int victoryPrestige(CasusBelli cb) {
         return switch (cb) {
             case HUMILIATE -> 60;
-            case CONQUEST -> 40;
+            case CONQUEST, GUERRE_SAINTE -> 40;
             default -> 30;
         };
     }

@@ -22,6 +22,7 @@ public enum LedgerCategory {
     ARMEE(false),
     PILLAGE(false),
     EVENEMENTS(false),
+    TOURNOIS(false),
     AUTRES(false);
 
     private final boolean income;

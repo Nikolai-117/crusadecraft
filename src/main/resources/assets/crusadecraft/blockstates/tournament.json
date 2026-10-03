@@ -1,0 +1,19 @@
+{
+  "variants": {
+    "facing=north": {
+      "model": "crusadecraft:block/tournament"
+    },
+    "facing=east": {
+      "model": "crusadecraft:block/tournament",
+      "y": 90
+    },
+    "facing=south": {
+      "model": "crusadecraft:block/tournament",
+      "y": 180
+    },
+    "facing=west": {
+      "model": "crusadecraft:block/tournament",
+      "y": 270
+    }
+  }
+}

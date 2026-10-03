@@ -401,6 +401,12 @@ public final class DiplomacyService {
             case SEAL_PEACE -> {
                 return fr.crusadecraft.core.war.WarService.sealPeace(server, realm, l);
             }
+            case JOIN_CRUSADE -> {
+                return fr.crusadecraft.core.war.CrusadeService.join(server, realm, l.war());
+            }
+            case SEAL_MARRIAGE -> {
+                return fr.crusadecraft.core.court.HouseService.marry(server, realm, l.from());
+            }
             case PAY_TRIBUTE -> {
                 rel.setTribute(realm.id(), l.amount(), today + 20);
                 if (l.fromAi()) ai(server, l.from()).ifPresent(a -> rel.setHostile(false));
@@ -593,6 +599,11 @@ public final class DiplomacyService {
             ai.setGold(ai.gold() - gift);
             return Optional.of(letter(server, ai.id(), true, realm, who, Component.translatable("crusadecraft.letter.ai_gift.subject"),
                     Component.translatable("crusadecraft.letter.ai_gift.body", realmName, gift), List.of(), 7).withAmount(gift));
+        }
+        // Une maison IA bien disposée propose d'unir les familles.
+        if (opinion >= 45 && random.nextInt(3) == 0) {
+            Optional<Letter> marriage = fr.crusadecraft.core.court.HouseService.aiOffer(server, realm, ai, today);
+            if (marriage.isPresent()) return marriage;
         }
         Treaty offer = null;
         if (opinion >= 45 && !rel.has(Treaty.ALLIANCE_DEFENSIVE, today) && !rel.has(Treaty.ALLIANCE, today)) offer = Treaty.ALLIANCE_DEFENSIVE;

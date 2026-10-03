@@ -13,7 +13,7 @@ import java.util.UUID;
 /** La fiche d'un royaume IA découvert : ce que le héraut ou la carte en apprend au joueur. */
 public record AiRealmView(UUID id, String place, TitleRank rank, int color, String house, AiPersonality personality,
                           Person ruler, List<Seat> council, List<Province> provinces, long gold, int prestige, int piety,
-                          long discoveredDay, int distance) {
+                          long discoveredDay, int distance, AiFaith faith) {
 
     public record Person(String name, boolean female, int age, int[] stats, List<Trait> traits) {
         static Person of(AiCharacter c) {
@@ -53,7 +53,7 @@ public record AiRealmView(UUID id, String place, TitleRank rank, int color, Stri
             provinces.add(new Province(p.name(), p.capital(), p.anchor(), p.population(), p.development(), p.seat().getX(), p.seat().getZ()));
         }
         return new AiRealmView(r.id(), r.place(), r.rank(), r.color(), r.house(), r.personality(), Person.of(r.ruler()),
-                council, provinces, r.gold(), r.prestige(), r.piety(), discoveredDay, distance);
+                council, provinces, r.gold(), r.prestige(), r.piety(), discoveredDay, distance, r.faith());
     }
 
     public void write(FriendlyByteBuf buf) {
@@ -84,6 +84,7 @@ public record AiRealmView(UUID id, String place, TitleRank rank, int color, Stri
         buf.writeVarInt(piety);
         buf.writeLong(discoveredDay);
         buf.writeVarInt(distance);
+        buf.writeEnum(faith);
     }
 
     public static AiRealmView read(FriendlyByteBuf buf) {
@@ -104,6 +105,6 @@ public record AiRealmView(UUID id, String place, TitleRank rank, int color, Stri
                     buf.readVarInt(), buf.readVarInt(), buf.readVarInt()));
         }
         return new AiRealmView(id, place, rank, color, house, personality, ruler, council, provinces, buf.readLong(),
-                buf.readVarInt(), buf.readVarInt(), buf.readLong(), buf.readVarInt());
+                buf.readVarInt(), buf.readVarInt(), buf.readLong(), buf.readVarInt(), buf.readEnum(AiFaith.class));
     }
 }

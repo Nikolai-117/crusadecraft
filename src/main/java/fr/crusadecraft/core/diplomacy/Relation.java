@@ -20,6 +20,7 @@ public final class Relation {
     private final UUID a, b;
     private final Map<Treaty, Long> treaties = new EnumMap<>(Treaty.class);
     private boolean hostile;
+    private boolean marriage;
     private boolean war;
     /** Le suzerain si l'un est vassal de l'autre, sinon {@code null}. */
     private UUID suzerain;
@@ -100,6 +101,9 @@ public final class Relation {
     public boolean hostile() { return hostile; }
     public void setHostile(boolean hostile) { this.hostile = hostile; }
     public boolean war() { return war; }
+    /** Un mariage unit les deux maisons (P10). */
+    public boolean marriage() { return marriage; }
+    public void setMarriage(boolean marriage) { this.marriage = marriage; }
     public void setWar(boolean war) { this.war = war; }
 
     public UUID suzerain() { return suzerain; }
@@ -192,6 +196,7 @@ public final class Relation {
         t.put("treaties", tr);
         t.putBoolean("hostile", hostile);
         t.putBoolean("war", war);
+        t.putBoolean("marriage", marriage);
         if (suzerain != null) t.putUUID("suzerain", suzerain);
         t.putInt("tax", vassalTax);
         t.putInt("levy", vassalLevy);
@@ -221,6 +226,7 @@ public final class Relation {
         }
         r.hostile = t.getBoolean("hostile");
         r.war = t.getBoolean("war");
+        r.marriage = t.getBoolean("marriage");
         if (t.hasUUID("suzerain")) r.suzerain = t.getUUID("suzerain");
         r.vassalTax = t.contains("tax") ? t.getInt("tax") : 20;
         r.vassalLevy = t.contains("levy") ? t.getInt("levy") : 20;

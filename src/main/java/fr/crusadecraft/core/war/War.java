@@ -63,6 +63,8 @@ public final class War {
     private long lastAiOfferDay = Long.MIN_VALUE;
     /** Rangs MineColonies d'avant-guerre (« colonie|joueur » → rang), rendus à la paix. */
     private final java.util.Map<String, String> savedRanks = new java.util.LinkedHashMap<>();
+    /** Une croisade : les fidèles s'y rallient, la victoire est bénie (P10). */
+    private boolean crusade;
 
     public War(UUID id, UUID attacker, UUID defender, CasusBelli cb, int targetProvince, long startDay) {
         this.id = id;
@@ -92,6 +94,8 @@ public final class War {
     public long lastAiOfferDay() { return lastAiOfferDay; }
 
     public java.util.Map<String, String> savedRanks() { return savedRanks; }
+    public boolean crusade() { return crusade; }
+    public void setCrusade(boolean crusade) { this.crusade = crusade; }
     public void setLastRaidTick(long t) { this.lastRaidTick = t; }
     public void setLastAiOfferDay(long d) { this.lastAiOfferDay = d; }
 
@@ -156,6 +160,7 @@ public final class War {
         CompoundTag ranks = new CompoundTag();
         for (java.util.Map.Entry<String, String> e : savedRanks.entrySet()) ranks.putString(e.getKey(), e.getValue());
         t.put("ranks", ranks);
+        t.putBoolean("crusade", crusade);
         return t;
     }
 
@@ -194,6 +199,7 @@ public final class War {
         w.lastAiOfferDay = t.contains("offer") ? t.getLong("offer") : Long.MIN_VALUE;
         CompoundTag ranks = t.getCompound("ranks");
         for (String k : ranks.getAllKeys()) w.savedRanks.put(k, ranks.getString(k));
+        w.crusade = t.getBoolean("crusade");
         return w;
     }
 }

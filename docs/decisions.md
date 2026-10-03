@@ -339,3 +339,28 @@ Les compétences vont de 1 à 99 : un citoyen débutant obtient 1 à 5, un exper
   conquêtes, coalitions, ultimatums, complots, secrets, décisions d'événements. Onglet Chroniques (Règne /
   Monde) et « Chroniques du royaume », un livre qui s'ouvre comme un livre écrit (recette : livre, plume,
   poche d'encre, papier).
+
+**P10 (3 octobre 2026)**
+
+- **La foi des royaumes IA** : trois sur quatre fidèles, les autres païens ou hérétiques, tirée de l'identifiant
+  du royaume (les mondes déjà générés la reçoivent sans rien régénérer). La fiche d'un royaume l'affiche.
+- **Croisades** : la « Guerre sainte » est un motif contre un royaume païen ou hérétique (comte au moins, 100 de
+  piété). L'appel rallie aussitôt les royaumes IA fidèles (les fanatiques toujours, les autres s'ils estiment le
+  meneur à +20) et invite les autres souverains par lettre (« Prendre la croix »). Victoire : la province visée,
+  et piété +50, prestige +30 pour chaque croisé. Les IA fanatiques et pieuses appellent elles-mêmes à la
+  croisade. Celui qu'un traité lie à la cible ne se croise pas.
+- **Tournois** : la Lice (bloc, à poser dans une colonie du royaume) organise un tournoi tous les 15 jours,
+  derrière la recherche « Chevalerie » (réglable). Les chevaliers sont vos conseillers et maires (les cinq
+  meilleurs en Martial), face aux champions (maréchaux) des royaumes voisins en paix avec vous. Tableau à
+  élimination directe : la valeur d'un jouteur vient de son Martial, de ses traits (brave, vétéran, champion,
+  blessé, lâche) et de la chance. L'hôte gagne du prestige ; le vainqueur devient champion ; on revient
+  vétéran, ou blessé. Avec Epic Knights, un champion de la cour rapporte une lance de ce mod (cherchée par son
+  identifiant, sans dépendre de son code).
+- **La maison du souverain** : on y fait entrer des conseillers ou des maires (25 de prestige). Leurs conjoints
+  et leurs enfants y entrent d'eux-mêmes, d'après la vraie généalogie MineColonies (partenaire, enfants de la
+  colonie). On désigne un héritier : prestige +10 la première fois, et les factions pèsent 10 points de moins.
+- **Mariages dynastiques** : un membre adulte et libre (sans conjoint dans sa colonie) peut épouser un membre de
+  la famille d'un souverain IA de la même foi. La réponse se lit d'avance ; acceptée, elle arrive par lettre à
+  sceller. Les maisons s'unissent (+20 d'opinion durable) et signent une alliance défensive. Les IA bien
+  disposées proposent elles-mêmes des mariages. Le Colombier reste inchangé : les mariages se demandent depuis
+  l'écran de la Maison (bouton dans l'onglet Royaume du menu royal).

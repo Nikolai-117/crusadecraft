@@ -16,7 +16,12 @@ public enum CasusBelli {
     /** Forcer un souverain moins titré à prêter hommage. */
     VASSALIZE(false, 0),
     /** Humilier un rival : prestige et or. */
-    HUMILIATE(false, 0);
+    HUMILIATE(false, 0),
+    /** La guerre sainte contre un royaume païen ou hérétique : une croisade, qui rallie les fidèles (P10). */
+    GUERRE_SAINTE(true, 0);
+
+    /** Piété dépensée pour appeler une croisade. */
+    public static final int CRUSADE_PIETY = 100;
 
     private final boolean targetsProvince;
     private final int prestigeCost;

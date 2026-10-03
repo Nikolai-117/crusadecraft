@@ -165,6 +165,13 @@ public final class UiShots {
         }, null));
         list.add(new Shot("evenement", () -> new fr.crusadecraft.client.screen.EventScreen(sampleEvent()), null));
         list.add(new Shot("intrigues", () -> new fr.crusadecraft.client.screen.IntrigueScreen(sampleIntrigue()), null));
+        list.add(new Shot("lice_tournoi", () -> new fr.crusadecraft.client.screen.TournamentScreen(sampleTournament()), null));
+        list.add(new Shot("maison", () -> new fr.crusadecraft.client.screen.HouseScreen(sampleHouse()), null));
+        list.add(new Shot("maison_mariage", () -> {
+            fr.crusadecraft.client.screen.HouseScreen s = new fr.crusadecraft.client.screen.HouseScreen(sampleHouse());
+            s.preview(0, true);
+            return s;
+        }, null));
         list.add(new Shot("livre_chroniques", () -> {
             List<fr.crusadecraft.network.packet.WorldPackets.NewsLine> lines = new ArrayList<>(sampleChronicle());
             java.util.Collections.reverse(lines);
@@ -190,6 +197,8 @@ public final class UiShots {
                 new ItemStack(ModItems.COUNCIL_TABLE.get()), new ItemStack(ModItems.COUNCIL_SEAT.get()),
                 new ItemStack(ModItems.MAYOR_DESK.get()), new ItemStack(ModItems.TREASURY.get()),
                 new ItemStack(ModItems.WAR_MAP.get()), new ItemStack(ModItems.BOUNDARY_STONE.get()))), null));
+        list.add(new Shot("objets_cour", () -> new ItemShowcaseScreen(List.of(new ItemStack(ModItems.TOURNAMENT.get()),
+                new ItemStack(ModItems.CHRONIQUES.get()))), null));
         list.add(new Shot("objets_diplomatie", () -> new ItemShowcaseScreen(List.of(new ItemStack(ModItems.COLOMBIER.get()),
                 new ItemStack(ModItems.CHANCERY.get()), new ItemStack(ModItems.SEAL.get()), new ItemStack(ModItems.LETTER.get()),
                 new ItemStack(ModItems.CLAIM_SCROLL.get()))), null));
@@ -342,6 +351,37 @@ public final class UiShots {
                         Component.literal("Romain"), Component.literal("Royaume de Valbrume"), Component.literal("Valbrume"))));
     }
 
+    private static fr.crusadecraft.core.court.TournamentView sampleTournament() {
+        return new fr.crusadecraft.core.court.TournamentView(100, 1250, "", 0,
+                List.of("Aldric", "Berthe", "Odon", "Bérenger (Royaume d'Ambrevent)", "Aude (Duché de Rochegarde)", "Thibaut (Baronnie de Cendrecourt)"),
+                3,
+                List.of(Component.translatable("crusadecraft.tournament.bout", 1, "Aldric", "Aude", "Aldric"),
+                        Component.translatable("crusadecraft.tournament.bout", 1, "Berthe", "Bérenger", "Bérenger"),
+                        Component.translatable("crusadecraft.tournament.bout.wounded", 1, "Odon", "Thibaut", "Odon"),
+                        Component.translatable("crusadecraft.tournament.bout", 2, "Aldric", "Bérenger", "Aldric"),
+                        Component.translatable("crusadecraft.tournament.bout", 3, "Aldric", "Odon", "Aldric"),
+                        Component.translatable("crusadecraft.tournament.champion.mine", "Aldric", "Royaume de Valbrume", 51)));
+    }
+
+    private static fr.crusadecraft.core.court.HouseView sampleHouse() {
+        ResourceLocation ow = ResourceLocation.tryParse("minecraft:overworld");
+        ColonyRef c = new ColonyRef(ow, 1);
+        return new fr.crusadecraft.core.court.HouseView(5, 8, 140, 25,
+                List.of(new fr.crusadecraft.core.court.HouseView.Member(new CitizenRef(c, 7), "Aldric", false, false, true, "", 0, true),
+                        new fr.crusadecraft.core.court.HouseView.Member(new CitizenRef(c, 9), "Berthe", true, false, false, "Hugues", 2, false),
+                        new fr.crusadecraft.core.court.HouseView.Member(new CitizenRef(c, 10), "Hugues", false, false, false, "Berthe", 2, false),
+                        new fr.crusadecraft.core.court.HouseView.Member(new CitizenRef(c, 21), "Aélis", true, true, false, "", 0, false),
+                        new fr.crusadecraft.core.court.HouseView.Member(new CitizenRef(c, 22), "Raoul", false, true, false, "", 0, false)),
+                List.of(new fr.crusadecraft.core.court.HouseView.Candidate(new CitizenRef(c, 4), "Odon", "crusadecraft.post.maitre_espion.m"),
+                        new fr.crusadecraft.core.court.HouseView.Candidate(new CitizenRef(c, 3), "Gautier", "crusadecraft.post.chapelain.m")),
+                List.of(new fr.crusadecraft.core.court.HouseView.Match(UUID.randomUUID(), "Ambrevent", TitleRank.ROYAUME, Heraldry.GUEULES.rgb(),
+                                "Ormesval", fr.crusadecraft.core.world.AiFaith.FIDELE, false, "", -12),
+                        new fr.crusadecraft.core.court.HouseView.Match(UUID.randomUUID(), "Rochegarde", TitleRank.DUCHE, Heraldry.SINOPLE.rgb(),
+                                "Rochegarde", fr.crusadecraft.core.world.AiFaith.FIDELE, true, "", 14),
+                        new fr.crusadecraft.core.court.HouseView.Match(UUID.randomUUID(), "Cendrecourt", TitleRank.BARONNIE, Heraldry.POURPRE.rgb(),
+                                "Cendrecourt", fr.crusadecraft.core.world.AiFaith.PAIEN, false, "crusadecraft.house.block.faith", 0)));
+    }
+
     private static fr.crusadecraft.core.event.EventView sampleEvent() {
         return new fr.crusadecraft.core.event.EventView(UUID.randomUUID(),
                 Component.translatable("crusadecraft.event.famine.title", "", "", "Royaume de Valbrume"),
@@ -413,6 +453,7 @@ public final class UiShots {
                 case CONQUEST -> "crusadecraft.war.cb.need_duchy";
                 case VASSALIZE -> "crusadecraft.war.cb.rank";
                 case HUMILIATE -> null;
+                case GUERRE_SAINTE -> "crusadecraft.war.cb.not_infidel";
             };
             List<fr.crusadecraft.core.war.WarView.ProvinceOption> provinces = cb == fr.crusadecraft.core.war.CasusBelli.CLAIM
                     ? List.of(new fr.crusadecraft.core.war.WarView.ProvinceOption(4, "Saulepré"), new fr.crusadecraft.core.war.WarView.ProvinceOption(5, "Rochegarde"))
@@ -468,7 +509,7 @@ public final class UiShots {
                 new AiRealmView.Province("Givrefond", false, fr.crusadecraft.core.world.AiProvince.Anchor.LAND, 17, 12, -900, -650),
                 new AiRealmView.Province("Brisemer", false, fr.crusadecraft.core.world.AiProvince.Anchor.VILLAGE, 31, 22, -1350, -600));
         return new AiRealmView(UUID.randomUUID(), "Ambrevent", TitleRank.ROYAUME, Heraldry.GUEULES.rgb(), "Ormesval",
-                AiPersonality.EXPANSIONNISTE, ruler, council, provinces, 742, 263, 41, 12, 1164);
+                AiPersonality.EXPANSIONNISTE, ruler, council, provinces, 742, 263, 41, 12, 1164, fr.crusadecraft.core.world.AiFaith.FIDELE);
     }
 
     private static TreasuryView sampleTreasury(long gold) {

@@ -47,7 +47,14 @@ public final class AiRealm {
         this.personality = personality;
         this.ruler = ruler;
         this.foundedDay = foundedDay;
+        this.faith = AiFaith.of(id);
     }
+
+    /** Sa foi (P10) : tirée de son identifiant, pour les mondes générés avant qu'elle n'existe. */
+    private AiFaith faith;
+
+    public AiFaith faith() { return faith; }
+    public void setFaith(AiFaith faith) { this.faith = faith; }
 
     public UUID id() { return id; }
     /** Le nom de lieu qui donne son nom au royaume (« Valcourt » pour « Comté de Valcourt »). */
@@ -112,6 +119,7 @@ public final class AiRealm {
         t.putInt("color", color);
         t.putString("house", house);
         t.putString("personality", personality.name());
+        t.putString("faith", faith.name());
         t.put("ruler", ruler.save());
         CompoundTag c = new CompoundTag();
         for (Map.Entry<Post, AiCharacter> e : council.entrySet()) c.put(e.getKey().name(), e.getValue().save());
@@ -153,6 +161,7 @@ public final class AiRealm {
                 // clé illisible : ignorée
             }
         }
+        if (t.contains("faith")) r.faith = AiFaith.byName(t.getString("faith"), r.faith);
         return r;
     }
 }

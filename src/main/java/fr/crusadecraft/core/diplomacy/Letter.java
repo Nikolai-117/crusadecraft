@@ -30,6 +30,10 @@ public final class Letter {
         PAY_TRIBUTE,
         /** Sceller la paix aux termes de la lettre. */
         SEAL_PEACE,
+        /** Rejoindre la croisade à laquelle la lettre appelle (P10). */
+        JOIN_CRUSADE,
+        /** Sceller un mariage dynastique (P10). */
+        SEAL_MARRIAGE,
         /** Refuser. */
         REFUSE;
 

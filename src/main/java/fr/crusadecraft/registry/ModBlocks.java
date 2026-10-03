@@ -51,6 +51,10 @@ public final class ModBlocks {
     public static final RegistryObject<Block> CHANCERY = BLOCKS.register("chancery", () -> new fr.crusadecraft.block.ChanceryBlock(
             BlockBehaviour.Properties.of().mapColor(MapColor.COLOR_BROWN).strength(2.5F, 6.0F).sound(SoundType.WOOD).noOcclusion()));
 
+    /** La Lice de tournoi (P10). */
+    public static final RegistryObject<Block> TOURNAMENT = BLOCKS.register("tournament", () -> new fr.crusadecraft.block.TournamentBlock(
+            BlockBehaviour.Properties.of().mapColor(MapColor.WOOD).strength(2.0F, 3.0F).sound(SoundType.WOOD).noOcclusion()));
+
     private ModBlocks() {}
 
     public static void register(IEventBus modBus) {

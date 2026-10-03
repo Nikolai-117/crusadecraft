@@ -31,6 +31,7 @@ public final class DataMigrations {
         // v6 → v7 : guerres, registre des dégâts, armées, provinces conquises. Absents = la paix.
         // v7 → v8 : menace des royaumes, coalitions, nouvelles du monde. Absents = aucune menace, rien à dire.
         // v8 → v9 : factions, complots, secrets, événements, chronique du règne. Absents = une cour paisible.
+        // v9 → v10 : foi des royaumes IA (tirée de leur identifiant si absente), croisades, maison et mariages, tournois.
         if (version < CrusadeSavedData.DATA_VERSION) {
             CrusadeCraft.LOGGER.info("CrusadeCraft : données mises à niveau de la version {} à {}", version,
                     CrusadeSavedData.DATA_VERSION);

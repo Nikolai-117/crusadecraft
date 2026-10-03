@@ -94,10 +94,11 @@ public final class IntrigueService {
         return realm.court().task(Post.MAITRE_ESPION) == CouncilTask.DEBUSQUER_COMPLOTS;
     }
 
-    /** L'ordre que maintient le Maréchal : son Martial, s'il s'y emploie. */
+    /** L'ordre que maintient le Maréchal (son Martial, s'il s'y emploie), et la stabilité d'un héritier désigné (10). */
     static int order(Realm realm, List<Courtier> court) {
         Courtier marshal = holder(court, Post.MARECHAL);
-        return marshal != null && realm.court().task(Post.MARECHAL) == CouncilTask.MAINTENIR_ORDRE ? marshal.martial() : 0;
+        int order = marshal != null && realm.court().task(Post.MARECHAL) == CouncilTask.MAINTENIR_ORDRE ? marshal.martial() : 0;
+        return order + (realm.dynasty().heir() != null ? 10 : 0);
     }
 
     // ------------------------------------------------------------------ chaque jour
@@ -438,7 +439,7 @@ public final class IntrigueService {
         for (Secret s : st.secrets()) if (s.known()) secrets.add(new IntrigueView.SecretLine(s.id(), CharacterService.nameOf(server, s.holder()), s.kind()));
         List<String> revolts = new ArrayList<>();
         for (ColonyRef c : realm.allColonies()) if (st.inRevolt(c, today)) revolts.add(MineColoniesBridge.info(c).name());
-        return new IntrigueView(spy == null ? "" : spy.name(), hunting(realm), marshal != null && order(realm, court) > 0, factions,
+        return new IntrigueView(spy == null ? "" : spy.name(), hunting(realm), marshal != null && realm.court().task(Post.MARECHAL) == CouncilTask.MAINTENIR_ORDRE, factions,
                 spy == null ? 0 : hidden, plots,
                 secrets, revolts, st.pending().size(), realm.dread());
     }

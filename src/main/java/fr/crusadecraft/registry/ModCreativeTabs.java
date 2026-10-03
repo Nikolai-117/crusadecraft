@@ -27,6 +27,7 @@ public final class ModCreativeTabs {
                 output.accept(ModItems.WAR_MAP.get());
                 output.accept(ModItems.BOUNDARY_STONE.get());
                 output.accept(ModItems.COLOMBIER.get());
+                output.accept(ModItems.TOURNAMENT.get());
                 output.accept(ModItems.CHANCERY.get());
                 output.accept(ModItems.SEAL.get());
             })

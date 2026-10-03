@@ -110,6 +110,7 @@ public final class CrusadeConfig {
         public final ForgeConfigSpec.BooleanValue factions;
         public final ForgeConfigSpec.BooleanValue plots;
         public final ForgeConfigSpec.BooleanValue revolts;
+        public final ForgeConfigSpec.BooleanValue tournamentNeedsResearch;
         public final ForgeConfigSpec.BooleanValue disableDuplicatesWithWarNTaxes;
         public final ForgeConfigSpec.BooleanValue disableDuplicatesWithWarNNobility;
 
@@ -278,6 +279,11 @@ public final class CrusadeConfig {
             factions = b.comment("Les courtisans mécontents se liguent en factions, qui posent des ultimatums.").define("factions", true);
             plots = b.comment("Les courtisans qui vous haïssent complotent ; ils ont aussi des secrets à débusquer.").define("complots", true);
             revolts = b.comment("Les colonies malheureuses et trop taxées peuvent se révolter.").define("revoltes", true);
+            b.pop();
+
+            b.comment("Vie de cour : tournois, croisades, mariages").push("cour");
+            tournamentNeedsResearch = b.comment("La Lice de tournoi demande la recherche « Chevalerie » à l'Université de la capitale.")
+                    .define("tournoiDemandeRecherche", true);
             b.pop();
 
             b.comment("Cohabitation avec d'autres mods qui font la même chose").push("compatibilite");

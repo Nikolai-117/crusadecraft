@@ -272,8 +272,9 @@ public final class WarService {
                     if (ok) provinces.add(new WarView.ProvinceOption(p.id(), p.name()));
                 }
             }
+            boolean infidel = a.map(x -> x.faith().infidel()).orElse(false);
             WarRules.CbContext ctx = new WarRules.CbContext(me.rank(), party(server, other).rank(), anyClaim, anyDejure,
-                    rel.hostile(), opinion, me.prestige(), isVassal);
+                    rel.hostile(), opinion, me.prestige(), isVassal, infidel, me.piety());
             String cbProblem = WarRules.cbProblem(cb, ctx);
             if (cbProblem == null && cb.targetsProvince() && provinces.isEmpty()) cbProblem = "crusadecraft.war.cb.no_province";
             cbs.add(new WarView.CbOption(cb, cbProblem, provinces));
@@ -300,6 +301,11 @@ public final class WarService {
         }
         me.setPrestige(me.prestige() - cb.prestigeCost());
         me.setThreat(AiRules.addThreat(me.threat(), AiRules.THREAT_DECLARE));
+        if (cb == CasusBelli.GUERRE_SAINTE) {
+            me.setPiety(me.piety() - CasusBelli.CRUSADE_PIETY);
+            CrusadeService.call(server, me.id(), target, province);
+            return CouncilActions.Outcome.ok(Component.translatable("crusadecraft.crusade.called", name(server, target)));
+        }
         declareBetween(server, me.id(), target, cb, province);
         return CouncilActions.Outcome.ok(Component.translatable("crusadecraft.war.declared", name(server, target)));
     }
@@ -649,7 +655,7 @@ public final class WarService {
             addPrestige(server, lose, -prestige);
             if (winner > 0) {
                 switch (w.cb()) {
-                    case CLAIM, DEJURE, CONQUEST -> province(server, w.targetProvince()).ifPresent(p -> {
+                    case CLAIM, DEJURE, CONQUEST, GUERRE_SAINTE -> province(server, w.targetProvince()).ifPresent(p -> {
                         // La province a pu changer de mains entre-temps : on ne cède que ce que le vaincu tient encore.
                         UUID holder = holderOf(server, p);
                         if (holder == null || w.side(holder) != -1) {
@@ -679,6 +685,7 @@ public final class WarService {
             }
             // Un royaume vaincu inquiète moins ses voisins.
             player(server, lose).ifPresent(r -> r.setThreat(r.threat() - 30));
+            if (w.crusade() && winner > 0) CrusadeService.bless(server, w);
             outcome = Component.translatable("crusadecraft.war.result.victory", winName);
         }
         w.log(today, "crusadecraft.war.log.peace", 0, winner == 0 ? "WHITE" : winName.getString());

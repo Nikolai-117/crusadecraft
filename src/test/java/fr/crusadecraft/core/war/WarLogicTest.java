@@ -22,7 +22,7 @@ class WarLogicTest {
 
     private static WarRules.CbContext ctx(TitleRank attacker, TitleRank defender, boolean claim, boolean dejure, boolean hostile,
                                           int opinion, int prestige, boolean vassal) {
-        return new WarRules.CbContext(attacker, defender, claim, dejure, hostile, opinion, prestige, vassal);
+        return new WarRules.CbContext(attacker, defender, claim, dejure, hostile, opinion, prestige, vassal, false, 0);
     }
 
     @Test

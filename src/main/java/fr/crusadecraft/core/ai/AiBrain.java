@@ -75,6 +75,7 @@ public final class AiBrain {
 
     /** Un royaume IA réfléchit : la guerre s'il en a l'envie et les moyens, sinon un traité avec un voisin. */
     public static void think(MinecraftServer server, AiRealm ai, Random random) {
+        if (CrusadeConfig.SERVER.aiWars.get() && fr.crusadecraft.core.war.CrusadeService.aiCall(server, ai, random)) return;
         if (CrusadeConfig.SERVER.aiWars.get() && !data(server).wars().atWar(ai.id()) && considerWar(server, ai)) return;
         considerTreaty(server, ai, random);
     }

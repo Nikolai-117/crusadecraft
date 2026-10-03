@@ -55,7 +55,8 @@ public class AiRealmScreen extends Screen {
         Ui.panel(g, left, top, w, h);
         Ui.shield(g, font, left + 12, top + 10, 30, 37, view.color(), Ui.initial(view.place()));
         Ui.scaled(g, font, title, left + 50, top + 11, 1.4f, Ui.TEXT_TITLE, false);
-        Component sub = AiNames.house(view.house()).copy().append(" · ").append(Component.translatable(view.personality().key()));
+        Component sub = AiNames.house(view.house()).copy().append(" · ").append(Component.translatable(view.personality().key()))
+                .append(" · ").append(Component.translatable(view.faith().key()));
         Ui.text(g, font, sub, left + 50, top + 27, Ui.TEXT);
         Ui.text(g, font, Component.translatable(view.personality().key() + ".desc"), left + 50, top + 38, Ui.TEXT_MUTED);
         if (Ui.inside(mouseX, mouseY, left + 50, top + 26, font.width(sub), 22)) {

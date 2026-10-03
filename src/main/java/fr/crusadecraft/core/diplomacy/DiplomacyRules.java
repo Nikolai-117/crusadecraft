@@ -60,6 +60,7 @@ public final class DiplomacyRules {
         if (rel.has(Treaty.NON_AGRESSION, today)) add(lines, Treaty.NON_AGRESSION.key(), null, 10);
         if (rel.has(Treaty.COMMERCE, today)) add(lines, Treaty.COMMERCE.key(), null, c.personality() == AiPersonality.MARCHAND ? 20 : 10);
         if (rel.has(Treaty.PASSAGE, today)) add(lines, Treaty.PASSAGE.key(), null, 5);
+        if (rel.marriage()) add(lines, "crusadecraft.diplo.op.marriage", null, 20);
         if (rel.hostile()) add(lines, "crusadecraft.diplo.hostile", null, -30);
         if (rel.war()) add(lines, "crusadecraft.diplo.guerre", null, -100);
         if (rel.isVassalOf(ai, player)) {
@@ -172,6 +173,30 @@ public final class DiplomacyRules {
             default -> {
             }
         }
+        int total = 0;
+        for (Factor x : f) total += x.value();
+        return new Verdict(total >= 0, total, f, null);
+    }
+
+    // ------------------------------------------------------------------ mariages
+
+    /** Seuil d'opinion d'un mariage dynastique. */
+    public static final int MARRIAGE_THRESHOLD = 20;
+
+    /**
+     * La réponse d'un souverain IA à une demande en mariage : l'opinion, le seuil, son tempérament, et la gloire
+     * de s'allier à plus titré que soi. Jamais avec une autre foi, jamais deux fois la même maison, jamais en guerre.
+     */
+    public static Verdict marriage(int opinion, Context c, Relation rel, boolean sameFaith, boolean alreadyMarried) {
+        if (rel.war()) return Verdict.blocked("crusadecraft.diplo.block.war");
+        if (!sameFaith) return Verdict.blocked("crusadecraft.house.block.faith");
+        if (alreadyMarried || rel.marriage()) return Verdict.blocked("crusadecraft.house.block.already");
+        List<Factor> f = new ArrayList<>();
+        f.add(new Factor("crusadecraft.diplo.f.opinion", opinion));
+        f.add(new Factor("crusadecraft.diplo.f.threshold", -MARRIAGE_THRESHOLD));
+        if (c.personality() == AiPersonality.PACIFIQUE) f.add(new Factor(c.personality().key(), 10));
+        if (c.personality() == AiPersonality.MARCHAND) f.add(new Factor(c.personality().key(), 5));
+        f.add(new Factor("crusadecraft.diplo.op.rank", 5 * (c.playerRank().ordinal() - c.aiRank().ordinal())));
         int total = 0;
         for (Factor x : f) total += x.value();
         return new Verdict(total >= 0, total, f, null);

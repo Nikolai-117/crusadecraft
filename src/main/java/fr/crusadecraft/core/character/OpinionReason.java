@@ -44,7 +44,13 @@ public enum OpinionReason {
     FACTION_REFUSEE(-20, 20, true),
     COMPLOT_PARDONNE(15, 15, true),
     CHANTAGE(-10, 30, true),
-    SECRET_REVELE(-30, 30, true);
+    SECRET_REVELE(-30, 30, true),
+    // P10 : vie de cour
+    MAISON(15, 400, false),
+    HERITIER(20, 60, true),
+    MARIAGE(15, 60, true),
+    TOURNOI_VICTOIRE(20, 30, true),
+    TOURNOI(5, 20, true);
 
     private final int value;
     private final int durationDays;

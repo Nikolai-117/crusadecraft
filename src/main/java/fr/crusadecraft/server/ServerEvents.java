@@ -67,6 +67,7 @@ public final class ServerEvents {
         fr.crusadecraft.core.world.WorldService.onServerStopped();
         fr.crusadecraft.core.diplomacy.DiplomacyService.onServerStopped();
         WarFieldService.onServerStopped();
+        fr.crusadecraft.core.court.TournamentService.onServerStopped();
     }
 
     @SubscribeEvent
@@ -184,7 +185,8 @@ public final class ServerEvents {
             else if (event.getPlacedBlock().is(ModBlocks.MAYOR_DESK.get())) refusal = fr.crusadecraft.block.CourtBlocks.checkDesk(p, lvl, event.getPos());
             else if (event.getPlacedBlock().is(ModBlocks.TREASURY.get())) refusal = fr.crusadecraft.block.CourtBlocks.checkTreasury(p, lvl, event.getPos());
             else if (event.getPlacedBlock().is(ModBlocks.WAR_MAP.get())) refusal = fr.crusadecraft.block.CourtBlocks.checkWarMap(p, lvl, event.getPos());
-            else if (event.getPlacedBlock().is(ModBlocks.COLOMBIER.get()) || event.getPlacedBlock().is(ModBlocks.CHANCERY.get())) {
+            else if (event.getPlacedBlock().is(ModBlocks.COLOMBIER.get()) || event.getPlacedBlock().is(ModBlocks.CHANCERY.get())
+                    || event.getPlacedBlock().is(ModBlocks.TOURNAMENT.get())) {
                 refusal = fr.crusadecraft.block.CourtBlocks.checkTreasury(p, lvl, event.getPos());
             }
             if (refusal.isPresent()) {

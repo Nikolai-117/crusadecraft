@@ -2,6 +2,7 @@ package fr.crusadecraft.network;
 
 import fr.crusadecraft.CrusadeCraft;
 import fr.crusadecraft.network.packet.CharacterActionPacket;
+import fr.crusadecraft.network.packet.CourtLifePackets;
 import fr.crusadecraft.network.packet.CourtPackets;
 import fr.crusadecraft.network.packet.DiplomacyPackets;
 import fr.crusadecraft.network.packet.EconomyPackets;
@@ -30,7 +31,7 @@ import net.minecraftforge.network.simple.SimpleChannel;
  * (distance, droits, état) avant d'agir.
  */
 public final class CrusadeNetwork {
-    private static final String VERSION = "7";
+    private static final String VERSION = "8";
 
     public static final SimpleChannel CHANNEL = NetworkRegistry.newSimpleChannel(
             ResourceLocation.tryParse(CrusadeCraft.MOD_ID + ":main"),
@@ -168,6 +169,20 @@ public final class CrusadeNetwork {
         CHANNEL.messageBuilder(IntriguePackets.ChronicleBook.class, nextId++, NetworkDirection.PLAY_TO_CLIENT)
                 .encoder(IntriguePackets.ChronicleBook::encode).decoder(IntriguePackets.ChronicleBook::decode)
                 .consumerMainThread(IntriguePackets.ChronicleBook::handle).add();
+
+        // P10 : vie de cour
+        CHANNEL.messageBuilder(CourtLifePackets.OpenTournament.class, nextId++, NetworkDirection.PLAY_TO_CLIENT)
+                .encoder(CourtLifePackets.OpenTournament::encode).decoder(CourtLifePackets.OpenTournament::decode)
+                .consumerMainThread(CourtLifePackets.OpenTournament::handle).add();
+        CHANNEL.messageBuilder(CourtLifePackets.OpenHouse.class, nextId++, NetworkDirection.PLAY_TO_CLIENT)
+                .encoder(CourtLifePackets.OpenHouse::encode).decoder(CourtLifePackets.OpenHouse::decode)
+                .consumerMainThread(CourtLifePackets.OpenHouse::handle).add();
+        CHANNEL.messageBuilder(CourtLifePackets.TournamentAction.class, nextId++, NetworkDirection.PLAY_TO_SERVER)
+                .encoder(CourtLifePackets.TournamentAction::encode).decoder(CourtLifePackets.TournamentAction::decode)
+                .consumerMainThread(CourtLifePackets.TournamentAction::handle).add();
+        CHANNEL.messageBuilder(CourtLifePackets.HouseAction.class, nextId++, NetworkDirection.PLAY_TO_SERVER)
+                .encoder(CourtLifePackets.HouseAction::encode).decoder(CourtLifePackets.HouseAction::decode)
+                .consumerMainThread(CourtLifePackets.HouseAction::handle).add();
     }
 
     public static void toPlayer(ServerPlayer player, Object packet) {
