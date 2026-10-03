@@ -61,7 +61,10 @@ public class RealmScreen extends Screen {
     private fr.crusadecraft.core.diplomacy.ChanceryView chancery;
     private fr.crusadecraft.core.war.WarView war;
     private java.util.List<fr.crusadecraft.network.packet.WorldPackets.NewsLine> news;
+    private java.util.List<fr.crusadecraft.network.packet.WorldPackets.NewsLine> chronicle;
     private int newsScroll;
+    /** Onglet Chroniques : la chronique du règne (par défaut) ou les nouvelles du monde. */
+    private static boolean showWorld;
     private Law selectedLaw;
     private int selectedLevel = -1;
 
@@ -97,8 +100,11 @@ public class RealmScreen extends Screen {
         this.chancery = v;
     }
 
-    public void setNews(java.util.List<fr.crusadecraft.network.packet.WorldPackets.NewsLine> lines) {
+    public void setNews(java.util.List<fr.crusadecraft.network.packet.WorldPackets.NewsLine> lines,
+                        java.util.List<fr.crusadecraft.network.packet.WorldPackets.NewsLine> chronicle) {
         this.news = lines;
+        this.chronicle = chronicle;
+        if (minecraft != null) rebuildWidgets();
     }
 
     public void setWar(fr.crusadecraft.core.war.WarView v) {
@@ -135,6 +141,42 @@ public class RealmScreen extends Screen {
         if (tab == Tab.GUERRE && war == null) request(EconomyPackets.RequestTab.Tab.WAR);
         if (tab == Tab.CHRONIQUES && news == null) request(EconomyPackets.RequestTab.Tab.NEWS);
         if (tab == Tab.LOIS) initLawButton();
+        if (view.pendingEvents() > 0) {
+            Button events = Button.builder(Component.translatable("crusadecraft.realm.events", view.pendingEvents()), b -> {
+                if (minecraft != null && minecraft.getConnection() != null) {
+                    CrusadeNetwork.toServer(new fr.crusadecraft.network.packet.IntriguePackets.RequestEvent(null));
+                }
+            }).bounds(left + w - 128, top + 34, 120, 16).build();
+            events.setTooltip(Tooltip.create(Component.translatable("crusadecraft.realm.events.tip")));
+            addRenderableWidget(events);
+        }
+        int cy = top + 82, ch = h - 82 - 10;
+        if (tab == Tab.CONSEIL) {
+            Button intrigues = Button.builder(Component.translatable("crusadecraft.intrigue.open"), b -> {
+                if (minecraft != null && minecraft.getConnection() != null) {
+                    CrusadeNetwork.toServer(new fr.crusadecraft.network.packet.IntriguePackets.IntrigueAction(
+                            fr.crusadecraft.network.packet.IntriguePackets.IntrigueAction.Kind.REFRESH, null));
+                }
+            }).bounds(left + w - 8 - 112, cy + ch - 20, 104, 16).build();
+            intrigues.setTooltip(Tooltip.create(Component.translatable("crusadecraft.intrigue.open.tip")));
+            addRenderableWidget(intrigues);
+        }
+        if (tab == Tab.CHRONIQUES && (news != null || chronicle != null)) {
+            Button reign = Button.builder(Component.translatable("crusadecraft.chronicle.reign"), b -> {
+                showWorld = false;
+                newsScroll = 0;
+                rebuildWidgets();
+            }).bounds(left + w - 8 - 4 - 150, cy + 4, 74, 14).build();
+            reign.active = showWorld;
+            Button world = Button.builder(Component.translatable("crusadecraft.chronicle.world"), b -> {
+                showWorld = true;
+                newsScroll = 0;
+                rebuildWidgets();
+            }).bounds(left + w - 8 - 4 - 74, cy + 4, 74, 14).build();
+            world.active = !showWorld;
+            addRenderableWidget(reign);
+            addRenderableWidget(world);
+        }
     }
 
     /** Le bouton qui propose (ou impose) le niveau de loi sélectionné. */
@@ -196,7 +238,7 @@ public class RealmScreen extends Screen {
             renderVassalsTab(g, left + 8, cy, w - 16, ch, mouseX, mouseY);
         } else if (tab == Tab.GUERRE) {
             renderWarTab(g, left + 8, cy, w - 16, ch, mouseX, mouseY);
-        } else if (tab == Tab.CHRONIQUES && news != null && !news.isEmpty()) {
+        } else if (tab == Tab.CHRONIQUES && (news != null || chronicle != null)) {
             renderNewsTab(g, left + 8, cy, w - 16, ch);
         } else {
             renderEmpty(g, left + 8, cy, w - 16, ch);
@@ -289,7 +331,7 @@ public class RealmScreen extends Screen {
             }
             if (mayor) ry += 19; else ly += 19;
         }
-        String hint = font.plainSubstrByWidth(Component.translatable("crusadecraft.council.hint").getString(), cw - 20);
+        String hint = font.plainSubstrByWidth(Component.translatable("crusadecraft.council.hint").getString(), cw - 130);
         Ui.text(g, font, Component.literal(hint), x + 10, y + ch - 11, Ui.TEXT_MUTED);
         if (pendingTooltip != null) {
             g.renderComponentTooltip(font, pendingTooltip, mouseX, mouseY);
@@ -382,7 +424,14 @@ public class RealmScreen extends Screen {
 
     /** Les nouvelles du monde : guerres, paix, frontières qui bougent, alliances, coalitions. */
     private void renderNewsTab(GuiGraphics g, int x, int y, int cw, int ch) {
-        Ui.text(g, font, Component.translatable("crusadecraft.news.title"), x + 8, y + 7, Ui.TEXT_TITLE);
+        java.util.List<fr.crusadecraft.network.packet.WorldPackets.NewsLine> news = showWorld ? this.news : this.chronicle;
+        if (news == null) news = java.util.List.of();
+        Ui.text(g, font, Component.translatable(showWorld ? "crusadecraft.news.title" : "crusadecraft.chronicle.title"), x + 8, y + 7, Ui.TEXT_TITLE);
+        if (news.isEmpty()) {
+            Ui.wrapped(g, font, Component.translatable(showWorld ? "crusadecraft.news.none" : "crusadecraft.chronicle.none"), x + 8, y + 24,
+                    cw - 16, Ui.TEXT_MUTED);
+            return;
+        }
         int ry = y + 21;
         int bottom = y + ch - 4;
         int visible = 0;
@@ -403,13 +452,13 @@ public class RealmScreen extends Screen {
         }
         if (newsScroll + visible < news.size()) {
             Component more = Component.translatable("crusadecraft.news.more", news.size() - newsScroll - visible);
-            Ui.text(g, font, more, x + cw - 8 - font.width(more), y + 7, Ui.TEXT_MUTED);
+            Ui.text(g, font, more, x + cw - 8 - 158 - font.width(more), y + 7, Ui.TEXT_MUTED);
         }
     }
 
     @Override
     public boolean mouseScrolled(double mouseX, double mouseY, double delta) {
-        if (tab == Tab.CHRONIQUES && news != null) {
+        if (tab == Tab.CHRONIQUES && (news != null || chronicle != null)) {
             newsScroll -= (int) Math.signum(delta);
             return true;
         }

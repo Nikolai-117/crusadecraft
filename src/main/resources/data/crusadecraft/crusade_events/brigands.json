@@ -1,0 +1,41 @@
+{
+  "trigger": "random",
+  "weight": 8,
+  "cooldown": 25,
+  "title": "crusadecraft.event.brigands.title",
+  "text": "crusadecraft.event.brigands.text",
+  "icon": "minecraft:crossbow",
+  "options": [
+    {
+      "text": "crusadecraft.event.brigands.opt.soldiers",
+      "effects": {
+        "army": -5,
+        "prestige": 5,
+        "post_opinion": {
+          "post": "MAIRE",
+          "value": 5
+        }
+      }
+    },
+    {
+      "text": "crusadecraft.event.brigands.opt.pay",
+      "requires": {
+        "min_gold": 30
+      },
+      "effects": {
+        "gold": -30
+      }
+    },
+    {
+      "text": "crusadecraft.event.brigands.opt.ignore",
+      "effects": {
+        "post_opinion": {
+          "post": "MAIRE",
+          "value": -10
+        }
+      }
+    }
+  ],
+  "default": 2,
+  "expires": 3
+}

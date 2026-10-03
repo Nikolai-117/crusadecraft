@@ -1,0 +1,28 @@
+{
+  "trigger": "random",
+  "weight": 4,
+  "cooldown": 80,
+  "title": "crusadecraft.event.heritier.title",
+  "text": "crusadecraft.event.heritier.text",
+  "icon": "minecraft:golden_helmet",
+  "conditions": {
+    "min_age": 15
+  },
+  "options": [
+    {
+      "text": "crusadecraft.event.heritier.opt.proclaim",
+      "effects": {
+        "prestige": 10,
+        "council_opinion": 5
+      }
+    },
+    {
+      "text": "crusadecraft.event.heritier.opt.wait",
+      "effects": {
+        "council_opinion": -3
+      }
+    }
+  ],
+  "default": 1,
+  "expires": 3
+}

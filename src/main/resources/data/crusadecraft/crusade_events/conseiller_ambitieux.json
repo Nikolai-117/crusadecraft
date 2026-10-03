@@ -1,0 +1,36 @@
+{
+  "trigger": "random",
+  "weight": 6,
+  "cooldown": 25,
+  "title": "crusadecraft.event.conseiller_ambitieux.title",
+  "text": "crusadecraft.event.conseiller_ambitieux.text",
+  "icon": "minecraft:writable_book",
+  "conditions": {
+    "has_post": "CHANCELIER",
+    "min_age": 5
+  },
+  "options": [
+    {
+      "text": "crusadecraft.event.conseiller_ambitieux.opt.grant",
+      "effects": {
+        "post_opinion": {
+          "post": "CHANCELIER",
+          "value": 20
+        },
+        "prestige": -5
+      }
+    },
+    {
+      "text": "crusadecraft.event.conseiller_ambitieux.opt.refuse",
+      "effects": {
+        "post_opinion": {
+          "post": "CHANCELIER",
+          "value": -15
+        },
+        "dread": 2
+      }
+    }
+  ],
+  "default": 1,
+  "expires": 3
+}

@@ -386,6 +386,7 @@ public final class DiplomacyService {
                 rel.makeVassal(realm.id(), l.tax(), l.levy());
                 rel.addOpinion(l.from(), OpinionModifier.of(OpinionReason.HOMMAGE, today, 1));
                 realm.setPrestige(realm.prestige() + 10);
+                fr.crusadecraft.core.intrigue.Chronicle.record(server, realm, "crusadecraft.chronicle.vassal", other);
                 return CouncilActions.Outcome.ok(Component.translatable("crusadecraft.diplo.vassal_sealed", other));
             }
             case SEAL_HOMAGE -> {

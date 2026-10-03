@@ -1,0 +1,38 @@
+{
+  "trigger": "random",
+  "weight": 8,
+  "cooldown": 25,
+  "title": "crusadecraft.event.marchand.title",
+  "text": "crusadecraft.event.marchand.text",
+  "icon": "minecraft:chest",
+  "options": [
+    {
+      "text": "crusadecraft.event.marchand.opt.buy",
+      "requires": {
+        "min_gold": 50
+      },
+      "effects": {
+        "gold": -50,
+        "prestige": 10
+      }
+    },
+    {
+      "text": "crusadecraft.event.marchand.opt.deal",
+      "requires": {
+        "has_post": "INTENDANT"
+      },
+      "effects": {
+        "gold": 40,
+        "post_opinion": {
+          "post": "INTENDANT",
+          "value": 5
+        }
+      }
+    },
+    {
+      "text": "crusadecraft.event.marchand.opt.send_away"
+    }
+  ],
+  "default": 2,
+  "expires": 3
+}

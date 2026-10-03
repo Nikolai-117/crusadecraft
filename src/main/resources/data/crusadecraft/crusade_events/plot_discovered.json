@@ -1,0 +1,38 @@
+{
+  "trigger": "plot_discovered",
+  "weight": 10,
+  "cooldown": 25,
+  "title": "crusadecraft.event.plot_discovered.title",
+  "text": "crusadecraft.event.plot_discovered.text",
+  "icon": "minecraft:spyglass",
+  "options": [
+    {
+      "text": "crusadecraft.event.plot_discovered.opt.imprison",
+      "effects": {
+        "plot": "end",
+        "subject_status": "EMPRISONNE:30",
+        "dread": 5,
+        "chronicle": "crusadecraft.chronicle.plot.imprisoned"
+      }
+    },
+    {
+      "text": "crusadecraft.event.plot_discovered.opt.exile",
+      "effects": {
+        "plot": "end",
+        "subject_status": "EXILE:60",
+        "dread": 3,
+        "chronicle": "crusadecraft.chronicle.plot.exiled"
+      }
+    },
+    {
+      "text": "crusadecraft.event.plot_discovered.opt.forgive",
+      "effects": {
+        "plot": "forgive",
+        "prestige": -5,
+        "chronicle": "crusadecraft.chronicle.plot.forgiven"
+      }
+    }
+  ],
+  "default": 0,
+  "expires": 3
+}

@@ -53,33 +53,44 @@ public final class WorldPackets {
 
     public static void sendNews(ServerPlayer player) {
         java.util.List<NewsLine> lines = new java.util.ArrayList<>();
+        java.util.List<NewsLine> chronicle = new java.util.ArrayList<>();
         fr.crusadecraft.core.realm.RealmService.realmOf(player.server, player.getUUID()).ifPresent(r -> {
             for (fr.crusadecraft.core.world.WorldNews n : fr.crusadecraft.core.ai.AiBrain.newsFor(player.server, r)) {
                 lines.add(new NewsLine(n.day(), n.text()));
             }
+            for (fr.crusadecraft.core.world.WorldNews n : r.intrigue().chronicle()) chronicle.add(new NewsLine(n.day(), n.text()));
         });
-        CrusadeNetwork.toPlayer(player, new NewsData(lines));
+        CrusadeNetwork.toPlayer(player, new NewsData(lines, chronicle));
     }
 
-    /** Les nouvelles du monde que ce souverain peut connaître, pour l'onglet Chroniques. */
-    public record NewsData(java.util.List<NewsLine> lines) {
+    static void writeLines(FriendlyByteBuf buf, java.util.List<NewsLine> lines) {
+        buf.writeVarInt(lines.size());
+        for (NewsLine l : lines) {
+            buf.writeLong(l.day());
+            buf.writeComponent(l.text());
+        }
+    }
+
+    static java.util.List<NewsLine> readLines(FriendlyByteBuf buf) {
+        int n = buf.readVarInt();
+        java.util.List<NewsLine> lines = new java.util.ArrayList<>(n);
+        for (int i = 0; i < n; i++) lines.add(new NewsLine(buf.readLong(), buf.readComponent()));
+        return lines;
+    }
+
+    /** Les nouvelles du monde que ce souverain peut connaître, et la chronique de son règne, pour l'onglet Chroniques. */
+    public record NewsData(java.util.List<NewsLine> lines, java.util.List<NewsLine> chronicle) {
         public static void encode(NewsData p, FriendlyByteBuf buf) {
-            buf.writeVarInt(p.lines.size());
-            for (NewsLine l : p.lines) {
-                buf.writeLong(l.day());
-                buf.writeComponent(l.text());
-            }
+            writeLines(buf, p.lines);
+            writeLines(buf, p.chronicle);
         }
 
         public static NewsData decode(FriendlyByteBuf buf) {
-            int n = buf.readVarInt();
-            java.util.List<NewsLine> lines = new java.util.ArrayList<>(n);
-            for (int i = 0; i < n; i++) lines.add(new NewsLine(buf.readLong(), buf.readComponent()));
-            return new NewsData(lines);
+            return new NewsData(readLines(buf), readLines(buf));
         }
 
         public static void handle(NewsData p, Supplier<NetworkEvent.Context> ctx) {
-            DistExecutor.unsafeRunWhenOn(Dist.CLIENT, () -> () -> ClientPackets.news(p.lines));
+            DistExecutor.unsafeRunWhenOn(Dist.CLIENT, () -> () -> ClientPackets.news(p.lines, p.chronicle));
         }
     }
 

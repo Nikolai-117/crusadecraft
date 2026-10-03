@@ -1,0 +1,36 @@
+{
+  "trigger": "faction_baisse_impots",
+  "weight": 10,
+  "cooldown": 25,
+  "title": "crusadecraft.event.faction_baisse_impots.title",
+  "text": "crusadecraft.event.faction_baisse_impots.text",
+  "icon": "minecraft:gold_nugget",
+  "options": [
+    {
+      "text": "crusadecraft.event.faction_baisse_impots.opt.concede",
+      "effects": {
+        "faction": "concede",
+        "prestige": -10
+      }
+    },
+    {
+      "text": "crusadecraft.event.faction_baisse_impots.opt.appease",
+      "requires": {
+        "min_gold": 60
+      },
+      "effects": {
+        "faction": "appease",
+        "gold": -60
+      }
+    },
+    {
+      "text": "crusadecraft.event.faction_baisse_impots.opt.refuse",
+      "effects": {
+        "faction": "refuse",
+        "dread": 5
+      }
+    }
+  ],
+  "default": 2,
+  "expires": 3
+}

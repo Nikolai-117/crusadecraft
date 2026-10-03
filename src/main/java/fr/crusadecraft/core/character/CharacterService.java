@@ -268,6 +268,7 @@ public final class CharacterService {
         rec.addModifier(OpinionModifier.of(OpinionReason.NOMME, today, 1));
         rec.remember(today, "crusadecraft.history.appointed", post.key(info.female()));
         Component postName = Component.translatable(post.key(info.female()));
+        fr.crusadecraft.core.intrigue.Chronicle.record(server, realm, "crusadecraft.chronicle.appointed", Component.literal(name), postName);
         CrusadeNetwork.toPlayer(player, ToastPacket.of(ToastPacket.Kind.COUNCIL,
                 Component.translatable("crusadecraft.toast.appointed.title"),
                 Component.translatable("crusadecraft.toast.appointed.body", name, postName)));

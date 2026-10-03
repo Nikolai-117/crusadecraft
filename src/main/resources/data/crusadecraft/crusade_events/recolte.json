@@ -1,0 +1,35 @@
+{
+  "trigger": "random",
+  "weight": 9,
+  "cooldown": 25,
+  "title": "crusadecraft.event.recolte.title",
+  "text": "crusadecraft.event.recolte.text",
+  "icon": "minecraft:hay_block",
+  "conditions": {
+    "min_citizens": 5
+  },
+  "options": [
+    {
+      "text": "crusadecraft.event.recolte.opt.festival",
+      "requires": {
+        "min_gold": 20
+      },
+      "effects": {
+        "gold": -20,
+        "council_opinion": 8,
+        "post_opinion": {
+          "post": "MAIRE",
+          "value": 5
+        }
+      }
+    },
+    {
+      "text": "crusadecraft.event.recolte.opt.store",
+      "effects": {
+        "gold": 50
+      }
+    }
+  ],
+  "default": 1,
+  "expires": 3
+}

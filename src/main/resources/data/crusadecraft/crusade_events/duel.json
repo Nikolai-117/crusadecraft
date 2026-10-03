@@ -1,0 +1,32 @@
+{
+  "trigger": "random",
+  "weight": 7,
+  "cooldown": 25,
+  "title": "crusadecraft.event.duel.title",
+  "text": "crusadecraft.event.duel.text",
+  "icon": "minecraft:iron_sword",
+  "conditions": {
+    "has_post": "MARECHAL"
+  },
+  "options": [
+    {
+      "text": "crusadecraft.event.duel.opt.accept",
+      "effects": {
+        "prestige": 15,
+        "army": -5,
+        "post_opinion": {
+          "post": "MARECHAL",
+          "value": 10
+        }
+      }
+    },
+    {
+      "text": "crusadecraft.event.duel.opt.refuse",
+      "effects": {
+        "prestige": -10
+      }
+    }
+  ],
+  "default": 1,
+  "expires": 3
+}

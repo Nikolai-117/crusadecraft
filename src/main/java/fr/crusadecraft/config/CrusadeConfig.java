@@ -105,6 +105,11 @@ public final class CrusadeConfig {
         public final ForgeConfigSpec.BooleanValue coalitions;
         public final ForgeConfigSpec.IntValue coalitionThreshold;
         public final ForgeConfigSpec.BooleanValue worldNewsToasts;
+        public final ForgeConfigSpec.BooleanValue events;
+        public final ForgeConfigSpec.IntValue eventChance;
+        public final ForgeConfigSpec.BooleanValue factions;
+        public final ForgeConfigSpec.BooleanValue plots;
+        public final ForgeConfigSpec.BooleanValue revolts;
         public final ForgeConfigSpec.BooleanValue disableDuplicatesWithWarNTaxes;
         public final ForgeConfigSpec.BooleanValue disableDuplicatesWithWarNNobility;
 
@@ -263,6 +268,16 @@ public final class CrusadeConfig {
                     .defineInRange("seuilCoalition", 60, 10, 200);
             worldNewsToasts = b.comment("Annoncer par notification les guerres et paix entre royaumes que vous connaissez.")
                     .define("notificationsNouvelles", true);
+            b.pop();
+
+            b.comment("Intrigues et événements : factions, complots, secrets, révoltes, événements à choix").push("intrigues");
+            events = b.comment("Des événements à choix surgissent dans votre royaume (définis en JSON, extensibles par datapack).")
+                    .define("evenements", true);
+            eventChance = b.comment("Chance, en pour cent, qu'un événement surgisse un jour donné (s'il n'y en a pas déjà un en attente).")
+                    .defineInRange("chanceEvenementParJour", 20, 0, 100);
+            factions = b.comment("Les courtisans mécontents se liguent en factions, qui posent des ultimatums.").define("factions", true);
+            plots = b.comment("Les courtisans qui vous haïssent complotent ; ils ont aussi des secrets à débusquer.").define("complots", true);
+            revolts = b.comment("Les colonies malheureuses et trop taxées peuvent se révolter.").define("revoltes", true);
             b.pop();
 
             b.comment("Cohabitation avec d'autres mods qui font la même chose").push("compatibilite");

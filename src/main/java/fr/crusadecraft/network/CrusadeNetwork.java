@@ -6,6 +6,7 @@ import fr.crusadecraft.network.packet.CourtPackets;
 import fr.crusadecraft.network.packet.DiplomacyPackets;
 import fr.crusadecraft.network.packet.EconomyPackets;
 import fr.crusadecraft.network.packet.FoundRealmPacket;
+import fr.crusadecraft.network.packet.IntriguePackets;
 import fr.crusadecraft.network.packet.OpenCharacterPacket;
 import fr.crusadecraft.network.packet.OpenFoundingScreenPacket;
 import fr.crusadecraft.network.packet.OpenRealmScreenPacket;
@@ -29,7 +30,7 @@ import net.minecraftforge.network.simple.SimpleChannel;
  * (distance, droits, état) avant d'agir.
  */
 public final class CrusadeNetwork {
-    private static final String VERSION = "6";
+    private static final String VERSION = "7";
 
     public static final SimpleChannel CHANNEL = NetworkRegistry.newSimpleChannel(
             ResourceLocation.tryParse(CrusadeCraft.MOD_ID + ":main"),
@@ -147,6 +148,26 @@ public final class CrusadeNetwork {
         CHANNEL.messageBuilder(WorldPackets.NewsData.class, nextId++, NetworkDirection.PLAY_TO_CLIENT)
                 .encoder(WorldPackets.NewsData::encode).decoder(WorldPackets.NewsData::decode)
                 .consumerMainThread(WorldPackets.NewsData::handle).add();
+
+        // P9 : événements et intrigues
+        CHANNEL.messageBuilder(IntriguePackets.OpenEvent.class, nextId++, NetworkDirection.PLAY_TO_CLIENT)
+                .encoder(IntriguePackets.OpenEvent::encode).decoder(IntriguePackets.OpenEvent::decode)
+                .consumerMainThread(IntriguePackets.OpenEvent::handle).add();
+        CHANNEL.messageBuilder(IntriguePackets.OpenIntrigue.class, nextId++, NetworkDirection.PLAY_TO_CLIENT)
+                .encoder(IntriguePackets.OpenIntrigue::encode).decoder(IntriguePackets.OpenIntrigue::decode)
+                .consumerMainThread(IntriguePackets.OpenIntrigue::handle).add();
+        CHANNEL.messageBuilder(IntriguePackets.RequestEvent.class, nextId++, NetworkDirection.PLAY_TO_SERVER)
+                .encoder(IntriguePackets.RequestEvent::encode).decoder(IntriguePackets.RequestEvent::decode)
+                .consumerMainThread(IntriguePackets.RequestEvent::handle).add();
+        CHANNEL.messageBuilder(IntriguePackets.AnswerEvent.class, nextId++, NetworkDirection.PLAY_TO_SERVER)
+                .encoder(IntriguePackets.AnswerEvent::encode).decoder(IntriguePackets.AnswerEvent::decode)
+                .consumerMainThread(IntriguePackets.AnswerEvent::handle).add();
+        CHANNEL.messageBuilder(IntriguePackets.IntrigueAction.class, nextId++, NetworkDirection.PLAY_TO_SERVER)
+                .encoder(IntriguePackets.IntrigueAction::encode).decoder(IntriguePackets.IntrigueAction::decode)
+                .consumerMainThread(IntriguePackets.IntrigueAction::handle).add();
+        CHANNEL.messageBuilder(IntriguePackets.ChronicleBook.class, nextId++, NetworkDirection.PLAY_TO_CLIENT)
+                .encoder(IntriguePackets.ChronicleBook::encode).decoder(IntriguePackets.ChronicleBook::decode)
+                .consumerMainThread(IntriguePackets.ChronicleBook::handle).add();
     }
 
     public static void toPlayer(ServerPlayer player, Object packet) {

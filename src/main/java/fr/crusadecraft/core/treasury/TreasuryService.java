@@ -140,8 +140,10 @@ public final class TreasuryService {
             TaxRules.Modifiers m = new TaxRules.Modifiers(report.happiness(), fiscal, steward, research, report.raided(),
                     capital ? 1.0 : province);
             TaxRules.ColonyTax tax = TaxRules.compute(buildings, taxes, upkeep, m);
+            // Une province en révolte ne paie rien.
+            boolean revolt = realm.intrigue().inRevolt(colony, RealmService.currentDay(server));
             lines.add(new TreasuryView.ColonyLine(report.name(), capital, report.happiness(), buildings.size(),
-                    active ? tax.collected() : 0, tax.upkeep(), report.raided()));
+                    active && !revolt ? tax.collected() : 0, tax.upkeep(), report.raided()));
         }
         return new Forecast(lines, domainIncome(server, realm, population, meetingBonus), salaries(server, realm),
                 steward, research);

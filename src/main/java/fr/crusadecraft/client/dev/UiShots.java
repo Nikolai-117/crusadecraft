@@ -160,8 +160,23 @@ public final class UiShots {
         }, null));
         list.add(new Shot("menu_chroniques", () -> {
             RealmScreen s = RealmScreen.withTab(view, RealmScreen.Tab.CHRONIQUES);
-            s.setNews(sampleNews());
+            s.setNews(sampleNews(), sampleChronicle());
             return s;
+        }, null));
+        list.add(new Shot("evenement", () -> new fr.crusadecraft.client.screen.EventScreen(sampleEvent()), null));
+        list.add(new Shot("intrigues", () -> new fr.crusadecraft.client.screen.IntrigueScreen(sampleIntrigue()), null));
+        list.add(new Shot("livre_chroniques", () -> {
+            List<fr.crusadecraft.network.packet.WorldPackets.NewsLine> lines = new ArrayList<>(sampleChronicle());
+            java.util.Collections.reverse(lines);
+            // La page des faits, pas celle du titre : on tourne la page une fois l'écran prêt.
+            return new net.minecraft.client.gui.screens.inventory.BookViewScreen(
+                    new fr.crusadecraft.client.screen.ChronicleBook("Royaume de Valbrume", "Aubépine", lines)) {
+                @Override
+                protected void init() {
+                    super.init();
+                    setPage(1);
+                }
+            };
         }, null));
         list.add(new Shot("notification_coalition", TitleScreen::new, () -> Minecraft.getInstance().getToasts().addToast(
                 new CrusadeToast(ToastPacket.Kind.ALERT, Component.translatable("crusadecraft.toast.coalition.title"),
@@ -309,6 +324,49 @@ public final class UiShots {
                 new fr.crusadecraft.core.diplomacy.ChanceryView.Claim(9, "Saulepré", "Rochegarde", TitleRank.DUCHE, 1410));
         return new fr.crusadecraft.core.diplomacy.ChanceryView("Royaume de Valbrume", TitleRank.COMTE, 3, TitleRank.DUCHE, 4, 600, 300,
                 1250, 140, true, "", true, vassals, claims, candidates, 7, 62);
+    }
+
+    private static List<fr.crusadecraft.network.packet.WorldPackets.NewsLine> sampleChronicle() {
+        return List.of(
+                new fr.crusadecraft.network.packet.WorldPackets.NewsLine(57, Component.translatable("crusadecraft.chronicle.event",
+                        Component.translatable("crusadecraft.event.famine.title"), Component.translatable("crusadecraft.event.famine.opt.grain"))),
+                new fr.crusadecraft.network.packet.WorldPackets.NewsLine(52, Component.translatable("crusadecraft.chronicle.conquest",
+                        Component.literal("Ormesval"), fr.crusadecraft.core.world.AiNames.realm(TitleRank.COMTE, "Ambrevent"))),
+                new fr.crusadecraft.network.packet.WorldPackets.NewsLine(46, Component.translatable("crusadecraft.chronicle.war.declared",
+                        fr.crusadecraft.core.world.AiNames.realm(TitleRank.COMTE, "Ambrevent"), Component.translatable("crusadecraft.cb.claim"))),
+                new fr.crusadecraft.network.packet.WorldPackets.NewsLine(31, Component.translatable("crusadecraft.chronicle.law",
+                        Component.translatable("crusadecraft.law.fiscalite"), Component.translatable("crusadecraft.law.fiscalite.lourde"))),
+                new fr.crusadecraft.network.packet.WorldPackets.NewsLine(14, Component.translatable("crusadecraft.chronicle.appointed",
+                        Component.literal("Aldric"), Component.translatable("crusadecraft.post.marechal.m"))),
+                new fr.crusadecraft.network.packet.WorldPackets.NewsLine(12, Component.translatable("crusadecraft.chronicle.founded",
+                        Component.literal("Romain"), Component.literal("Royaume de Valbrume"), Component.literal("Valbrume"))));
+    }
+
+    private static fr.crusadecraft.core.event.EventView sampleEvent() {
+        return new fr.crusadecraft.core.event.EventView(UUID.randomUUID(),
+                Component.translatable("crusadecraft.event.famine.title", "", "", "Royaume de Valbrume"),
+                Component.translatable("crusadecraft.event.famine.text", "", "", "Royaume de Valbrume"),
+                ResourceLocation.tryParse("minecraft:wheat"),
+                List.of(new fr.crusadecraft.core.event.EventView.OptionView(Component.translatable("crusadecraft.event.famine.opt.grain"), true,
+                                List.of(Component.translatable("crusadecraft.event.fx.gold", "-60"), Component.translatable("crusadecraft.event.fx.prestige", "+10"))),
+                        new fr.crusadecraft.core.event.EventView.OptionView(Component.translatable("crusadecraft.event.famine.opt.pray"), true,
+                                List.of(Component.translatable("crusadecraft.event.fx.piety", "+15"), Component.translatable("crusadecraft.event.fx.council", "-5"))),
+                        new fr.crusadecraft.core.event.EventView.OptionView(Component.translatable("crusadecraft.event.famine.opt.nothing"), true,
+                                List.of(Component.translatable("crusadecraft.event.fx.council", "-15")))),
+                2, 2, 2);
+    }
+
+    private static fr.crusadecraft.core.intrigue.IntrigueView sampleIntrigue() {
+        return new fr.crusadecraft.core.intrigue.IntrigueView("Odon", true, true,
+                List.of(new fr.crusadecraft.core.intrigue.IntrigueView.FactionLine(fr.crusadecraft.core.intrigue.Faction.Kind.BAISSE_IMPOTS,
+                                List.of("Berthe", "Gautier", "Ysolde"), 64, ""),
+                        new fr.crusadecraft.core.intrigue.IntrigueView.FactionLine(fr.crusadecraft.core.intrigue.Faction.Kind.INDEPENDANCE,
+                                List.of("Hugues"), 18, "Pierrefeu")),
+                1,
+                List.of(new fr.crusadecraft.core.intrigue.IntrigueView.PlotLine("Gautier", fr.crusadecraft.core.intrigue.Plot.Kind.DETOURNEMENT, 42)),
+                List.of(new fr.crusadecraft.core.intrigue.IntrigueView.SecretLine(UUID.randomUUID(), "Berthe", fr.crusadecraft.core.intrigue.Secret.Kind.LIAISON),
+                        new fr.crusadecraft.core.intrigue.IntrigueView.SecretLine(UUID.randomUUID(), "Aldric", fr.crusadecraft.core.intrigue.Secret.Kind.DETTES_DE_JEU)),
+                List.of("Pierrefeu"), 1, 12);
     }
 
     private static List<fr.crusadecraft.network.packet.WorldPackets.NewsLine> sampleNews() {
@@ -464,7 +522,7 @@ public final class UiShots {
         seats.add(new RealmView.Seat(Post.MAIRE, null, "", false, 0, "Hautemarche"));
         seats.add(new RealmView.Seat(Post.MAIRE, null, "", false, 0, "Pierrefeu"));
         return new RealmView(v.id(), v.name(), v.motto(), v.house(), v.color(), v.rulerName(), v.feminineTitle(), v.rank(),
-                v.state(), v.foundedDay(), v.currentDay(), v.gold(), v.prestige(), v.piety(), v.dread(), v.colonies(), seats);
+                v.state(), v.foundedDay(), v.currentDay(), v.gold(), v.prestige(), v.piety(), v.dread(), v.colonies(), seats, v.pendingEvents());
     }
 
     public static RealmView sampleView() {
@@ -475,7 +533,7 @@ public final class UiShots {
                 new ColonyInfo(new ColonyRef(ow, 3), "Pierrefeu", 1, 6, 8, 3.2, 7, Heraldry.GUEULES.rgb()));
         return new RealmView(UUID.randomUUID(), "Royaume de Valbrume", "Par le fer et la foi", "Aubépine",
                 Heraldry.AZUR.rgb(), "Romain", false, TitleRank.BARONNIE, RealmState.ACTIVE, 12, 57,
-                1250, 50, 12, 3, colonies, List.of());
+                1250, 50, 12, 3, colonies, List.of(), 1);
     }
 
     @SubscribeEvent

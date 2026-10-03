@@ -1,0 +1,35 @@
+{
+  "trigger": "random",
+  "weight": 12,
+  "cooldown": 10,
+  "title": "crusadecraft.event.ralliement.title",
+  "text": "crusadecraft.event.ralliement.text",
+  "icon": "minecraft:white_banner",
+  "conditions": {
+    "at_war": true
+  },
+  "options": [
+    {
+      "text": "crusadecraft.event.ralliement.opt.rally",
+      "requires": {
+        "min_gold": 30
+      },
+      "effects": {
+        "gold": -30,
+        "army": 10
+      }
+    },
+    {
+      "text": "crusadecraft.event.ralliement.opt.levy",
+      "effects": {
+        "army": 15,
+        "council_opinion": -8
+      }
+    },
+    {
+      "text": "crusadecraft.event.ralliement.opt.nothing"
+    }
+  ],
+  "default": 2,
+  "expires": 3
+}

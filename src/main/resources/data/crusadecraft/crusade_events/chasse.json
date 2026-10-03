@@ -1,0 +1,22 @@
+{
+  "trigger": "random",
+  "weight": 10,
+  "cooldown": 25,
+  "title": "crusadecraft.event.chasse.title",
+  "text": "crusadecraft.event.chasse.text",
+  "icon": "minecraft:bow",
+  "options": [
+    {
+      "text": "crusadecraft.event.chasse.opt.join",
+      "effects": {
+        "prestige": 5,
+        "council_opinion": 5
+      }
+    },
+    {
+      "text": "crusadecraft.event.chasse.opt.decline"
+    }
+  ],
+  "default": 1,
+  "expires": 3
+}

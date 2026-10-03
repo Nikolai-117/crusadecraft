@@ -129,8 +129,30 @@ public final class ClientPackets {
         else if (open) mc.setScreen(new fr.crusadecraft.client.screen.ChanceryScreen(view));
     }
 
-    public static void news(java.util.List<fr.crusadecraft.network.packet.WorldPackets.NewsLine> lines) {
-        if (Minecraft.getInstance().screen instanceof RealmScreen realm) realm.setNews(lines);
+    public static void news(java.util.List<fr.crusadecraft.network.packet.WorldPackets.NewsLine> lines,
+                            java.util.List<fr.crusadecraft.network.packet.WorldPackets.NewsLine> chronicle) {
+        if (Minecraft.getInstance().screen instanceof RealmScreen realm) realm.setNews(lines, chronicle);
+    }
+
+    /** Un événement à décider ; {@code null} : plus rien n'attend, l'écran se ferme. */
+    public static void event(fr.crusadecraft.core.event.EventView view) {
+        Minecraft mc = Minecraft.getInstance();
+        if (view == null) {
+            if (mc.screen instanceof fr.crusadecraft.client.screen.EventScreen) mc.setScreen(null);
+            return;
+        }
+        mc.setScreen(new fr.crusadecraft.client.screen.EventScreen(view));
+    }
+
+    public static void chronicleBook(String realm, String house, java.util.List<fr.crusadecraft.network.packet.WorldPackets.NewsLine> lines) {
+        Minecraft.getInstance().setScreen(new net.minecraft.client.gui.screens.inventory.BookViewScreen(
+                new fr.crusadecraft.client.screen.ChronicleBook(realm, house, lines)));
+    }
+
+    public static void intrigue(fr.crusadecraft.core.intrigue.IntrigueView view, boolean open) {
+        Minecraft mc = Minecraft.getInstance();
+        if (mc.screen instanceof fr.crusadecraft.client.screen.IntrigueScreen screen) screen.refresh(view);
+        else if (open) mc.setScreen(new fr.crusadecraft.client.screen.IntrigueScreen(view));
     }
 
     public static void war(fr.crusadecraft.core.war.WarView view, boolean open) {

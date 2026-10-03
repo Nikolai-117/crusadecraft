@@ -1,0 +1,36 @@
+{
+  "trigger": "faction_independance",
+  "weight": 10,
+  "cooldown": 25,
+  "title": "crusadecraft.event.faction_independance.title",
+  "text": "crusadecraft.event.faction_independance.text",
+  "icon": "minecraft:white_banner",
+  "options": [
+    {
+      "text": "crusadecraft.event.faction_independance.opt.concede",
+      "effects": {
+        "faction": "concede",
+        "prestige": -20
+      }
+    },
+    {
+      "text": "crusadecraft.event.faction_independance.opt.appease",
+      "requires": {
+        "min_gold": 100
+      },
+      "effects": {
+        "faction": "appease",
+        "gold": -100
+      }
+    },
+    {
+      "text": "crusadecraft.event.faction_independance.opt.refuse",
+      "effects": {
+        "faction": "refuse",
+        "dread": 5
+      }
+    }
+  ],
+  "default": 2,
+  "expires": 3
+}

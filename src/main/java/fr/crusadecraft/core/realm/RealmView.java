@@ -16,7 +16,7 @@ import java.util.UUID;
  */
 public record RealmView(UUID id, String name, String motto, String house, int color, String rulerName,
                         boolean feminineTitle, TitleRank rank, RealmState state, long foundedDay, long currentDay,
-                        long gold, int prestige, int piety, int dread, List<ColonyInfo> colonies, List<Seat> seats) {
+                        long gold, int prestige, int piety, int dread, List<ColonyInfo> colonies, List<Seat> seats, int pendingEvents) {
 
     /**
      * Un siège de dignitaire : un poste du conseil (ou un maire) et son titulaire. {@code holder} est nul
@@ -70,6 +70,7 @@ public record RealmView(UUID id, String name, String motto, String house, int co
         for (ColonyInfo c : colonies) c.write(buf);
         buf.writeVarInt(seats.size());
         for (Seat s : seats) s.write(buf);
+        buf.writeVarInt(pendingEvents);
     }
 
     public static RealmView read(FriendlyByteBuf buf) {
@@ -95,6 +96,6 @@ public record RealmView(UUID id, String name, String motto, String house, int co
         List<Seat> seats = new ArrayList<>(ns);
         for (int i = 0; i < ns; i++) seats.add(Seat.read(buf));
         return new RealmView(id, name, motto, house, color, rulerName, feminine, rank, state, founded, current,
-                gold, prestige, piety, dread, colonies, seats);
+                gold, prestige, piety, dread, colonies, seats, buf.readVarInt());
     }
 }

@@ -43,6 +43,8 @@ public final class ModItems {
             () -> new fr.crusadecraft.item.SealItem(new Item.Properties().rarity(Rarity.RARE)));
     public static final RegistryObject<Item> CLAIM_SCROLL = ITEMS.register("claim_scroll",
             () -> new fr.crusadecraft.item.ClaimScrollItem(new Item.Properties().rarity(Rarity.UNCOMMON)));
+    public static final RegistryObject<Item> CHRONIQUES = ITEMS.register("chroniques",
+            () -> new fr.crusadecraft.item.ChroniclesItem(new Item.Properties().stacksTo(1).rarity(Rarity.UNCOMMON)));
     public static final RegistryObject<Item> TREASURY = ITEMS.register("treasury",
             () -> new BlockItem(ModBlocks.TREASURY.get(), new Item.Properties().rarity(Rarity.UNCOMMON)));
 

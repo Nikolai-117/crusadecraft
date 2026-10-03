@@ -80,6 +80,8 @@ public final class TitleService {
         realm.setRank(r.rank());
         CrusadeSavedData.get(server).setDirty();
         Component title = Component.translatable(r.rank().holderKey(realm.feminineTitle()));
+        fr.crusadecraft.core.intrigue.Chronicle.record(server, realm, "crusadecraft.chronicle.rank", Component.literal(realm.rulerName()), title,
+                Component.translatable(r.rank().titleKey()));
         CrusadeNetwork.toPlayer(player, ToastPacket.of(ToastPacket.Kind.REALM, Component.translatable("crusadecraft.toast.title.title"),
                 Component.translatable("crusadecraft.toast.title.body", title, Component.translatable(r.rank().titleKey()))));
         return CouncilActions.Outcome.ok(Component.translatable("crusadecraft.title.created", Component.translatable(r.rank().titleKey())));

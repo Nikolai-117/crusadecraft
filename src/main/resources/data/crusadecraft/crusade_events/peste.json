@@ -1,0 +1,45 @@
+{
+  "trigger": "random",
+  "weight": 6,
+  "cooldown": 40,
+  "title": "crusadecraft.event.peste.title",
+  "text": "crusadecraft.event.peste.text",
+  "icon": "minecraft:rotten_flesh",
+  "conditions": {
+    "min_citizens": 8
+  },
+  "options": [
+    {
+      "text": "crusadecraft.event.peste.opt.quarantine",
+      "requires": {
+        "min_gold": 40
+      },
+      "effects": {
+        "gold": -40,
+        "army": -10
+      }
+    },
+    {
+      "text": "crusadecraft.event.peste.opt.chaplain",
+      "requires": {
+        "has_post": "CHAPELAIN"
+      },
+      "effects": {
+        "piety": 10,
+        "post_opinion": {
+          "post": "CHAPELAIN",
+          "value": 10
+        }
+      }
+    },
+    {
+      "text": "crusadecraft.event.peste.opt.nothing",
+      "effects": {
+        "army": -25,
+        "council_opinion": -10
+      }
+    }
+  ],
+  "default": 2,
+  "expires": 3
+}

@@ -56,6 +56,8 @@ public final class Realm {
     private int armyMen = -1;
     /** La menace que ce royaume fait peser sur ses voisins (conquêtes, guerres), qui retombe avec le temps. */
     private int threat;
+    /** Factions, complots, secrets, événements en attente et chronique du règne (P9). */
+    private fr.crusadecraft.core.intrigue.IntrigueState intrigue = new fr.crusadecraft.core.intrigue.IntrigueState();
     /** Provinces IA revendiquées (identifiants de province). */
     private final java.util.Set<Integer> claims = new java.util.LinkedHashSet<>();
     /** Lettres en route ou arrivées au Colombier, et celles qui attendent une réponse. */
@@ -122,6 +124,7 @@ public final class Realm {
     /** Hommes disponibles ; {@code -1} tant qu'on ne les a jamais comptés. */
     public int armyMen() { return armyMen; }
     public int threat() { return threat; }
+    public fr.crusadecraft.core.intrigue.IntrigueState intrigue() { return intrigue; }
     public void setThreat(int threat) { this.threat = Math.max(0, threat); }
     public void setArmyMen(int men) { this.armyMen = men; }
     public List<fr.crusadecraft.core.diplomacy.Letter> mail() { return mail; }
@@ -208,6 +211,7 @@ public final class Realm {
         tag.putBoolean("armyRaised", armyRaised);
         tag.putInt("armyMen", armyMen);
         tag.putInt("threat", threat);
+        tag.put("intrigue", intrigue.save());
         ListTag mailTag = new ListTag();
         for (fr.crusadecraft.core.diplomacy.Letter l : mail) mailTag.add(l.save());
         tag.put("mail", mailTag);
@@ -249,6 +253,7 @@ public final class Realm {
         realm.armyRaised = tag.getBoolean("armyRaised");
         realm.armyMen = tag.contains("armyMen") ? tag.getInt("armyMen") : -1;
         realm.threat = tag.getInt("threat");
+        realm.intrigue = fr.crusadecraft.core.intrigue.IntrigueState.load(tag.getCompound("intrigue"));
         ListTag mailTag = tag.getList("mail", Tag.TAG_COMPOUND);
         for (int i = 0; i < mailTag.size(); i++) {
             try {

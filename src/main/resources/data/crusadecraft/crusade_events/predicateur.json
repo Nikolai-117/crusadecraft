@@ -1,0 +1,40 @@
+{
+  "trigger": "random",
+  "weight": 6,
+  "cooldown": 25,
+  "title": "crusadecraft.event.predicateur.title",
+  "text": "crusadecraft.event.predicateur.text",
+  "icon": "minecraft:lectern",
+  "options": [
+    {
+      "text": "crusadecraft.event.predicateur.opt.let",
+      "effects": {
+        "piety": -10,
+        "council_opinion": 3
+      }
+    },
+    {
+      "text": "crusadecraft.event.predicateur.opt.expel",
+      "effects": {
+        "piety": 5,
+        "dread": 3
+      }
+    },
+    {
+      "text": "crusadecraft.event.predicateur.opt.debate",
+      "requires": {
+        "has_post": "CHAPELAIN"
+      },
+      "effects": {
+        "piety": 10,
+        "prestige": 5,
+        "post_opinion": {
+          "post": "CHAPELAIN",
+          "value": 10
+        }
+      }
+    }
+  ],
+  "default": 1,
+  "expires": 3
+}

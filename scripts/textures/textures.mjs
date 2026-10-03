@@ -120,6 +120,28 @@ export const TEXTURES = {
       '................',
     ],
   },
+  // Chroniques du royaume : gros volume bleu nuit, coins et fermoir d'or, signet rouge.
+  'item/chroniques': {
+    palette: { k: '141a2e', b: '24345e', B: '3a5290', g: 'c9a24a', G: 'f2d27a', p: 'eadcb8', P: 'c9b48a', r: 'b3261e' },
+    pixels: [
+      '................',
+      '..kkkkkkkkkkkk..',
+      '..kgbbbbbbbbgk..',
+      '..kbBBBBBBBBbkp.',
+      '..kbBkkkkkkBbkp.',
+      '..kbBkGGGGkBbkP.',
+      '..kbBkGkkGkBbkp.',
+      '..kbBkGGGGkBbkp.',
+      '..kbBkkkkkkBbkP.',
+      '..kbBBBBBBBBbkg.',
+      '..kbBBBBBBBBbkG.',
+      '..kbBBBBBBBBbkg.',
+      '..kgbbbbbbbbgkp.',
+      '..kkkkkkkkkkkkk.',
+      '...pppppprpppk..',
+      '...kkkkkkrkkk...',
+    ],
+  },
   'item/registre': {
     palette: LEATHER,
     pixels: [

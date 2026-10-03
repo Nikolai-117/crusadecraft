@@ -37,7 +37,14 @@ public enum OpinionReason {
     REFUS_DIPLOMATIQUE(-8, 8, true),
     CHANCELIER_RELATIONS(5, 10, true),
     EXIGENCE(-15, 20, true),
-    HOMMAGE(10, 30, true);
+    HOMMAGE(10, 30, true),
+    // P9 : événements, factions, complots, secrets
+    EVENEMENT(10, 20, true),
+    FACTION_CONCEDEE(15, 15, true),
+    FACTION_REFUSEE(-20, 20, true),
+    COMPLOT_PARDONNE(15, 15, true),
+    CHANTAGE(-10, 30, true),
+    SECRET_REVELE(-30, 30, true);
 
     private final int value;
     private final int durationDays;

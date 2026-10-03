@@ -309,3 +309,33 @@ Les compétences vont de 1 à 99 : un citoyen débutant obtient 1 à 5, un exper
   guerres et les paix sont aussi annoncées par notification (réglable). Les mariages viendront en P10.
 - **Simulation de 60 jours** en GameTest, toutes les IA réfléchissant chaque jour : aucune guerre ne dure plus
   de 31 jours, aucun état incohérent.
+
+**P9 (3 octobre 2026)**
+
+- **Les événements sont des données** : un fichier JSON par événement (`data/<espace>/crusade_events/`),
+  rechargé à chaque `/reload`. Conditions (or, prestige, guerre, poste au conseil, rang, âge du royaume,
+  bonheur moyen, niveau d'une loi…), options avec leurs propres conditions, effets (or, prestige, piété,
+  crainte, menace, armée, opinions du conseil, d'un poste ou du personnage en cause, cachot ou exil, trait,
+  loi abaissée, révolte), option par défaut et délai. Un datapack peut en ajouter, en texte brut ou en clés
+  de traduction. Vingt sont livrés : quatorze au hasard, six appelés par les intrigues.
+- **Un événement attend la décision** quelques jours (bouton « Événements » du menu royal, notification) ;
+  passé le délai, l'option par défaut s'applique. Un test vérifie que l'option par défaut de chaque
+  événement livré ne coûte jamais d'or qu'on pourrait ne pas avoir (il a trouvé les « Pèlerins »).
+- **Factions** : baisse des impôts (tous les mécontents, si l'impôt est au moins normal), indépendance (les
+  maires d'une province malheureuse), renvoi d'un conseiller honni (corrompu, cruel, arbitraire, fourbe,
+  arrogant). Un loyal ne se ligue jamais, un ambitieux dès qu'il n'aime plus. Puissance = part de la cour
+  (un conseiller pèse 3, un maire 2), moins la moitié de la crainte et le Martial du maréchal qui maintient
+  l'ordre. À 60 %, ultimatum : céder, acheter la paix, ou refuser (grève de l'impôt, province en révolte).
+- **Complots** (détournement, sabotage, diffamation) : nés de la haine (5 % par jour), ils avancent selon
+  l'Intrigue de leur auteur ; le Maître-espion les évente selon la sienne (trois fois plus s'il
+  « débusque les complots », tâche désormais ouverte, comme « Maintenir l'ordre » du maréchal). Éventé :
+  cachot, exil ou pardon ; abouti : le coup porte, et l'on apprend ensuite qui l'a porté.
+- **Secrets** (dettes de jeu, liaison, hérésie, corruption) : découverts par le Maître-espion, ils servent au
+  chantage (deux mois sans faction ni complot) ou se révèlent (prestige, piété pour une hérésie, rancune
+  tenace). Sans maître-espion, on ne sait rien, et l'écran le dit.
+- **Révoltes paysannes** : une colonie malheureuse (moins de 5) sous un impôt au moins normal peut se
+  soulever ; une province en révolte ne paie pas l'impôt.
+- **La chronique du règne** s'écrit d'elle-même : fondation, titres, nominations, lois, hommages, guerres,
+  conquêtes, coalitions, ultimatums, complots, secrets, décisions d'événements. Onglet Chroniques (Règne /
+  Monde) et « Chroniques du royaume », un livre qui s'ouvre comme un livre écrit (recette : livre, plume,
+  poche d'encre, papier).

@@ -94,6 +94,8 @@ public final class RealmService {
                 currentDay(player.server));
         realm.setPrestige(CrusadeConfig.SERVER.startingPrestige.get());
         CrusadeSavedData.get(player.server).add(realm);
+        fr.crusadecraft.core.intrigue.Chronicle.record(player.server, realm, "crusadecraft.chronicle.founded", Component.literal(player.getGameProfile().getName()),
+                Component.literal(name), Component.literal(fr.crusadecraft.compat.minecolonies.MineColoniesBridge.info(check.colony()).name()));
         CrusadeCraft.LOGGER.info("CrusadeCraft : {} fonde le royaume « {} » (capitale {})",
                 player.getGameProfile().getName(), name, check.colony());
         CrusadeNetwork.toPlayer(player, ToastPacket.of(ToastPacket.Kind.REALM,
@@ -115,7 +117,7 @@ public final class RealmService {
         }
         return new RealmView(realm.id(), realm.name(), realm.motto(), realm.house(), realm.color(), realm.rulerName(),
                 realm.feminineTitle(), realm.rank(), realm.state(), realm.foundedDay(), currentDay(server),
-                realm.gold(), realm.prestige(), realm.piety(), realm.dread(), colonies, seats);
+                realm.gold(), realm.prestige(), realm.piety(), realm.dread(), colonies, seats, realm.intrigue().pending().size());
     }
 
     private static RealmView.Seat seat(MinecraftServer server, Realm realm, Post post, CitizenRef holder, String place) {

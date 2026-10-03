@@ -18,6 +18,7 @@ public final class ModCreativeTabs {
             .displayItems((params, output) -> {
                 output.accept(ModItems.THRONE.get());
                 output.accept(ModItems.REGISTRE.get());
+                output.accept(ModItems.CHRONIQUES.get());
                 output.accept(ModItems.SCEPTRE.get());
                 output.accept(ModItems.COUNCIL_TABLE.get());
                 output.accept(ModItems.COUNCIL_SEAT.get());

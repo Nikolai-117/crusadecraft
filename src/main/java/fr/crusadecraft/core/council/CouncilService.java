@@ -261,6 +261,9 @@ public final class CouncilService {
         // Impôts, domaine, salaires, entretien, effets quotidiens des lois ; puis traités, tributs, vassaux.
         TreasuryService.onNewDay(server, realm, day, bonus);
         fr.crusadecraft.core.diplomacy.DiplomacyService.onNewDay(server, realm, day);
+        // Ce qui se trame à la cour, puis les événements (échus, ou nouveaux).
+        fr.crusadecraft.core.intrigue.IntrigueService.onNewDay(server, realm, day);
+        fr.crusadecraft.core.event.EventService.onNewDay(server, realm, day);
         data.setDirty();
     }
 

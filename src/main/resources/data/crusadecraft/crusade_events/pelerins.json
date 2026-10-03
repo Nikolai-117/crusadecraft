@@ -1,0 +1,29 @@
+{
+  "trigger": "random",
+  "weight": 8,
+  "cooldown": 25,
+  "title": "crusadecraft.event.pelerins.title",
+  "text": "crusadecraft.event.pelerins.text",
+  "icon": "minecraft:candle",
+  "options": [
+    {
+      "text": "crusadecraft.event.pelerins.opt.welcome",
+      "requires": {
+        "min_gold": 10
+      },
+      "effects": {
+        "piety": 10,
+        "gold": -10
+      }
+    },
+    {
+      "text": "crusadecraft.event.pelerins.opt.tax",
+      "effects": {
+        "gold": 30,
+        "piety": -10
+      }
+    }
+  ],
+  "default": 1,
+  "expires": 3
+}

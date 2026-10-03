@@ -351,6 +351,10 @@ public final class WarService {
                 Component.translatable("crusadecraft.toast.war.called.body", enemy, attackerName));
         AiBrain.publish(server, WorldNews.of(today, "crusadecraft.news.war", List.of(attacker, target), attackerName, enemy,
                 Component.translatable(cb.key())), true);
+        player(server, attacker).ifPresent(r -> fr.crusadecraft.core.intrigue.Chronicle.record(server, r, "crusadecraft.chronicle.war.declared", enemy,
+                Component.translatable(cb.key())));
+        player(server, target).ifPresent(r -> fr.crusadecraft.core.intrigue.Chronicle.record(server, r, "crusadecraft.chronicle.war.attacked", attackerName,
+                Component.translatable(cb.key())));
         return war;
     }
 
@@ -660,6 +664,8 @@ public final class WarService {
                         });
                         AiBrain.publish(server, WorldNews.of(today, "crusadecraft.news.province", List.of(w.attacker(), w.defender()),
                                 Component.literal(p.name()), winName, previous), false);
+                        player(server, w.attacker()).ifPresent(r -> fr.crusadecraft.core.intrigue.Chronicle.record(server, r, "crusadecraft.chronicle.conquest",
+                                Component.literal(p.name()), previous));
                     });
                     case VASSALIZE -> {
                         data.diplomacy().between(w.defender(), w.attacker()).makeVassal(w.attacker(), 25, 25);
@@ -676,6 +682,12 @@ public final class WarService {
             outcome = Component.translatable("crusadecraft.war.result.victory", winName);
         }
         w.log(today, "crusadecraft.war.log.peace", 0, winner == 0 ? "WHITE" : winName.getString());
+        for (UUID side : List.of(w.attacker(), w.defender())) {
+            UUID foe = side.equals(w.attacker()) ? w.defender() : w.attacker();
+            String key = winner == 0 ? "crusadecraft.chronicle.war.white" : side.equals(win) ? "crusadecraft.chronicle.war.won"
+                    : "crusadecraft.chronicle.war.lost";
+            player(server, side).ifPresent(r -> fr.crusadecraft.core.intrigue.Chronicle.record(server, r, key, name(server, foe)));
+        }
         hostileRanks(server, w, false);
         data.wars().damage().release(w.id());
         data.wars().remove(w.id());

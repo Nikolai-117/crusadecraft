@@ -125,6 +125,7 @@ public final class LawService {
             }
         }
         realm.laws().set(law, level, today);
+        fr.crusadecraft.core.intrigue.Chronicle.record(server, realm, "crusadecraft.chronicle.law", Component.translatable(law.key()), levelName);
         data.setDirty();
         if (law == Law.FISCALITE) TreasuryService.applyHappiness(server);
         String key = vote.ballots().isEmpty() ? "crusadecraft.law.decreed" : vote.passes() ? "crusadecraft.law.adopted" : "crusadecraft.law.forced";

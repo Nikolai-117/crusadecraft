@@ -1,0 +1,46 @@
+{
+  "trigger": "revolt",
+  "weight": 10,
+  "cooldown": 25,
+  "title": "crusadecraft.event.revolt.title",
+  "text": "crusadecraft.event.revolt.text",
+  "icon": "minecraft:torch",
+  "options": [
+    {
+      "text": "crusadecraft.event.revolt.opt.concede",
+      "effects": {
+        "law_down": "FISCALITE",
+        "prestige": -10
+      }
+    },
+    {
+      "text": "crusadecraft.event.revolt.opt.repress",
+      "effects": {
+        "army": -10,
+        "dread": 10,
+        "post_opinion": {
+          "post": "MAIRE",
+          "value": -10
+        }
+      }
+    },
+    {
+      "text": "crusadecraft.event.revolt.opt.negotiate",
+      "requires": {
+        "min_gold": 50
+      },
+      "effects": {
+        "gold": -50,
+        "revolt_days": 2
+      }
+    },
+    {
+      "text": "crusadecraft.event.revolt.opt.wait",
+      "effects": {
+        "revolt_days": 10
+      }
+    }
+  ],
+  "default": 3,
+  "expires": 2
+}

@@ -46,6 +46,12 @@ public final class ServerEvents {
         CrusadeCommand.register(event.getDispatcher());
     }
 
+    /** Les événements à choix se lisent dans les datapacks, au démarrage et à chaque /reload. */
+    @SubscribeEvent
+    public static void onReloadListeners(net.minecraftforge.event.AddReloadListenerEvent event) {
+        event.addListener(new fr.crusadecraft.core.event.EventLoader());
+    }
+
     @SubscribeEvent
     public static void onServerStarted(ServerStartedEvent event) {
         ConflictDetector.logAtStartup();

@@ -21,14 +21,14 @@ public enum CouncilTask {
     // Maréchal
     ENTRAINER_TROUPES(Post.MARECHAL, true),
     ORGANISER_LEVEES(Post.MARECHAL, false),
-    MAINTENIR_ORDRE(Post.MARECHAL, false),
+    MAINTENIR_ORDRE(Post.MARECHAL, true),
     // Intendant
     GERER_LE_DOMAINE(Post.INTENDANT, true),
     DEVELOPPER_PROVINCE(Post.INTENDANT, false),
     COLLECTER_IMPOTS(Post.INTENDANT, true),
     // Maître-espion
     SURVEILLER_LES_TERRES(Post.MAITRE_ESPION, true),
-    DEBUSQUER_COMPLOTS(Post.MAITRE_ESPION, false),
+    DEBUSQUER_COMPLOTS(Post.MAITRE_ESPION, true),
     ESPIONNER_RIVAL(Post.MAITRE_ESPION, false),
     // Chapelain
     LEGITIMITE(Post.CHAPELAIN, true),

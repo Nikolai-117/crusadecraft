@@ -1,0 +1,46 @@
+{
+  "trigger": "random",
+  "weight": 10,
+  "cooldown": 25,
+  "title": "crusadecraft.event.famine.title",
+  "text": "crusadecraft.event.famine.text",
+  "icon": "minecraft:wheat",
+  "conditions": {
+    "min_citizens": 5
+  },
+  "options": [
+    {
+      "text": "crusadecraft.event.famine.opt.grain",
+      "requires": {
+        "min_gold": 60
+      },
+      "effects": {
+        "gold": -60,
+        "prestige": 10,
+        "council_opinion": 5
+      }
+    },
+    {
+      "text": "crusadecraft.event.famine.opt.pray",
+      "effects": {
+        "piety": 15,
+        "post_opinion": {
+          "post": "MAIRE",
+          "value": -5
+        }
+      }
+    },
+    {
+      "text": "crusadecraft.event.famine.opt.nothing",
+      "effects": {
+        "post_opinion": {
+          "post": "MAIRE",
+          "value": -15
+        },
+        "prestige": -5
+      }
+    }
+  ],
+  "default": 2,
+  "expires": 3
+}

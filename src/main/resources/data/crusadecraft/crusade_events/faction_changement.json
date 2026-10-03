@@ -1,0 +1,36 @@
+{
+  "trigger": "faction_changement",
+  "weight": 10,
+  "cooldown": 25,
+  "title": "crusadecraft.event.faction_changement.title",
+  "text": "crusadecraft.event.faction_changement.text",
+  "icon": "minecraft:lectern",
+  "options": [
+    {
+      "text": "crusadecraft.event.faction_changement.opt.concede",
+      "effects": {
+        "faction": "concede"
+      }
+    },
+    {
+      "text": "crusadecraft.event.faction_changement.opt.appease",
+      "requires": {
+        "min_gold": 50
+      },
+      "effects": {
+        "faction": "appease",
+        "gold": -50
+      }
+    },
+    {
+      "text": "crusadecraft.event.faction_changement.opt.refuse",
+      "effects": {
+        "faction": "refuse",
+        "prestige": -15,
+        "council_opinion": -5
+      }
+    }
+  ],
+  "default": 2,
+  "expires": 3
+}

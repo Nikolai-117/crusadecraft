@@ -276,6 +276,7 @@ public final class AiBrain {
                 c.setAnnounced(true);
                 notify(server, p, ToastPacket.Kind.ALERT, Component.translatable("crusadecraft.toast.coalition.title"),
                         Component.translatable("crusadecraft.toast.coalition.body", c.members().size()));
+                fr.crusadecraft.core.intrigue.Chronicle.record(server, p, "crusadecraft.chronicle.coalition", Component.literal(String.valueOf(c.members().size())));
                 publish(server, WorldNews.of(day, "crusadecraft.news.coalition", new ArrayList<>(c.members()),
                         Component.literal(p.name()), Component.literal(String.valueOf(c.members().size()))), false);
             }

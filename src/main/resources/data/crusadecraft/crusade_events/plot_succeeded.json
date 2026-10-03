@@ -1,0 +1,25 @@
+{
+  "trigger": "plot_succeeded",
+  "weight": 10,
+  "cooldown": 25,
+  "title": "crusadecraft.event.plot_succeeded.title",
+  "text": "crusadecraft.event.plot_succeeded.text",
+  "icon": "minecraft:wither_rose",
+  "options": [
+    {
+      "text": "crusadecraft.event.plot_succeeded.opt.justice",
+      "effects": {
+        "subject_status": "EMPRISONNE:30",
+        "dread": 5
+      }
+    },
+    {
+      "text": "crusadecraft.event.plot_succeeded.opt.let",
+      "effects": {
+        "prestige": -5
+      }
+    }
+  ],
+  "default": 1,
+  "expires": 2
+}

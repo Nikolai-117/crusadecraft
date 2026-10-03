@@ -1,0 +1,42 @@
+{
+  "trigger": "random",
+  "weight": 8,
+  "cooldown": 25,
+  "title": "crusadecraft.event.prosperite.title",
+  "text": "crusadecraft.event.prosperite.text",
+  "icon": "minecraft:emerald",
+  "conditions": {
+    "min_happiness": 7
+  },
+  "options": [
+    {
+      "text": "crusadecraft.event.prosperite.opt.feast",
+      "requires": {
+        "min_gold": 30
+      },
+      "effects": {
+        "gold": -30,
+        "prestige": 15,
+        "council_opinion": 10
+      }
+    },
+    {
+      "text": "crusadecraft.event.prosperite.opt.treasury",
+      "effects": {
+        "gold": 80
+      }
+    },
+    {
+      "text": "crusadecraft.event.prosperite.opt.church",
+      "requires": {
+        "min_gold": 20
+      },
+      "effects": {
+        "gold": -20,
+        "piety": 20
+      }
+    }
+  ],
+  "default": 1,
+  "expires": 3
+}
