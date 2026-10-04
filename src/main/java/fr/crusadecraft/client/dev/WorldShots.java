@@ -346,6 +346,8 @@ public final class WorldShots {
             case PAPER_SHOT -> {
                 // Ni chat ni notification par-dessus la carte tenue en main.
                 mc.gui.getChat().clearMessages(false);
+                mc.options.chatVisibility().set(net.minecraft.world.entity.player.ChatVisiblity.HIDDEN);
+                mc.getTutorial().setStep(net.minecraft.client.tutorial.TutorialSteps.NONE);
                 mc.getToasts().clear();
                 grab(mc, "carte_papier");
                 step = Step.DONE;
