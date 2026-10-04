@@ -527,12 +527,15 @@ public final class WorldShots {
         ServerPlayer player = server.getPlayerList().getPlayers().get(0);
         ServerLevel level = player.serverLevel();
         var map = net.minecraft.world.item.MapItem.create(level, fortGround.getX(), fortGround.getZ() - 80, (byte) 2, true, false);
-        net.minecraft.world.item.MapItem.renderBiomePreviewMap(level, map);
+        // La surcouche ne peint que ce qui est exploré : la carte de démonstration l'est entièrement.
+        var saved = net.minecraft.world.item.MapItem.getSavedData(map, level);
+        byte grass = net.minecraft.world.level.material.MapColor.GRASS.getPackedId(net.minecraft.world.level.material.MapColor.Brightness.NORMAL);
+        if (saved != null) for (int x = 0; x < 128; x++) for (int z = 0; z < 128; z++) saved.updateColor(x, z, grass);
         player.getInventory().setItem(0, map);
         player.getInventory().selected = 0;
         player.getAbilities().flying = false;
         player.onUpdateAbilities();
-        player.connection.teleport(fortGround.getX() + 0.5, fortGround.getY() + 1, fortGround.getZ() + 40.5, 180f, 60f);
+        player.connection.teleport(fortGround.getX() + 0.5, fortGround.getY() + 1, fortGround.getZ() - 55.5, 180f, 60f);
     }
 
     private static void grab(Minecraft mc, String name) {
