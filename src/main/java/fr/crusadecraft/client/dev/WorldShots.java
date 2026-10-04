@@ -344,6 +344,9 @@ public final class WorldShots {
                 wait = 120;
             }
             case PAPER_SHOT -> {
+                // Ni chat ni notification par-dessus la carte tenue en main.
+                mc.gui.getChat().clearMessages(false);
+                mc.getToasts().clear();
                 grab(mc, "carte_papier");
                 step = Step.DONE;
                 wait = 20;
@@ -535,7 +538,7 @@ public final class WorldShots {
         player.getInventory().selected = 0;
         player.getAbilities().flying = false;
         player.onUpdateAbilities();
-        player.connection.teleport(fortGround.getX() + 0.5, fortGround.getY() + 1, fortGround.getZ() - 55.5, 180f, 60f);
+        player.connection.teleport(fortGround.getX() + 0.5, fortGround.getY() + 1, fortGround.getZ() - 55.5, 180f, 72f);
     }
 
     private static void grab(Minecraft mc, String name) {
