@@ -42,6 +42,7 @@ public class MapScreen extends Screen {
     private static boolean lastDejure;
     /** Centre demandé par un autre écran (« Voir sur la carte »), appliqué à la prochaine ouverture. */
     private static int[] pendingCenter;
+    private static double pendingScale = -1;
 
     /** Les outils de l'éditeur. */
     enum Tool {
@@ -98,6 +99,8 @@ public class MapScreen extends Screen {
             centerX = pendingCenter[0];
             centerZ = pendingCenter[1];
             pendingCenter = null;
+            scale = pendingScale;
+            pendingScale = -1;
         } else {
             centerX = view.focusX();
             centerZ = view.focusZ();
@@ -105,7 +108,13 @@ public class MapScreen extends Screen {
     }
 
     public static void centerNextOn(int x, int z) {
+        centerNextOn(x, z, -1);
+    }
+
+    /** La prochaine carte ouverte se centre ici, à cette échelle (blocs par point ; négatif : toute la carte). */
+    public static void centerNextOn(int x, int z, double blocksPerPoint) {
         pendingCenter = new int[]{x, z};
+        pendingScale = blocksPerPoint;
     }
 
     /** Bascule en vue de jure (aperçu du banc d'essai visuel). */

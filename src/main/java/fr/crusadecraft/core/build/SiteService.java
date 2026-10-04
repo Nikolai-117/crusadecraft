@@ -1,7 +1,9 @@
 package fr.crusadecraft.core.build;
 
 import fr.crusadecraft.CrusadeCraft;
+import fr.crusadecraft.compat.minecolonies.MineColoniesBridge;
 import fr.crusadecraft.config.CrusadeConfig;
+import fr.crusadecraft.core.ColonyRef;
 import fr.crusadecraft.core.council.CouncilActions.Outcome;
 import fr.crusadecraft.core.lineage.Community;
 import fr.crusadecraft.core.lineage.CommunityKind;
@@ -25,6 +27,7 @@ import net.minecraft.core.Direction;
 import net.minecraft.core.registries.Registries;
 import net.minecraft.network.chat.Component;
 import net.minecraft.resources.ResourceKey;
+import net.minecraft.resources.ResourceLocation;
 import net.minecraft.server.MinecraftServer;
 import net.minecraft.server.level.ServerLevel;
 import net.minecraft.server.level.ServerPlayer;
@@ -151,17 +154,39 @@ public final class SiteService {
                 displayName(site), cost));
     }
 
-    /** Le nom de la ville la plus proche (à moins de 600 blocs), sinon un nom de lieu nouveau. */
+    /**
+     * Le nom de la ville la plus proche (à moins de 600 blocs), sinon un nom de lieu nouveau. Les colonies des
+     * royaumes des joueurs comptent comme les villes IA : un fort posé à côté de Valbrume est celui de Valbrume.
+     */
     private static String nearestPlace(MinecraftServer server, ServerLevel level, BlockPos pos) {
         String best = null;
         double bestD = 600.0 * 600.0;
+        ResourceLocation dim = level.dimension().location();
         for (AiRealm r : data(server).world().realms()) {
             for (AiProvince p : r.provinces()) {
-                if (!p.dimension().equals(level.dimension().location())) continue;
+                if (!p.dimension().equals(dim)) continue;
                 double d = p.distanceSqr(pos.getX(), pos.getZ());
                 if (d < bestD) {
                     bestD = d;
                     best = p.name();
+                }
+            }
+        }
+        if (MineColoniesBridge.isReady()) {
+            for (Realm realm : data(server).realms()) {
+                List<ColonyRef> colonies = new java.util.ArrayList<>(realm.provinces());
+                if (!colonies.contains(realm.capital())) colonies.add(realm.capital());
+                for (ColonyRef ref : colonies) {
+                    if (!ref.dimension().equals(dim)) continue;
+                    Optional<BlockPos> center = MineColoniesBridge.center(ref);
+                    if (center.isEmpty()) continue;
+                    double dx = center.get().getX() - pos.getX(), dz = center.get().getZ() - pos.getZ();
+                    if (dx * dx + dz * dz < bestD) {
+                        String name = MineColoniesBridge.info(ref).name();
+                        if (name == null || name.isBlank()) continue;
+                        bestD = dx * dx + dz * dz;
+                        best = name;
+                    }
                 }
             }
         }

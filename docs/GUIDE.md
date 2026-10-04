@@ -1,4 +1,4 @@
-# CrusadeCraft 1.2.0 — installer et tester
+# CrusadeCraft 1.3.0 — installer et tester
 
 ## 1. Ce qu'il faut
 
@@ -17,9 +17,10 @@ Optionnels, déjà présents chez toi, donc activés automatiquement :
 
 ## 2. Installer
 
-1. Le fichier du mod est `E:\crusadecraft\build\libs\crusadecraft-1.2.0.jar`.
+1. Le fichier du mod est `E:\crusadecraft\build\libs\crusadecraft-1.3.0.jar`.
 2. Mets-le dans le dossier des mods de l'instance : `D:\MultiMC\instances\1.20.1\.minecraft\mods\`.
    Dans MultiMC, tu peux aussi faire clic droit sur l'instance → *Modifier* → *Mods* → *Ajouter un fichier*.
+   **Retire l'ancien** `crusadecraft-1.2.0.jar` : deux versions du mod ensemble empêchent le jeu de démarrer.
 3. Lance l'instance comme d'habitude.
 
 **Avant de jouer sur un monde qui compte, fais une sauvegarde de ce monde** (copie de son dossier dans
@@ -107,6 +108,32 @@ données du mod (fichier `crusadecraft.dat` du monde) restent sur place, sans ef
     nom, leur âge et leur métier ; **Arbre** remplit l'arbre généalogique de Comes Alive ; **Inscrire** ajoute au
     registre les villageois Comes Alive qui t'entourent.
 
+### Tracer ses frontières et construire (bâton de bornage)
+30. Fabrique le **Bâton de bornage** : deux bâtons, une ficelle et un colorant rouge, dans n'importe quel ordre.
+31. **Clic droit dans le vide** ouvre son menu, en trois colonnes :
+    - **Pour qui** : un royaume, la terre libre ou la gomme (la gomme seulement dans l'éditeur) ;
+    - **Tracer** : la façon de tracer ;
+    - **Construire** : la construction à poser.
+32. **Tracer** :
+    - **Polygone** : clic droit sur des blocs pour poser les coins, puis reclique près du premier ;
+    - **Rectangle** : deux coins opposés ;
+    - **En marchant** : chaque case où tu entres, le bâton en main, est peinte. Accroupi, elle redevient libre.
+
+    Le tracé s'affiche en poussière colorée avant d'être validé. **Ctrl+Z** annule le dernier tracé et rend l'or.
+33. **En survie**, on ne trace que pour son royaume, sur des cases libres, collées à ses terres et à moins de 256 blocs
+    d'une de ses places. Chaque case coûte 5 pièces d'or (réglable). Une case tenue par un autre royaume se prend à la
+    guerre, pas au bâton.
+34. **Construire** : choisis une construction, puis fais un clic droit sur le sol. L'entrée regarde vers toi.
+    - Les constructions possibles sont le jalon, la tour de guet, le camp, l'avant-poste et le fort, plus, dans
+      l'éditeur, le donjon et le village peuplé.
+    - Dans l'éditeur, elles se posent d'un coup ; en survie, elles s'élèvent bloc par bloc, payées d'avance.
+    - Achevée, une construction tient les terres alentour, avec une garnison. Un ennemi peut l'assiéger : il prend sa
+      bannière.
+    - Sur la carte du mod, clique sur une construction pour la donner ou la supprimer. Ses pierres restent dans le
+      monde.
+35. **Carte papier** : une carte vanilla, en main ou dans un cadre, montre les terres des royaumes et le nom des
+    capitales. Au survol, son infobulle dit à qui sont les terres en son centre.
+
 ## 4. Réglages
 
 Tout se règle dans `saves/<ton monde>/serverconfig/crusadecraft-server.toml`, à modifier monde fermé. Les
@@ -115,6 +142,7 @@ sections principales :
 - `fondation`, `personnages` et `conseil` ;
 - `economie` et `lois` ;
 - `monde` (royaumes IA, et `editeurCarte` : qui peut ouvrir l'éditeur de la carte) ;
+- `territoire` (bâton de bornage et constructions en survie, coût d'une case, distance, chantiers) ;
 - `diplomatie` ;
 - `guerre` (sièges, raids, anti-grief, rang Hostile entre joueurs, troupes Hundred Years War) ;
 - `ia` (fréquence des décisions, guerres entre IA et contre toi, répit après la fondation, coalitions) ;

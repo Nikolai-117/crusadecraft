@@ -226,6 +226,8 @@ public final class UiShots {
         list.add(new Shot("objets_diplomatie", () -> new ItemShowcaseScreen(List.of(new ItemStack(ModItems.COLOMBIER.get()),
                 new ItemStack(ModItems.CHANCERY.get()), new ItemStack(ModItems.SEAL.get()), new ItemStack(ModItems.LETTER.get()),
                 new ItemStack(ModItems.CLAIM_SCROLL.get()))), null));
+        list.add(new Shot("objets_territoire", () -> new ItemShowcaseScreen(List.of(new ItemStack(ModItems.BORNAGE.get()),
+                new ItemStack(ModItems.BOUNDARY_STONE.get()))), null));
         list.add(new Shot("notification", TitleScreen::new, () -> Minecraft.getInstance().getToasts().addToast(
                 new CrusadeToast(ToastPacket.Kind.REALM, Component.translatable("crusadecraft.toast.founded.title"),
                         Component.translatable("crusadecraft.toast.founded.body", view.name())))));
@@ -710,6 +712,8 @@ public final class UiShots {
         index++;
         if (index < shots.size()) {
             Shot shot = shots.get(index);
+            // Une notification de la prise précédente ne doit pas recouvrir celle-ci.
+            mc.getToasts().clear();
             mc.setScreen(shot.screen().get());
             if (shot.before() != null) shot.before().run();
             wait = SETTLE_TICKS;

@@ -1,0 +1,20 @@
+{
+  "name": "crusadecraft.codex.bornage",
+  "icon": "crusadecraft:baton_de_bornage",
+  "category": "crusadecraft:monde",
+  "sortnum": 5,
+  "pages": [
+    {
+      "type": "patchouli:text",
+      "text": "crusadecraft.codex.bornage.p0"
+    },
+    {
+      "type": "patchouli:text",
+      "text": "crusadecraft.codex.bornage.p1"
+    },
+    {
+      "type": "patchouli:text",
+      "text": "crusadecraft.codex.bornage.p2"
+    }
+  ]
+}

@@ -51,7 +51,7 @@ public final class WorldShots {
     private static final boolean ENABLED = Boolean.getBoolean("crusadecraft.worldshots");
     private static final String WORLD = "crusadecraft-shots";
 
-    private enum Step { BOOT, LOADING, SETUP, WALL, MAP, SHEET, HERALD, REALM, LETTER, SEAL, CHANCERY, COLOMBIER, TOWNHALL, TOWNHALL_CLICK, WAR, SIEGE, CAPTURE, CAPTURED, WAR_TABLE, RAID, EDITOR, EDITOR_REALM, EDITOR_PAINT, LINEAGE_OPEN, LINEAGE_HOUSE, LINEAGE_SPAWN, LINEAGE_SHOT, DONE }
+    private enum Step { BOOT, LOADING, SETUP, WALL, MAP, SHEET, HERALD, REALM, LETTER, SEAL, CHANCERY, COLOMBIER, TOWNHALL, TOWNHALL_CLICK, WAR, SIEGE, CAPTURE, CAPTURED, WAR_TABLE, RAID, EDITOR, EDITOR_REALM, EDITOR_PAINT, LINEAGE_OPEN, LINEAGE_HOUSE, LINEAGE_SPAWN, LINEAGE_SHOT, STAFF_MENU, STAFF_SHOT, FORT_SHOT, SITES_MAP, PAPER_SHOT, DONE }
 
     private static Step step = Step.BOOT;
     private static int wait;
@@ -302,6 +302,49 @@ public final class WorldShots {
                         fr.crusadecraft.compat.mca.McaBridge.TAG)).size();
                 CrusadeCraft.LOGGER.info("WorldShots : {} personne(s) incarnée(s), {} villageois Comes Alive marqués autour du joueur", incarnated, tagged);
                 grab(mc, "famille_comes_alive");
+                // Le bâton de bornage (P14) : en main, au nom du royaume du joueur.
+                server.execute(() -> giveStaff(server));
+                step = Step.STAFF_MENU;
+                wait = 30;
+            }
+            case STAFF_MENU -> {
+                // La case tenue est choisie par le client : le bâton est posé dans la première.
+                mc.player.getInventory().selected = 0;
+                CrusadeCraft.LOGGER.info("WorldShots : bâton en main {}",
+                        fr.crusadecraft.item.BornageStaffItem.held(mc.player).isPresent() ? "oui" : "non");
+                mc.setScreen(new fr.crusadecraft.client.screen.StaffScreen());
+                step = Step.STAFF_SHOT;
+                wait = 30;
+            }
+            case STAFF_SHOT -> {
+                grab(mc, "baton_de_bornage");
+                mc.setScreen(null);
+                MinecraftServer server = mc.getSingleplayerServer();
+                server.execute(() -> buildFort(server));
+                step = Step.FORT_SHOT;
+                wait = 120;
+            }
+            case FORT_SHOT -> {
+                var data = fr.crusadecraft.data.CrusadeSavedData.get(mc.getSingleplayerServer());
+                var fort = data.world().sites().stream().filter(x -> x.kind() == fr.crusadecraft.core.build.SiteKind.FORT).findFirst();
+                CrusadeCraft.LOGGER.info("WorldShots : fort {} ({} %)", fort.isPresent() ? "posé" : "absent",
+                        fort.map(fr.crusadecraft.core.build.SiteService::percent).orElse(0));
+                grab(mc, "fort");
+                fort.ifPresent(f -> fr.crusadecraft.client.screen.MapScreen.centerNextOn(f.anchor().getX(), f.anchor().getZ() - 60, 3));
+                CrusadeNetwork.toServer(new WorldPackets.RequestMap(true));
+                step = Step.SITES_MAP;
+                wait = 40;
+            }
+            case SITES_MAP -> {
+                grab(mc, "carte_constructions");
+                mc.setScreen(null);
+                MinecraftServer server = mc.getSingleplayerServer();
+                server.execute(() -> givePaperMap(server));
+                step = Step.PAPER_SHOT;
+                wait = 120;
+            }
+            case PAPER_SHOT -> {
+                grab(mc, "carte_papier");
                 step = Step.DONE;
                 wait = 20;
             }
@@ -449,6 +492,47 @@ public final class WorldShots {
         player.connection.teleport(center.getX() + 0.5, center.getY() + 1, center.getZ() + 4.5, 180f, 0f);
         long interval = fr.crusadecraft.config.CrusadeConfig.SERVER.raidMinutes.get() * 1200L;
         data.wars().between(realm.id(), enemy).ifPresent(w -> w.setLastRaidTick(player.serverLevel().getGameTime() - interval - 1));
+    }
+
+    private static BlockPos fortGround;
+
+    /** Le bâton dans la main du joueur, réglé sur son royaume, sur un terrain dégagé au sud de la capitale. */
+    private static void giveStaff(MinecraftServer server) {
+        ServerPlayer player = server.getPlayerList().getPlayers().get(0);
+        ServerLevel level = player.serverLevel();
+        var realm = fr.crusadecraft.core.realm.RealmService.realmOf(server, player.getUUID()).orElseThrow();
+        var staff = new net.minecraft.world.item.ItemStack(fr.crusadecraft.registry.ModItems.BORNAGE.get());
+        fr.crusadecraft.item.BornageStaffItem.setOwner(staff, realm.id(), realm.color(), realm.name());
+        player.getInventory().selected = 0;
+        player.getInventory().setItem(0, staff);
+        BlockPos center = fr.crusadecraft.compat.minecolonies.MineColoniesBridge.center(realm.capital()).orElse(player.blockPosition());
+        fortGround = level.getHeightmapPos(net.minecraft.world.level.levelgen.Heightmap.Types.MOTION_BLOCKING_NO_LEAVES, center.south(80)).below();
+        player.connection.teleport(fortGround.getX() + 0.5, fortGround.getY() + 1, fortGround.getZ() + 40.5, 180f, 0f);
+    }
+
+    /** Un fort du royaume du joueur, posé d'un coup comme dans l'éditeur ; le joueur le regarde d'un peu plus haut. */
+    private static void buildFort(MinecraftServer server) {
+        ServerPlayer player = server.getPlayerList().getPlayers().get(0);
+        var realm = fr.crusadecraft.core.realm.RealmService.realmOf(server, player.getUUID()).orElseThrow();
+        var out = fr.crusadecraft.core.build.SiteService.place(player, fr.crusadecraft.core.build.SiteKind.FORT, realm.id(), fortGround,
+                Direction.SOUTH, true);
+        CrusadeCraft.LOGGER.info("WorldShots : construction du fort — {}", out.message().getString());
+        player.getAbilities().flying = true;
+        player.onUpdateAbilities();
+        player.connection.teleport(fortGround.getX() + 0.5, fortGround.getY() + 16, fortGround.getZ() + 38.5, 180f, 22f);
+    }
+
+    /** Une carte papier remplie, tenue à deux mains, regardée de près : les terres du royaume par-dessus. */
+    private static void givePaperMap(MinecraftServer server) {
+        ServerPlayer player = server.getPlayerList().getPlayers().get(0);
+        ServerLevel level = player.serverLevel();
+        var map = net.minecraft.world.item.MapItem.create(level, fortGround.getX(), fortGround.getZ() - 80, (byte) 2, true, false);
+        net.minecraft.world.item.MapItem.renderBiomePreviewMap(level, map);
+        player.getInventory().setItem(0, map);
+        player.getInventory().selected = 0;
+        player.getAbilities().flying = false;
+        player.onUpdateAbilities();
+        player.connection.teleport(fortGround.getX() + 0.5, fortGround.getY() + 1, fortGround.getZ() + 40.5, 180f, 60f);
     }
 
     private static void grab(Minecraft mc, String name) {

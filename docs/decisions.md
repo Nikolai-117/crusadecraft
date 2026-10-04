@@ -451,3 +451,36 @@ générations, relations et communautés, en s'appuyant sur Comes Alive (MCA Reb
   réglages changés par les tests pouvaient revenir un instant en arrière, d'où des échecs au hasard). Comes Alive et
   Architectury sont chargés en développement (sauf `-Pwith_mca=false`) ; son écran « Qui es-tu ? » est coupé dans le
   monde jetable des captures.
+
+**P14 (4 octobre 2026) — le bâton de bornage, les constructions, la carte papier**
+
+Demandé par Romain : tracer ses frontières sur le terrain, poser avant-postes et constructions (y compris les villes
+des IA), voir les terres sur les cartes papier vanilla ; plus tard le commerce. Validé tel que proposé.
+
+- **Un seul territoire** (`Territory`) : les cases peintes de l'éditeur, les cercles des constructions achevées et
+  ceux des postes de garde MineColonies (tour de garde, caserne, tour de caserne) répondent à la même question,
+  « à qui est ce bloc ? ». Une case peinte l'emporte ; sinon le cercle le plus proche. La guerre, les messages
+  d'entrée, la carte et la carte papier lisent tous cette réponse.
+- **Le bâton de bornage** : polygone, rectangle, en marchant, construire. Aperçu en poussière colorée, annulation
+  (Ctrl+Z, dix tracés, l'or rendu), plafond de cases par tracé. Dans l'éditeur, tout est permis ; en survie
+  (`territoire.bornageSurvie`), on ne trace que pour son royaume, sur des cases libres, contiguës à ses terres et
+  à moins de 256 blocs d'une de ses places, à 5 pièces d'or la case (réglable).
+- **Les constructions sont des plans écrits en code**, pas des fichiers de structure : jalon, tour de guet, camp,
+  avant-poste, fort, donjon, village. Tournées selon le regard, aux couleurs du royaume (bannières, laine, lits).
+  Instantanées dans l'éditeur (1 200 blocs par tick au plus), en chantier ailleurs (6 blocs toutes les 2 s). Un
+  chantier ne tient aucune terre ; achevée, la construction tient un cercle et peut être prise en siège (sa
+  bannière, comme une capitale). Le donjon déplace le siège de la province la plus proche ; le village crée une
+  ville et la peuple (avec Comes Alive). Supprimer une construction la retire du registre : ses pierres restent.
+- **Doublon de nom évité** : la construction la plus simple s'appelait « Borne », comme la Borne de frontière (le
+  bloc qui annexe une colonie). Elle s'appelle désormais « Jalon ».
+- **La carte papier** : le paquet vanilla d'une carte n'en donne pas le centre ; le serveur l'envoie, une fois par
+  carte et par session, pour les cartes en main et dans les cadres proches. Le client peint frontières et noms
+  par-dessus (mixin sur `MapRenderer.render`, côté client seulement). Les icônes vanilla sont une liste fermée :
+  elles n'ont pas été touchées.
+- **Sauvegarde** : les constructions s'ajoutent sans changer de version (absentes, la liste est vide). Une
+  sauvegarde 1.2 se lit sans rien perdre.
+- **Banc d'essai** : MineColonies vérifie qu'un chunk est chargé en lisant une table que le serveur ne met à jour
+  qu'en fin de tick ; une colonie créée dans un chunk tout juste chargé n'avait pas d'Hôtel de ville. Tous les tests
+  à colonie attendent désormais deux ticks avant de commencer.
+- **Corrigé au passage** : une règle `.gitignore` (`build/`) ignorait aussi `src/.../core/build/` ; elle ne vise
+  plus que le dossier de construction à la racine.
