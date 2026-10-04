@@ -120,6 +120,8 @@ public final class ServerEvents {
         if (t % 10 == 4) fr.crusadecraft.core.world.TerritoryService.walkTick(server);
         if (t % 40 == 12) fr.crusadecraft.core.world.PaperMapService.tick(server);
         fr.crusadecraft.core.build.SiteService.tick(server, t);
+        // Les lieux suivent le monde (une ville renommée, un royaume disparu) : toutes les vingt secondes suffisent.
+        if (t % 400 == 200) fr.crusadecraft.core.place.PlaceService.sync(server);
     }
 
     /** Les golems d'un village assiégé ne s'en prennent pas à sa garnison. */

@@ -82,7 +82,7 @@ public final class TerritoryService {
     public static void onStaffUse(ServerPlayer player, ItemStack stack, BlockPos pos, Direction face, boolean sneaking) {
         BornageStaffItem.Mode mode = BornageStaffItem.mode(stack);
         long cell = TerritoryMap.key(TerritoryMap.cellOf(pos.getX()), TerritoryMap.cellOf(pos.getZ()));
-        if (sneaking && mode != BornageStaffItem.Mode.CONSTRUIRE) {
+        if (sneaking && mode != BornageStaffItem.Mode.CONSTRUIRE && mode != BornageStaffItem.Mode.LIEU) {
             // Accroupi : cette case redevient terre libre.
             say(player, apply(player, null, BornageStaffItem.NEUTRAL, new long[]{cell}, false));
             return;
@@ -102,6 +102,9 @@ public final class TerritoryService {
             }
             case MARCHE -> say(player, paintTarget(player, stack, new long[]{cell}, true));
             case CONSTRUIRE -> say(player, SiteService.placeFromStaff(player, stack, pos, player.getDirection()));
+            // Un lieu saint, une ruine, une région : on le nomme dans un formulaire, puis le serveur le pose ici.
+            case LIEU -> fr.crusadecraft.network.CrusadeNetwork.toPlayer(player,
+                    new fr.crusadecraft.network.packet.LieuPackets.OpenForm(BornageStaffItem.lieu(stack).ordinal(), pos.above()));
         }
     }
 

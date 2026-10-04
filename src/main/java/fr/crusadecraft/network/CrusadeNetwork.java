@@ -33,7 +33,7 @@ import net.minecraftforge.network.simple.SimpleChannel;
  * (distance, droits, état) avant d'agir.
  */
 public final class CrusadeNetwork {
-    private static final String VERSION = "11";
+    private static final String VERSION = "12";
 
     public static final SimpleChannel CHANNEL = NetworkRegistry.newSimpleChannel(
             ResourceLocation.tryParse(CrusadeCraft.MOD_ID + ":main"),
@@ -208,6 +208,19 @@ public final class CrusadeNetwork {
         CHANNEL.messageBuilder(LineagePackets.Action.class, nextId++, NetworkDirection.PLAY_TO_SERVER)
                 .encoder(LineagePackets.Action::encode).decoder(LineagePackets.Action::decode)
                 .consumerMainThread(LineagePackets.Action::handle).add();
+        // P15 : les lieux.
+        CHANNEL.messageBuilder(fr.crusadecraft.network.packet.LieuPackets.Open.class, nextId++, NetworkDirection.PLAY_TO_CLIENT)
+                .encoder(fr.crusadecraft.network.packet.LieuPackets.Open::encode).decoder(fr.crusadecraft.network.packet.LieuPackets.Open::decode)
+                .consumerMainThread(fr.crusadecraft.network.packet.LieuPackets.Open::handle).add();
+        CHANNEL.messageBuilder(fr.crusadecraft.network.packet.LieuPackets.OpenForm.class, nextId++, NetworkDirection.PLAY_TO_CLIENT)
+                .encoder(fr.crusadecraft.network.packet.LieuPackets.OpenForm::encode).decoder(fr.crusadecraft.network.packet.LieuPackets.OpenForm::decode)
+                .consumerMainThread(fr.crusadecraft.network.packet.LieuPackets.OpenForm::handle).add();
+        CHANNEL.messageBuilder(fr.crusadecraft.network.packet.LieuPackets.Request.class, nextId++, NetworkDirection.PLAY_TO_SERVER)
+                .encoder(fr.crusadecraft.network.packet.LieuPackets.Request::encode).decoder(fr.crusadecraft.network.packet.LieuPackets.Request::decode)
+                .consumerMainThread(fr.crusadecraft.network.packet.LieuPackets.Request::handle).add();
+        CHANNEL.messageBuilder(fr.crusadecraft.network.packet.LieuPackets.Action.class, nextId++, NetworkDirection.PLAY_TO_SERVER)
+                .encoder(fr.crusadecraft.network.packet.LieuPackets.Action::encode).decoder(fr.crusadecraft.network.packet.LieuPackets.Action::decode)
+                .consumerMainThread(fr.crusadecraft.network.packet.LieuPackets.Action::handle).add();
         // P12 : éditeur de la carte
         CHANNEL.messageBuilder(MapEditPackets.CreateRealm.class, nextId++, NetworkDirection.PLAY_TO_SERVER)
                 .encoder(MapEditPackets.CreateRealm::encode).decoder(MapEditPackets.CreateRealm::decode)

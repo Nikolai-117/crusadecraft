@@ -21,7 +21,13 @@ import java.util.UUID;
  */
 public record MapView(ResourceLocation dimension, int focusX, int focusZ, int playerX, int playerZ, int territoryRadius,
                       int colonyRadius, List<Territory> territories, List<Seat> seats, List<Dejure> dejure,
-                      boolean canEdit, boolean editing, Borders borders) {
+                      boolean canEdit, boolean editing, Borders borders, List<Place> places) {
+
+    public MapView(ResourceLocation dimension, int focusX, int focusZ, int playerX, int playerZ, int territoryRadius,
+                   int colonyRadius, List<Territory> territories, List<Seat> seats, List<Dejure> dejure,
+                   boolean canEdit, boolean editing, Borders borders) {
+        this(dimension, focusX, focusZ, playerX, playerZ, territoryRadius, colonyRadius, territories, seats, dejure, canEdit, editing, borders, List.of());
+    }
 
     public MapView(ResourceLocation dimension, int focusX, int focusZ, int playerX, int playerZ, int territoryRadius,
                    int colonyRadius, List<Territory> territories, List<Seat> seats, List<Dejure> dejure) {
@@ -70,6 +76,12 @@ public record MapView(ResourceLocation dimension, int focusX, int focusZ, int pl
     }
 
     public record Dejure(String place, int color) {}
+
+    /**
+     * Un lieu posé à la main (P15) : un lieu saint, une ruine, une région (avec son rayon), ou ce qui reste d'un lieu
+     * disparu. Les villes et les constructions sont déjà des sièges.
+     */
+    public record Place(UUID id, int kind, net.minecraft.network.chat.Component name, int x, int z, int radius, int color) {}
 
     /**
      * Les cases peintes : la clé de chaque case (voir {@link TerritoryMap#key}) et l'indice de son royaume dans
@@ -143,6 +155,16 @@ public record MapView(ResourceLocation dimension, int focusX, int focusZ, int pl
             buf.writeLong(borders.keys()[i]);
             buf.writeVarInt(borders.owners()[i] + 1);
         }
+        buf.writeVarInt(places.size());
+        for (Place p : places) {
+            buf.writeUUID(p.id());
+            buf.writeVarInt(p.kind());
+            buf.writeComponent(p.name());
+            buf.writeVarInt(p.x());
+            buf.writeVarInt(p.z());
+            buf.writeVarInt(p.radius());
+            buf.writeInt(p.color());
+        }
     }
 
     public static MapView read(FriendlyByteBuf buf) {
@@ -192,6 +214,11 @@ public record MapView(ResourceLocation dimension, int focusX, int focusZ, int pl
             keys[i] = buf.readLong();
             owners[i] = buf.readVarInt() - 1;
         }
-        return new MapView(dim, fx, fz, px, pz, radius, colonyRadius, territories, seats, dejure, canEdit, editing, new Borders(keys, owners));
+        n = buf.readVarInt();
+        List<Place> places = new ArrayList<>(n);
+        for (int i = 0; i < n; i++) {
+            places.add(new Place(buf.readUUID(), buf.readVarInt(), buf.readComponent(), buf.readVarInt(), buf.readVarInt(), buf.readVarInt(), buf.readInt()));
+        }
+        return new MapView(dim, fx, fz, px, pz, radius, colonyRadius, territories, seats, dejure, canEdit, editing, new Borders(keys, owners), places);
     }
 }

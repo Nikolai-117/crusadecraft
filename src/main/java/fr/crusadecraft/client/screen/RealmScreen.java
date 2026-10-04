@@ -161,6 +161,13 @@ public class RealmScreen extends Screen {
             // Dans l'en-tête, à côté des événements : en bas de l'onglet, il recouvrait les ressources du souverain.
             house.setTooltip(Tooltip.create(Component.translatable("crusadecraft.house.open.tip")));
             addRenderableWidget(house);
+            Button lieux = Button.builder(Component.translatable("crusadecraft.lieu.open"), b -> {
+                if (minecraft != null && minecraft.getConnection() != null) {
+                    CrusadeNetwork.toServer(fr.crusadecraft.network.packet.LieuPackets.Request.of(null));
+                }
+            }).bounds(house.getX() - 2 - 58, top + 34, 58, 16).build();
+            lieux.setTooltip(Tooltip.create(Component.translatable("crusadecraft.lieu.open.tip")));
+            addRenderableWidget(lieux);
         }
         if (tab == Tab.CONSEIL) {
             Button intrigues = Button.builder(Component.translatable("crusadecraft.intrigue.open"), b -> {

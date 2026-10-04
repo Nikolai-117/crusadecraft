@@ -191,6 +191,13 @@ public class MapScreen extends Screen {
             addRenderableWidget(edit);
         }
         if (editing()) initEditor();
+        else {
+            Button lieux = Button.builder(Component.translatable("crusadecraft.lieu.open"),
+                    b -> CrusadeNetwork.toServer(fr.crusadecraft.network.packet.LieuPackets.Request.of(null)))
+                    .bounds(mapX + mapW - 56, top + h - 21, 56, 16).build();
+            lieux.setTooltip(Tooltip.create(Component.translatable("crusadecraft.lieu.open.tip")));
+            addRenderableWidget(lieux);
+        }
         dirty = true;
     }
 
@@ -245,7 +252,7 @@ public class MapScreen extends Screen {
     /** Hauteur du panneau : l'en-tête, les retouches de la ville (ou le mot sur la colonie), puis le royaume. */
     private int panelHeight() {
         int i = selectedIndex();
-        if (i < 0) return Math.min(90, mapH - 8);
+        if (i < 0) return Math.min(108, mapH - 8);
         return Math.min(panelRealmTop(view.seats().get(i)) + 14 + 3 * 16 + 4, mapH - 8);
     }
 
@@ -285,6 +292,10 @@ public class MapScreen extends Screen {
                     b -> CrusadeNetwork.toServer(new fr.crusadecraft.network.packet.LineagePackets.Request(null, null))).bounds(px, y + 17, bw, 15).build();
             lineages.setTooltip(Tooltip.create(Component.translatable("crusadecraft.lineage.open.tip")));
             addRenderableWidget(lineages);
+            Button lieux = Button.builder(Component.translatable("crusadecraft.lieu.open"),
+                    b -> CrusadeNetwork.toServer(fr.crusadecraft.network.packet.LieuPackets.Request.of(null))).bounds(px, y + 34, bw, 15).build();
+            lieux.setTooltip(Tooltip.create(Component.translatable("crusadecraft.lieu.open.tip")));
+            addRenderableWidget(lieux);
             return;
         }
         MapView.Seat s = view.seats().get(seatIndex);
@@ -349,6 +360,21 @@ public class MapScreen extends Screen {
         int ownerIndex = s.provinceId() >= 0 && s.origin() >= 0 && s.origin() < view.territories().size() ? s.origin() : s.territory();
         MapView.Territory owner = view.territories().get(ownerIndex);
         y = realmY;
+        // La fiche du lieu choisi : la construction, la ville, ou (pour une colonie) le royaume du joueur.
+        fr.crusadecraft.network.packet.LieuPackets.Request sheet = s.site() != null && s.site().id() != null
+                ? new fr.crusadecraft.network.packet.LieuPackets.Request(null, fr.crusadecraft.core.place.Lieu.RefType.SITE.ordinal(), s.site().id(), 0)
+                : s.provinceId() >= 0
+                ? new fr.crusadecraft.network.packet.LieuPackets.Request(null, fr.crusadecraft.core.place.Lieu.RefType.AI_PROVINCE.ordinal(), null, s.provinceId())
+                : new fr.crusadecraft.network.packet.LieuPackets.Request(null, fr.crusadecraft.core.place.Lieu.RefType.PLAYER_REALM.ordinal(),
+                view.territories().get(s.territory()).id(), 0);
+        Button sheetButton = Button.builder(Component.translatable("crusadecraft.lieu.sheet"), b -> CrusadeNetwork.toServer(sheet)).build();
+        sheetButton.setTooltip(Tooltip.create(Component.translatable("crusadecraft.lieu.sheet.tip")));
+        if (!owner.ai()) {
+            sheetButton.setPosition(px, y);
+            sheetButton.setWidth(bw);
+            sheetButton.setHeight(15);
+            addRenderableWidget(sheetButton);
+        }
         if (owner.ai()) {
             addRenderableWidget(Button.builder(Component.translatable("crusadecraft.mapedit.realm.edit"), b ->
                     minecraft.setScreen(MapEditForm.editRealm(this, owner))).bounds(px, y, bw, 15).build());
@@ -362,9 +388,13 @@ public class MapScreen extends Screen {
             }).bounds(px, y, bw, 15).build());
             y += 16;
             Button lineage = Button.builder(Component.translatable("crusadecraft.lineage.of_realm"),
-                    b -> CrusadeNetwork.toServer(new fr.crusadecraft.network.packet.LineagePackets.Request(null, owner.id()))).bounds(px, y, bw, 15).build();
+                    b -> CrusadeNetwork.toServer(new fr.crusadecraft.network.packet.LineagePackets.Request(null, owner.id()))).bounds(px, y, bw / 2 - 1, 15).build();
             lineage.setTooltip(Tooltip.create(Component.translatable("crusadecraft.lineage.of_realm.tip")));
             addRenderableWidget(lineage);
+            sheetButton.setPosition(px + bw / 2 + 1, y);
+            sheetButton.setWidth(bw / 2 - 1);
+            sheetButton.setHeight(15);
+            addRenderableWidget(sheetButton);
         }
     }
 
@@ -444,6 +474,7 @@ public class MapScreen extends Screen {
         g.renderOutline(mapX - 1, mapY - 1, mapW + 2, mapH + 2, Ui.GOLD_DARK);
 
         g.enableScissor(mapX, mapY, mapX + mapW, mapY + mapH);
+        renderPlaces(g);
         renderSeats(g);
         renderPlayer(g);
         if (editing()) renderBrush(g, mouseX, mouseY);
@@ -458,11 +489,13 @@ public class MapScreen extends Screen {
         Component hint = status != null && Util.getMillis() < statusUntil ? status : editing() ? editHint() : Component.translatable("crusadecraft.map.hint");
         int hintColor = status != null && Util.getMillis() < statusUntil ? (statusOk ? 0xFF9FD07A : 0xFFE0796E) : Ui.TEXT_MUTED;
         // Le mode d'emploi à droite, réduit s'il le faut, jamais par-dessus l'échelle.
-        int room = mapW - font.width(foot) - 16;
+        // Hors de l'éditeur, le bouton « Lieux » tient le coin droit du pied.
+        int reserved = editing() ? 0 : 60;
+        int room = mapW - font.width(foot) - 16 - reserved;
         float k = Math.min(1f, room / (float) Math.max(1, font.width(hint)));
         if (k >= 0.55f) {
             int hw = Math.round(font.width(hint) * k);
-            Ui.scaled(g, font, hint, mapX + mapW - hw, footY + Math.round((1 - k) * 4), k, hintColor, false);
+            Ui.scaled(g, font, hint, mapX + mapW - reserved - hw, footY + Math.round((1 - k) * 4), k, hintColor, false);
         }
         if (!editing() && view.territories().stream().noneMatch(t -> t.ai())) {
             Ui.wrappedCentered(g, font, Component.translatable("crusadecraft.map.nothing_known"), mapX + mapW / 2, mapY + 8, mapW - 40, INK);
@@ -575,6 +608,43 @@ public class MapScreen extends Screen {
                 g.pose().popPose();
             }
         }
+    }
+
+    /** Les lieux posés à la main (P15) : un lieu saint, une ruine, une région et son cercle pointillé. */
+    private void renderPlaces(GuiGraphics g) {
+        for (MapView.Place p : view.places()) {
+            int x = screenX(p.x()), y = screenY(p.z());
+            int r = p.radius() > 0 ? (int) Math.round(p.radius() / scale) : 0;
+            if (x + r < mapX - 40 || x - r > mapX + mapW + 40 || y + r < mapY - 20 || y - r > mapY + mapH + 20) continue;
+            int color = 0xFF000000 | p.color();
+            if (r > 3) {
+                int steps = Math.max(16, Math.min(240, r));
+                for (int i = 0; i < steps; i += 2) {
+                    double a = i * Math.PI * 2 / steps;
+                    int cx = x + (int) Math.round(Math.cos(a) * r), cy = y + (int) Math.round(Math.sin(a) * r);
+                    g.fill(cx, cy, cx + 1, cy + 1, 0xC0000000 | (INK & 0xFFFFFF));
+                }
+            }
+            String icon = String.valueOf(fr.crusadecraft.core.place.LieuKind.byOrdinal(p.kind()).icon());
+            int iw = font.width(icon);
+            g.drawString(font, icon, x - iw / 2 + 1, y - 3, INK, false);
+            g.drawString(font, icon, x - iw / 2, y - 4, color, false);
+            if (scale <= 8 || r > 20) label(g, p.name(), x, y, 0.65f);
+        }
+    }
+
+    /** Le lieu posé à la main sous la souris, à six points près. */
+    private MapView.Place placeNear(double mouseX, double mouseY) {
+        MapView.Place best = null;
+        double bestD = 36;
+        for (MapView.Place p : view.places()) {
+            double d = Math.pow(screenX(p.x()) - mouseX, 2) + Math.pow(screenY(p.z()) - mouseY, 2);
+            if (d < bestD) {
+                bestD = d;
+                best = p;
+            }
+        }
+        return best;
     }
 
     private void label(GuiGraphics g, Component name, int x, int y, float k) {
@@ -757,6 +827,14 @@ public class MapScreen extends Screen {
 
     private void clickMap(double mouseX, double mouseY) {
         int x = (int) Math.round(worldX(mouseX)), z = (int) Math.round(worldZ(mouseY));
+        // Un lieu posé à la main : sa fiche.
+        if (!editing() || tool == Tool.CHOOSE) {
+            MapView.Place place = placeNear(mouseX, mouseY);
+            if (place != null) {
+                CrusadeNetwork.toServer(fr.crusadecraft.network.packet.LieuPackets.Request.of(place.id()));
+                return;
+            }
+        }
         if (!editing()) {
             int owner = raster.ownerAt((int) mouseX - mapX, (int) mouseY - mapY);
             if (owner >= 0 && owner < view.seats().size()) {

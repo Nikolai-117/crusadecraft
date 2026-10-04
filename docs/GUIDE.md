@@ -1,4 +1,4 @@
-# CrusadeCraft 1.3.0 — installer et tester
+# CrusadeCraft 1.4.0 — installer et tester
 
 ## 1. Ce qu'il faut
 
@@ -17,15 +17,20 @@ Optionnels, déjà présents chez toi, donc activés automatiquement :
 
 ## 2. Installer
 
-1. Le fichier du mod est `E:\crusadecraft\build\libs\crusadecraft-1.3.0.jar`.
+1. Le fichier du mod est `E:\crusadecraft\build\libs\crusadecraft-1.4.0.jar`.
 2. Mets-le dans le dossier des mods de l'instance : `D:\MultiMC\instances\1.20.1\.minecraft\mods\`.
    Dans MultiMC, tu peux aussi faire clic droit sur l'instance → *Modifier* → *Mods* → *Ajouter un fichier*.
-   **Retire l'ancien** `crusadecraft-1.2.0.jar` : deux versions du mod ensemble empêchent le jeu de démarrer.
+   **Retire l'ancien** (`crusadecraft-1.3.0.jar`, ou une version plus vieille) : deux versions du mod ensemble
+   empêchent le jeu de démarrer.
 3. Lance l'instance comme d'habitude.
 
 **Avant de jouer sur un monde qui compte, fais une sauvegarde de ce monde** (copie de son dossier dans
 `D:\MultiMC\instances\1.20.1\.minecraft\saves\`). Le plus simple pour un premier essai : **un nouveau monde de
 test**.
+
+**Tes données sont copiées avant chaque mise à jour.** Quand une nouvelle version du mod change le format de ses
+données, elle en garde d'abord une copie datée dans `saves/<ton monde>/data/crusadecraft_backups/`. Pour revenir en
+arrière : remets l'ancien jar et recopie ce fichier à la place de `data/crusadecraft.dat` (monde fermé).
 
 **Pour désinstaller**, il suffit de retirer le jar. CrusadeCraft ne modifie jamais MineColonies : tes colonies
 restent exactement comme avant. Seuls les blocs du mod (trône, tables, coffre…) disparaissent du monde. Les
@@ -134,6 +139,22 @@ données du mod (fichier `crusadecraft.dat` du monde) restent sur place, sans ef
 35. **Carte papier** : une carte vanilla, en main ou dans un cadre, montre les terres des royaumes et le nom des
     capitales. Au survol, son infobulle dit à qui sont les terres en son centre.
 
+### Les lieux : ranger le monde et écrire ses fiches
+36. Le bouton **« Lieux »** (menu royal, onglet *Royaume* ; ou au pied de la carte) ouvre l'arbre de tous les lieux :
+    les royaumes sous leurs suzerains, les villes sous leurs royaumes, les forts sous leurs villes. En haut, la ligne
+    « Vous êtes : » dit où tu te tiens.
+37. Clique sur un lieu : sa **fiche** s'affiche (qui le tient, de quoi il relève, sa population, sa position).
+    **Écrire** ouvre la fiche à rédiger : son histoire, ce qu'on y trouve. Le mod n'y écrit jamais rien. Tu peux écrire
+    la fiche des lieux de ton royaume ; l'hôte, celle de tous.
+38. **Poser un lieu saint, une ruine ou une région** : bâton de bornage, colonne *Poser un lieu*, puis clic droit sur le
+    sol et un nom. En survie, seulement sur tes terres. Ces lieux apparaissent sur la carte du mod (une région avec son
+    cercle) ; un clic dessus ouvre leur fiche.
+39. **L'hôte** peut aussi poser des **titres** qui regroupent d'autres lieux (« + Nouveau lieu », genre *Empire*,
+    *Royaume*… ; on tape seulement « Lothaire » pour « Empire de Lothaire »), puis **Rattacher** chaque lieu où il veut.
+    « Rendre au monde » le remet sous le parent que le monde lui donne.
+40. Une ville ou une construction effacée **garde sa fiche** si tu en avais écrit une : elle reste dans la liste,
+    « disparue du monde », jusqu'à ce que tu la supprimes.
+
 ## 4. Réglages
 
 Tout se règle dans `saves/<ton monde>/serverconfig/crusadecraft-server.toml`, à modifier monde fermé. Les
@@ -159,6 +180,8 @@ Chaque système peut être coupé.
 | `/crusade liste` | Les royaumes du monde |
 | `/crusade info [joueur]` | Le détail d'un royaume |
 | `/crusade colonie` | La colonie sous tes pieds et son royaume |
+| `/crusade lieux` | Ouvre l'écran des lieux |
+| `/crusade ici` | Où tu te tiens : place proche, région, royaume et suzerains |
 | `/crusade reconcilier` | Revérifie l'état des royaumes |
 | `/crusade monde info` | Le monde IA |
 | `/crusade monde generer` | Régénère les royaumes IA autour de toi |

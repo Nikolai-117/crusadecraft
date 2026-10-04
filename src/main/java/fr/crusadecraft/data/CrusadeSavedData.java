@@ -29,7 +29,7 @@ import java.util.UUID;
  */
 public final class CrusadeSavedData extends AtomicSavedData {
     public static final String FILE_NAME = CrusadeCraft.MOD_ID;
-    public static final int DATA_VERSION = 12;
+    public static final int DATA_VERSION = 13;
 
     private final Map<UUID, Realm> realms = new LinkedHashMap<>();
     private final Map<CitizenRef, CharacterRecord> characters = new LinkedHashMap<>();
@@ -41,13 +41,32 @@ public final class CrusadeSavedData extends AtomicSavedData {
     private fr.crusadecraft.core.war.WarState wars = new fr.crusadecraft.core.war.WarState();
     /** Le registre des lignées : personnes, maisons, communautés (P13). */
     private fr.crusadecraft.core.lineage.LineageState lineage = new fr.crusadecraft.core.lineage.LineageState();
+    /** Les lieux : titres et places, leur hiérarchie et leurs fiches (P15). */
+    private fr.crusadecraft.core.place.PlaceState places = new fr.crusadecraft.core.place.PlaceState();
 
     public static CrusadeSavedData get(MinecraftServer server) {
         return server.getLevel(Level.OVERWORLD).getDataStorage()
-                .computeIfAbsent(CrusadeSavedData::load, CrusadeSavedData::new, FILE_NAME);
+                .computeIfAbsent(tag -> load(server, tag), CrusadeSavedData::new, FILE_NAME);
     }
 
-    private static CrusadeSavedData load(CompoundTag tag) {
+    /** Avant qu'une autre version du mod ne touche aux données, une copie datée du fichier tel qu'il est. */
+    private static CrusadeSavedData load(MinecraftServer server, CompoundTag tag) {
+        int version = tag.contains("version") ? tag.getInt("version") : DATA_VERSION;
+        if (version != DATA_VERSION) {
+            java.nio.file.Path file = server.getWorldPath(net.minecraft.world.level.storage.LevelResource.ROOT)
+                    .resolve("data").resolve(FILE_NAME + ".dat");
+            try {
+                SaveBackups.backup(file, version, version > DATA_VERSION, java.time.LocalDateTime.now()).ifPresent(copy ->
+                        CrusadeCraft.LOGGER.info("CrusadeCraft : copie de secours des données en version {} : {}", version, copy));
+            } catch (java.io.IOException | RuntimeException e) {
+                CrusadeCraft.LOGGER.error("CrusadeCraft : copie de secours impossible avant la mise à niveau ; il ne reste que le .bak", e);
+            }
+        }
+        return load(tag);
+    }
+
+    /** Lit des données, quelle que soit leur version (public pour les tests de non-régression des sauvegardes). */
+    public static CrusadeSavedData load(CompoundTag tag) {
         CompoundTag migrated = DataMigrations.migrate(tag);
         CrusadeSavedData data = new CrusadeSavedData();
         ListTag list = migrated.getList("realms", Tag.TAG_COMPOUND);
@@ -78,6 +97,7 @@ public final class CrusadeSavedData extends AtomicSavedData {
         data.diplomacy = fr.crusadecraft.core.diplomacy.Diplomacy.load(migrated, "diplomacy");
         data.wars = fr.crusadecraft.core.war.WarState.load(migrated.getCompound("wars"));
         data.lineage = fr.crusadecraft.core.lineage.LineageState.load(migrated.getCompound("lineage"));
+        data.places = fr.crusadecraft.core.place.PlaceState.load(migrated.getCompound("places"));
         return data;
     }
 
@@ -94,6 +114,7 @@ public final class CrusadeSavedData extends AtomicSavedData {
         tag.put("diplomacy", diplomacy.save());
         tag.put("wars", wars.save());
         tag.put("lineage", lineage.save());
+        tag.put("places", places.save());
         return tag;
     }
 
@@ -107,6 +128,10 @@ public final class CrusadeSavedData extends AtomicSavedData {
 
     public fr.crusadecraft.core.lineage.LineageState lineage() {
         return lineage;
+    }
+
+    public fr.crusadecraft.core.place.PlaceState places() {
+        return places;
     }
 
     public fr.crusadecraft.core.war.WarState wars() {

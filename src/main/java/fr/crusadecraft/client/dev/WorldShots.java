@@ -51,7 +51,7 @@ public final class WorldShots {
     private static final boolean ENABLED = Boolean.getBoolean("crusadecraft.worldshots");
     private static final String WORLD = "crusadecraft-shots";
 
-    private enum Step { BOOT, LOADING, SETUP, WALL, MAP, SHEET, HERALD, REALM, LETTER, SEAL, CHANCERY, COLOMBIER, TOWNHALL, TOWNHALL_CLICK, WAR, SIEGE, CAPTURE, CAPTURED, WAR_TABLE, RAID, EDITOR, EDITOR_REALM, EDITOR_PAINT, LINEAGE_OPEN, LINEAGE_HOUSE, LINEAGE_SPAWN, LINEAGE_SHOT, STAFF_MENU, STAFF_SHOT, FORT_SHOT, SITES_MAP, PAPER_SHOT, DONE }
+    private enum Step { BOOT, LOADING, SETUP, WALL, MAP, SHEET, HERALD, REALM, LETTER, SEAL, CHANCERY, COLOMBIER, TOWNHALL, TOWNHALL_CLICK, WAR, SIEGE, CAPTURE, CAPTURED, WAR_TABLE, RAID, EDITOR, EDITOR_REALM, EDITOR_PAINT, LINEAGE_OPEN, LINEAGE_HOUSE, LINEAGE_SPAWN, LINEAGE_SHOT, STAFF_MENU, STAFF_SHOT, FORT_SHOT, SITES_MAP, PAPER_SHOT, LIEU_FORM, LIEU_SCREEN, LIEU_MAP, DONE }
 
     private static Step step = Step.BOOT;
     private static int wait;
@@ -350,6 +350,34 @@ public final class WorldShots {
                 mc.getTutorial().setStep(net.minecraft.client.tutorial.TutorialSteps.NONE);
                 mc.getToasts().clear();
                 grab(mc, "carte_papier");
+                mc.options.chatVisibility().set(net.minecraft.world.entity.player.ChatVisiblity.FULL);
+                // Les lieux (P15) : un lieu saint posé au bâton, en mode « Lieu ».
+                MinecraftServer server = mc.getSingleplayerServer();
+                server.execute(() -> placeShrine(server));
+                step = Step.LIEU_FORM;
+                wait = 30;
+            }
+            case LIEU_FORM -> {
+                CrusadeCraft.LOGGER.info("WorldShots : formulaire du lieu {}",
+                        mc.screen instanceof fr.crusadecraft.client.screen.LieuForm ? "ouvert" : "absent");
+                grab(mc, "lieu_formulaire");
+                CrusadeNetwork.toServer(new fr.crusadecraft.network.packet.LieuPackets.Action(fr.crusadecraft.network.packet.LieuPackets.Action.Op.CREATE,
+                        null, "Abbaye de Saint-Aubin", fr.crusadecraft.core.place.LieuKind.LIEU_SAINT.ordinal(), null, shrinePos, 0));
+                step = Step.LIEU_SCREEN;
+                wait = 30;
+            }
+            case LIEU_SCREEN -> {
+                var lieux = mc.screen instanceof fr.crusadecraft.client.screen.LieuxScreen screen ? screen.view() : null;
+                CrusadeCraft.LOGGER.info("WorldShots : écran des lieux {} ({} lieux)", lieux != null ? "ouvert" : "absent",
+                        lieux == null ? 0 : lieux.entries().size());
+                grab(mc, "lieux_reels");
+                if (shrinePos != null) fr.crusadecraft.client.screen.MapScreen.centerNextOn(shrinePos.getX(), shrinePos.getZ(), 2);
+                CrusadeNetwork.toServer(new WorldPackets.RequestMap(true));
+                step = Step.LIEU_MAP;
+                wait = 40;
+            }
+            case LIEU_MAP -> {
+                grab(mc, "carte_lieux");
                 step = Step.DONE;
                 wait = 20;
             }
@@ -541,6 +569,24 @@ public final class WorldShots {
         player.getAbilities().flying = false;
         player.onUpdateAbilities();
         player.connection.teleport(fortGround.getX() + 0.5, fortGround.getY() + 1, fortGround.getZ() - 55.5, 180f, 72f);
+    }
+
+    private static BlockPos shrinePos;
+
+    /** Le bâton revient en main, en mode « Lieu » ; un clic au sol près de la capitale ouvre le formulaire du lieu. */
+    private static void placeShrine(MinecraftServer server) {
+        ServerPlayer player = server.getPlayerList().getPlayers().get(0);
+        ServerLevel level = player.serverLevel();
+        var realm = fr.crusadecraft.core.realm.RealmService.realmOf(server, player.getUUID()).orElseThrow();
+        var staff = new net.minecraft.world.item.ItemStack(fr.crusadecraft.registry.ModItems.BORNAGE.get());
+        fr.crusadecraft.item.BornageStaffItem.setOwner(staff, realm.id(), realm.color(), realm.name());
+        fr.crusadecraft.item.BornageStaffItem.setLieu(staff, fr.crusadecraft.core.place.LieuKind.LIEU_SAINT);
+        player.getInventory().setItem(0, staff);
+        BlockPos center = fr.crusadecraft.compat.minecolonies.MineColoniesBridge.center(realm.capital()).orElse(player.blockPosition());
+        BlockPos ground = level.getHeightmapPos(net.minecraft.world.level.levelgen.Heightmap.Types.MOTION_BLOCKING_NO_LEAVES, center.offset(18, 0, 18)).below();
+        shrinePos = ground.above();
+        player.connection.teleport(ground.getX() + 0.5, ground.getY() + 1, ground.getZ() + 4.5, 180f, 30f);
+        fr.crusadecraft.core.world.TerritoryService.onStaffUse(player, staff, ground, Direction.UP, false);
     }
 
     private static void grab(Minecraft mc, String name) {

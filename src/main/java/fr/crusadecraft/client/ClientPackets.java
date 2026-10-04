@@ -118,6 +118,21 @@ public final class ClientPackets {
         Minecraft.getInstance().setScreen(new fr.crusadecraft.client.screen.StaffScreen());
     }
 
+    /** Les lieux (P15) : rafraîchit l'écran ouvert, ou l'ouvre. */
+    public static void lieux(fr.crusadecraft.core.place.LieuView view, boolean open) {
+        Minecraft mc = Minecraft.getInstance();
+        // Écran déjà ouvert (ou un de ses formulaires) : on le rafraîchit sans perdre où l'on en était dans la liste.
+        if (mc.screen instanceof fr.crusadecraft.client.screen.LieuxScreen screen) screen.refresh(view);
+        else if (mc.screen instanceof fr.crusadecraft.client.screen.LieuForm form && form.parent() != null) form.parent().refresh(view);
+        else if (mc.screen instanceof fr.crusadecraft.client.screen.LieuTextScreen text) text.parent().refresh(view);
+        else if (open) mc.setScreen(new fr.crusadecraft.client.screen.LieuxScreen(view));
+    }
+
+    /** Le bâton a visé le sol en mode « Lieu » : on nomme le lieu à poser. */
+    public static void lieuForm(fr.crusadecraft.core.place.LieuKind kind, net.minecraft.core.BlockPos pos) {
+        Minecraft.getInstance().setScreen(fr.crusadecraft.client.screen.LieuForm.create(null, kind, pos, null));
+    }
+
     /** Le registre des lignées : rafraîchit l'écran ouvert, ou l'ouvre. */
     public static void lineage(fr.crusadecraft.core.lineage.LineageView view, boolean open) {
         Minecraft mc = Minecraft.getInstance();

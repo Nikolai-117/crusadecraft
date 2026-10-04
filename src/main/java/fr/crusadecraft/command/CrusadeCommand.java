@@ -38,6 +38,17 @@ public final class CrusadeCommand {
                         .then(Commands.argument("joueur", EntityArgument.player())
                                 .executes(ctx -> info(ctx, EntityArgument.getPlayer(ctx, "joueur")))))
                 .then(Commands.literal("colonie").executes(CrusadeCommand::colonyHere))
+                .then(Commands.literal("lieux").executes(ctx -> {
+                    fr.crusadecraft.network.packet.LieuPackets.send(ctx.getSource().getPlayerOrException(), null, true, null, true);
+                    return 1;
+                }))
+                .then(Commands.literal("ici").executes(ctx -> {
+                    var player = ctx.getSource().getPlayerOrException();
+                    Component chain = fr.crusadecraft.core.place.PlaceService.chainAt(ctx.getSource().getServer(),
+                            player.level().dimension().location(), player.getX(), player.getZ());
+                    ctx.getSource().sendSuccess(() -> Component.translatable("crusadecraft.lieu.here", chain), false);
+                    return 1;
+                }))
                 .then(Commands.literal("lignees").executes(ctx -> {
                     fr.crusadecraft.network.packet.LineagePackets.send(ctx.getSource().getPlayerOrException(), null, true);
                     return 1;

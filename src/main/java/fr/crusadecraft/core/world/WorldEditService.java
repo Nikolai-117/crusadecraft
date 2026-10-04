@@ -223,6 +223,9 @@ public final class WorldEditService {
             host.get().provinces().add(moved);
         }
         for (Realm r : data.realms()) r.claims().removeAll(gone);
+        // Avant qu'un numéro de province ne resserve : la fiche d'une ville effacée n'ira pas à la suivante.
+        for (int g : gone) fr.crusadecraft.core.place.PlaceService.forget(server, fr.crusadecraft.core.place.Lieu.Ref.aiProvince(g));
+        fr.crusadecraft.core.place.PlaceService.forget(server, fr.crusadecraft.core.place.Lieu.Ref.aiRealm(id));
         world.borders().forget(id);
         fr.crusadecraft.core.lineage.LineageService.onRealmRemoved(server, id);
         fr.crusadecraft.core.build.SiteService.onRealmRemoved(server, id);
@@ -342,6 +345,7 @@ public final class WorldEditService {
         if (city.capital()) return Outcome.no("crusadecraft.mapedit.city.capital", AiNames.realm(host.rank(), host.place()));
         host.provinces().remove(city);
         for (Realm r : data(player.server).realms()) r.claims().remove(city.id());
+        fr.crusadecraft.core.place.PlaceService.forget(player.server, fr.crusadecraft.core.place.Lieu.Ref.aiProvince(city.id()));
         data(player.server).setDirty();
         return Outcome.ok(Component.translatable("crusadecraft.mapedit.city.deleted", city.name()));
     }

@@ -30,6 +30,7 @@ public class StaffScreen extends Screen {
     private int left, top, w, h, colA, colB, colC, colAW, colBW, colCW, listTop, listBottom;
     private int scroll;
     private boolean instant = true;
+    private int lieuLabelY;
 
     public StaffScreen() {
         super(Component.translatable("item.crusadecraft.baton_de_bornage"));
@@ -136,6 +137,19 @@ public class StaffScreen extends Screen {
                 instant = !instant;
                 rebuildWidgets();
             }).bounds(colC, cy + 4, colCW, 15).tooltip(Tooltip.create(Component.translatable("crusadecraft.bornage.instant.tip"))).build());
+            cy += 20;
+        }
+        // Les lieux qu'on pose d'un clic au sol (P15) : on les nomme ensuite.
+        lieuLabelY = cy + 4;
+        fr.crusadecraft.core.place.LieuKind[] lieux = {fr.crusadecraft.core.place.LieuKind.LIEU_SAINT, fr.crusadecraft.core.place.LieuKind.RUINE,
+                fr.crusadecraft.core.place.LieuKind.REGION};
+        int third = (colCW - 4) / 3;
+        for (int i = 0; i < lieux.length; i++) {
+            fr.crusadecraft.core.place.LieuKind kind = lieux[i];
+            addRenderableWidget(Button.builder(Component.translatable(kind.key()),
+                    b -> send(new StaffPackets.Action(StaffPackets.Action.Op.SET_LIEU, null, "", kind.ordinal(), false)))
+                    .bounds(colC + i * (third + 2), cy + 14, third, 15)
+                    .tooltip(Tooltip.create(Component.translatable("crusadecraft.bornage.lieu.tip", Component.translatable(kind.key())))).build());
         }
     }
 
@@ -153,6 +167,7 @@ public class StaffScreen extends Screen {
         Ui.text(g, font, Component.translatable("crusadecraft.bornage.col.owner"), colA, top + 34, Ui.GOLD);
         Ui.text(g, font, Component.translatable("crusadecraft.bornage.col.draw"), colB, top + 34, Ui.GOLD);
         Ui.text(g, font, Component.translatable("crusadecraft.bornage.col.build"), colC, top + 34, Ui.GOLD);
+        Ui.text(g, font, Component.translatable("crusadecraft.bornage.col.lieu"), colC, lieuLabelY, Ui.GOLD);
 
         // La liste des royaumes.
         Ui.inset(g, colA, listTop, colAW, listBottom - listTop);

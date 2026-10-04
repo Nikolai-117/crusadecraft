@@ -484,3 +484,37 @@ des IA), voir les terres sur les cartes papier vanilla ; plus tard le commerce. 
   à colonie attendent désormais deux ticks avant de commencer.
 - **Corrigé au passage** : une règle `.gitignore` (`build/`) ignorait aussi `src/.../core/build/` ; elle ne vise
   plus que le dossier de construction à la racine.
+
+**P15 (4 octobre 2026) — les lieux, et des sauvegardes à l'abri**
+
+Première phase de CrusadeCraft 2.0 (plan : `docs/etape-0-v2-rapport.md`, validé par Romain le 4 octobre).
+
+- **Le lieu indexe, il ne recopie pas.** Chaque royaume (IA ou joueur), province, colonie de joueur et construction a
+  son lieu, créé d'office ; son nom, sa position et son tenancier se lisent dans la chose elle-même. Le lieu ajoute
+  sa place dans la hiérarchie et sa **fiche**, un texte que seul le joueur écrit : le mod n'y met rien.
+- **La hiérarchie est celle du monde** : un royaume relève de son suzerain, une ville du royaume qui la tient, une
+  construction de sa ville (sinon de son royaume). L'éditeur peut ranger un lieu ailleurs, jamais en boucle, et
+  poser des titres qui en regroupent d'autres (« Empire de… »). Les royaumes de jure restent ce qu'ils étaient : la
+  vue de jure de la carte.
+- **Les lieux posés à la main** : lieu saint, ruine, région (avec un rayon) — au bâton (mode « Lieu »), sur ses terres
+  en survie ; et les titres, dans l'éditeur. Ils s'affichent sur la carte du mod. Un lieu saint, une ruine ou une
+  région revient au royaume qui tient la terre où on le pose, et se range sous lui ; un titre, non (il regroupe, et
+  son tenancier peut être rangé sous lui sans faire de boucle).
+- **Une chose disparue garde sa fiche** : sans texte, son lieu s'en va ; avec, il reste, « disparu du monde », et
+  c'est au joueur de le supprimer. Les numéros de province pouvant resservir, le lieu d'une ville effacée est
+  détaché **au moment** de l'effacement, pour que sa fiche n'aille pas à la ville suivante.
+- **Changé par rapport au plan** : les cases de territoire ne pointent pas vers un comté. La chaîne « où suis-je »
+  se déduit sans cela (la place la plus proche, la région, puis le royaume qui tient la terre et ses suzerains), et
+  réécrire toutes les cases aurait été une migration risquée sans bénéfice visible. Si les protections par lieu de
+  P16 l'exigent, ce sera fait là, avec sa propre sauvegarde.
+- **« Près de » sans faute** : « près d'Abbaye de Saint-Aubin » était faux, et l'article d'un nom choisi par le joueur
+  ne se devine pas. La position dit donc « Abbaye de Saint-Aubin, à 12 blocs ».
+- **Sauvegardes** : version 13. Avant toute mise à niveau (ou devant une sauvegarde plus récente que le mod), une
+  copie datée du fichier va dans `data/crusadecraft_backups/` (`crusadecraft-v12-2026-10-04_12-30-00.dat`), jamais
+  réécrite ; les dix plus récentes sont gardées. Le `.bak` existant ne suffisait pas : il était remplacé à chaque
+  sauvegarde du monde.
+- **Zéro perte, prouvé** : les jars 1.0.0, 1.1.0 et 1.2.0 ont été reconstruits depuis leurs commits, chacun a joué le
+  banc d'essai en monde réel, et leurs fichiers de données sont gardés dans `src/test/resources/fixtures` avec celui de
+  la 1.3.0. Un test les charge, les met à niveau, les réécrit et les relit : aucune section ni aucun royaume ne
+  manque, et écrire puis relire ne change rien. Ce test a trouvé que les cases peintes s'écrivaient dans un ordre
+  changeant ; elles s'écrivent désormais triées, pour un fichier stable.

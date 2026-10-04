@@ -59,6 +59,10 @@ public final class StaffPreview {
                 BlockPos c = hit.getBlockPos();
                 rectangle(mc, dust, c.getX() - half, c.getZ() - half, c.getX() + half, c.getZ() + half, budget);
             }
+            case LIEU -> {
+                // Un lieu se pose en un point : une colonne de poussière là où le clic le posera.
+                if (mc.hitResult instanceof BlockHitResult hit && hit.getType() == HitResult.Type.BLOCK) pillar(mc, dust, hit.getBlockPos(), budget);
+            }
         }
     }
 

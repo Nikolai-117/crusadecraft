@@ -108,16 +108,15 @@ public final class TerritoryMap {
         for (Map.Entry<ResourceLocation, Long2ObjectOpenHashMap<UUID>> e : cells.entrySet()) {
             List<UUID> palette = new ArrayList<>();
             Map<UUID, Integer> index = new HashMap<>();
-            long[] keys = new long[e.getValue().size()];
+            // Dans l'ordre des clés : un même territoire s'écrit toujours de la même façon.
+            long[] keys = e.getValue().keySet().toLongArray();
+            java.util.Arrays.sort(keys);
             int[] owners = new int[keys.length];
-            int i = 0;
-            for (Long2ObjectMap.Entry<UUID> c : e.getValue().long2ObjectEntrySet()) {
-                keys[i] = c.getLongKey();
-                owners[i] = index.computeIfAbsent(c.getValue(), u -> {
+            for (int i = 0; i < keys.length; i++) {
+                owners[i] = index.computeIfAbsent(e.getValue().get(keys[i]), u -> {
                     palette.add(u);
                     return palette.size() - 1;
                 });
-                i++;
             }
             CompoundTag t = new CompoundTag();
             t.putString("dim", e.getKey().toString());

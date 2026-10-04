@@ -196,6 +196,12 @@ public final class UiShots {
         list.add(new Shot("registre_communaute", () -> new fr.crusadecraft.client.screen.LineageScreen(sampleLineage(false)), null));
         list.add(new Shot("registre_nouvelle_maison", () -> fr.crusadecraft.client.screen.LineageForm.newHouse(
                 new fr.crusadecraft.client.screen.LineageScreen(lineage), lineage.realms()), null));
+        fr.crusadecraft.core.place.LieuView lieux = sampleLieux();
+        list.add(new Shot("lieux", () -> new fr.crusadecraft.client.screen.LieuxScreen(lieux), null));
+        list.add(new Shot("lieux_nouveau", () -> fr.crusadecraft.client.screen.LieuForm.create(
+                new fr.crusadecraft.client.screen.LieuxScreen(lieux), null, BlockPos.ZERO, lieux.selection().id()), null));
+        list.add(new Shot("lieux_fiche", () -> new fr.crusadecraft.client.screen.LieuTextScreen(new fr.crusadecraft.client.screen.LieuxScreen(lieux),
+                lieux.selection().id(), lieux.selection().name(), lieux.selection().text()), null));
         list.add(new Shot("livre_chroniques", () -> {
             List<fr.crusadecraft.network.packet.WorldPackets.NewsLine> lines = new ArrayList<>(sampleChronicle());
             java.util.Collections.reverse(lines);
@@ -521,6 +527,46 @@ public final class UiShots {
     }
 
     /** Le registre des lignées : la maison Aubépine sur trois générations, ou le village de Saint-Aubin. */
+    /** Les lieux d'un monde de démonstration : le royaume du joueur, un empire posé à la main, une région. */
+    private static fr.crusadecraft.core.place.LieuView sampleLieux() {
+        record E(int depth, fr.crusadecraft.core.place.LieuKind kind, String name, int color, boolean linked, int population, boolean text) {}
+        int azur = Heraldry.AZUR.rgb(), pourpre = 0x8E24AA, sinople = 0x2E7D32, neutre = 0x9A8A70;
+        List<E> rows = List.of(
+                new E(0, fr.crusadecraft.core.place.LieuKind.ROYAUME, "Royaume de Valbrume", azur, true, 41, false),
+                new E(1, fr.crusadecraft.core.place.LieuKind.VILLE, "Valbrume", azur, true, 24, false),
+                new E(1, fr.crusadecraft.core.place.LieuKind.VILLE, "Hautemarche", azur, true, 11, false),
+                new E(1, fr.crusadecraft.core.place.LieuKind.FORT, "Fort frontalier de Valbrume", azur, true, 0, false),
+                new E(1, fr.crusadecraft.core.place.LieuKind.LIEU_SAINT, "Abbaye de Saint-Aubin", azur, false, 0, true),
+                new E(0, fr.crusadecraft.core.place.LieuKind.EMPIRE, "Empire de Lothaire", pourpre, false, 120, false),
+                new E(1, fr.crusadecraft.core.place.LieuKind.ROYAUME, "Royaume d'Ambrevent", pourpre, true, 89, false),
+                new E(2, fr.crusadecraft.core.place.LieuKind.VILLE, "Ambrevent", pourpre, true, 58, false),
+                new E(2, fr.crusadecraft.core.place.LieuKind.VILLE, "Ormesval", pourpre, true, 31, false),
+                new E(1, fr.crusadecraft.core.place.LieuKind.DUCHE, "Duché de Rochegarde", sinople, true, 31, false),
+                new E(2, fr.crusadecraft.core.place.LieuKind.VILLE, "Rochegarde", sinople, true, 31, false),
+                new E(0, fr.crusadecraft.core.place.LieuKind.REGION, "Forêt de Brocéliande", neutre, false, 0, false),
+                new E(0, fr.crusadecraft.core.place.LieuKind.RUINE, "Ruines de Karak", neutre, false, 0, true));
+        List<fr.crusadecraft.core.place.LieuView.Entry> entries = new ArrayList<>();
+        UUID abbey = null, realm = null;
+        for (E e : rows) {
+            UUID id = UUID.randomUUID();
+            if (e.kind() == fr.crusadecraft.core.place.LieuKind.LIEU_SAINT) abbey = id;
+            if (realm == null) realm = id;
+            entries.add(new fr.crusadecraft.core.place.LieuView.Entry(id, e.kind().ordinal(), Component.literal(e.name()), e.depth(), e.color(),
+                    e.linked(), e.population(), e.text()));
+        }
+        var selection = new fr.crusadecraft.core.place.LieuView.Selection(abbey, fr.crusadecraft.core.place.LieuKind.LIEU_SAINT.ordinal(),
+                Component.literal("Abbaye de Saint-Aubin"), Component.translatable("crusadecraft.lieu.origin.manual"),
+                Component.literal("Royaume de Valbrume"), realm, Component.literal("Royaume de Valbrume"), 0, true, 412, -96, 0, 12,
+                "Votre texte ici : l'histoire du lieu, ce qu'on y trouve, ce qu'on en raconte. Le mod n'écrit rien dans les fiches ;"
+                        + " elles sont à vous, et chacun les lit dans l'écran des lieux.",
+                "Abbaye de Saint-Aubin", true, true, true, true);
+        List<fr.crusadecraft.core.place.LieuView.Choice> realms = List.of(
+                new fr.crusadecraft.core.place.LieuView.Choice(UUID.randomUUID(), Component.literal("Royaume de Valbrume")),
+                new fr.crusadecraft.core.place.LieuView.Choice(UUID.randomUUID(), Component.literal("Royaume d'Ambrevent")));
+        return new fr.crusadecraft.core.place.LieuView(true, entries, selection,
+                Component.literal("Abbaye de Saint-Aubin, à 12 blocs › Royaume de Valbrume"), realms, null, true);
+    }
+
     private static fr.crusadecraft.core.lineage.LineageView sampleLineage(boolean house) {
         java.util.function.BiFunction<String, Object[], fr.crusadecraft.core.lineage.LineageView.Row> row = (n, o) ->
                 new fr.crusadecraft.core.lineage.LineageView.Row(UUID.randomUUID(), n, (boolean) o[0], (int) o[1], (boolean) o[2],

@@ -25,7 +25,7 @@ public final class StaffPackets {
     private StaffPackets() {}
 
     public record Action(Op op, UUID owner, String special, int a, boolean b) {
-        public enum Op { SET_OWNER, SET_SPECIAL, SET_MODE, VALIDATE, CLEAR, UNDO, SET_BUILD }
+        public enum Op { SET_OWNER, SET_SPECIAL, SET_MODE, VALIDATE, CLEAR, UNDO, SET_BUILD, SET_LIEU }
 
         public static Action of(Op op) {
             return new Action(op, null, "", 0, false);
@@ -102,6 +102,12 @@ public final class StaffPackets {
                 if (!editor && !kind.survival()) return Outcome.no("crusadecraft.site.editor_only", Component.translatable(kind.key()));
                 BornageStaffItem.setBuild(staff, kind, editor && p.b);
                 return Outcome.ok(Component.translatable("crusadecraft.bornage.build_set", Component.translatable(kind.key())));
+            }
+            case SET_LIEU -> {
+                fr.crusadecraft.core.place.LieuKind kind = fr.crusadecraft.core.place.LieuKind.byOrdinal(p.a);
+                if (!kind.placed()) return null;
+                BornageStaffItem.setLieu(staff, kind);
+                return Outcome.ok(Component.translatable("crusadecraft.bornage.lieu_set", Component.translatable(kind.key())));
             }
             default -> {
                 return null;

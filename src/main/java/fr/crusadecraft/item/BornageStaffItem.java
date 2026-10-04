@@ -35,7 +35,7 @@ import java.util.UUID;
  */
 public class BornageStaffItem extends Item {
     public enum Mode {
-        POLYGONE, RECTANGLE, MARCHE, CONSTRUIRE;
+        POLYGONE, RECTANGLE, MARCHE, CONSTRUIRE, LIEU;
 
         public String key() {
             return "crusadecraft.bornage.mode." + name().toLowerCase(Locale.ROOT);
@@ -137,6 +137,18 @@ public class BornageStaffItem extends Item {
         t.putLongArray("points", new long[0]);
     }
 
+    /** Le genre de lieu que pose le mode « Lieu » (P15). */
+    public static fr.crusadecraft.core.place.LieuKind lieu(ItemStack stack) {
+        return fr.crusadecraft.core.place.LieuKind.byName(peek(stack).getString("lieu"));
+    }
+
+    public static void setLieu(ItemStack stack, fr.crusadecraft.core.place.LieuKind kind) {
+        CompoundTag t = tag(stack);
+        t.putString("lieu", kind.name());
+        t.putString("mode", Mode.LIEU.name());
+        t.putLongArray("points", new long[0]);
+    }
+
     /** Le bâton tenu par ce joueur, en main principale d'abord. */
     public static Optional<ItemStack> held(Player player) {
         for (InteractionHand hand : InteractionHand.values()) {
@@ -172,6 +184,8 @@ public class BornageStaffItem extends Item {
         tooltip.add(Component.translatable("crusadecraft.bornage.tooltip.mode", Component.translatable(mode.key())).withStyle(ChatFormatting.GOLD));
         if (!who.isEmpty()) tooltip.add(Component.translatable("crusadecraft.bornage.tooltip.owner", who).withStyle(ChatFormatting.GRAY));
         if (mode == Mode.CONSTRUIRE) tooltip.add(Component.translatable("crusadecraft.bornage.tooltip.build", Component.translatable(build(stack).key()))
+                .withStyle(ChatFormatting.GRAY));
+        if (mode == Mode.LIEU) tooltip.add(Component.translatable("crusadecraft.bornage.tooltip.build", Component.translatable(lieu(stack).key()))
                 .withStyle(ChatFormatting.GRAY));
         tooltip.add(Component.translatable("crusadecraft.bornage.tooltip.1").withStyle(ChatFormatting.DARK_GRAY));
         tooltip.add(Component.translatable("crusadecraft.bornage.tooltip.2").withStyle(ChatFormatting.DARK_GRAY));
