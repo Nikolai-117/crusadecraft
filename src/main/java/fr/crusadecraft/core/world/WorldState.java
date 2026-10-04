@@ -46,8 +46,10 @@ public final class WorldState {
     private final List<fr.crusadecraft.core.ai.Coalition> coalitions = new ArrayList<>();
     /** Les nouvelles du monde, les plus récentes en tête. */
     private final List<WorldNews> news = new ArrayList<>();
-    /** Les frontières peintes à la main dans l'éditeur de la carte (P12). */
+    /** Les frontières peintes à la main dans l'éditeur de la carte (P12) et au bâton de bornage (P14). */
     private TerritoryMap borders = new TerritoryMap();
+    /** Les constructions des royaumes : avant-postes, tours, forts, camps, bornes, donjons, villages (P14). */
+    private final Map<UUID, fr.crusadecraft.core.build.Site> sites = new LinkedHashMap<>();
 
     public boolean generated() { return generated; }
     public int version() { return version; }
@@ -79,6 +81,14 @@ public final class WorldState {
     public List<WorldNews> news() { return news; }
 
     public TerritoryMap borders() { return borders; }
+
+    public Collection<fr.crusadecraft.core.build.Site> sites() { return sites.values(); }
+
+    public Optional<fr.crusadecraft.core.build.Site> site(UUID id) { return Optional.ofNullable(id == null ? null : sites.get(id)); }
+
+    public void add(fr.crusadecraft.core.build.Site site) { sites.put(site.id(), site); }
+
+    public Optional<fr.crusadecraft.core.build.Site> removeSite(UUID id) { return Optional.ofNullable(sites.remove(id)); }
 
     /** Le premier identifiant de province libre, tous royaumes confondus. */
     public int nextProvinceId() {
@@ -131,6 +141,7 @@ public final class WorldState {
         coalitions.clear();
         news.clear();
         borders = new TerritoryMap();
+        sites.clear();
         generated = false;
     }
 
@@ -172,6 +183,9 @@ public final class WorldState {
         for (WorldNews w : news) n.add(w.save());
         t.put("news", n);
         t.put("borders", borders.save());
+        ListTag st = new ListTag();
+        for (fr.crusadecraft.core.build.Site site : sites.values()) st.add(site.save());
+        t.put("sites", st);
         return t;
     }
 
@@ -195,6 +209,11 @@ public final class WorldState {
         ListTag n = t.getList("news", Tag.TAG_COMPOUND);
         for (int i = 0; i < n.size(); i++) s.news.add(WorldNews.load(n.getCompound(i)));
         s.borders = TerritoryMap.load(t.getList("borders", Tag.TAG_COMPOUND));
+        ListTag st = t.getList("sites", Tag.TAG_COMPOUND);
+        for (int i = 0; i < st.size(); i++) {
+            fr.crusadecraft.core.build.Site site = fr.crusadecraft.core.build.Site.load(st.getCompound(i));
+            s.sites.put(site.id(), site);
+        }
         return s;
     }
 }

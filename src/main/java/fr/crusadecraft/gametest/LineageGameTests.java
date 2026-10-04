@@ -49,7 +49,7 @@ public final class LineageGameTests {
         w.cleanup();
     }
 
-    @GameTest(template = TestWorld.TEMPLATE, batch = "p13_cour", timeoutTicks = 200)
+    @GameTest(template = TestWorld.TEMPLATE, setupTicks = TestWorld.SETUP_TICKS, batch = "p13_cour", timeoutTicks = 200)
     public static void chaqueRoyaumeASaCour(GameTestHelper h) {
         TestWorld w = TestWorld.realm(h, "Valbrume");
         List<Entity> spawned = new ArrayList<>();
@@ -91,7 +91,7 @@ public final class LineageGameTests {
         }
     }
 
-    @GameTest(template = TestWorld.TEMPLATE, batch = "p13_comes_alive", timeoutTicks = 200)
+    @GameTest(template = TestWorld.TEMPLATE, setupTicks = TestWorld.SETUP_TICKS, batch = "p13_comes_alive", timeoutTicks = 200)
     public static void faireVenirUneFamilleAvecComesAlive(GameTestHelper h) {
         TestWorld w = TestWorld.realm(h, "Valbrume");
         List<Entity> spawned = new ArrayList<>();

@@ -122,6 +122,9 @@ public final class WorldEditService {
         if (crowded.isPresent()) return Outcome.no("crusadecraft.mapedit.too_close", crowded.get());
         AiRealm realm = addRealm(player.server, level, name, ruler, rank, Heraldry.byOrdinal(colorIndex).rgb(), faith, personality, x, z);
         realm.discover(player.getUUID(), RealmService.currentDay(player.server));
+        // Créé depuis le bâton de bornage : on trace aussitôt pour le nouveau royaume.
+        fr.crusadecraft.item.BornageStaffItem.held(player).ifPresent(st -> fr.crusadecraft.item.BornageStaffItem.setOwner(st, realm.id(),
+                realm.color(), AiNames.realm(realm.rank(), realm.place()).getString()));
         return Outcome.ok(Component.translatable("crusadecraft.mapedit.realm.created", AiNames.realm(realm.rank(), realm.place())));
     }
 
@@ -222,6 +225,7 @@ public final class WorldEditService {
         for (Realm r : data.realms()) r.claims().removeAll(gone);
         world.borders().forget(id);
         fr.crusadecraft.core.lineage.LineageService.onRealmRemoved(server, id);
+        fr.crusadecraft.core.build.SiteService.onRealmRemoved(server, id);
         data.setDirty();
         CrusadeCraft.LOGGER.info("CrusadeCraft : royaume IA {} effacé dans l'éditeur de la carte", realm.place());
     }

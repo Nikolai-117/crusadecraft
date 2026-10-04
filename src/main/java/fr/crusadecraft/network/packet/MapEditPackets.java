@@ -176,6 +176,25 @@ public final class MapEditPackets {
         }
     }
 
+    /** Une construction (P14) : la donner à un autre royaume, ou l'effacer du registre ({@code delete}). */
+    public record SiteAction(UUID site, boolean delete, UUID holder) {
+        public static void encode(SiteAction p, FriendlyByteBuf buf) {
+            buf.writeUUID(p.site);
+            buf.writeBoolean(p.delete);
+            buf.writeBoolean(p.holder != null);
+            if (p.holder != null) buf.writeUUID(p.holder);
+        }
+
+        public static SiteAction decode(FriendlyByteBuf buf) {
+            return new SiteAction(buf.readUUID(), buf.readBoolean(), buf.readBoolean() ? buf.readUUID() : null);
+        }
+
+        public static void handle(SiteAction p, Supplier<NetworkEvent.Context> ctx) {
+            run(ctx, pl -> p.delete ? fr.crusadecraft.core.build.SiteService.remove(pl, p.site)
+                    : p.holder == null ? Outcome.no("crusadecraft.mapedit.realm.unknown") : fr.crusadecraft.core.build.SiteService.give(pl, p.site, p.holder));
+        }
+    }
+
     /** « Monde vierge » : les royaumes générés disparaissent, ceux posés à la main restent. */
     public record Wipe() {
         public static void encode(Wipe p, FriendlyByteBuf buf) {}

@@ -476,6 +476,29 @@ public final class MineColoniesBridge {
         return out;
     }
 
+    /** Un poste de garde d'une colonie (tour de garde, caserne, tour de caserne) : sa position et son niveau. */
+    public record GuardPost(BlockPos pos, int level) {}
+
+    /** Les postes de garde construits d'une colonie : ils comptent comme avant-postes du royaume (P14). */
+    public static List<GuardPost> guardPosts(ColonyRef ref) {
+        List<GuardPost> out = new ArrayList<>();
+        if (broken) return out;
+        try {
+            IColony c = colony(ref);
+            if (c == null) return out;
+            for (IBuilding b : c.getServerBuildingManager().getBuildings().values()) {
+                if (b.getBuildingLevel() <= 0) continue;
+                String type = b.getBuildingType().getRegistryName().getPath();
+                if (type.equals("guardtower") || type.equals("barracks") || type.equals("barrackstower")) {
+                    out.add(new GuardPost(b.getPosition(), b.getBuildingLevel()));
+                }
+            }
+        } catch (LinkageError e) {
+            breakBridge(e);
+        }
+        return out;
+    }
+
     /**
      * Force d'un effet de recherche dans une colonie (0 si la recherche n'est pas terminée). Nos recherches
      * de gouvernance sont un datapack : MineColonies ignore lui-même une recherche inconnue au chargement,

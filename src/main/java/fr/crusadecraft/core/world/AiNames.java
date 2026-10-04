@@ -18,6 +18,11 @@ public final class AiNames {
                 && !place.toLowerCase(Locale.ROOT).startsWith("hêt");
     }
 
+    /** Ce nom de lieu s'élide-t-il (« d'Ambrevent », « de Valcourt ») ? */
+    public static boolean elidesPublic(String place) {
+        return elides(place);
+    }
+
     public static Component realm(TitleRank rank, String place) {
         return Component.translatable(elides(place) ? "crusadecraft.ai.realm.elided" : "crusadecraft.ai.realm",
                 Component.translatable(rank.titleKey()), place);

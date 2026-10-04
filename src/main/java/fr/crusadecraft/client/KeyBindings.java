@@ -19,5 +19,9 @@ public final class KeyBindings {
     public static final KeyMapping MAP = new KeyMapping("key.crusadecraft.map",
             KeyConflictContext.IN_GAME, InputConstants.Type.KEYSYM, GLFW.GLFW_KEY_COMMA, CATEGORY);
 
+    /** Annuler le dernier tracé du bâton de bornage : Ctrl+Z, comme partout. */
+    public static final KeyMapping UNDO_BORNAGE = new KeyMapping("key.crusadecraft.undo_bornage",
+            KeyConflictContext.IN_GAME, net.minecraftforge.client.settings.KeyModifier.CONTROL, InputConstants.Type.KEYSYM, GLFW.GLFW_KEY_Z, CATEGORY);
+
     private KeyBindings() {}
 }

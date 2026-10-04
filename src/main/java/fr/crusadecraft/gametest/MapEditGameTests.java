@@ -76,7 +76,7 @@ public final class MapEditGameTests {
         return data.world().realms().stream().filter(r -> r.place().equals(place)).findFirst().orElseThrow();
     }
 
-    @GameTest(template = TestWorld.TEMPLATE, batch = "p12_poser", timeoutTicks = 200)
+    @GameTest(template = TestWorld.TEMPLATE, setupTicks = TestWorld.SETUP_TICKS, batch = "p12_poser", timeoutTicks = 200)
     public static void poserRoyaumesEtVilles(GameTestHelper h) {
         TestWorld w = TestWorld.realm(h, "Valbrume");
         Runnable restore = setUp(w);
@@ -146,7 +146,7 @@ public final class MapEditGameTests {
         }
     }
 
-    @GameTest(template = TestWorld.TEMPLATE, batch = "p12_peindre", timeoutTicks = 200)
+    @GameTest(template = TestWorld.TEMPLATE, setupTicks = TestWorld.SETUP_TICKS, batch = "p12_peindre", timeoutTicks = 200)
     public static void peindreLesFrontieres(GameTestHelper h) {
         TestWorld w = TestWorld.realm(h, "Valbrume");
         Runnable restore = setUp(w);
@@ -186,7 +186,7 @@ public final class MapEditGameTests {
         }
     }
 
-    @GameTest(template = TestWorld.TEMPLATE, batch = "p12_effacer", timeoutTicks = 200)
+    @GameTest(template = TestWorld.TEMPLATE, setupTicks = TestWorld.SETUP_TICKS, batch = "p12_effacer", timeoutTicks = 200)
     public static void effacerUnRoyaumeProprement(GameTestHelper h) {
         TestWorld w = TestWorld.realm(h, "Valbrume");
         Runnable restore = setUp(w);

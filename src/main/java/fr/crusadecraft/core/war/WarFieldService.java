@@ -68,6 +68,8 @@ public final class WarFieldService {
     static final class Siege {
         UUID war;
         int province;
+        /** Une construction assiégée (P14) plutôt qu'une province : elle change de mains si elle tombe. */
+        UUID site;
         UUID player;
         UUID realm;
         UUID enemy;
@@ -200,6 +202,10 @@ public final class WarFieldService {
         return war + "|" + province;
     }
 
+    private static String siteKey(UUID war, UUID site) {
+        return war + "|site:" + site;
+    }
+
     private static void startSieges(MinecraftServer server) {
         int radius = CrusadeConfig.SERVER.siegeRadius.get();
         for (ServerPlayer player : server.getPlayerList().getPlayers()) {
@@ -214,7 +220,18 @@ public final class WarFieldService {
                         if (w.occupied().contains(p.id()) || SIEGES.containsKey(key(w.id(), p.id()))) continue;
                         if (!p.dimension().equals(player.level().dimension().location())) continue;
                         if (p.distanceSqr(player.getX(), player.getZ()) > (double) radius * radius) continue;
-                        beginSiege(server, player, realm.get(), w, ai.get(), p);
+                        int count = WarRules.clamp((int) Math.round(p.population() / 6.0 * (1 - w.defenderExhaustion() / 150.0)), 3, 10);
+                        beginSiege(server, player, realm.get(), w, ai.get(), p.seat(), count, p.id(), null, Component.literal(p.name()));
+                    }
+                    // Ses places fortes (P14) : tours, camps, avant-postes, forts, donjons.
+                    for (fr.crusadecraft.core.build.Site site : WarService.data(server).world().sites()) {
+                        if (!site.built() || !site.kind().capturable() || !enemy.equals(site.owner())) continue;
+                        if (SIEGES.containsKey(siteKey(w.id(), site.id()))) continue;
+                        if (!site.dimension().equals(player.level().dimension().location())) continue;
+                        if (site.distanceSqr(player.getX(), player.getZ()) > (double) radius * radius) continue;
+                        int count = Math.max(2, (int) Math.round(site.kind().garrison() * (1 - w.defenderExhaustion() / 150.0)));
+                        beginSiege(server, player, realm.get(), w, ai.get(), site.anchor(), count, -1, site.id(),
+                                fr.crusadecraft.core.build.SiteService.displayName(site));
                     }
                 }
             }
@@ -222,18 +239,7 @@ public final class WarFieldService {
     }
 
     private static DyeColor dye(int rgb) {
-        DyeColor best = DyeColor.WHITE;
-        long bestD = Long.MAX_VALUE;
-        for (DyeColor c : DyeColor.values()) {
-            int o = c.getTextColor();
-            long dr = ((o >> 16) & 0xFF) - ((rgb >> 16) & 0xFF), dg = ((o >> 8) & 0xFF) - ((rgb >> 8) & 0xFF), db = (o & 0xFF) - (rgb & 0xFF);
-            long d = dr * dr + dg * dg + db * db;
-            if (d < bestD) {
-                bestD = d;
-                best = c;
-            }
-        }
-        return best;
+        return fr.crusadecraft.core.build.Banners.dye(rgb);
     }
 
     /** Le pied du siège : le point le plus bas autour du centre du village (une place, une rue), jamais un toit. */
@@ -259,19 +265,25 @@ public final class WarFieldService {
         return Optional.empty();
     }
 
-    private static void beginSiege(MinecraftServer server, ServerPlayer player, Realm realm, War w, AiRealm enemy, AiProvince p) {
+    /**
+     * Un siège commence devant ce siège (une province, ou une construction si {@code site} n'est pas nul) : sa garnison
+     * sort, la bannière de l'ennemi est plantée, vos hommes d'armes vous rejoignent.
+     */
+    private static void beginSiege(MinecraftServer server, ServerPlayer player, Realm realm, War w, AiRealm enemy, BlockPos seat, int count,
+                                   int province, UUID site, Component placeName) {
         ServerLevel level = player.serverLevel();
-        if (!level.isLoaded(p.seat())) return;
-        BlockPos top = bannerSpot(level, p.seat());
-        if (top == null) top = surface(level, p.seat().getX(), p.seat().getZ());
+        if (!level.isLoaded(seat)) return;
+        BlockPos top = bannerSpot(level, seat);
+        if (top == null) top = surface(level, seat.getX(), seat.getZ());
         Siege s = new Siege();
         s.war = w.id();
-        s.province = p.id();
+        s.province = province;
+        s.site = site;
         s.player = player.getUUID();
         s.realm = realm.id();
         s.enemy = enemy.id();
         s.level = level.dimension();
-        s.seat = p.seat();
+        s.seat = seat;
         // La bannière du royaume ennemi, plantée au cœur du siège ; notée pour être retirée à coup sûr.
         if (level.getBlockState(top).canBeReplaced()) {
             WarService.data(server).wars().damage().record(w.id(), level.dimension().location(), top, level.getBlockState(top), null);
@@ -280,7 +292,6 @@ public final class WarFieldService {
         } else {
             s.banner = top.above();
         }
-        int count = WarRules.clamp((int) Math.round(p.population() / 6.0 * (1 - w.defenderExhaustion() / 150.0)), 3, 10);
         Component garrisonName = Component.translatable("crusadecraft.war.unit.garrison", AiNames.realmOf(enemy.rank(), enemy.place()));
         for (int i = 0; i < count; i++) {
             double a = RANDOM.nextDouble() * Math.PI * 2, r = 3 + RANDOM.nextDouble() * 6;
@@ -304,9 +315,9 @@ public final class WarFieldService {
                 if (m != null) s.squad.add(m.getUUID());
             }
         }
-        SIEGES.put(key(w.id(), p.id()), s);
+        SIEGES.put(site != null ? siteKey(w.id(), site) : key(w.id(), province), s);
         WarService.data(server).setDirty();
-        WarService.notify(server, realm.id(), ToastPacket.Kind.WAR, Component.translatable("crusadecraft.toast.war.siege.title", p.name()),
+        WarService.notify(server, realm.id(), ToastPacket.Kind.WAR, Component.translatable("crusadecraft.toast.war.siege.title", placeName),
                 Component.translatable("crusadecraft.toast.war.siege.body", s.garrison.size()));
     }
 
@@ -362,6 +373,18 @@ public final class WarFieldService {
 
     private static void capture(MinecraftServer server, War w, Siege s) {
         long today = RealmService.currentDay(server);
+        if (s.site != null) {
+            // Une place forte prise change aussitôt de mains, et ses terres avec elle.
+            var site = WarService.data(server).world().site(s.site);
+            Component siteName = site.map(fr.crusadecraft.core.build.SiteService::displayName).orElse(Component.literal("?"));
+            fr.crusadecraft.core.build.SiteService.capture(server, s.site, s.realm);
+            w.addBattle(w.side(s.realm) * 4);
+            w.log(today, "crusadecraft.war.log.captured", w.side(s.realm) * 4, siteName.getString());
+            WarService.data(server).setDirty();
+            WarService.notifyBoth(server, w, ToastPacket.Kind.WAR, Component.translatable("crusadecraft.toast.war.captured.title"),
+                    Component.translatable("crusadecraft.toast.war.captured.body", siteName, WarService.name(server, s.realm)));
+            return;
+        }
         w.occupied().add(s.province);
         w.addBattle(w.side(s.realm) * 5);
         String name = WarService.province(server, s.province).map(AiProvince::name).orElse("?");

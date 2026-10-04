@@ -50,6 +50,9 @@ public final class ModItems {
     public static final RegistryObject<Item> TREASURY = ITEMS.register("treasury",
             () -> new BlockItem(ModBlocks.TREASURY.get(), new Item.Properties().rarity(Rarity.UNCOMMON)));
 
+    public static final RegistryObject<Item> BORNAGE = ITEMS.register("baton_de_bornage",
+            () -> new fr.crusadecraft.item.BornageStaffItem(new Item.Properties().stacksTo(1).rarity(Rarity.UNCOMMON)));
+
     private ModItems() {}
 
     public static void register(IEventBus modBus) {

@@ -3,6 +3,8 @@ plugins {
     id 'idea'
     id 'net.minecraftforge.gradle' version '[6.0,6.2)'
     id 'org.parchmentmc.librarian.forgegradle' version '1.+'
+    // P14 : un seul mixin, côté client, pour dessiner les royaumes sur la carte papier de Minecraft.
+    id 'org.spongepowered.mixin' version '0.7.+'
 }
 
 version = mod_version
@@ -103,6 +105,8 @@ dependencies {
         runtimeOnly fg.deobf("local:architectury:${architectury_version}")
     }
 
+    annotationProcessor 'org.spongepowered:mixin:0.8.5:processor'
+
     // Tests de la logique pure (aucun démarrage de Minecraft).
     testImplementation platform('org.junit:junit-bom:5.10.2')
     testImplementation 'org.junit.jupiter:junit-jupiter'
@@ -189,9 +193,15 @@ tasks.named('processResources', ProcessResources).configure {
     }
 }
 
+mixin {
+    add sourceSets.main, "${mod_id}.refmap.json"
+    config "${mod_id}.mixins.json"
+}
+
 tasks.named('jar', Jar).configure {
     manifest {
         attributes([
+                'MixinConfigs'            : "${mod_id}.mixins.json",
                 'Specification-Title'     : mod_id,
                 'Specification-Vendor'    : mod_authors,
                 'Specification-Version'   : '1',

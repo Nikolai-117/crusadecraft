@@ -44,7 +44,7 @@ public final class CouncilGameTests {
         return previous;
     }
 
-    @GameTest(template = TestWorld.TEMPLATE, batch = "p3_table", timeoutTicks = 100)
+    @GameTest(template = TestWorld.TEMPLATE, setupTicks = TestWorld.SETUP_TICKS, batch = "p3_table", timeoutTicks = 100)
     public static void tableTachesEtConvocation(GameTestHelper h) {
         TestWorld w = TestWorld.realm(h, "Valbrume");
         int previous = lenient();
@@ -73,7 +73,7 @@ public final class CouncilGameTests {
         }
     }
 
-    @GameTest(template = TestWorld.TEMPLATE, batch = "p3_jour", timeoutTicks = 100)
+    @GameTest(template = TestWorld.TEMPLATE, setupTicks = TestWorld.SETUP_TICKS, batch = "p3_jour", timeoutTicks = 100)
     public static void effetsDuJour(GameTestHelper h) {
         TestWorld w = TestWorld.realm(h, "Hautemarche");
         int previous = lenient();
@@ -102,7 +102,7 @@ public final class CouncilGameTests {
         }
     }
 
-    @GameTest(template = TestWorld.TEMPLATE, batch = "p3_requetes", timeoutTicks = 100)
+    @GameTest(template = TestWorld.TEMPLATE, setupTicks = TestWorld.SETUP_TICKS, batch = "p3_requetes", timeoutTicks = 100)
     public static void requetesDuMaire(GameTestHelper h) {
         TestWorld w = TestWorld.realm(h, "Pierrefeu");
         int previous = lenient();

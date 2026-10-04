@@ -95,7 +95,7 @@ public final class AiGameTests {
         for (AiRealm r : realms) if (r != attacker && r != spared) data.diplomacy().between(attacker.id(), r.id()).sign(Treaty.NON_AGRESSION, today);
     }
 
-    @GameTest(template = TestWorld.TEMPLATE, batch = "p8_frontiere", timeoutTicks = 200)
+    @GameTest(template = TestWorld.TEMPLATE, setupTicks = TestWorld.SETUP_TICKS, batch = "p8_frontiere", timeoutTicks = 200)
     public static void guerreEntreIADeplaceUneFrontiere(GameTestHelper h) {
         TestWorld w = TestWorld.realm(h, "Valbrume");
         Runnable restore = testSettings();
@@ -133,7 +133,7 @@ public final class AiGameTests {
         }
     }
 
-    @GameTest(template = TestWorld.TEMPLATE, batch = "p8_coalition", timeoutTicks = 200)
+    @GameTest(template = TestWorld.TEMPLATE, setupTicks = TestWorld.SETUP_TICKS, batch = "p8_coalition", timeoutTicks = 200)
     public static void coalitionContreUnJoueurMenacant(GameTestHelper h) {
         TestWorld w = TestWorld.realm(h, "Hautemarche");
         Runnable restore = testSettings();
@@ -173,7 +173,7 @@ public final class AiGameTests {
         }
     }
 
-    @GameTest(template = TestWorld.TEMPLATE, batch = "p8_monde", timeoutTicks = 400)
+    @GameTest(template = TestWorld.TEMPLATE, setupTicks = TestWorld.SETUP_TICKS, batch = "p8_monde", timeoutTicks = 400)
     public static void soixanteJoursDePolitique(GameTestHelper h) {
         TestWorld w = TestWorld.realm(h, "Ormesval");
         Runnable restore = testSettings();
@@ -192,7 +192,9 @@ public final class AiGameTests {
                 AiBrain.onNewDay(server, d);
                 if (data.wars().all().size() > before) wars += data.wars().all().size() - before;
                 for (War war : data.wars().all()) {
-                    w.check(d - war.startDay() <= 31, "une guerre entre IA ne finit jamais (" + (d - war.startDay()) + " jours)");
+                    // Seules les guerres entre IA finissent d'elles-mêmes ; contre un joueur, il faut négocier.
+                    boolean betweenAis = data.world().realm(war.attacker()).isPresent() && data.world().realm(war.defender()).isPresent();
+                    w.check(!betweenAis || d - war.startDay() <= 31, "une guerre entre IA ne finit jamais (" + (d - war.startDay()) + " jours)");
                     w.check(!war.attacker().equals(war.defender()), "un royaume en guerre contre lui-même");
                 }
             }
@@ -205,7 +207,7 @@ public final class AiGameTests {
         }
     }
 
-    @GameTest(template = TestWorld.TEMPLATE, batch = "p8_ia_attaque", timeoutTicks = 200)
+    @GameTest(template = TestWorld.TEMPLATE, setupTicks = TestWorld.SETUP_TICKS, batch = "p8_ia_attaque", timeoutTicks = 200)
     public static void uneIAAttaqueUnJoueurHai(GameTestHelper h) {
         TestWorld w = TestWorld.realm(h, "Pierrefeu");
         Runnable restore = testSettings();

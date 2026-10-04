@@ -48,6 +48,26 @@ public final class WorldPackets {
         }
     }
 
+    /** Où se trouve une carte papier (P14) : Minecraft ne l'envoie pas au client. */
+    public record MapCenter(int id, net.minecraft.resources.ResourceLocation dimension, int x, int z, int scale) {
+        public static void encode(MapCenter p, FriendlyByteBuf buf) {
+            buf.writeVarInt(p.id);
+            buf.writeResourceLocation(p.dimension);
+            buf.writeInt(p.x);
+            buf.writeInt(p.z);
+            buf.writeVarInt(p.scale);
+        }
+
+        public static MapCenter decode(FriendlyByteBuf buf) {
+            return new MapCenter(buf.readVarInt(), buf.readResourceLocation(), buf.readInt(), buf.readInt(), buf.readVarInt());
+        }
+
+        public static void handle(MapCenter p, Supplier<NetworkEvent.Context> ctx) {
+            DistExecutor.unsafeRunWhenOn(Dist.CLIENT, () -> () -> fr.crusadecraft.client.map.PaperMapOverlay.setCenter(p.id,
+                    new fr.crusadecraft.client.map.PaperMapOverlay.Center(p.dimension, p.x, p.z, p.scale)));
+        }
+    }
+
     /** Une ligne des nouvelles du monde : son jour et son texte. */
     public record NewsLine(long day, Component text) {}
 

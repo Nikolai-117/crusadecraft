@@ -173,10 +173,8 @@ public final class WorldService {
                     Component.translatable("crusadecraft.toast.discovered.body", name)));
             if (CrusadeConfig.SERVER.heralds.get()) sendHerald(player, realm);
         }
-        // Une frontière peinte décide seule ; sinon, le cercle autour du siège le plus proche.
-        Optional<UUID> painted = world.borders().at(dim, player.getX(), player.getZ());
-        AiRealm here = painted.isPresent() ? world.realm(painted.get()).orElse(null)
-                : dist <= CrusadeConfig.SERVER.territoryRadius.get() ? realm : null;
+        // Les terres où l'on se tient : la réponse commune (frontières peintes, puis cercles des sièges et des constructions).
+        AiRealm here = Territory.ownerAt(server, dim, player.getX(), player.getZ()).flatMap(world::realm).orElse(null);
         UUID current = here == null ? null : here.id();
         UUID previous = current == null ? LAST_TERRITORY.remove(player.getUUID()) : LAST_TERRITORY.put(player.getUUID(), current);
         if (here != null && !current.equals(previous) && !(fresh && here == realm) && here.discoveredBy(player.getUUID())) {
@@ -385,6 +383,26 @@ public final class WorldService {
                 if (i == null) continue;
                 seats.add(new MapView.Seat(i, p.name(), p.seat().getX(), p.seat().getZ(), p.capital() && p.holder() == null, p.dejureKingdom(),
                         p.anchor() != AiProvince.Anchor.LAND, true, p.id(), index.get(r.id())));
+            }
+        }
+        // Les constructions (P14) des royaumes de cette carte, et les postes de garde MineColonies des joueurs.
+        for (fr.crusadecraft.core.build.Site site : world.sites()) {
+            Integer i = index.get(site.owner());
+            if (i == null || !site.dimension().equals(dim)) continue;
+            seats.add(new MapView.Seat(i, site.name(), site.anchor().getX(), site.anchor().getZ(), false, nearestDejure(world, site.anchor().getX(),
+                    site.anchor().getZ()), false, false, -1, -1, new MapView.SiteInfo(site.id(), site.kind().ordinal(), site.radius(),
+                    fr.crusadecraft.core.build.SiteService.percent(site), site.kind().garrison())));
+        }
+        for (Realm r : data.realms()) {
+            Integer i = index.get(r.id());
+            if (i == null) continue;
+            for (ColonyRef colony : r.allColonies()) {
+                if (!colony.dimension().equals(dim)) continue;
+                for (MineColoniesBridge.GuardPost g : Territory.guardPosts(colony)) {
+                    seats.add(new MapView.Seat(i, MineColoniesBridge.info(colony).name(), g.pos().getX(), g.pos().getZ(), false,
+                            nearestDejure(world, g.pos().getX(), g.pos().getZ()), false, false, -1, -1,
+                            new MapView.SiteInfo(null, MapView.SiteInfo.GUARD_POST, Territory.guardRadius(g.level()), 100, g.level())));
+                }
             }
         }
         List<MapView.Dejure> dejure = new ArrayList<>();

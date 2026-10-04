@@ -63,7 +63,7 @@ public class MapScreen extends Screen {
     }
 
     /** Un siège retrouvé d'une carte à l'autre : par sa province, sinon par son royaume et son nom (colonie). */
-    record SeatKey(UUID territory, int province, String name) {}
+    record SeatKey(UUID territory, int province, String name, UUID site, int x, int z) {}
 
     private MapView view;
     private boolean dejure = lastDejure;
@@ -242,7 +242,17 @@ public class MapScreen extends Screen {
 
     /** Où commence la partie « royaume » du panneau, relativement à son bord haut. */
     private static int panelRealmTop(MapView.Seat s) {
+        if (s.site() != null && s.site().id() != null) return 36 + 12 + 2 * 16;
         return 36 + (s.provinceId() >= 0 ? 3 * 16 : 34);
+    }
+
+    /** « Fort de Valcourt » pour une construction, « Poste de garde » pour MineColonies, sinon le nom du siège. */
+    static Component seatName(MapView.Seat s) {
+        if (s.site() == null) return Component.literal(s.name());
+        if (s.site().kind() == MapView.SiteInfo.GUARD_POST) return Component.translatable("crusadecraft.site.guard_post.named", s.name());
+        fr.crusadecraft.core.build.SiteKind kind = fr.crusadecraft.core.build.SiteKind.byOrdinal(s.site().kind());
+        return Component.translatable(AiNames.elidesPublic(s.name()) ? "crusadecraft.site.named.elided" : "crusadecraft.site.named",
+                Component.translatable(kind.key()), s.name());
     }
 
     private int panelY() {
@@ -271,7 +281,31 @@ public class MapScreen extends Screen {
         MapView.Seat s = view.seats().get(seatIndex);
         int realmY = panelY() + panelRealmTop(s) + 14;
         y += 30;
-        if (s.provinceId() >= 0) {
+        if (s.site() != null && s.site().id() != null) {
+            // Une construction : la donner à un autre royaume, ou l'effacer du registre (ses pierres restent).
+            y += 12;
+            if (giveTarget < 0 || giveTarget >= view.territories().size()) giveTarget = s.territory();
+            Component give = Component.translatable("crusadecraft.mapedit.city.give_to", shortName(giveTarget));
+            addRenderableWidget(Button.builder(Component.literal(font.plainSubstrByWidth(give.getString(), bw - 40)), b -> {
+                giveTarget = (giveTarget + (hasShiftDown() ? view.territories().size() - 1 : 1)) % view.territories().size();
+                rebuildWidgets();
+            }).bounds(px, y, bw - 32, 15).tooltip(Tooltip.create(Component.translatable("crusadecraft.mapedit.city.give.tip"))).build());
+            Button ok = Button.builder(Component.translatable("crusadecraft.mapedit.city.give"), b ->
+                    CrusadeNetwork.toServer(new MapEditPackets.SiteAction(s.site().id(), false, view.territories().get(giveTarget).id())))
+                    .bounds(px + bw - 30, y, 30, 15).build();
+            ok.active = giveTarget != s.territory();
+            addRenderableWidget(ok);
+            y += 16;
+            Button delete = Button.builder(armedLabel(1, "crusadecraft.mapedit.site.delete"), b -> {
+                if (confirm(1)) {
+                    CrusadeNetwork.toServer(new MapEditPackets.SiteAction(s.site().id(), true, null));
+                    selected = null;
+                }
+                rebuildWidgets();
+            }).bounds(px, y, bw, 15).build();
+            delete.setTooltip(Tooltip.create(Component.translatable("crusadecraft.mapedit.site.delete.tip")));
+            addRenderableWidget(delete);
+        } else if (s.provinceId() >= 0) {
             addRenderableWidget(Button.builder(Component.translatable("crusadecraft.mapedit.city.rename"), b ->
                     minecraft.setScreen(MapEditForm.renameCity(this, s.provinceId(), s.name()))).bounds(px, y, bw / 2 - 1, 15).build());
             Button move = Button.builder(Component.translatable(moving ? "crusadecraft.mapedit.city.moving" : "crusadecraft.mapedit.city.move"), b -> {
@@ -366,17 +400,19 @@ public class MapScreen extends Screen {
     }
 
     private SeatKey keyOf(MapView.Seat s) {
-        return new SeatKey(view.territories().get(s.territory()).id(), s.provinceId(), s.name());
+        return new SeatKey(view.territories().get(s.territory()).id(), s.provinceId(), s.name(), s.site() == null ? null : s.site().id(), s.x(), s.z());
     }
 
     private int selectedIndex() {
         if (selected == null) return -1;
         for (int i = 0; i < view.seats().size(); i++) {
             MapView.Seat s = view.seats().get(i);
-            if (selected.province() >= 0 ? s.provinceId() == selected.province()
-                    : s.provinceId() < 0 && s.name().equals(selected.name()) && view.territories().get(s.territory()).id().equals(selected.territory())) {
-                return i;
-            }
+            boolean same;
+            if (selected.site() != null) same = s.site() != null && selected.site().equals(s.site().id());
+            else if (selected.province() >= 0) same = s.provinceId() == selected.province();
+            else same = s.provinceId() < 0 && (s.site() == null || s.site().id() == null) && s.x() == selected.x() && s.z() == selected.z()
+                    && view.territories().get(s.territory()).id().equals(selected.territory());
+            if (same) return i;
         }
         return -1;
     }
@@ -452,17 +488,23 @@ public class MapScreen extends Screen {
         }
         MapView.Seat s = view.seats().get(seatIndex);
         MapView.Territory t = view.territories().get(s.territory());
-        Ui.text(g, font, Component.literal(font.plainSubstrByWidth(s.name(), tw)), tx, py + 6, Ui.TEXT_TITLE);
-        String kind = s.provinceId() < 0 ? "crusadecraft.mapedit.panel.colony" : s.capital() ? "crusadecraft.mapedit.panel.capital"
-                : "crusadecraft.mapedit.panel.city";
+        Ui.text(g, font, Component.literal(font.plainSubstrByWidth(seatName(s).getString(), tw)), tx, py + 6, Ui.TEXT_TITLE);
+        String kind = s.site() != null ? (s.site().kind() == MapView.SiteInfo.GUARD_POST ? "crusadecraft.mapedit.panel.guard_post"
+                : "crusadecraft.mapedit.panel.site") : s.provinceId() < 0 ? "crusadecraft.mapedit.panel.colony" : s.capital()
+                ? "crusadecraft.mapedit.panel.capital" : "crusadecraft.mapedit.panel.city";
         Ui.text(g, font, Component.literal(font.plainSubstrByWidth(Component.translatable(kind).getString(), tw)), tx, py + 16, Ui.TEXT_MUTED);
         Ui.text(g, font, Component.literal(font.plainSubstrByWidth(Component.translatable("crusadecraft.mapedit.panel.held",
                 shortName(s.territory())).getString(), tw)), tx, py + 26, Ui.TEXT);
-        if (s.provinceId() < 0) {
+        if (s.site() != null && s.site().id() != null) {
+            Ui.text(g, font, Component.literal(font.plainSubstrByWidth(siteState(s).getString(), tw)), tx, py + 36, Ui.TEXT_MUTED);
+        } else if (s.site() != null) {
+            Ui.wrapped(g, font, Component.translatable("crusadecraft.mapedit.panel.guard_post.body"), tx, py + 38, tw, Ui.TEXT_MUTED);
+        } else if (s.provinceId() < 0) {
             Ui.wrapped(g, font, Component.translatable("crusadecraft.mapedit.panel.colony.body"), tx, py + 38, tw, Ui.TEXT_MUTED);
         }
         int ownerIndex = s.provinceId() >= 0 && s.origin() >= 0 && s.origin() < view.territories().size() ? s.origin() : s.territory();
         int ly = py + panelRealmTop(s) + 3;
+        if (s.site() != null && s.site().kind() == MapView.SiteInfo.GUARD_POST) return;
         MapView.Territory owner = view.territories().get(ownerIndex);
         if (owner.ai()) {
             Ui.text(g, font, Component.literal(font.plainSubstrByWidth(Component.translatable("crusadecraft.mapedit.panel.realm",
@@ -500,6 +542,11 @@ public class MapScreen extends Screen {
             int x = screenX(s.x()), y = screenY(s.z());
             if (x < mapX - 40 || x > mapX + mapW + 40 || y < mapY - 20 || y > mapY + mapH + 20) continue;
             if (i == chosen) g.renderOutline(x - 7, y - 7, 14, 14, 0xFFFFFFFF);
+            if (s.site() != null) {
+                siteIcon(g, s, x, y);
+                if (scale <= 6 || i == chosen) label(g, seatName(s), x, y, 0.65f);
+                continue;
+            }
             if (s.capital()) {
                 g.fill(x - 4, y - 4, x + 4, y + 4, INK);
                 g.fill(x - 3, y - 3, x + 3, y + 3, 0xFFD4A017);
@@ -518,6 +565,70 @@ public class MapScreen extends Screen {
                 g.drawString(font, name, 0, 0, INK, false);
                 g.pose().popPose();
             }
+        }
+    }
+
+    private void label(GuiGraphics g, Component name, int x, int y, float k) {
+        int tw = Math.round(font.width(name) * k);
+        g.pose().pushPose();
+        g.pose().translate(x - tw / 2f, y + 6, 0);
+        g.pose().scale(k, k, 1);
+        g.drawString(font, name, 0, 0, INK, false);
+        g.pose().popPose();
+    }
+
+    /** L'avancement d'une construction : « Chantier : 45 % » ou « Bâtie · garnison 5 ». */
+    private static Component siteState(MapView.Seat s) {
+        if (s.site().percent() < 100) return Component.translatable("crusadecraft.site.state.building", s.site().percent());
+        return s.site().garrison() > 0 ? Component.translatable("crusadecraft.site.state.garrison", s.site().garrison())
+                : Component.translatable("crusadecraft.site.state.built");
+    }
+
+    /** Une icône par nature de construction, aux couleurs de son royaume ; un chantier est pâle. */
+    private void siteIcon(GuiGraphics g, MapView.Seat s, int x, int y) {
+        int color = 0xFF000000 | view.territories().get(s.territory()).color();
+        if (s.site().percent() < 100) color = (color & 0x00FFFFFF) | 0x88000000;
+        int ink = s.site().percent() < 100 ? 0x88000000 | (INK & 0xFFFFFF) : INK;
+        int kind = s.site().kind();
+        if (kind == MapView.SiteInfo.GUARD_POST || kind == fr.crusadecraft.core.build.SiteKind.TOUR.ordinal()) {
+            g.fill(x - 2, y - 4, x + 2, y + 3, ink);
+            g.fill(x - 1, y - 3, x + 1, y + 2, color);
+            g.fill(x - 2, y - 5, x - 1, y - 4, ink);
+            g.fill(x + 1, y - 5, x + 2, y - 4, ink);
+            return;
+        }
+        switch (fr.crusadecraft.core.build.SiteKind.byOrdinal(kind)) {
+            case BORNE -> {
+                g.fill(x - 1, y - 3, x + 1, y + 2, ink);
+                g.fill(x, y - 4, x + 2, y - 2, color);
+            }
+            case CAMP -> {
+                for (int i = 0; i < 4; i++) g.fill(x - i, y - 3 + i, x + i + 1, y - 2 + i, ink);
+                for (int i = 1; i < 3; i++) g.fill(x - i + 1, y - 2 + i, x + i, y - 1 + i, color);
+            }
+            case AVANT_POSTE -> {
+                for (int i = 0; i < 4; i++) {
+                    g.fill(x - i, y - 3 + i, x + i + 1, y - 2 + i, ink);
+                    g.fill(x - i, y + 3 - i, x + i + 1, y + 4 - i, ink);
+                }
+                g.fill(x - 1, y - 1, x + 2, y + 2, color);
+            }
+            case FORT -> {
+                g.fill(x - 4, y - 4, x + 4, y + 4, ink);
+                g.fill(x - 3, y - 3, x + 3, y + 3, color);
+                g.fill(x - 1, y - 1, x + 1, y + 1, ink);
+            }
+            case DONJON -> {
+                g.fill(x - 3, y - 5, x + 3, y + 4, ink);
+                g.fill(x - 2, y - 4, x + 2, y + 3, 0xFFD4A017);
+                g.fill(x - 1, y - 2, x + 1, y + 1, color);
+            }
+            case VILLAGE -> {
+                g.fill(x - 3, y - 1, x + 3, y + 3, ink);
+                g.fill(x - 2, y, x + 2, y + 2, 0xFFEDE3CC);
+                for (int i = 0; i < 3; i++) g.fill(x - i - 1, y - 3 + i, x + i + 1, y - 2 + i, color);
+            }
+            default -> g.fill(x - 2, y - 2, x + 2, y + 2, ink);
         }
     }
 
@@ -551,6 +662,14 @@ public class MapScreen extends Screen {
                 : t.ai() ? Component.translatable("crusadecraft.map.status.neutral").withStyle(ChatFormatting.YELLOW)
                 : Component.translatable("crusadecraft.map.status.player").withStyle(ChatFormatting.AQUA);
         tip.add(relation);
+        if (s.site() != null) {
+            tip.add(seatName(s).copy().withStyle(ChatFormatting.WHITE));
+            tip.add(s.site().kind() == MapView.SiteInfo.GUARD_POST
+                    ? Component.translatable("crusadecraft.site.guard_post.level", s.site().garrison()).withStyle(ChatFormatting.GRAY)
+                    : siteState(s).copy().withStyle(ChatFormatting.GRAY));
+            if (editing()) tip.add(Component.translatable("crusadecraft.mapedit.click").withStyle(ChatFormatting.DARK_GRAY));
+            return tip;
+        }
         Component seat = Component.translatable(s.capital() ? "crusadecraft.map.seat.capital" : "crusadecraft.map.seat", s.name());
         tip.add(seat.copy().withStyle(ChatFormatting.GRAY));
         if (s.dejure() >= 0 && s.dejure() < view.dejure().size()) {

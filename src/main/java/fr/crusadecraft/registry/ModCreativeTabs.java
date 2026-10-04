@@ -30,6 +30,7 @@ public final class ModCreativeTabs {
                 output.accept(ModItems.TOURNAMENT.get());
                 output.accept(ModItems.CHANCERY.get());
                 output.accept(ModItems.SEAL.get());
+                output.accept(ModItems.BORNAGE.get());
             })
             .build());
 

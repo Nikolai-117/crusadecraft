@@ -109,7 +109,13 @@ public final class ClientPackets {
         if (!view.editing()) fr.crusadecraft.client.map.ClientMapData.set(view);
         Minecraft mc = Minecraft.getInstance();
         if (mc.screen instanceof fr.crusadecraft.client.screen.MapScreen screen) screen.refresh(view);
+        else if (mc.screen instanceof fr.crusadecraft.client.screen.StaffScreen staff) staff.setMap(view);
         else if (open) mc.setScreen(new fr.crusadecraft.client.screen.MapScreen(view));
+    }
+
+    /** Le menu du bâton de bornage (clic droit dans le vide). */
+    public static void openStaffMenu() {
+        Minecraft.getInstance().setScreen(new fr.crusadecraft.client.screen.StaffScreen());
     }
 
     /** Le registre des lignées : rafraîchit l'écran ouvert, ou l'ouvre. */

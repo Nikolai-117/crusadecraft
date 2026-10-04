@@ -752,24 +752,9 @@ public final class WarService {
         return out;
     }
 
+    /** Cet endroit est-il sur les terres de ce royaume ? La réponse commune de {@link fr.crusadecraft.core.world.Territory}. */
     public static boolean inTerritory(MinecraftServer server, UUID id, ResourceLocation dim, BlockPos pos) {
-        // Une frontière peinte à la main décide seule, à la place des cercles autour des sièges.
-        Optional<UUID> painted = data(server).world().borders().at(dim, pos.getX() + 0.5, pos.getZ() + 0.5);
-        if (painted.isPresent()) return painted.get().equals(id);
-        int radius = CrusadeConfig.SERVER.territoryRadius.get();
-        for (AiProvince p : provincesOf(server, id)) {
-            if (p.dimension().equals(dim) && p.distanceSqr(pos.getX() + 0.5, pos.getZ() + 0.5) <= (double) radius * radius) return true;
-        }
-        Optional<Realm> r = player(server, id);
-        if (r.isPresent()) {
-            int colonyRadius = CrusadeConfig.SERVER.colonyRadius.get();
-            for (ColonyRef c : r.get().allColonies()) {
-                if (!c.dimension().equals(dim)) continue;
-                Optional<BlockPos> center = MineColoniesBridge.center(c);
-                if (center.isPresent() && center.get().distSqr(pos) <= (double) colonyRadius * colonyRadius) return true;
-            }
-        }
-        return false;
+        return fr.crusadecraft.core.world.Territory.ownerAt(server, dim, pos.getX() + 0.5, pos.getZ() + 0.5).map(id::equals).orElse(false);
     }
 
     // ------------------------------------------------------------------ messages

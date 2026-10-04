@@ -76,7 +76,7 @@ public final class DiplomacyGameTests {
                 .orElseThrow(() -> new IllegalStateException("aucune lettre à sceller : " + w.realm.mail().size() + " lettre(s)"));
     }
 
-    @GameTest(template = TestWorld.TEMPLATE, batch = "p6_hommage", timeoutTicks = 200)
+    @GameTest(template = TestWorld.TEMPLATE, setupTicks = TestWorld.SETUP_TICKS, batch = "p6_hommage", timeoutTicks = 200)
     public static void vassaliserUneSeigneurieEtDevenirComte(GameTestHelper h) {
         TestWorld w = TestWorld.realm(h, "Valbrume");
         Runnable restore = testSettings();
@@ -125,7 +125,7 @@ public final class DiplomacyGameTests {
         }
     }
 
-    @GameTest(template = TestWorld.TEMPLATE, batch = "p6_traites", timeoutTicks = 200)
+    @GameTest(template = TestWorld.TEMPLATE, setupTicks = TestWorld.SETUP_TICKS, batch = "p6_traites", timeoutTicks = 200)
     public static void cadeauInsulteTraiteEtTribut(GameTestHelper h) {
         TestWorld w = TestWorld.realm(h, "Hautemarche");
         Runnable restore = testSettings();
@@ -164,7 +164,7 @@ public final class DiplomacyGameTests {
         }
     }
 
-    @GameTest(template = TestWorld.TEMPLATE, batch = "p6_revendication", timeoutTicks = 200)
+    @GameTest(template = TestWorld.TEMPLATE, setupTicks = TestWorld.SETUP_TICKS, batch = "p6_revendication", timeoutTicks = 200)
     public static void revendicationParLeChancelier(GameTestHelper h) {
         TestWorld w = TestWorld.realm(h, "Pierrefeu");
         Runnable restore = testSettings();

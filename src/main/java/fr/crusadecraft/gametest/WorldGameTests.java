@@ -28,7 +28,7 @@ public final class WorldGameTests {
 
     private WorldGameTests() {}
 
-    @GameTest(template = TestWorld.TEMPLATE, batch = "p5_monde", timeoutTicks = 260)
+    @GameTest(template = TestWorld.TEMPLATE, setupTicks = TestWorld.SETUP_TICKS, batch = "p5_monde", timeoutTicks = 260)
     public static void generationDecouverteEtCarte(GameTestHelper h) {
         TestWorld w = TestWorld.realm(h, "Valbrume");
         var server = h.getLevel().getServer();

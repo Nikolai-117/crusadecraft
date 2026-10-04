@@ -355,13 +355,33 @@ public final class LineageService {
         LineageState state = state(player.server);
         List<Person> people = people(state, target);
         if (people.isEmpty()) return Outcome.no("crusadecraft.lineage.unknown");
-        ServerLevel level = player.serverLevel();
+        int[] counts = spawnAt(player.serverLevel(), state, people, player.blockPosition());
+        int spawned = counts[0], came = counts[1], elsewhere = counts[2];
+        data(player.server).setDirty();
+        CrusadeCraft.LOGGER.info("CrusadeCraft : {} personne(s) du registre apparues, {} venues, {} ailleurs", spawned, came, elsewhere);
+        if (spawned + came == 0) return Outcome.no(elsewhere > 0 ? "crusadecraft.lineage.spawn.elsewhere" : "crusadecraft.lineage.spawn.none");
+        return Outcome.ok(Component.translatable("crusadecraft.lineage.spawn.done", spawned, came));
+    }
+
+    /**
+     * Fait apparaître ces personnes autour d'un point (un village qui vient d'être bâti), sans demander de droits :
+     * c'est le jeu qui le fait. Renvoie le nombre d'apparus. Sans Comes Alive, rien.
+     */
+    public static int spawnPeople(ServerLevel level, LineageState state, List<Person> people, BlockPos center) {
+        if (!McaBridge.isReady() || people.isEmpty()) return 0;
+        int[] counts = spawnAt(level, state, people, center);
+        CrusadeSavedData.get(level.getServer()).setDirty();
+        return counts[0];
+    }
+
+    /** Apparus, venus, ailleurs : les vivants visés qui ne sont pas encore dans le monde apparaissent autour du centre. */
+    private static int[] spawnAt(ServerLevel level, LineageState state, List<Person> people, BlockPos center) {
         McaBridge.syncTree(level, state, people);
         int spawned = 0, came = 0, elsewhere = 0, index = 0;
         for (Person p : people) {
             if (!p.alive()) continue;
             if (spawned + came >= SPAWN_MAX) break;
-            BlockPos spot = spot(level, player.blockPosition(), index++);
+            BlockPos spot = spot(level, center, index++);
             Entity existing = level.getEntity(p.id());
             if (existing != null) {
                 existing.teleportTo(spot.getX() + 0.5, spot.getY(), spot.getZ() + 0.5);
@@ -378,10 +398,7 @@ public final class LineageService {
                 spawned++;
             }
         }
-        data(player.server).setDirty();
-        CrusadeCraft.LOGGER.info("CrusadeCraft : {} personne(s) du registre apparues, {} venues, {} ailleurs", spawned, came, elsewhere);
-        if (spawned + came == 0) return Outcome.no(elsewhere > 0 ? "crusadecraft.lineage.spawn.elsewhere" : "crusadecraft.lineage.spawn.none");
-        return Outcome.ok(Component.translatable("crusadecraft.lineage.spawn.done", spawned, came));
+        return new int[]{spawned, came, elsewhere};
     }
 
     /** Inscrit les personnes visées dans l'arbre généalogique de Comes Alive, sans rien faire apparaître. */

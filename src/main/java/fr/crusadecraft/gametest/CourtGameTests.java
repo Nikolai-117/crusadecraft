@@ -86,7 +86,7 @@ public final class CourtGameTests {
         w.cleanup();
     }
 
-    @GameTest(template = TestWorld.TEMPLATE, batch = "p10_tournoi", timeoutTicks = 200)
+    @GameTest(template = TestWorld.TEMPLATE, setupTicks = TestWorld.SETUP_TICKS, batch = "p10_tournoi", timeoutTicks = 200)
     public static void tournoiALaLice(GameTestHelper h) {
         TestWorld w = TestWorld.realm(h, "Valbrume");
         Runnable restore = testSettings();
@@ -116,7 +116,7 @@ public final class CourtGameTests {
         }
     }
 
-    @GameTest(template = TestWorld.TEMPLATE, batch = "p10_croisade", timeoutTicks = 200)
+    @GameTest(template = TestWorld.TEMPLATE, setupTicks = TestWorld.SETUP_TICKS, batch = "p10_croisade", timeoutTicks = 200)
     public static void croisadeContreUnPaien(GameTestHelper h) {
         TestWorld w = TestWorld.realm(h, "Hautemarche");
         Runnable restore = testSettings();
@@ -161,7 +161,7 @@ public final class CourtGameTests {
         }
     }
 
-    @GameTest(template = TestWorld.TEMPLATE, batch = "p10_mariage", timeoutTicks = 200)
+    @GameTest(template = TestWorld.TEMPLATE, setupTicks = TestWorld.SETUP_TICKS, batch = "p10_mariage", timeoutTicks = 200)
     public static void maisonHeritierEtMariage(GameTestHelper h) {
         TestWorld w = TestWorld.realm(h, "Pierrefeu");
         Runnable restore = testSettings();

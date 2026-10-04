@@ -65,7 +65,7 @@ public final class IntrigueGameTests {
         return w.realm.intrigue().pending().stream().filter(e -> e.event().equals(event)).findFirst();
     }
 
-    @GameTest(template = TestWorld.TEMPLATE, batch = "p9_evenement", timeoutTicks = 200)
+    @GameTest(template = TestWorld.TEMPLATE, setupTicks = TestWorld.SETUP_TICKS, batch = "p9_evenement", timeoutTicks = 200)
     public static void evenementAChoixEtChronique(GameTestHelper h) {
         TestWorld w = TestWorld.realm(h, "Valbrume");
         Runnable restore = testSettings();
@@ -102,7 +102,7 @@ public final class IntrigueGameTests {
         }
     }
 
-    @GameTest(template = TestWorld.TEMPLATE, batch = "p9_faction", timeoutTicks = 200)
+    @GameTest(template = TestWorld.TEMPLATE, setupTicks = TestWorld.SETUP_TICKS, batch = "p9_faction", timeoutTicks = 200)
     public static void factionEtUltimatum(GameTestHelper h) {
         TestWorld w = TestWorld.realm(h, "Hautemarche");
         Runnable restore = testSettings();
@@ -138,7 +138,7 @@ public final class IntrigueGameTests {
         }
     }
 
-    @GameTest(template = TestWorld.TEMPLATE, batch = "p9_complot", timeoutTicks = 200)
+    @GameTest(template = TestWorld.TEMPLATE, setupTicks = TestWorld.SETUP_TICKS, batch = "p9_complot", timeoutTicks = 200)
     public static void complotEventeEtSecrets(GameTestHelper h) {
         TestWorld w = TestWorld.realm(h, "Pierrefeu");
         Runnable restore = testSettings();

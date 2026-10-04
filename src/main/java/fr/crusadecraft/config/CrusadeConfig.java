@@ -77,6 +77,13 @@ public final class CrusadeConfig {
         public final ForgeConfigSpec.IntValue territoryRadius;
         public final ForgeConfigSpec.IntValue colonyRadius;
         public final ForgeConfigSpec.EnumValue<fr.crusadecraft.core.world.WorldEditService.Access> mapEditor;
+        public final ForgeConfigSpec.BooleanValue survivalClaims;
+        public final ForgeConfigSpec.IntValue claimCellCost;
+        public final ForgeConfigSpec.IntValue claimMaxDistance;
+        public final ForgeConfigSpec.IntValue claimMaxCells;
+        public final ForgeConfigSpec.BooleanValue survivalBuilding;
+        public final ForgeConfigSpec.IntValue buildBlocksPerStep;
+        public final ForgeConfigSpec.IntValue buildStepSeconds;
         public final ForgeConfigSpec.IntValue discoveryRadius;
         public final ForgeConfigSpec.BooleanValue heralds;
         public final ForgeConfigSpec.IntValue heraldSeconds;
@@ -221,6 +228,19 @@ public final class CrusadeConfig {
             mapEditor = b.comment("Qui peut ouvrir l'éditeur de la carte (poser royaumes et villes, peindre les frontières) :",
                             "TOUS, HOTE_ET_OPERATEURS (l'hôte d'une partie solo et les opérateurs) ou PERSONNE.")
                     .defineEnum("editeurCarte", fr.crusadecraft.core.world.WorldEditService.Access.HOTE_ET_OPERATEURS);
+            b.pop();
+
+            b.comment("Territoire : bâton de bornage et constructions (P14)").push("territoire");
+            survivalClaims = b.comment("En survie, un joueur peut étendre son propre royaume au bâton de bornage (l'éditeur de la carte, lui, peut tout).")
+                    .define("bornageSurvie", true);
+            claimCellCost = b.comment("Or demandé au trésor pour chaque case de 16 blocs prise en survie.").defineInRange("coutCaseOr", 5, 0, 10000);
+            claimMaxDistance = b.comment("Distance maximale, en blocs, entre une case prise en survie et une de vos colonies ou constructions.")
+                    .defineInRange("distanceMaxBlocs", 256, 16, 10000);
+            claimMaxCells = b.comment("Cases prises au plus d'un coup en survie.").defineInRange("casesMaxParTrace", 256, 1, 16384);
+            survivalBuilding = b.comment("En survie, un joueur peut bâtir des constructions pour son propre royaume (chantier payé par le trésor).")
+                    .define("constructionsSurvie", true);
+            buildBlocksPerStep = b.comment("Blocs posés à chaque étape d'un chantier en survie.").defineInRange("chantierBlocsParEtape", 6, 1, 512);
+            buildStepSeconds = b.comment("Secondes entre deux étapes d'un chantier en survie.").defineInRange("chantierSecondes", 2, 1, 600);
             b.pop();
 
             b.comment("Diplomatie, titres et vassalité").push("diplomatie");

@@ -27,7 +27,8 @@ public class MapEditForm extends Screen {
 
     private enum Mode { NEW_REALM, EDIT_REALM, NEW_CITY, RENAME_CITY }
 
-    private final MapScreen parent;
+    /** L'écran d'où l'on vient : la carte, ou le menu du bâton de bornage. */
+    private final Screen parent;
     private final Mode mode;
     private final int x, z;
     private final UUID target;
@@ -44,7 +45,7 @@ public class MapEditForm extends Screen {
     private int left, top, fw, fh;
     private Component status;
 
-    private MapEditForm(MapScreen parent, Mode mode, int x, int z, UUID target, int province, Component owner, String initialName) {
+    private MapEditForm(Screen parent, Mode mode, int x, int z, UUID target, int province, Component owner, String initialName) {
         super(Component.translatable("crusadecraft.mapedit.form." + mode.name().toLowerCase(java.util.Locale.ROOT)));
         this.parent = parent;
         this.mode = mode;
@@ -57,7 +58,7 @@ public class MapEditForm extends Screen {
     }
 
     /** Un nouveau royaume, sa capitale en (x, z) ; la couleur proposée est la première qu'aucun royaume ne porte. */
-    public static MapEditForm newRealm(MapScreen parent, int x, int z, List<Integer> usedColors) {
+    public static MapEditForm newRealm(Screen parent, int x, int z, List<Integer> usedColors) {
         MapEditForm f = new MapEditForm(parent, Mode.NEW_REALM, x, z, null, -1, null, "");
         for (Heraldry h : Heraldry.values()) {
             if (!usedColors.contains(h.rgb())) {
@@ -68,7 +69,7 @@ public class MapEditForm extends Screen {
         return f;
     }
 
-    public static MapEditForm editRealm(MapScreen parent, MapView.Territory t) {
+    public static MapEditForm editRealm(Screen parent, MapView.Territory t) {
         MapEditForm f = new MapEditForm(parent, Mode.EDIT_REALM, 0, 0, t.id(), -1, null, t.label());
         f.rank = t.rank();
         f.colorIndex = Heraldry.nearest(t.color()).ordinal();
@@ -77,11 +78,11 @@ public class MapEditForm extends Screen {
         return f;
     }
 
-    public static MapEditForm newCity(MapScreen parent, MapView.Territory owner, Component ownerName, int x, int z) {
+    public static MapEditForm newCity(Screen parent, MapView.Territory owner, Component ownerName, int x, int z) {
         return new MapEditForm(parent, Mode.NEW_CITY, x, z, owner.id(), -1, ownerName, "");
     }
 
-    public static MapEditForm renameCity(MapScreen parent, int province, String name) {
+    public static MapEditForm renameCity(Screen parent, int province, String name) {
         return new MapEditForm(parent, Mode.RENAME_CITY, 0, 0, null, province, null, name);
     }
 

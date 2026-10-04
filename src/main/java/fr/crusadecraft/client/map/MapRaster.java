@@ -77,9 +77,10 @@ public final class MapRaster {
             MapView.Territory t = v.territories().get(s.territory());
             sx[i] = s.x();
             sz[i] = s.z();
-            double r = s.province() ? v.territoryRadius() : v.colonyRadius();
+            // Une construction tient le territoire de sa nature (rien tant qu'elle est en chantier).
+            double r = s.site() != null ? s.site().radius() : s.province() ? v.territoryRadius() : v.colonyRadius();
             r2[i] = r * r;
-            reveal2[i] = (r * 2.2) * (r * 2.2);
+            reveal2[i] = (Math.max(r, 32) * 2.2) * (Math.max(r, 32) * 2.2);
             if (dejure && s.dejure() >= 0 && s.dejure() < v.dejure().size()) {
                 colors[i] = v.dejure().get(s.dejure()).color();
                 group[i] = s.dejure();

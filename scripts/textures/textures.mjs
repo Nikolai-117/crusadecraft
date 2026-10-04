@@ -120,6 +120,28 @@ export const TEXTURES = {
       '................',
     ],
   },
+  // Bâton de bornage : une hampe de bois, pointe ferrée en bas, fanion rouge à liseré d'or en haut.
+  'item/baton_de_bornage': {
+    palette: { k: '2a1c10', w: '7a5230', W: 'a77b4f', r: '8f1f1a', R: 'c43a2e', g: 'c9a24a', G: 'f2d27a', s: '8a8f96' },
+    pixels: [
+      '.......kkkkkkk..',
+      '......kgRRRRRk..',
+      '......kgRRRRrk..',
+      '.....kGkRRRrk...',
+      '.....kWkkkkk....',
+      '....kWwk........',
+      '....kWwk........',
+      '...kWwk.........',
+      '...kWwk.........',
+      '..kWwk..........',
+      '..kWwk..........',
+      '.kWwk...........',
+      '.kWwk...........',
+      'kskk............',
+      'ksk.............',
+      '.k..............',
+    ],
+  },
   // Chroniques du royaume : gros volume bleu nuit, coins et fermoir d'or, signet rouge.
   'item/chroniques': {
     palette: { k: '141a2e', b: '24345e', B: '3a5290', g: 'c9a24a', G: 'f2d27a', p: 'eadcb8', P: 'c9b48a', r: 'b3261e' },

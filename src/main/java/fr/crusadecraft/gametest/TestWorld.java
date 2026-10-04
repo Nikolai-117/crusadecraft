@@ -22,6 +22,12 @@ import java.util.UUID;
  */
 final class TestWorld {
     static final String TEMPLATE = "dalle";
+    /**
+     * Deux ticks avant chaque test : MineColonies ne voit une colonie posée que dans un terrain que Minecraft a déjà
+     * rendu « visible », ce qu'il fait en fin de tick. Un test posé sur un terrain chargé à l'instant ratait sa colonie,
+     * et tous les suivants avec lui.
+     */
+    static final long SETUP_TICKS = 2;
 
     final GameTestHelper helper;
     final ServerPlayer ruler;

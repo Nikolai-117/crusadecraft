@@ -38,7 +38,7 @@ public final class CharacterGameTests {
         return CrusadeSavedData.get(w.helper.getLevel().getServer()).character(ref).orElseThrow();
     }
 
-    @GameTest(template = TestWorld.TEMPLATE, batch = "p2_fiche", timeoutTicks = 100)
+    @GameTest(template = TestWorld.TEMPLATE, setupTicks = TestWorld.SETUP_TICKS, batch = "p2_fiche", timeoutTicks = 100)
     public static void ficheDepuisLesCompetences(GameTestHelper h) {
         TestWorld w = TestWorld.realm(h, "Valbrume");
         try {
@@ -61,7 +61,7 @@ public final class CharacterGameTests {
         }
     }
 
-    @GameTest(template = TestWorld.TEMPLATE, batch = "p2_nomination", timeoutTicks = 100)
+    @GameTest(template = TestWorld.TEMPLATE, setupTicks = TestWorld.SETUP_TICKS, batch = "p2_nomination", timeoutTicks = 100)
     public static void nominationEtTitres(GameTestHelper h) {
         TestWorld w = TestWorld.realm(h, "Hautemarche");
         int previous = CrusadeConfig.SERVER.refuseOfficeBelowOpinion.get();
@@ -93,7 +93,7 @@ public final class CharacterGameTests {
         }
     }
 
-    @GameTest(template = TestWorld.TEMPLATE, batch = "p2_refus", timeoutTicks = 100)
+    @GameTest(template = TestWorld.TEMPLATE, setupTicks = TestWorld.SETUP_TICKS, batch = "p2_refus", timeoutTicks = 100)
     public static void refusSousLeSeuil(GameTestHelper h) {
         TestWorld w = TestWorld.realm(h, "Brumeval");
         int previous = CrusadeConfig.SERVER.refuseOfficeBelowOpinion.get();
@@ -111,7 +111,7 @@ public final class CharacterGameTests {
         }
     }
 
-    @GameTest(template = TestWorld.TEMPLATE, batch = "p2_recompense", timeoutTicks = 100)
+    @GameTest(template = TestWorld.TEMPLATE, setupTicks = TestWorld.SETUP_TICKS, batch = "p2_recompense", timeoutTicks = 100)
     public static void recompensePrendLObjet(GameTestHelper h) {
         TestWorld w = TestWorld.realm(h, "Pierrefeu");
         try {
@@ -131,7 +131,7 @@ public final class CharacterGameTests {
         }
     }
 
-    @GameTest(template = TestWorld.TEMPLATE, batch = "p2_prison", timeoutTicks = 100)
+    @GameTest(template = TestWorld.TEMPLATE, setupTicks = TestWorld.SETUP_TICKS, batch = "p2_prison", timeoutTicks = 100)
     public static void prisonEtExil(GameTestHelper h) {
         TestWorld w = TestWorld.realm(h, "Roncevaux");
         int previous = CrusadeConfig.SERVER.refuseOfficeBelowOpinion.get();
@@ -158,7 +158,7 @@ public final class CharacterGameTests {
         }
     }
 
-    @GameTest(template = TestWorld.TEMPLATE, batch = "p2_mort", timeoutTicks = 100)
+    @GameTest(template = TestWorld.TEMPLATE, setupTicks = TestWorld.SETUP_TICKS, batch = "p2_mort", timeoutTicks = 100)
     public static void mortEtDisparitionLiberentLePoste(GameTestHelper h) {
         TestWorld w = TestWorld.realm(h, "Combegrise");
         int previous = CrusadeConfig.SERVER.refuseOfficeBelowOpinion.get();
@@ -184,7 +184,7 @@ public final class CharacterGameTests {
         }
     }
 
-    @GameTest(template = TestWorld.TEMPLATE, batch = "p2_etranger", timeoutTicks = 100)
+    @GameTest(template = TestWorld.TEMPLATE, setupTicks = TestWorld.SETUP_TICKS, batch = "p2_etranger", timeoutTicks = 100)
     public static void unEtrangerNObeitPas(GameTestHelper h) {
         TestWorld w = TestWorld.realm(h, "Valombre");
         try {

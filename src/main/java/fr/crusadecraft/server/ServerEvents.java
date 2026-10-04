@@ -59,12 +59,22 @@ public final class ServerEvents {
         RealmService.reconcileAll(event.getServer());
     }
 
+    /** Un joueur part : on lui renverra le centre de ses cartes papier à son retour. */
+    @SubscribeEvent
+    public static void onLoggedOut(net.minecraftforge.event.entity.player.PlayerEvent.PlayerLoggedOutEvent event) {
+        fr.crusadecraft.core.world.PaperMapService.onLogout(event.getEntity().getUUID());
+    }
+
     @SubscribeEvent
     public static void onServerStopped(ServerStoppedEvent event) {
         MineColoniesEvents.onServerStopped();
         fr.crusadecraft.core.council.CouncilService.onServerStopped();
         fr.crusadecraft.core.council.RequestService.onServerStopped();
         fr.crusadecraft.core.world.WorldService.onServerStopped();
+        fr.crusadecraft.core.world.Territory.onServerStopped();
+        fr.crusadecraft.core.world.TerritoryService.onServerStopped();
+        fr.crusadecraft.core.build.SiteService.onServerStopped();
+        fr.crusadecraft.core.world.PaperMapService.onServerStopped();
         fr.crusadecraft.core.diplomacy.DiplomacyService.onServerStopped();
         WarFieldService.onServerStopped();
         fr.crusadecraft.core.court.TournamentService.onServerStopped();
@@ -106,6 +116,10 @@ public final class ServerEvents {
         if (t % (CrusadeConfig.SERVER.aiLetterMinutes.get() * 1200) == 600) fr.crusadecraft.core.diplomacy.DiplomacyService.aiLetters(server);
         if (t % 20 == 10) WarFieldService.tick(server);
         if (t % 5 == 2) WarFieldService.restoreTick(server);
+        // P14 : le bâton de bornage en marchant (deux fois par seconde), les chantiers (chaque tick, par petits lots).
+        if (t % 10 == 4) fr.crusadecraft.core.world.TerritoryService.walkTick(server);
+        if (t % 40 == 12) fr.crusadecraft.core.world.PaperMapService.tick(server);
+        fr.crusadecraft.core.build.SiteService.tick(server, t);
     }
 
     /** Les golems d'un village assiégé ne s'en prennent pas à sa garnison. */

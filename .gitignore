@@ -3,8 +3,8 @@ reference/
 
 # Gradle / ForgeGradle
 .gradle/
-build/
-out/
+/build/
+/out/
 run/
 run-*/
 logs/
@@ -19,7 +19,7 @@ logs/
 .classpath
 .project
 .settings/
-bin/
+/bin/
 
 # Système
 Thumbs.db

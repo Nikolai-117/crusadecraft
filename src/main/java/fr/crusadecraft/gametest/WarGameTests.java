@@ -94,7 +94,7 @@ public final class WarGameTests {
                 .orElseThrow(() -> new IllegalStateException("guerre introuvable après la déclaration"));
     }
 
-    @GameTest(template = TestWorld.TEMPLATE, batch = "p7_campagne", timeoutTicks = 200)
+    @GameTest(template = TestWorld.TEMPLATE, setupTicks = TestWorld.SETUP_TICKS, batch = "p7_campagne", timeoutTicks = 200)
     public static void declarerFaireCampagneEtCapituler(GameTestHelper h) {
         TestWorld w = TestWorld.realm(h, "Valbrume");
         Runnable restore = testSettings();
@@ -154,7 +154,7 @@ public final class WarGameTests {
         }
     }
 
-    @GameTest(template = TestWorld.TEMPLATE, batch = "p7_conquete", timeoutTicks = 200)
+    @GameTest(template = TestWorld.TEMPLATE, setupTicks = TestWorld.SETUP_TICKS, batch = "p7_conquete", timeoutTicks = 200)
     public static void conquerirUneProvinceRevendiquee(GameTestHelper h) {
         TestWorld w = TestWorld.realm(h, "Hautemarche");
         Runnable restore = testSettings();
@@ -193,7 +193,7 @@ public final class WarGameTests {
         }
     }
 
-    @GameTest(template = TestWorld.TEMPLATE, batch = "p7_degats", timeoutTicks = 200)
+    @GameTest(template = TestWorld.TEMPLATE, setupTicks = TestWorld.SETUP_TICKS, batch = "p7_degats", timeoutTicks = 200)
     public static void degatsDeGuerreReparesALaPaix(GameTestHelper h) {
         TestWorld w = TestWorld.realm(h, "Pierrefeu");
         Runnable restore = testSettings();
@@ -202,8 +202,9 @@ public final class WarGameTests {
             var level = h.getLevel();
             var data = CrusadeSavedData.get(server);
             AiRealm county = generateAndPick(w, TitleRank.COMTE);
-            // Une province ennemie posée au bord du terrain de test, pour que la guerre s'y joue.
-            AiProvince border = new AiProvince(9999, "Marche-Grise", level.dimension().location(), w.center.offset(12, 0, 0),
+            // Une province ennemie posée au bord du terrain de test, plus près du mur que la colonie : ses terres l'emportent
+            // (la règle commune : le siège le plus proche tient l'endroit).
+            AiProvince border = new AiProvince(9999, "Marche-Grise", level.dimension().location(), h.absolutePos(new BlockPos(2, 1, 1)),
                     AiProvince.Anchor.LAND, false, 0, 20, 10);
             county.provinces().add(border);
             data.diplomacy().between(county.id(), w.realm.id()).setHostile(true);

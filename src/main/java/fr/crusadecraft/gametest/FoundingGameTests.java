@@ -72,7 +72,7 @@ public final class FoundingGameTests {
         if (!condition) h.fail(message);
     }
 
-    @GameTest(template = TEMPLATE, batch = "p1_fondation", timeoutTicks = 100)
+    @GameTest(template = TEMPLATE, setupTicks = TestWorld.SETUP_TICKS, batch = "p1_fondation", timeoutTicks = 100)
     public static void fondationComplete(GameTestHelper h) {
         Setup s = setup(h, "Valbrume", 2);
         try {
@@ -107,7 +107,7 @@ public final class FoundingGameTests {
         }
     }
 
-    @GameTest(template = TEMPLATE, batch = "p1_niveau", timeoutTicks = 100)
+    @GameTest(template = TEMPLATE, setupTicks = TestWorld.SETUP_TICKS, batch = "p1_niveau", timeoutTicks = 100)
     public static void hotelDeVilleTropBas(GameTestHelper h) {
         Setup s = setup(h, "Brumeval", 1);
         try {
@@ -122,7 +122,7 @@ public final class FoundingGameTests {
         }
     }
 
-    @GameTest(template = TEMPLATE, batch = "p1_proprietaire", timeoutTicks = 100)
+    @GameTest(template = TEMPLATE, setupTicks = TestWorld.SETUP_TICKS, batch = "p1_proprietaire", timeoutTicks = 100)
     public static void seulLeProprietaireFonde(GameTestHelper h) {
         Setup s = setup(h, "Hautemarche", 3);
         try {
@@ -136,7 +136,7 @@ public final class FoundingGameTests {
         }
     }
 
-    @GameTest(template = TEMPLATE, batch = "p1_hors_colonie", timeoutTicks = 100)
+    @GameTest(template = TEMPLATE, setupTicks = TestWorld.SETUP_TICKS, batch = "p1_hors_colonie", timeoutTicks = 100)
     public static void horsColonie(GameTestHelper h) {
         ServerPlayer joueur = fakePlayer(h, "voyageur");
         BlockPos pos = h.absolutePos(new BlockPos(4, 1, 4));
@@ -149,7 +149,7 @@ public final class FoundingGameTests {
      * Supprimer la colonie capitale met le royaume en sommeil sans le détruire : c'est l'événement
      * MineColonies qui déclenche la réconciliation, au tick suivant.
      */
-    @GameTest(template = TEMPLATE, batch = "p1_sommeil", timeoutTicks = 100)
+    @GameTest(template = TEMPLATE, setupTicks = TestWorld.SETUP_TICKS, batch = "p1_sommeil", timeoutTicks = 100)
     public static void capitaleSupprimeeMetEnSommeil(GameTestHelper h) {
         Setup s = setup(h, "Pierrefeu", 2);
         Optional<Realm> founded = RealmService.found(s.owner(), new RealmService.FoundingRequest(

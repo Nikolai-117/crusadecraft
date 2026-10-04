@@ -33,7 +33,7 @@ import net.minecraftforge.network.simple.SimpleChannel;
  * (distance, droits, état) avant d'agir.
  */
 public final class CrusadeNetwork {
-    private static final String VERSION = "10";
+    private static final String VERSION = "11";
 
     public static final SimpleChannel CHANNEL = NetworkRegistry.newSimpleChannel(
             ResourceLocation.tryParse(CrusadeCraft.MOD_ID + ":main"),
@@ -185,6 +185,16 @@ public final class CrusadeNetwork {
         CHANNEL.messageBuilder(CourtLifePackets.HouseAction.class, nextId++, NetworkDirection.PLAY_TO_SERVER)
                 .encoder(CourtLifePackets.HouseAction::encode).decoder(CourtLifePackets.HouseAction::decode)
                 .consumerMainThread(CourtLifePackets.HouseAction::handle).add();
+        // P14 : bâton de bornage, constructions
+        CHANNEL.messageBuilder(WorldPackets.MapCenter.class, nextId++, NetworkDirection.PLAY_TO_CLIENT)
+                .encoder(WorldPackets.MapCenter::encode).decoder(WorldPackets.MapCenter::decode)
+                .consumerMainThread(WorldPackets.MapCenter::handle).add();
+        CHANNEL.messageBuilder(MapEditPackets.SiteAction.class, nextId++, NetworkDirection.PLAY_TO_SERVER)
+                .encoder(MapEditPackets.SiteAction::encode).decoder(MapEditPackets.SiteAction::decode)
+                .consumerMainThread(MapEditPackets.SiteAction::handle).add();
+        CHANNEL.messageBuilder(fr.crusadecraft.network.packet.StaffPackets.Action.class, nextId++, NetworkDirection.PLAY_TO_SERVER)
+                .encoder(fr.crusadecraft.network.packet.StaffPackets.Action::encode).decoder(fr.crusadecraft.network.packet.StaffPackets.Action::decode)
+                .consumerMainThread(fr.crusadecraft.network.packet.StaffPackets.Action::handle).add();
         // P13 : registre des lignées
         CHANNEL.messageBuilder(LineagePackets.Open.class, nextId++, NetworkDirection.PLAY_TO_CLIENT)
                 .encoder(LineagePackets.Open::encode).decoder(LineagePackets.Open::decode)

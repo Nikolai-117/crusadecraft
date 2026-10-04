@@ -53,7 +53,7 @@ public final class TreasuryGameTests {
         return CrusadeSavedData.get(w.helper.getLevel().getServer()).character(ref).orElseThrow();
     }
 
-    @GameTest(template = TestWorld.TEMPLATE, batch = "p4_impots", timeoutTicks = 100)
+    @GameTest(template = TestWorld.TEMPLATE, setupTicks = TestWorld.SETUP_TICKS, batch = "p4_impots", timeoutTicks = 100)
     public static void impotsEtSalairesDuJour(GameTestHelper h) {
         TestWorld w = TestWorld.realm(h, "Valbrume");
         int previous = lenient();
@@ -92,7 +92,7 @@ public final class TreasuryGameTests {
         }
     }
 
-    @GameTest(template = TestWorld.TEMPLATE, batch = "p4_coffre", timeoutTicks = 100)
+    @GameTest(template = TestWorld.TEMPLATE, setupTicks = TestWorld.SETUP_TICKS, batch = "p4_coffre", timeoutTicks = 100)
     public static void depotEtRetraitAuCoffre(GameTestHelper h) {
         TestWorld w = TestWorld.realm(h, "Hautemarche");
         try {
@@ -130,7 +130,7 @@ public final class TreasuryGameTests {
         }
     }
 
-    @GameTest(template = TestWorld.TEMPLATE, batch = "p4_dette", timeoutTicks = 100)
+    @GameTest(template = TestWorld.TEMPLATE, setupTicks = TestWorld.SETUP_TICKS, batch = "p4_dette", timeoutTicks = 100)
     public static void detteEtSalairesImpayes(GameTestHelper h) {
         TestWorld w = TestWorld.realm(h, "Pierrefeu");
         int previous = lenient();
@@ -160,7 +160,7 @@ public final class TreasuryGameTests {
         }
     }
 
-    @GameTest(template = TestWorld.TEMPLATE, batch = "p4_lois", timeoutTicks = 100)
+    @GameTest(template = TestWorld.TEMPLATE, setupTicks = TestWorld.SETUP_TICKS, batch = "p4_lois", timeoutTicks = 100)
     public static void loiVoteeRejeteeImposee(GameTestHelper h) {
         TestWorld w = TestWorld.realm(h, "Marchefort");
         int previous = lenient();

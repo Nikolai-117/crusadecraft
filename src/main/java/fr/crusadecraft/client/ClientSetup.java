@@ -21,6 +21,7 @@ public final class ClientSetup {
     @SubscribeEvent
     public static void onKeys(RegisterKeyMappingsEvent event) {
         event.register(KeyBindings.REALM_MENU);
+        event.register(KeyBindings.UNDO_BORNAGE);
         event.register(KeyBindings.MAP);
     }
 }
