@@ -263,12 +263,18 @@ Chaque phase suit la même méthode :
   test de démarrage en serveur dédié.
 
 ### P16 — Le territoire façon Factions
+- **Tout au chunk** (précisé le 5 octobre) : aujourd'hui, les cases peintes sont déjà des chunks, mais les
+  terres automatiques (autour d'une ville, d'un fort, d'un poste de garde) sont des cercles. Elles
+  deviennent des chunks : un chunk appartient au royaume dont le cercle contient son centre. La
+  propriété, les protections, les messages d'entrée et **toutes les cartes** (celle du mod, la carte
+  papier, Xaero, Dynmap) lisent alors la même chose, chunk par chunk, comme Factions. C'est un calcul,
+  pas une réécriture des données : aucune migration.
 - **Commandes** :
   - `/crusade claim` et `unclaim` sur le chunk où tu te tiens ;
   - `/crusade map` : une carte 11×11 des chunks voisins, colorée, dans le chat ;
   - `/crusade info`.
 - **Règles en survie** : coût, contiguïté, plafond selon le rang et la population, distance à un
-  Lieu. Tout est réglable.
+  Lieu. Tout est réglable. Le plafond s'affiche partout : « Terres : 2 076 / 2 500 chunks ».
 - **Titres à l'entrée**, en grand et une fois par passage : « Comté de X — Royaume de Y ».
 - **Protection selon la relation** : casser, poser, ouvrir un coffre ou frapper un animal dépendent
   du lien (suzerain, vassal, allié, neutre, ennemi en guerre). C'est réglable par Lieu.
@@ -287,11 +293,18 @@ Chaque phase suit la même méthode :
   - la world map et la minimap colorent les terres par royaume ;
   - au survol, une infobulle donne « Comté de X, Royaume de Y » ;
   - la mise à jour est en direct.
-- **Dans ton navigateur** : la carte web montre frontières, villes et Lieux, avec une fiche au clic
-  (souverain, population, relations, ton texte).
+- **Dans ton navigateur, avec Dynmap** (choisi le 5 octobre d'après ta capture « Duchy of France ») :
+  - chaque chunk tenu est un carré à la couleur de son royaume, et les frontières suivent les bords
+    des chunks, comme les claims de Factions ou de Towny sur Dynmap ;
+  - un clic sur un royaume ouvre sa fiche : nom et titre (« Duché de… »), devise, souverain, trésor,
+    foi et régime, population, date de fondation, « Terres : X / plafond chunks », conseil, vassaux ;
+  - les Lieux (villes, forts, lieux saints) sont des repères cliquables, avec ta fiche ;
+  - chaque ligne de la fiche se coupe dans les réglages. Sur un serveur, le trésor peut rester caché
+    aux autres.
 - **Faisable** :
   - Xaero, par le mixin client décrit au §3 ;
-  - la carte web, par l'API officielle de BlueMap ou de Dynmap.
+  - la carte web, par l'API de marqueurs de Dynmap (version Forge 1.20.1), à vérifier sur son jar
+    au début de la phase.
 - **Impossible ou fragile** :
   - Xaero sans API publique : si Xaero change, le calque s'efface proprement.
   - Les waypoints Xaero : pas d'API.
@@ -313,10 +326,19 @@ Chaque phase suit la même méthode :
   - Les zones que tu as explorées s'affichent en couleurs réelles.
   - Des calques : politique, de jure, terrain, Lieux, armées, puis routes commerciales.
   - Un zoom fluide.
-  - **La carte de guerre** : flèches, fronts, objectifs et notes, partagés avec tes alliés.
-  - **La carte de guerre est aussi sur la carte web** (demandé le 4 octobre). Elle forme une couche
-    « Carte de guerre » de BlueMap, qu'on coche ou décoche, avec ses lignes, ses zones et ses
-    repères cliquables. Elle se met à jour en même temps que la carte du jeu.
+  - **La carte de guerre**, partagée avec tes alliés.
+    - **Où l'éditer : dans le jeu**, à la Table de guerre (bouton « Carte de guerre ») ou sur la carte
+      du mod (mode « Guerre »).
+    - **Au chunk, comme le reste** : les zones se peignent au pinceau, chunk par chunk (offensive,
+      défense, objectif). S'y ajoutent des flèches d'attaque, des lignes de front et des repères avec
+      une note.
+    - **L'état de la guerre se dessine tout seul**, chunk par chunk : terres occupées, places
+      assiégées, chunks disputés.
+  - **La carte de guerre est aussi sur Dynmap** (demandé le 4 octobre). Elle forme une couche « Carte
+    de guerre » qu'on coche ou décoche, avec ses zones, ses flèches et ses repères cliquables, et se
+    met à jour en même temps que le jeu.
+  - **Pas d'édition depuis le navigateur.** La page de Dynmap ne fait qu'afficher. Une page d'édition
+    web demanderait des comptes et des mots de passe : sur un serveur, ce serait une porte ouverte.
 - **Faisable** : le serveur échantillonne le biome et l'altitude **sans générer de chunk**, comme il
   repère déjà les villages. Le calcul est étalé dans le temps et mis en cache.
 - **Limites** :
@@ -461,8 +483,9 @@ Chaque phase suit la même méthode :
 « Pour moi tout est bon, continue, fais ce que tu penses être le mieux. » Les recommandations deviennent donc
 les décisions :
 
-1. **BlueMap** pour la carte web. Je télécharge son jar dans `libs/local` pour compiler, sans jamais le
-   redistribuer. Romain l'installe lui-même.
+1. ~~BlueMap~~ **Dynmap** pour la carte web : Romain l'a précisé le 5 octobre, capture à l'appui (claims
+   au chunk à la manière de Factions, fiche au clic). Je télécharge son jar dans `libs/local` pour
+   compiler, sans jamais le redistribuer. Romain l'installe lui-même.
 2. **Pas d'OPAC.**
 3. **Mixin Xaero accepté.**
 4. **Terres IA non protégées par défaut** en survie (réglable).
@@ -470,4 +493,7 @@ les décisions :
 6. **P14 terminée d'abord** (captures, guide, 1.3.0).
 
 Ajout de Romain : **la carte de guerre doit aussi paraître sur la carte web**. C'est intégré à P18, en
-couche de BlueMap (§6).
+couche de Dynmap (§6).
+
+Précision du 5 octobre : **tout fonctionne au chunk**, comme Factions — terres, protections, cartes, et
+carte de guerre (P16 à P18) ; la carte de guerre s'édite dans le jeu et s'affiche sur Dynmap.
