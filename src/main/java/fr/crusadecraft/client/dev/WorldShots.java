@@ -51,11 +51,12 @@ public final class WorldShots {
     private static final boolean ENABLED = Boolean.getBoolean("crusadecraft.worldshots");
     private static final String WORLD = "crusadecraft-shots";
 
-    private enum Step { BOOT, LOADING, SETUP, WALL, MAP, SHEET, HERALD, REALM, LETTER, SEAL, CHANCERY, COLOMBIER, TOWNHALL, TOWNHALL_CLICK, WAR, SIEGE, CAPTURE, CAPTURED, WAR_TABLE, RAID, EDITOR, EDITOR_REALM, EDITOR_PAINT, LINEAGE_OPEN, LINEAGE_HOUSE, LINEAGE_SPAWN, LINEAGE_SHOT, STAFF_MENU, STAFF_SHOT, FORT_SHOT, SITES_MAP, PAPER_SHOT, LIEU_FORM, LIEU_SCREEN, LIEU_MAP, DONE }
+    private enum Step { BOOT, LOADING, SETUP, WALL, MAP, SHEET, HERALD, REALM, LETTER, SEAL, CHANCERY, COLOMBIER, TOWNHALL, TOWNHALL_CLICK, WAR, SIEGE, CAPTURE, CAPTURED, WAR_TABLE, RAID, EDITOR, EDITOR_REALM, EDITOR_PAINT, LINEAGE_OPEN, LINEAGE_HOUSE, LINEAGE_SPAWN, LINEAGE_SHOT, STAFF_MENU, STAFF_SHOT, FORT_SHOT, SITES_MAP, PAPER_SHOT, LIEU_FORM, LIEU_SCREEN, LIEU_MAP, CHAT_MAP, WALK_IN, TITLE_SHOT, XAERO_SHOT, DONE }
 
     private static Step step = Step.BOOT;
     private static int wait;
     private static int shot;
+    private static boolean held;
 
     private WorldShots() {}
 
@@ -347,10 +348,13 @@ public final class WorldShots {
                 // Ni chat ni notification par-dessus la carte tenue en main.
                 mc.gui.getChat().clearMessages(false);
                 mc.options.chatVisibility().set(net.minecraft.world.entity.player.ChatVisiblity.HIDDEN);
+                mc.options.broadcastOptions();
                 mc.getTutorial().setStep(net.minecraft.client.tutorial.TutorialSteps.NONE);
                 mc.getToasts().clear();
                 grab(mc, "carte_papier");
                 mc.options.chatVisibility().set(net.minecraft.world.entity.player.ChatVisiblity.FULL);
+                // Le serveur filtre les messages selon ce réglage : on le lui redit, sinon le chat resterait muet.
+                mc.options.broadcastOptions();
                 // Les lieux (P15) : un lieu saint posé au bâton, en mode « Lieu ».
                 MinecraftServer server = mc.getSingleplayerServer();
                 server.execute(() -> placeShrine(server));
@@ -378,10 +382,60 @@ public final class WorldShots {
             }
             case LIEU_MAP -> {
                 grab(mc, "carte_lieux");
+                mc.setScreen(null);
+                // Le territoire au chunk (P16) : la carte du chat, puis le titre à l'entrée d'un royaume.
+                mc.gui.getChat().clearMessages(false);
+                MinecraftServer server = mc.getSingleplayerServer();
+                server.execute(() -> chatMap(server));
+                step = Step.CHAT_MAP;
+                wait = 20;
+            }
+            case CHAT_MAP -> {
+                grab(mc, "carte_chat");
+                mc.gui.getChat().clearMessages(false);
+                MinecraftServer server = mc.getSingleplayerServer();
+                server.execute(() -> walkOut(server));
+                step = Step.WALK_IN;
+                wait = 50;
+            }
+            case WALK_IN -> {
+                MinecraftServer server = mc.getSingleplayerServer();
+                server.execute(() -> walkIn(server));
+                step = Step.TITLE_SHOT;
+                wait = 32;
+            }
+            case TITLE_SHOT -> {
+                mc.gui.getChat().clearMessages(false);
+                grab(mc, "titre_entree");
+                // Xaero's World Map (P17), s'il est chargé : sa touche d'ouverture, comme le ferait le joueur.
+                net.minecraft.client.KeyMapping open = null;
+                for (net.minecraft.client.KeyMapping k : mc.options.keyMappings) if (k.getName().equals("gui.xaero_open_map")) open = k;
+                CrusadeCraft.LOGGER.info("WorldShots : Xaero's World Map {}", open == null ? "absent" : "ouvert");
+                if (open != null) {
+                    net.minecraft.client.KeyMapping.click(open.getKey());
+                    step = Step.XAERO_SHOT;
+                    wait = 80;
+                } else {
+                    step = Step.DONE;
+                    wait = 20;
+                }
+            }
+            case XAERO_SHOT -> {
+                CrusadeCraft.LOGGER.info("WorldShots : écran {}", mc.screen == null ? "aucun" : mc.screen.getClass().getName());
+                grab(mc, "xaero_carte");
+                mc.setScreen(null);
                 step = Step.DONE;
                 wait = 20;
             }
             case DONE -> {
+                // -Dcrusadecraft.worldshots.hold=240 : la partie reste ouverte (pour regarder la carte web Dynmap).
+                int hold = Integer.getInteger("crusadecraft.worldshots.hold", 0);
+                if (hold > 0 && !held) {
+                    held = true;
+                    CrusadeCraft.LOGGER.info("WorldShots : partie gardée ouverte {} secondes", hold);
+                    wait = hold * 20;
+                    return;
+                }
                 CrusadeCraft.LOGGER.info("WorldShots : terminé, fermeture du jeu");
                 mc.stop();
             }
@@ -572,6 +626,25 @@ public final class WorldShots {
     }
 
     private static BlockPos shrinePos;
+
+    /** Le joueur à la lisière de ses terres ; la carte des chunks voisins arrive dans son chat. */
+    private static void chatMap(MinecraftServer server) {
+        ServerPlayer player = server.getPlayerList().getPlayers().get(0);
+        player.connection.teleport(fortGround.getX() + 0.5, fortGround.getY() + 1, fortGround.getZ() + 0.5, 180f, 10f);
+        for (var line : fr.crusadecraft.core.world.ClaimService.map(player)) player.sendSystemMessage(line);
+    }
+
+    /** Hors de toute terre, loin à l'ouest. */
+    private static void walkOut(MinecraftServer server) {
+        ServerPlayer player = server.getPlayerList().getPlayers().get(0);
+        player.connection.teleport(fortGround.getX() - 900.5, fortGround.getY() + 30, fortGround.getZ() + 0.5, 90f, 10f);
+    }
+
+    /** De retour sur ses terres : le nom du royaume s'affiche en grand. */
+    private static void walkIn(MinecraftServer server) {
+        ServerPlayer player = server.getPlayerList().getPlayers().get(0);
+        player.connection.teleport(fortGround.getX() + 0.5, fortGround.getY() + 1, fortGround.getZ() + 30.5, 180f, -5f);
+    }
 
     /** Le bâton revient en main, en mode « Lieu » ; un clic au sol près de la capitale ouvre le formulaire du lieu. */
     private static void placeShrine(MinecraftServer server) {

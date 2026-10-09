@@ -1,0 +1,14 @@
+{
+  "required": false,
+  "minVersion": "0.8",
+  "package": "fr.crusadecraft.compat.xaero.mixin",
+  "compatibilityLevel": "JAVA_17",
+  "refmap": "crusadecraft.refmap.json",
+  "mixins": [],
+  "client": [
+    "HighlighterRegistryMixin"
+  ],
+  "injectors": {
+    "defaultRequire": 0
+  }
+}

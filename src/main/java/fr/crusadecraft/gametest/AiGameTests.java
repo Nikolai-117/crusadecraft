@@ -186,6 +186,9 @@ public final class AiGameTests {
             CrusadeConfig.SERVER.aiDecisionChance.set(100);
             long today = RealmService.currentDay(server);
             int wars = 0;
+            // Le jour où le test voit chaque guerre pour la première fois : la simulation fait passer les jours sans faire
+            // avancer l'horloge du serveur, si bien qu'une guerre déclarée tard porte la date réelle, pas la date simulée.
+            java.util.Map<java.util.UUID, Long> seen = new java.util.HashMap<>();
             for (long d = today + 1; d <= today + 60; d++) {
                 int before = data.wars().all().size();
                 WarService.onNewDay(server, d);
@@ -194,7 +197,9 @@ public final class AiGameTests {
                 for (War war : data.wars().all()) {
                     // Seules les guerres entre IA finissent d'elles-mêmes ; contre un joueur, il faut négocier.
                     boolean betweenAis = data.world().realm(war.attacker()).isPresent() && data.world().realm(war.defender()).isPresent();
-                    w.check(!betweenAis || d - war.startDay() <= 31, "une guerre entre IA ne finit jamais (" + (d - war.startDay()) + " jours)");
+                    long day = d;
+                    long since = day - seen.computeIfAbsent(war.id(), k -> day);
+                    w.check(!betweenAis || since <= 31, "une guerre entre IA ne finit jamais (" + since + " jours)");
                     w.check(!war.attacker().equals(war.defender()), "un royaume en guerre contre lui-même");
                 }
             }

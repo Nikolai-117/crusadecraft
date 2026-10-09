@@ -38,6 +38,8 @@ public final class CrusadeCraft {
     }
 
     private void commonSetup(FMLCommonSetupEvent event) {
+        // La carte web (P17) : on s'inscrit auprès de Dynmap s'il est là ; il nous préviendra quand sa carte sera prête.
+        fr.crusadecraft.compat.dynmap.DynmapBridge.init();
         event.enqueueWork(() -> {
             CrusadeNetwork.register();
             MineColoniesEvents.register();

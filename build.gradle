@@ -53,6 +53,8 @@ minecraft {
             parent runs.client
             workingDirectory project.file('run-worldshots')
             property 'crusadecraft.worldshots', 'true'
+            // -Phold=300 : la partie reste ouverte cinq minutes après les captures (pour regarder la carte web).
+            property 'crusadecraft.worldshots.hold', (project.findProperty('hold') ?: '0').toString()
         }
 
         server {
@@ -100,6 +102,19 @@ dependencies {
     // Minecraft Comes Alive (P13), aux versions exactes de l'instance. Compilé contre lui pour la compatibilité
     // (compat/mca, jamais chargée sans lui) ; chargé en développement pour les tests, sauf -Pwith_mca=false.
     compileOnly fg.deobf("local:minecraft-comes-alive:${mca_version}")
+    // Dynmap (P17) : la carte web. Même principe : compilé contre le jar de libs/local, utilisé seulement dans
+    // compat/dynmap, chargé en développement sauf -Pwith_dynmap=false.
+    compileOnly fg.deobf("local:Dynmap:${dynmap_version}")
+    if (project.findProperty('with_dynmap') != 'false') {
+        runtimeOnly fg.deobf("local:Dynmap:${dynmap_version}")
+    }
+    // Xaero's World Map (P17) : nos terres colorées sur sa carte et sur sa minimap. Compilé contre les jars de
+    // l'instance (copiés dans libs/local), utilisé seulement dans compat/xaero ; chargé en développement avec -Pwith_xaero=true.
+    compileOnly fg.deobf("local:xaeroworldmap:${xaero_worldmap_version}")
+    if (project.findProperty('with_xaero') == 'true') {
+        runtimeOnly fg.deobf("local:xaeroworldmap:${xaero_worldmap_version}")
+        runtimeOnly fg.deobf("local:xaerominimap:${xaero_minimap_version}")
+    }
     if (project.findProperty('with_mca') != 'false') {
         runtimeOnly fg.deobf("local:minecraft-comes-alive:${mca_version}")
         runtimeOnly fg.deobf("local:architectury:${architectury_version}")
@@ -149,6 +164,7 @@ def architectureGuard = tasks.register('checkArchitecture') {
             [pkg: 'dev.ftb.',          allowed: '/fr/crusadecraft/compat/ftbteams/'],
             [pkg: 'vazkii.patchouli.', allowed: '/fr/crusadecraft/compat/patchouli/'],
             [pkg: 'forge.net.mca.',    allowed: '/fr/crusadecraft/compat/mca/'],
+            [pkg: 'org.dynmap.',       allowed: '/fr/crusadecraft/compat/dynmap/'],
             [pkg: 'dev.architectury.', allowed: '/fr/crusadecraft/compat/mca/'],
         ]
         def rankPattern = ~/(?i)\brank\w*\s*\.\s*getId\s*\(\s*\)\s*(<=|>=|<|>)/
@@ -196,12 +212,13 @@ tasks.named('processResources', ProcessResources).configure {
 mixin {
     add sourceSets.main, "${mod_id}.refmap.json"
     config "${mod_id}.mixins.json"
+    config "${mod_id}.xaero.mixins.json"
 }
 
 tasks.named('jar', Jar).configure {
     manifest {
         attributes([
-                'MixinConfigs'            : "${mod_id}.mixins.json",
+                'MixinConfigs'            : "${mod_id}.mixins.json,${mod_id}.xaero.mixins.json",
                 'Specification-Title'     : mod_id,
                 'Specification-Vendor'    : mod_authors,
                 'Specification-Version'   : '1',

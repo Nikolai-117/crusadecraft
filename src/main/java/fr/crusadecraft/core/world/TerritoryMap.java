@@ -92,6 +92,13 @@ public final class TerritoryMap {
         return m == null ? new Long2ObjectOpenHashMap<>() : m;
     }
 
+    /** Les cases peintes au nom de ce royaume, toutes dimensions confondues : ses chunks revendiqués à la main. */
+    public int countOf(UUID owner) {
+        int n = 0;
+        for (Long2ObjectOpenHashMap<UUID> m : cells.values()) for (UUID v : m.values()) if (owner.equals(v)) n++;
+        return n;
+    }
+
     public int size() {
         int n = 0;
         for (Long2ObjectOpenHashMap<UUID> m : cells.values()) n += m.size();

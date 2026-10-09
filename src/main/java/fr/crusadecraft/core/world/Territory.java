@@ -21,9 +21,10 @@ import java.util.UUID;
  * À qui appartient un endroit du monde (P14) : la seule réponse, partagée par le bâton de bornage, les règles de
  * survie, la guerre, l'annonce d'entrée et la carte papier.
  *
- * <p>La règle est celle de la carte du mod : une case peinte décide seule (terre libre comprise) ; sinon, le siège le
- * plus proche dont le cercle couvre l'endroit — province d'un royaume IA (qui la tient, conquêtes comprises),
- * colonie d'un joueur, construction bâtie, poste de garde MineColonies.
+ * <p>Tout se décide <b>au chunk</b> (P16), comme dans Factions : un chunk peint décide seul (terre libre comprise) ;
+ * sinon, il revient au siège le plus proche dont le cercle contient <b>son centre</b> — province d'un royaume IA (qui
+ * la tient, conquêtes comprises), colonie d'un joueur, construction bâtie, poste de garde MineColonies. Deux blocs
+ * d'un même chunk ont donc toujours le même maître, et toutes les cartes dessinent les mêmes carrés.
  *
  * <p>Pour une série de questions (un tracé de centaines de cases), on prend un {@link Snapshot} une fois : il
  * rassemble les cercles et répond ensuite sans rien recalculer.
@@ -95,11 +96,15 @@ public final class Territory {
         return v * v;
     }
 
+    /**
+     * Un instantané tout frais. Pas de cache entre deux questions : réunir les cercles ne coûte que quelques
+     * microsecondes, et une réponse périmée juste après un changement de terres serait fausse.
+     */
     public static Snapshot snapshot(MinecraftServer server, ResourceLocation dim) {
         return new Snapshot(CrusadeSavedData.get(server).world().borders(), dim, circles(server, dim));
     }
 
-    /** À qui appartient cet endroit (vide : à personne). */
+    /** À qui appartient cet endroit (vide : à personne) : le maître de son chunk. */
     public static Optional<UUID> ownerAt(MinecraftServer server, ResourceLocation dim, double x, double z) {
         return snapshot(server, dim).ownerAt(x, z);
     }
@@ -109,6 +114,7 @@ public final class Territory {
         private final TerritoryMap borders;
         private final ResourceLocation dim;
         private final List<Circle> circles;
+        private final it.unimi.dsi.fastutil.longs.Long2ObjectOpenHashMap<UUID> owners = new it.unimi.dsi.fastutil.longs.Long2ObjectOpenHashMap<>();
 
         public Snapshot(TerritoryMap borders, ResourceLocation dim, List<Circle> circles) {
             this.borders = borders;
@@ -139,15 +145,55 @@ public final class Territory {
             return best == null ? Optional.empty() : Optional.of(best.owner());
         }
 
+        /** Le maître de l'endroit : celui de son chunk. */
         public Optional<UUID> ownerAt(double x, double z) {
-            Optional<UUID> painted = painted(x, z);
-            if (painted.isPresent()) return TerritoryMap.NEUTRAL.equals(painted.get()) ? Optional.empty() : painted;
-            return circleOwner(x, z);
+            return ownerOfCell(TerritoryMap.key(TerritoryMap.cellOf(x), TerritoryMap.cellOf(z)));
         }
 
-        /** Le propriétaire d'une case (son centre). */
+        /**
+         * Le maître d'un chunk : sa peinture (relue à chaque fois, elle peut changer), sinon le cercle qui contient son
+         * centre (mémorisé : les cercles de l'instantané, eux, ne bougent pas).
+         */
         public Optional<UUID> ownerOfCell(long key) {
-            return ownerAt(TerritoryMap.cellX(key) * TerritoryMap.CELL + 8, TerritoryMap.cellZ(key) * TerritoryMap.CELL + 8);
+            UUID painted = borders.cells(dim).get(key);
+            if (painted != null) return TerritoryMap.NEUTRAL.equals(painted) ? Optional.empty() : Optional.of(painted);
+            UUID known = owners.get(key);
+            if (known == null) {
+                known = circleOwner(TerritoryMap.cellX(key) * TerritoryMap.CELL + 8.0, TerritoryMap.cellZ(key) * TerritoryMap.CELL + 8.0).orElse(NOBODY);
+                owners.put(key, known);
+            }
+            return NOBODY.equals(known) ? Optional.empty() : Optional.of(known);
+        }
+
+        /** Tous les chunks tenus dans cette dimension, royaume par royaume. */
+        public Map<UUID, it.unimi.dsi.fastutil.longs.LongSet> chunksByOwner() {
+            it.unimi.dsi.fastutil.longs.LongOpenHashSet candidates = new it.unimi.dsi.fastutil.longs.LongOpenHashSet(borders.cells(dim).keySet());
+            for (Circle c : circles) {
+                double r = Math.sqrt(c.r2());
+                int x0 = TerritoryMap.cellOf(c.x() - r), x1 = TerritoryMap.cellOf(c.x() + r);
+                int z0 = TerritoryMap.cellOf(c.z() - r), z1 = TerritoryMap.cellOf(c.z() + r);
+                for (int cx = x0; cx <= x1; cx++) {
+                    for (int cz = z0; cz <= z1; cz++) {
+                        double dx = cx * TerritoryMap.CELL + 8.0 - c.x(), dz = cz * TerritoryMap.CELL + 8.0 - c.z();
+                        if (dx * dx + dz * dz <= c.r2()) candidates.add(TerritoryMap.key(cx, cz));
+                    }
+                }
+            }
+            Map<UUID, it.unimi.dsi.fastutil.longs.LongSet> out = new HashMap<>();
+            for (long key : candidates) {
+                ownerOfCell(key).ifPresent(o -> out.computeIfAbsent(o, k -> new it.unimi.dsi.fastutil.longs.LongOpenHashSet()).add(key));
+            }
+            return out;
+        }
+
+        /** Les chunks de ce royaume revendiqués à la main (peints à son nom), dans cette dimension. */
+        public int claimedBy(UUID realm) {
+            int n = 0;
+            for (UUID v : borders.cells(dim).values()) if (realm.equals(v)) n++;
+            return n;
         }
     }
+
+    /** Une valeur pour « personne », mémorisable dans une table. */
+    private static final UUID NOBODY = new UUID(0, 1);
 }

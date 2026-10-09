@@ -518,3 +518,57 @@ Première phase de CrusadeCraft 2.0 (plan : `docs/etape-0-v2-rapport.md`, valid�
   la 1.3.0. Un test les charge, les met à niveau, les réécrit et les relit : aucune section ni aucun royaume ne
   manque, et écrire puis relire ne change rien. Ce test a trouvé que les cases peintes s'écrivaient dans un ordre
   changeant ; elles s'écrivent désormais triées, pour un fichier stable.
+
+**P16 (9 octobre 2026) — le territoire au chunk, façon Factions**
+
+Demandé par Romain (5 octobre) : « que ça fonctionne par chunk directement », comme les claims de Factions sur Dynmap.
+
+- **Un chunk, un maître.** Les cases peintes étaient déjà des chunks ; les terres automatiques (cercles autour des
+  villes, des forts, des postes de garde) se décident désormais au centre du chunk : un chunk revient au siège le plus
+  proche dont le cercle contient son centre. Deux blocs d'un même chunk ont toujours le même maître, et la carte du
+  mod, la carte papier, Xaero et Dynmap dessinent les mêmes carrés. C'est un calcul : aucune donnée réécrite.
+- **Pas de cache entre deux questions.** Un cache d'une seconde aurait pu répondre faux juste après un changement de
+  terres (et les tests l'ont montré) ; réunir les cercles coûte quelques microsecondes. Dans un même instantané, seul
+  le résultat des cercles est mémorisé — la peinture, elle, est relue.
+- **Commandes pour tous** (les commandes d'administration restent aux opérateurs) : `/crusade claim [rayon]`,
+  `/crusade unclaim [rayon]`, `/crusade map` (25 × 7 chunks en couleurs dans le chat), `/crusade info` (à qui est ce
+  chunk, revendiqué ou autour d'une place, vos terres et votre plafond). Les règles sont celles du bâton de bornage
+  (contigu, à moins de 256 blocs d'une de vos places, payé), et Ctrl+Z annule aussi un claim. L'ancien
+  `/crusade info` des opérateurs devient `/crusade royaume [joueur]`.
+- **Plafond de chunks revendiqués** selon le rang (64, 160, 400, 1 000, 2 500 ; réglable) ; les terres autour des
+  villes ne comptent pas.
+- **Titre à l'entrée** : en passant une frontière, le nom du royaume en grand et son souverain dessous (« Vos
+  terres » chez soi, « Terres inconnues » chez un royaume pas encore découvert) ; « Terres sans maître » au-dessus de
+  la barre en sortant. Une couleur de royaume trop sombre est éclaircie pour rester lisible. Remplace l'ancien message
+  d'entrée, qui ne valait que pour les royaumes IA.
+- **Protections selon le lien**, sur les terres des royaumes de joueurs : les siens (souverain, officiers de ses
+  colonies) font tout ; suzerain et vassaux aussi ; un allié ouvre portes et coffres ; un ennemi en guerre pose et
+  ouvre (casser reste l'affaire des règles de guerre) ; les autres ne touchent à rien. Jamais pour les automates (faux
+  joueurs), jamais dans une colonie (MineColonies décide), les opérateurs passent outre ; terres des IA libres par
+  défaut. Tout est réglable (section `protection`).
+- **Deux tests ajustés, pas contournés** : un test unitaire réutilisait un instantané après avoir peint (d'où la règle
+  ci-dessus), et le test des dégâts de guerre comptait sur un mur « près du siège ennemi » — avec la règle au chunk,
+  cela dépendait du centre du chunk ; ses chunks sont maintenant peints au nom de l'ennemi.
+
+**P17 (9 octobre 2026) — la carte web Dynmap et Xaero**
+
+- **Dynmap** (choisi par Romain le 5 octobre, capture « Duchy of France » à l'appui), version Forge 1.20
+  `3.7-beta-6`, compilé contre son jar (libs/local, jamais redistribué) et utilisé seulement dans `compat/dynmap`.
+  Deux couches : « Royaumes » — chaque royaume en rectangles de chunks exacts (remplissage) et en segments de
+  frontière (trait), sans polygone à trou — et « Lieux » (villes, forts, lieux saints, ruines ; une région en aplat
+  léger). Un clic ouvre la fiche : titre, souverain, trésor, foi, maison, population, fondation, « Terres : X chunks
+  (revendiqués : Y / Z) », suzerain, vassaux, conseil, et le texte de la fiche du lieu.
+- **Le modèle ne connaît pas Dynmap** (`WebMap`, `WebMapGeometry`) : le module Dynmap ne fait que le recopier en
+  marqueurs, en mettant à jour ce qui existe et en retirant ce qui a disparu, seulement quand l'empreinte change
+  (vérifiée toutes les 20 s, réglable). Marqueurs non persistants : rien de périmé ne traîne d'une partie à l'autre.
+- **Textes côté serveur** : un serveur ne charge pas les traductions ; les fiches web sont composées à partir des
+  fichiers de langue du mod (`ServerText`), en français par défaut. Tout est échappé : un nom ou une fiche ne
+  deviennent jamais du code dans la page.
+- **Pas de brouillard sur le web** : la page est la même pour tous. Les royaumes IA peuvent en être retirés
+  (`royaumesIA = false`), le trésor et le conseil aussi.
+- **Xaero's World Map et Minimap** : les terres, chunk par chunk, avec le bord souligné là où le maître change et le
+  nom au survol — comme Xaero colore les claims d'OPAC, avec ses propres réglages d'opacité et son interrupteur
+  « claims ». Xaero n'a pas d'API publique : un seul mixin client, `@Pseudo`, en tête de `HighlighterRegistry.end()`,
+  dans sa propre configuration non obligatoire ; sans Xaero il ne s'applique pas, si Xaero change il ne trouve rien
+  et la couche disparaît sans planter. Le serveur envoie à chaque joueur, toutes les 5 s et seulement si elles ont
+  changé, les terres des royaumes qu'il connaît (brouillard respecté), en rectangles.

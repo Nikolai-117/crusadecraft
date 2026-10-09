@@ -1,0 +1,14 @@
+{
+  "crusadecraft.webmap.ruler": "Ruler",
+  "crusadecraft.webmap.treasury": "Treasury",
+  "crusadecraft.webmap.faith": "Faith",
+  "crusadecraft.webmap.house": "House",
+  "crusadecraft.webmap.population": "Population",
+  "crusadecraft.webmap.founded": "Founded",
+  "crusadecraft.webmap.lands.label": "Lands",
+  "crusadecraft.webmap.lands": "%s chunks",
+  "crusadecraft.webmap.lands.claimed": "%s chunks (claimed: %s / %s)",
+  "crusadecraft.webmap.suzerain": "Liege",
+  "crusadecraft.webmap.vassals": "Vassals",
+  "crusadecraft.xaero.lands": "Lands: %s"
+}

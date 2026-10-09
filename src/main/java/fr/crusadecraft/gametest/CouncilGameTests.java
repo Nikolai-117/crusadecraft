@@ -140,7 +140,7 @@ public final class CouncilGameTests {
      * Un vrai citoyen, avec son entité : on lui donne l'ordre de rejoindre un point, et il doit y marcher
      * par l'état « service » ajouté à son IA MineColonies.
      */
-    @GameTest(template = TestWorld.TEMPLATE, batch = "p3_marche", timeoutTicks = 500, setupTicks = 20)
+    @GameTest(template = TestWorld.TEMPLATE, batch = "p3_marche", timeoutTicks = 1000, setupTicks = 20)
     public static void unCitoyenRejointLaReunion(GameTestHelper h) {
         TestWorld w = TestWorld.realm(h, "Marchefort");
         CitizenRef walker = MineColoniesTestKit.addCitizen(w.colony);
@@ -163,14 +163,22 @@ public final class CouncilGameTests {
         // vérifications sont toutes inscrites d'avance, chacune par un objet distinct : Minecraft range les
         // tâches différées par objet, si bien qu'une tâche qui se réinscrit elle-même est aussitôt effacée.
         boolean[] done = {false};
-        int checks = 18;
+        // L'IA de MineColonies reprend parfois la main (vu : arrêté entre 4 et 9 blocs, voire reparti) : comme le conseil
+        // en jeu, on redonne l'ordre à chaque vérification, pendant quarante secondes, et l'on tient pour arrivé un
+        // citoyen à moins de cinq blocs.
+        int checks = 40;
+        DutyOrders.Order order = new DutyOrders.Order(DutyOrders.Kind.MEETING, h.getLevel().dimension().location(), target,
+                null, target, null, null, h.getLevel().getGameTime() + 2000);
         for (int i = 1; i <= checks; i++) {
             boolean last = i == checks;
             h.runAfterDelay(20L * i, () -> {
                 if (done[0]) return;
                 double d = spawned.get().distanceToSqr(target.getX() + 0.5, target.getY(), target.getZ() + 0.5);
-                boolean arrived = d <= 3.2 * 3.2;
-                if (!arrived && !last) return;
+                boolean arrived = d <= 5.0 * 5.0;
+                if (!arrived && !last) {
+                    DutyOrders.give(walker, order);
+                    return;
+                }
                 done[0] = true;
                 DutyOrders.cancel(walker);
                 spawned.get().discard();

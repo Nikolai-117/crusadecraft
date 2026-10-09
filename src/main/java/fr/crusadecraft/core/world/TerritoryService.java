@@ -213,6 +213,12 @@ public final class TerritoryService {
                 TerritoryRules.Verdict v = TerritoryRules.survival(realm.get().id(), cells, snap::ownerOfCell, anchors(server, realm.get(), dim),
                         CrusadeConfig.SERVER.claimMaxDistance.get(), CrusadeConfig.SERVER.claimCellCost.get(), CrusadeConfig.SERVER.claimMaxCells.get());
                 if (!v.ok()) return Outcome.no(v.refusal(), CrusadeConfig.SERVER.claimMaxCells.get());
+                // Le plafond de chunks revendiqués, selon le rang (les terres autour des villes ne comptent pas).
+                int cap = claimCap(realm.get());
+                int already = borders.countOf(realm.get().id());
+                int fresh = 0;
+                for (long k : v.cells()) if (!realm.get().id().equals(borders.cells(dim).get(k))) fresh++;
+                if (already + fresh > cap) return Outcome.no("crusadecraft.claim.cap", already, cap);
                 if (!TreasuryService.spend(server, realm.get(), LedgerCategory.TERRITOIRE, v.cost())) {
                     return Outcome.no("crusadecraft.bornage.no_gold", v.cost());
                 }
@@ -243,6 +249,13 @@ public final class TerritoryService {
                 ? Component.translatable("crusadecraft.mapedit.brush.erase") : DiplomacyService.name(server, owner);
         return cost > 0 ? Outcome.ok(Component.translatable("crusadecraft.bornage.done.paid", changed, who, cost))
                 : Outcome.ok(Component.translatable("crusadecraft.bornage.done", changed, who));
+    }
+
+    /** Les chunks qu'un royaume peut revendiquer à la main, selon son rang (réglage {@code plafondChunks}). */
+    public static int claimCap(Realm realm) {
+        java.util.List<? extends Integer> caps = CrusadeConfig.SERVER.claimCaps.get();
+        if (caps.isEmpty()) return Integer.MAX_VALUE;
+        return caps.get(Math.min(caps.size() - 1, realm.rank().ordinal()));
     }
 
     /** Le tracé où inscrire ces cases : un nouveau, ou celui de la marche en cours. */

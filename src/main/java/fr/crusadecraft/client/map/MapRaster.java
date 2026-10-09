@@ -75,8 +75,9 @@ public final class MapRaster {
         for (int i = 0; i < n; i++) {
             MapView.Seat s = v.seats().get(i);
             MapView.Territory t = v.territories().get(s.territory());
-            sx[i] = s.x();
-            sz[i] = s.z();
+            // Le centre du bloc, comme le serveur (Territory) : les mêmes chunks de part et d'autre.
+            sx[i] = s.x() + 0.5;
+            sz[i] = s.z() + 0.5;
             // Une construction tient le territoire de sa nature (rien tant qu'elle est en chantier).
             double r = s.site() != null ? s.site().radius() : s.province() ? v.territoryRadius() : v.colonyRadius();
             r2[i] = r * r;
@@ -95,17 +96,20 @@ public final class MapRaster {
             double wz = centerZ + (y - h / 2.0) * blocksPerPixel;
             for (int x = 0; x < w; x++) {
                 double wx = centerX + (x - w / 2.0) * blocksPerPixel;
+                // Les terres se décident au chunk (P16), comme sur le serveur : par la distance au centre du chunk.
+                double qx = Math.floor(wx / TerritoryMap.CELL) * TerritoryMap.CELL + TerritoryMap.CELL / 2.0;
+                double qz = Math.floor(wz / TerritoryMap.CELL) * TerritoryMap.CELL + TerritoryMap.CELL / 2.0;
                 int best = -1;
                 double bestD = Double.MAX_VALUE;
                 // Dans l'éditeur, pas de brouillard : c'est souvent en terre inconnue qu'on pose ses royaumes.
                 boolean revealed = v.editing() || sq(wx - v.playerX()) + sq(wz - v.playerZ()) <= playerReveal2;
                 for (int i = 0; i < n; i++) {
-                    double d = sq(wx - sx[i]) + sq(wz - sz[i]);
+                    double d = sq(qx - sx[i]) + sq(qz - sz[i]);
                     if (d <= r2[i] && d < bestD) {
                         best = i;
                         bestD = d;
                     }
-                    if (d <= reveal2[i]) revealed = true;
+                    if (sq(wx - sx[i]) + sq(wz - sz[i]) <= reveal2[i]) revealed = true;
                 }
                 int idx = y * w + x;
                 int noise = grain(wx, wz);

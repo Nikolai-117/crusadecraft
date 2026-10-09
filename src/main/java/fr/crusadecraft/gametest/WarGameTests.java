@@ -213,6 +213,11 @@ public final class WarGameTests {
             BlockPos wall = h.absolutePos(new BlockPos(1, 2, 1));
             BlockPos chest = h.absolutePos(new BlockPos(2, 2, 1));
             BlockPos ladder = h.absolutePos(new BlockPos(3, 2, 1));
+            // Les terres se décident au chunk (P16) : les chunks du mur sont peints au nom de l'ennemi, quel que soit
+            // l'emplacement du test par rapport aux centres des chunks.
+            long[] front = java.util.stream.Stream.of(wall, chest, ladder)
+                    .mapToLong(p -> fr.crusadecraft.core.world.TerritoryMap.key(p.getX() >> 4, p.getZ() >> 4)).distinct().toArray();
+            data.world().borders().paint(level.dimension().location(), front, county.id());
             level.setBlockAndUpdate(wall, Blocks.STONE_BRICKS.defaultBlockState());
             level.setBlockAndUpdate(chest, Blocks.CHEST.defaultBlockState());
             if (level.getBlockEntity(chest) instanceof Container c) c.setItem(0, new ItemStack(Items.DIAMOND, 3));

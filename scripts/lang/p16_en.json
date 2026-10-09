@@ -1,0 +1,23 @@
+{
+  "crusadecraft.entry.wild": "Masterless land",
+  "crusadecraft.entry.unknown": "Unknown lands",
+  "crusadecraft.entry.ruler": "%s, %s",
+  "crusadecraft.entry.yours": "Your lands",
+  "crusadecraft.entry.bar": "%s — %s",
+  "crusadecraft.protection.denied": "Protected lands: %s. You have no say here.",
+  "crusadecraft.claim.cap": "Limit reached: %s chunks claimed, %s at most for your rank.",
+  "crusadecraft.claim.radius": "Radius too large: %s at most.",
+  "crusadecraft.claim.map.title": "Chunks around you (%s, %s) — north is up",
+  "crusadecraft.claim.map.you": "✚ you",
+  "crusadecraft.claim.map.wild": "free land",
+  "crusadecraft.claim.map.unknown": "unknown lands",
+  "crusadecraft.claim.map.mine": "%s (you)",
+  "crusadecraft.claim.info.wild": "Chunk %s, %s: free land.",
+  "crusadecraft.claim.info.claimed": "Chunk %s, %s: %s (claimed).",
+  "crusadecraft.claim.info.auto": "Chunk %s, %s: %s (land around one of its places).",
+  "crusadecraft.claim.info.yours": "Your lands: %s chunks, %s of them claimed out of %s allowed.",
+  "crusadecraft.claim.info.realm": "Its lands: %s chunks.",
+  "crusadecraft.codex.territoire": "Land, chunk by chunk",
+  "crusadecraft.codex.territoire.p0": "Land is counted in $(l)chunks$(), as in Factions: the circles around towns, forts and guard posts take the chunks whose centre lies inside, and what you paint or claim is added. Every map draws the same squares.$(br2)$(l)/crusade claim$() [radius] claims, $(l)/crusade unclaim$() releases, $(l)/crusade map$() shows nearby chunks, $(l)/crusade info$() tells who owns this one.",
+  "crusadecraft.codex.territoire.p1": "Crossing a border shows the realm's name in large letters. On a player realm's land, only its own people break, place and open chests; a vassal or liege too, an ally opens doors, an enemy at war sets up ladders. Inside a colony, MineColonies permissions apply. Computer realms' lands are open unless configured otherwise."
+}

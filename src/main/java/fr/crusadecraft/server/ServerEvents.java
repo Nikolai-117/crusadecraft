@@ -63,6 +63,9 @@ public final class ServerEvents {
     @SubscribeEvent
     public static void onLoggedOut(net.minecraftforge.event.entity.player.PlayerEvent.PlayerLoggedOutEvent event) {
         fr.crusadecraft.core.world.PaperMapService.onLogout(event.getEntity().getUUID());
+        fr.crusadecraft.core.world.EntryTitles.onLogout(event.getEntity().getUUID());
+        fr.crusadecraft.core.world.ProtectionService.onLogout(event.getEntity().getUUID());
+        fr.crusadecraft.core.world.TerritorySync.onLogout(event.getEntity().getUUID());
     }
 
     @SubscribeEvent
@@ -75,6 +78,9 @@ public final class ServerEvents {
         fr.crusadecraft.core.world.TerritoryService.onServerStopped();
         fr.crusadecraft.core.build.SiteService.onServerStopped();
         fr.crusadecraft.core.world.PaperMapService.onServerStopped();
+        fr.crusadecraft.core.world.EntryTitles.onServerStopped();
+        fr.crusadecraft.compat.dynmap.DynmapBridge.onServerStopped();
+        fr.crusadecraft.core.world.TerritorySync.onServerStopped();
         fr.crusadecraft.core.diplomacy.DiplomacyService.onServerStopped();
         WarFieldService.onServerStopped();
         fr.crusadecraft.core.court.TournamentService.onServerStopped();
@@ -122,6 +128,11 @@ public final class ServerEvents {
         fr.crusadecraft.core.build.SiteService.tick(server, t);
         // Les lieux suivent le monde (une ville renommée, un royaume disparu) : toutes les vingt secondes suffisent.
         if (t % 400 == 200) fr.crusadecraft.core.place.PlaceService.sync(server);
+        // Le passage d'une frontière de chunk à l'autre : une vérification par seconde suffit.
+        if (t % 20 == 7) fr.crusadecraft.core.world.EntryTitles.tick(server);
+        fr.crusadecraft.compat.dynmap.DynmapBridge.tick(server, t);
+        // Les terres des cartes du client (Xaero) : toutes les cinq secondes, seulement si elles ont changé.
+        if (t % 100 == 60) fr.crusadecraft.core.world.TerritorySync.tick(server);
     }
 
     /** Les golems d'un village assiégé ne s'en prennent pas à sa garnison. */

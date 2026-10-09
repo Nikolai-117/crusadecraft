@@ -1,4 +1,4 @@
-# CrusadeCraft 1.4.0 — installer et tester
+# CrusadeCraft 1.5.0 — installer et tester
 
 ## 1. Ce qu'il faut
 
@@ -17,10 +17,10 @@ Optionnels, déjà présents chez toi, donc activés automatiquement :
 
 ## 2. Installer
 
-1. Le fichier du mod est `E:\crusadecraft\build\libs\crusadecraft-1.4.0.jar`.
+1. Le fichier du mod est `E:\crusadecraft\build\libs\crusadecraft-1.5.0.jar`.
 2. Mets-le dans le dossier des mods de l'instance : `D:\MultiMC\instances\1.20.1\.minecraft\mods\`.
    Dans MultiMC, tu peux aussi faire clic droit sur l'instance → *Modifier* → *Mods* → *Ajouter un fichier*.
-   **Retire l'ancien** (`crusadecraft-1.3.0.jar`, ou une version plus vieille) : deux versions du mod ensemble
+   **Retire l'ancien** (`crusadecraft-1.4.0.jar`, ou une version plus vieille) : deux versions du mod ensemble
    empêchent le jeu de démarrer.
 3. Lance l'instance comme d'habitude.
 
@@ -155,6 +155,38 @@ données du mod (fichier `crusadecraft.dat` du monde) restent sur place, sans ef
 40. Une ville ou une construction effacée **garde sa fiche** si tu en avais écrit une : elle reste dans la liste,
     « disparue du monde », jusqu'à ce que tu la supprimes.
 
+### Le territoire au chunk, comme Factions
+41. Les terres se comptent en **chunks** (carrés de 16 × 16 blocs). Autour de tes colonies, de tes forts et de tes
+    postes de garde, les chunks sont à toi d'office ; tu peux en **revendiquer** d'autres.
+42. Les commandes, pour tous les joueurs :
+    - `/crusade claim` revendique le chunk où tu te tiens ; `/crusade claim 2` un carré de 5 × 5 autour de toi ;
+    - `/crusade unclaim` (ou `/crusade unclaim 2`) le rend : il devient terre libre ;
+    - `/crusade map` affiche les chunks autour de toi, en couleurs, dans le chat ;
+    - `/crusade info` dit à qui est ce chunk et combien de terres a ton royaume.
+
+    En survie, comme au bâton : collé à tes terres, à moins de 256 blocs d'une de tes places, 5 pièces d'or le chunk,
+    et un **plafond** selon ton rang (64 chunks revendiqués pour une baronnie, 160 pour un comté…). Ctrl+Z annule.
+43. En passant une frontière, le **nom du royaume s'affiche en grand**.
+44. **Protections** : sur les terres d'un royaume de joueur, seuls les siens cassent, posent et ouvrent les coffres.
+    Un vassal ou son suzerain aussi ; un allié ouvre portes et coffres ; un ennemi en guerre pose ses échelles. Dans une
+    colonie, ce sont les permissions de MineColonies qui comptent. Les terres des royaumes de l'ordinateur restent
+    libres (réglable).
+
+### La carte web Dynmap
+45. **Installer Dynmap** : copie `E:\crusadecraft\libs\local\Dynmap-3.7-beta-6-forge-1.20.jar` (le fichier officiel,
+    pris sur Modrinth) dans le dossier `mods` de l'instance, à côté de CrusadeCraft.
+46. Lance ton monde, puis ouvre **http://localhost:8123** dans ton navigateur (pendant que tu joues).
+47. Dans le menu des couches (en haut à droite de la page), coche **Royaumes** et **Lieux**. Chaque royaume est
+    dessiné chunk par chunk, à sa couleur ; un clic ouvre sa fiche (souverain, trésor, population, terres…).
+    La carte se met à jour toute seule toutes les 20 secondes.
+48. Dynmap dessine le terrain à mesure que tu explores. Pour dessiner d'un coup ce qui est déjà exploré :
+    `/dynmap fullrender` + le nom de ton monde (il faut les commandes activées). C'est long sur un grand monde moddé.
+
+### Xaero's World Map et la minimap
+49. Rien à installer : tes terres et celles des royaumes que tu connais apparaissent sur la carte de Xaero (touche
+    **M**) et sur la minimap, chunk par chunk, avec le nom du royaume au survol. Elles suivent l'option « Afficher les
+    claims » de Xaero, et ses réglages d'opacité.
+
 ## 4. Réglages
 
 Tout se règle dans `saves/<ton monde>/serverconfig/crusadecraft-server.toml`, à modifier monde fermé. Les
@@ -163,7 +195,10 @@ sections principales :
 - `fondation`, `personnages` et `conseil` ;
 - `economie` et `lois` ;
 - `monde` (royaumes IA, et `editeurCarte` : qui peut ouvrir l'éditeur de la carte) ;
-- `territoire` (bâton de bornage et constructions en survie, coût d'une case, distance, chantiers) ;
+- `territoire` (bâton de bornage et constructions en survie, coût d'une case, distance, chantiers, plafond de chunks,
+  rayon de `/crusade claim`, titres à l'entrée) ;
+- `protection` (protection des terres, terres des IA, vassaux, alliés, opérateurs) ;
+- `carteWeb` (Dynmap : fréquence, langue des fiches, royaumes IA, lieux, trésor, conseil, opacité ; Xaero) ;
 - `diplomatie` ;
 - `guerre` (sièges, raids, anti-grief, rang Hostile entre joueurs, troupes Hundred Years War) ;
 - `ia` (fréquence des décisions, guerres entre IA et contre toi, répit après la fondation, coalitions) ;
@@ -180,8 +215,10 @@ Chaque système peut être coupé.
 | `/crusade liste` | Les royaumes du monde |
 | `/crusade info [joueur]` | Le détail d'un royaume |
 | `/crusade colonie` | La colonie sous tes pieds et son royaume |
-| `/crusade lieux` | Ouvre l'écran des lieux |
-| `/crusade ici` | Où tu te tiens : place proche, région, royaume et suzerains |
+| `/crusade royaume [joueur]` | Le détail d'un royaume (l'ancien `/crusade info`) |
+| `/crusade lieux` | Ouvre l'écran des lieux (pour tous) |
+| `/crusade ici` | Où tu te tiens : place proche, région, royaume et suzerains (pour tous) |
+| `/crusade claim`, `unclaim`, `map`, `info` | Le territoire (pour tous, voir plus haut) |
 | `/crusade reconcilier` | Revérifie l'état des royaumes |
 | `/crusade monde info` | Le monde IA |
 | `/crusade monde generer` | Régénère les royaumes IA autour de toi |
@@ -194,6 +231,7 @@ Pour accélérer le temps pendant un test : `/time add 24000` fait passer un jou
 
 - Les armées IA ne sont pas pilotées par les commandes de Hundred Years War, qui n'a pas d'API publique. Ses
   troupes servent en revanche aux sièges et aux raids.
-- Pas d'intégration aux cartes de Xaero, qui n'ont pas d'API pour colorer des territoires. La Table de guerre et
-  la carte du mod en tiennent lieu.
+- Xaero n'a pas d'API publique pour colorer des terres : CrusadeCraft passe par une petite greffe. Si une future
+  version de Xaero la casse, la couche disparaît simplement (le jeu ne plante pas).
+- La carte web Dynmap est la même pour tous ceux qui ont son adresse : pas de brouillard.
 - Usage personnel : ce mod n'est pas fait pour être redistribué.

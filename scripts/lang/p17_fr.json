@@ -1,0 +1,14 @@
+{
+  "crusadecraft.webmap.ruler": "Souverain",
+  "crusadecraft.webmap.treasury": "Trésor",
+  "crusadecraft.webmap.faith": "Foi",
+  "crusadecraft.webmap.house": "Maison",
+  "crusadecraft.webmap.population": "Population",
+  "crusadecraft.webmap.founded": "Fondé le",
+  "crusadecraft.webmap.lands.label": "Terres",
+  "crusadecraft.webmap.lands": "%s chunks",
+  "crusadecraft.webmap.lands.claimed": "%s chunks (revendiqués : %s / %s)",
+  "crusadecraft.webmap.suzerain": "Suzerain",
+  "crusadecraft.webmap.vassals": "Vassaux",
+  "crusadecraft.xaero.lands": "Terres : %s"
+}

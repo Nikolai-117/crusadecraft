@@ -84,6 +84,23 @@ public final class CrusadeConfig {
         public final ForgeConfigSpec.BooleanValue survivalBuilding;
         public final ForgeConfigSpec.IntValue buildBlocksPerStep;
         public final ForgeConfigSpec.IntValue buildStepSeconds;
+        public final ForgeConfigSpec.ConfigValue<java.util.List<? extends Integer>> claimCaps;
+        public final ForgeConfigSpec.IntValue claimCommandRadius;
+        public final ForgeConfigSpec.EnumValue<fr.crusadecraft.core.world.EntryTitles.Mode> entryMessages;
+        public final ForgeConfigSpec.BooleanValue protection;
+        public final ForgeConfigSpec.BooleanValue protectAiLand;
+        public final ForgeConfigSpec.BooleanValue protectVassals;
+        public final ForgeConfigSpec.BooleanValue alliesInteract;
+        public final ForgeConfigSpec.BooleanValue operatorsBypass;
+        public final ForgeConfigSpec.BooleanValue webMap;
+        public final ForgeConfigSpec.IntValue webMapSeconds;
+        public final ForgeConfigSpec.ConfigValue<String> webMapLanguage;
+        public final ForgeConfigSpec.BooleanValue webMapAiRealms;
+        public final ForgeConfigSpec.BooleanValue webMapPlaces;
+        public final ForgeConfigSpec.BooleanValue webMapTreasury;
+        public final ForgeConfigSpec.BooleanValue webMapCouncil;
+        public final ForgeConfigSpec.DoubleValue webMapOpacity;
+        public final ForgeConfigSpec.BooleanValue clientTerritory;
         public final ForgeConfigSpec.IntValue discoveryRadius;
         public final ForgeConfigSpec.BooleanValue heralds;
         public final ForgeConfigSpec.IntValue heraldSeconds;
@@ -241,6 +258,41 @@ public final class CrusadeConfig {
                     .define("constructionsSurvie", true);
             buildBlocksPerStep = b.comment("Blocs posés à chaque étape d'un chantier en survie.").defineInRange("chantierBlocsParEtape", 6, 1, 512);
             buildStepSeconds = b.comment("Secondes entre deux étapes d'un chantier en survie.").defineInRange("chantierSecondes", 2, 1, 600);
+            claimCaps = b.comment("Chunks qu'un royaume peut revendiquer à la main, selon son rang : baronnie, comté, duché, royaume, empire.",
+                            "Les terres autour de ses villes et de ses constructions ne comptent pas.")
+                    .defineList("plafondChunks", java.util.List.of(64, 160, 400, 1000, 2500), o -> o instanceof Integer i && i >= 0);
+            claimCommandRadius = b.comment("Rayon maximal de « /crusade claim <rayon> », en chunks (1 : un carré de 3 × 3).")
+                    .defineInRange("rayonMaxClaim", 3, 0, 10);
+            entryMessages = b.comment("À l'entrée sur des terres : un titre en grand, une ligne au-dessus de la barre d'objets, ou rien.")
+                    .defineEnum("messagesEntree", fr.crusadecraft.core.world.EntryTitles.Mode.TITRE);
+            b.pop();
+
+            b.comment("Protection des terres (P16), chunk par chunk, selon le lien avec leur royaume").push("protection");
+            protection = b.comment("Sur les terres d'un royaume de joueur, seuls les siens cassent, posent et ouvrent les coffres.")
+                    .define("active", true);
+            protectAiLand = b.comment("Les terres des royaumes IA sont protégées de la même façon (non : on y explore librement).")
+                    .define("terresIA", false);
+            protectVassals = b.comment("Un suzerain et ses vassaux peuvent tout faire sur les terres les uns des autres.")
+                    .define("vassauxLibres", true);
+            alliesInteract = b.comment("Un allié peut ouvrir portes et coffres (mais ni casser ni poser).")
+                    .define("alliesOuvrent", true);
+            operatorsBypass = b.comment("Les opérateurs du serveur passent outre.").define("operateursLibres", true);
+            b.pop();
+
+            b.comment("Carte web (P17) : les royaumes chunk par chunk sur Dynmap, avec leur fiche au clic. Sans Dynmap, rien ne se passe.")
+                    .push("carteWeb");
+            webMap = b.comment("Dessiner les royaumes et les lieux sur Dynmap.").define("dynmap", true);
+            webMapSeconds = b.comment("Tous les combien de secondes la carte web est remise à jour (seulement si quelque chose a changé).")
+                    .defineInRange("secondes", 20, 5, 3600);
+            webMapLanguage = b.comment("Langue des fiches : fr_fr ou en_us.").define("langue", "fr_fr");
+            webMapAiRealms = b.comment("Montrer aussi les royaumes de l'ordinateur (la page web est la même pour tous : pas de brouillard).")
+                    .define("royaumesIA", true);
+            webMapPlaces = b.comment("Montrer les lieux : villes, forts, lieux saints, ruines, régions.").define("lieux", true);
+            webMapTreasury = b.comment("Montrer le trésor des royaumes dans leur fiche.").define("tresor", true);
+            webMapCouncil = b.comment("Montrer le conseil des royaumes de l'ordinateur dans leur fiche.").define("conseil", true);
+            webMapOpacity = b.comment("Opacité de la couleur des terres (0 : transparentes, 1 : pleines).").defineInRange("opacite", 0.35, 0.0, 1.0);
+            clientTerritory = b.comment("Envoyer aux joueurs les terres des royaumes qu'ils connaissent, pour Xaero's World Map et Minimap.")
+                    .define("xaero", true);
             b.pop();
 
             b.comment("Diplomatie, titres et vassalité").push("diplomatie");

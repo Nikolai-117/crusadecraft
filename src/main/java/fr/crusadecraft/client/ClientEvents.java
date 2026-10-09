@@ -60,5 +60,6 @@ public final class ClientEvents {
     public static void onLogout(net.minecraftforge.client.event.ClientPlayerNetworkEvent.LoggingOut event) {
         fr.crusadecraft.client.map.ClientMapData.clear();
         fr.crusadecraft.client.map.PaperMapOverlay.clear();
+        fr.crusadecraft.client.map.ClientTerritory.clear();
     }
 }

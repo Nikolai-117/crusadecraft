@@ -1,0 +1,16 @@
+{
+  "name": "crusadecraft.codex.territoire",
+  "icon": "minecraft:map",
+  "category": "crusadecraft:monde",
+  "sortnum": 7,
+  "pages": [
+    {
+      "type": "patchouli:text",
+      "text": "crusadecraft.codex.territoire.p0"
+    },
+    {
+      "type": "patchouli:text",
+      "text": "crusadecraft.codex.territoire.p1"
+    }
+  ]
+}

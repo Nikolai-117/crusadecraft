@@ -47,13 +47,11 @@ public final class WorldService {
     /** Hérauts présents (identifiant d'entité → visite). État de session. */
     private static final Map<UUID, Herald> HERALDS = new HashMap<>();
     /** Dernier territoire IA où se trouvait chaque joueur, pour annoncer les entrées. État de session. */
-    private static final Map<UUID, UUID> LAST_TERRITORY = new HashMap<>();
 
     private WorldService() {}
 
     public static void onServerStopped() {
         HERALDS.clear();
-        LAST_TERRITORY.clear();
     }
 
     // ------------------------------------------------------------------ génération
@@ -157,10 +155,7 @@ public final class WorldService {
         long today = RealmService.currentDay(server);
         ResourceLocation dim = player.level().dimension().location();
         Optional<Map.Entry<AiRealm, AiProvince>> nearest = world.nearestProvince(dim, player.getX(), player.getZ());
-        if (nearest.isEmpty()) {
-            LAST_TERRITORY.remove(player.getUUID());
-            return Optional.empty();
-        }
+        if (nearest.isEmpty()) return Optional.empty();
         AiRealm realm = nearest.get().getKey();
         double dist = Math.sqrt(nearest.get().getValue().distanceSqr(player.getX(), player.getZ()));
         boolean fresh = false;
@@ -173,14 +168,7 @@ public final class WorldService {
                     Component.translatable("crusadecraft.toast.discovered.body", name)));
             if (CrusadeConfig.SERVER.heralds.get()) sendHerald(player, realm);
         }
-        // Les terres où l'on se tient : la réponse commune (frontières peintes, puis cercles des sièges et des constructions).
-        AiRealm here = Territory.ownerAt(server, dim, player.getX(), player.getZ()).flatMap(world::realm).orElse(null);
-        UUID current = here == null ? null : here.id();
-        UUID previous = current == null ? LAST_TERRITORY.remove(player.getUUID()) : LAST_TERRITORY.put(player.getUUID(), current);
-        if (here != null && !current.equals(previous) && !(fresh && here == realm) && here.discoveredBy(player.getUUID())) {
-            player.displayClientMessage(Component.translatable("crusadecraft.world.entering",
-                    AiNames.realmOf(here.rank(), here.place())), true);
-        }
+        // L'annonce d'entrée sur des terres est faite par EntryTitles (P16), pour tous les royaumes, chunk par chunk.
         return fresh ? Optional.of(realm) : Optional.empty();
     }
 

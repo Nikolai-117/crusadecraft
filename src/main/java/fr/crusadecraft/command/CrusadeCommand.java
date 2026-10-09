@@ -1,6 +1,7 @@
 package fr.crusadecraft.command;
 
 import com.mojang.brigadier.CommandDispatcher;
+import com.mojang.brigadier.arguments.IntegerArgumentType;
 import com.mojang.brigadier.arguments.StringArgumentType;
 import com.mojang.brigadier.context.CommandContext;
 import com.mojang.brigadier.exceptions.CommandSyntaxException;
@@ -31,13 +32,29 @@ public final class CrusadeCommand {
 
     public static void register(CommandDispatcher<CommandSourceStack> dispatcher) {
         dispatcher.register(Commands.literal("crusade")
-                .requires(src -> src.hasPermission(2))
-                .then(Commands.literal("liste").executes(CrusadeCommand::list))
+                // Pour tous les joueurs (P16) : le territoire, comme dans Factions.
+                .then(Commands.literal("claim")
+                        .executes(ctx -> say(ctx, fr.crusadecraft.core.world.ClaimService.claim(ctx.getSource().getPlayerOrException(), 0)))
+                        .then(Commands.argument("rayon", IntegerArgumentType.integer(0, 10))
+                                .executes(ctx -> say(ctx, fr.crusadecraft.core.world.ClaimService.claim(ctx.getSource().getPlayerOrException(),
+                                        IntegerArgumentType.getInteger(ctx, "rayon"))))))
+                .then(Commands.literal("unclaim")
+                        .executes(ctx -> say(ctx, fr.crusadecraft.core.world.ClaimService.unclaim(ctx.getSource().getPlayerOrException(), 0)))
+                        .then(Commands.argument("rayon", IntegerArgumentType.integer(0, 10))
+                                .executes(ctx -> say(ctx, fr.crusadecraft.core.world.ClaimService.unclaim(ctx.getSource().getPlayerOrException(),
+                                        IntegerArgumentType.getInteger(ctx, "rayon"))))))
+                .then(Commands.literal("map").executes(ctx -> lines(ctx, fr.crusadecraft.core.world.ClaimService.map(ctx.getSource().getPlayerOrException()))))
                 .then(Commands.literal("info")
+                        .executes(ctx -> lines(ctx, fr.crusadecraft.core.world.ClaimService.info(ctx.getSource().getPlayerOrException())))
+                        .then(Commands.argument("joueur", EntityArgument.player()).requires(src -> src.hasPermission(2))
+                                .executes(ctx -> info(ctx, EntityArgument.getPlayer(ctx, "joueur")))))
+                // Administration : opérateurs seulement.
+                .then(Commands.literal("royaume").requires(src -> src.hasPermission(2))
                         .executes(ctx -> info(ctx, ctx.getSource().getPlayerOrException()))
                         .then(Commands.argument("joueur", EntityArgument.player())
                                 .executes(ctx -> info(ctx, EntityArgument.getPlayer(ctx, "joueur")))))
-                .then(Commands.literal("colonie").executes(CrusadeCommand::colonyHere))
+                .then(Commands.literal("liste").requires(src -> src.hasPermission(2)).executes(CrusadeCommand::list))
+                .then(Commands.literal("colonie").requires(src -> src.hasPermission(2)).executes(CrusadeCommand::colonyHere))
                 .then(Commands.literal("lieux").executes(ctx -> {
                     fr.crusadecraft.network.packet.LieuPackets.send(ctx.getSource().getPlayerOrException(), null, true, null, true);
                     return 1;
@@ -49,21 +66,21 @@ public final class CrusadeCommand {
                     ctx.getSource().sendSuccess(() -> Component.translatable("crusadecraft.lieu.here", chain), false);
                     return 1;
                 }))
-                .then(Commands.literal("lignees").executes(ctx -> {
+                .then(Commands.literal("lignees").requires(src -> src.hasPermission(2)).executes(ctx -> {
                     fr.crusadecraft.network.packet.LineagePackets.send(ctx.getSource().getPlayerOrException(), null, true);
                     return 1;
                 }))
-                .then(Commands.literal("reconcilier").executes(ctx -> {
+                .then(Commands.literal("reconcilier").requires(src -> src.hasPermission(2)).executes(ctx -> {
                     RealmService.reconcileAll(ctx.getSource().getServer());
                     ctx.getSource().sendSuccess(() -> Component.translatable("crusadecraft.command.reconciled"), true);
                     return 1;
                 }))
-                .then(Commands.literal("dissoudre")
+                .then(Commands.literal("dissoudre").requires(src -> src.hasPermission(2))
                         .then(Commands.argument("royaume", StringArgumentType.greedyString())
                                 .suggests((ctx, b) -> SharedSuggestionProvider.suggest(
                                         CrusadeSavedData.get(ctx.getSource().getServer()).realms().stream().map(Realm::name), b))
                                 .executes(CrusadeCommand::dissolve)))
-                .then(Commands.literal("monde")
+                .then(Commands.literal("monde").requires(src -> src.hasPermission(2))
                         .then(Commands.literal("info").executes(CrusadeCommand::worldInfo))
                         .then(Commands.literal("generer").executes(ctx -> {
                             // Débogage : régénère les royaumes IA autour du joueur (efface les anciens).
@@ -93,6 +110,17 @@ public final class CrusadeCommand {
                     r.provinces().size(), capital == null ? "?" : capital.seat().toShortString(), r.discoveredBy().size()), false);
         }
         return world.realms().size();
+    }
+
+    private static int say(CommandContext<CommandSourceStack> ctx, fr.crusadecraft.core.council.CouncilActions.Outcome out) {
+        if (out.success()) ctx.getSource().sendSuccess(out::message, false);
+        else ctx.getSource().sendFailure(out.message());
+        return out.success() ? 1 : 0;
+    }
+
+    private static int lines(CommandContext<CommandSourceStack> ctx, java.util.List<Component> lines) {
+        for (Component line : lines) ctx.getSource().sendSuccess(() -> line, false);
+        return lines.size();
     }
 
     private static int list(CommandContext<CommandSourceStack> ctx) {
