@@ -109,6 +109,36 @@ public final class WarFieldService {
         return SIEGES.size();
     }
 
+    /**
+     * Un siège en cours, tel que les cartes le montrent (P18) : où, qui assiège qui, et combien de défenseurs tiennent
+     * encore.
+     */
+    public record SiegeView(net.minecraft.resources.ResourceLocation dim, int x, int z, UUID attacker, UUID defender, int garrison) {}
+
+    public static List<SiegeView> sieges() {
+        List<SiegeView> out = new ArrayList<>();
+        for (Siege s : SIEGES.values()) {
+            if (s.seat == null || s.level == null) continue;
+            out.add(new SiegeView(s.level.location(), s.seat.getX(), s.seat.getZ(), s.realm, s.enemy, s.garrison.size()));
+        }
+        out.sort(java.util.Comparator.comparingInt(SiegeView::x).thenComparingInt(SiegeView::z));
+        return out;
+    }
+
+    /** Un siège posé sans troupes ni bannière, pour les bancs d'essai ; ce qu'on rend le retire. */
+    public static Runnable siegeForTests(ResourceKey<Level> level, BlockPos seat, UUID attacker, UUID defender, int garrison) {
+        Siege s = new Siege();
+        s.war = UUID.randomUUID();
+        s.level = level;
+        s.seat = seat;
+        s.realm = attacker;
+        s.enemy = defender;
+        for (int i = 0; i < garrison; i++) s.garrison.add(UUID.randomUUID());
+        String key = "test|" + s.war;
+        SIEGES.put(key, s);
+        return () -> SIEGES.remove(key);
+    }
+
     public static int activeRaids() {
         return RAIDS.size();
     }

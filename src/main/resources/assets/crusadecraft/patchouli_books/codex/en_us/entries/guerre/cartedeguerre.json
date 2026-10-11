@@ -1,0 +1,16 @@
+{
+  "name": "crusadecraft.codex.cartedeguerre",
+  "icon": "minecraft:filled_map",
+  "category": "crusadecraft:guerre",
+  "sortnum": 7,
+  "pages": [
+    {
+      "type": "patchouli:text",
+      "text": "crusadecraft.codex.cartedeguerre.p0"
+    },
+    {
+      "type": "patchouli:text",
+      "text": "crusadecraft.codex.cartedeguerre.p1"
+    }
+  ]
+}

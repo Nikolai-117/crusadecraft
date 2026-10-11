@@ -99,6 +99,7 @@ public final class CrusadeConfig {
         public final ForgeConfigSpec.BooleanValue webMapPlaces;
         public final ForgeConfigSpec.BooleanValue webMapTreasury;
         public final ForgeConfigSpec.BooleanValue webMapCouncil;
+        public final ForgeConfigSpec.BooleanValue webMapWar;
         public final ForgeConfigSpec.DoubleValue webMapOpacity;
         public final ForgeConfigSpec.BooleanValue clientTerritory;
         public final ForgeConfigSpec.IntValue discoveryRadius;
@@ -290,6 +291,9 @@ public final class CrusadeConfig {
             webMapPlaces = b.comment("Montrer les lieux : villes, forts, lieux saints, ruines, régions.").define("lieux", true);
             webMapTreasury = b.comment("Montrer le trésor des royaumes dans leur fiche.").define("tresor", true);
             webMapCouncil = b.comment("Montrer le conseil des royaumes de l'ordinateur dans leur fiche.").define("conseil", true);
+            webMapWar = b.comment("Montrer la carte de guerre (P18) dans sa propre couche : zones, flèches, repères et sièges en cours.",
+                    "Attention : la page web est la même pour tous, les plans de chaque royaume y sont donc visibles de tous.")
+                    .define("guerre", true);
             webMapOpacity = b.comment("Opacité de la couleur des terres (0 : transparentes, 1 : pleines).").defineInRange("opacite", 0.35, 0.0, 1.0);
             clientTerritory = b.comment("Envoyer aux joueurs les terres des royaumes qu'ils connaissent, pour Xaero's World Map et Minimap.")
                     .define("xaero", true);

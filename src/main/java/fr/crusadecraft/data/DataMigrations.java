@@ -36,6 +36,7 @@ public final class DataMigrations {
         // v11 → v12 : registre des lignées (personnes, maisons, communautés). Absent = registre vide.
         // v12 → v13 : les lieux (P15). Absents = aucun ; ceux du monde se recréent d'eux-mêmes. Une copie datée du
         //            fichier est faite avant toute mise à niveau (SaveBackups).
+        // v13 → v14 : la carte de guerre (P18). Absente = aucun plan tracé.
         if (version < CrusadeSavedData.DATA_VERSION) {
             CrusadeCraft.LOGGER.info("CrusadeCraft : données mises à niveau de la version {} à {}", version,
                     CrusadeSavedData.DATA_VERSION);

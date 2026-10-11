@@ -33,7 +33,7 @@ import net.minecraftforge.network.simple.SimpleChannel;
  * (distance, droits, état) avant d'agir.
  */
 public final class CrusadeNetwork {
-    private static final String VERSION = "13";
+    private static final String VERSION = "14";
 
     public static final SimpleChannel CHANNEL = NetworkRegistry.newSimpleChannel(
             ResourceLocation.tryParse(CrusadeCraft.MOD_ID + ":main"),
@@ -250,6 +250,10 @@ public final class CrusadeNetwork {
         CHANNEL.messageBuilder(MapEditPackets.Result.class, nextId++, NetworkDirection.PLAY_TO_CLIENT)
                 .encoder(MapEditPackets.Result::encode).decoder(MapEditPackets.Result::decode)
                 .consumerMainThread(MapEditPackets.Result::handle).add();
+        // P18 : la carte de guerre
+        CHANNEL.messageBuilder(fr.crusadecraft.network.packet.WarMapPackets.Edit.class, nextId++, NetworkDirection.PLAY_TO_SERVER)
+                .encoder(fr.crusadecraft.network.packet.WarMapPackets.Edit::encode).decoder(fr.crusadecraft.network.packet.WarMapPackets.Edit::decode)
+                .consumerMainThread(fr.crusadecraft.network.packet.WarMapPackets.Edit::handle).add();
     }
 
     public static void toPlayer(ServerPlayer player, Object packet) {

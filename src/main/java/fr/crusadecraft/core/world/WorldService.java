@@ -397,7 +397,8 @@ public final class WorldService {
         for (WorldState.DejureKingdom k : world.dejure()) dejure.add(new MapView.Dejure(k.place(), k.color()));
         return new MapView(dim, focusX, focusZ, player.getBlockX(), player.getBlockZ(), CrusadeConfig.SERVER.territoryRadius.get(),
                 CrusadeConfig.SERVER.colonyRadius.get(), territories, seats, dejure, canEdit, editing, borders(world, dim, index),
-                fr.crusadecraft.core.place.PlaceService.mapPlaces(server, dim));
+                fr.crusadecraft.core.place.PlaceService.mapPlaces(server, dim),
+                editing ? MapView.War.NONE : fr.crusadecraft.core.war.WarMapService.view(player, dim));
     }
 
     /** Les cases peintes des royaumes de cette carte (les autres restent dans le brouillard), et les terres libres. */

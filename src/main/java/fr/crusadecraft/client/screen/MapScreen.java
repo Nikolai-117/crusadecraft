@@ -3,16 +3,22 @@ package fr.crusadecraft.client.screen;
 import fr.crusadecraft.client.KeyBindings;
 import fr.crusadecraft.client.map.MapRaster;
 import fr.crusadecraft.client.map.MapTexture;
+import com.mojang.math.Axis;
 import fr.crusadecraft.core.realm.TitleRank;
+import fr.crusadecraft.core.war.WarMap;
+import fr.crusadecraft.core.war.WarMapService;
 import fr.crusadecraft.core.world.AiNames;
 import fr.crusadecraft.core.world.MapView;
 import fr.crusadecraft.core.world.TerritoryMap;
+import fr.crusadecraft.core.world.WebMapGeometry;
 import fr.crusadecraft.core.world.WorldEditService;
 import fr.crusadecraft.network.CrusadeNetwork;
 import fr.crusadecraft.network.packet.MapEditPackets;
+import fr.crusadecraft.network.packet.WarMapPackets;
 import fr.crusadecraft.network.packet.WorldPackets;
 import it.unimi.dsi.fastutil.longs.Long2IntOpenHashMap;
 import it.unimi.dsi.fastutil.longs.LongArrayList;
+import it.unimi.dsi.fastutil.longs.LongOpenHashSet;
 import net.minecraft.ChatFormatting;
 import net.minecraft.Util;
 import net.minecraft.client.gui.GuiGraphics;
@@ -20,6 +26,7 @@ import net.minecraft.client.gui.components.Button;
 import net.minecraft.client.gui.components.Tooltip;
 import net.minecraft.client.gui.screens.Screen;
 import net.minecraft.network.chat.Component;
+import net.minecraft.network.chat.MutableComponent;
 
 import java.util.ArrayList;
 import java.util.List;
@@ -33,6 +40,9 @@ import java.util.UUID;
  * <p>Pour qui en a le droit, le bouton « Modifier » ouvre l'éditeur (P12) : poser des royaumes et des villes,
  * retoucher ceux qui existent, peindre les frontières au pinceau. L'écran ne fait que demander : le serveur
  * vérifie, répond par un message au pied de la carte, et renvoie la carte à jour.
+ *
+ * <p>Le bouton « Carte de guerre » (P18) pose par-dessus le plan de bataille de son royaume et de ses alliés : zones
+ * peintes chunk par chunk, flèches d'attaque, repères annotés, et les sièges en cours. Le souverain le trace ici même.
  */
 public class MapScreen extends Screen {
     private static final int INK = 0xFF3A2918;
@@ -43,6 +53,55 @@ public class MapScreen extends Screen {
     /** Centre demandé par un autre écran (« Voir sur la carte »), appliqué à la prochaine ouverture. */
     private static int[] pendingCenter;
     private static double pendingScale = -1;
+    private static boolean lastWar;
+    private static int lastPinKind;
+    /** Les couleurs des zones de guerre : offensive, défense, objectif (les mêmes sur Dynmap). */
+    static final int[] ZONE_COLORS = {0xD03A2F, 0x2F6FD0, 0xE0B020};
+    private static final int[] PIN_COLORS = {0xD03A2F, 0x2F6FD0, 0xE08A20, 0xEDE3CC};
+
+    /** Les outils de la carte de guerre : trois pinceaux de zone, la gomme, la flèche, le repère, et retirer. */
+    enum WarTool {
+        OFFENSIVE("offensive", 0, "■"), DEFENSE("defense", 1, "■"), OBJECTIVE("objective", 2, "■"), ERASE("erase", -1, "✗"),
+        ARROW("arrow", -2, "➜"), PIN("pin", -3, "⚑"), REMOVE("remove", -4, "✂");
+
+        final String key;
+        /** Le rang de la zone peinte, −1 pour la gomme ; en dessous, un outil qui ne peint pas. */
+        final int zone;
+        /** Ce qui reste sur le bouton quand la fenêtre est trop étroite pour les noms. */
+        final String glyph;
+
+        WarTool(String key, int zone, String glyph) {
+            this.key = key;
+            this.zone = zone;
+            this.glyph = glyph;
+        }
+
+        boolean paints() {
+            return zone >= -1;
+        }
+
+        /** Son nom, à la couleur de sa zone pour un pinceau. */
+        Component label() {
+            MutableComponent name = Component.translatable("crusadecraft.warmap.tool." + key);
+            if (zone < 0) return name;
+            int c = ZONE_COLORS[zone];
+            return name.withStyle(s -> s.withColor(c));
+        }
+
+        Component compact() {
+            MutableComponent g = Component.literal(glyph);
+            if (zone < 0) return g;
+            int c = ZONE_COLORS[zone];
+            return g.withStyle(s -> s.withColor(c));
+        }
+
+        Component tip() {
+            return Component.translatable("crusadecraft.warmap.tool." + key + ".tip");
+        }
+    }
+
+    /** Une couche de la carte de guerre prête à dessiner : des rectangles de chunks et leur bord. */
+    private record WarLayer(int fill, int line, List<WebMapGeometry.Rect> rects, List<WebMapGeometry.Segment> edges) {}
 
     /** Les outils de l'éditeur. */
     enum Tool {
@@ -92,6 +151,17 @@ public class MapScreen extends Screen {
     private boolean statusOk;
     private long statusUntil;
 
+    // Carte de guerre
+    private boolean war = lastWar;
+    private WarTool warTool = WarTool.OFFENSIVE;
+    /** Ce que le pinceau vient de peindre, en attendant la réponse du serveur : chunk → rang de zone, ou −1 effacé. */
+    private final Long2IntOpenHashMap warOverlay = new Long2IntOpenHashMap();
+    private List<WarLayer> warLayers;
+    /** Le bouton de l'outil choisi, cerné d'or. */
+    private Button warToolButton;
+    private boolean arrowing;
+    private double arrowX0, arrowZ0, arrowX1, arrowZ1;
+
     public MapScreen(MapView view) {
         super(Component.translatable("crusadecraft.map.title"));
         this.view = view;
@@ -136,6 +206,8 @@ public class MapScreen extends Screen {
         boolean modeChanged = view.editing() != newView.editing();
         this.view = newView;
         overlay.clear();
+        warOverlay.clear();
+        warLayers = null;
         dirty = true;
         if (modeChanged || minecraft != null) rebuildWidgets();
     }
@@ -154,6 +226,32 @@ public class MapScreen extends Screen {
         return view.editing();
     }
 
+    /** La carte de guerre est posée : hors de l'éditeur, et seulement pour qui a un royaume. */
+    private boolean warMode() {
+        return war && !editing() && view.war().enabled();
+    }
+
+    /** Le glyphe d'un repère, sur la carte et dans son formulaire. */
+    static String pinGlyph(WarMap.Mark mark) {
+        return switch (mark) {
+            case OBJECTIF -> "⚑";
+            case RASSEMBLEMENT -> "✦";
+            case DANGER -> "⚠";
+            case NOTE -> "✎";
+        };
+    }
+
+    void rememberPinKind(int kind) {
+        lastPinKind = kind;
+    }
+
+    /** Ouvre la carte de guerre, avec cet outil (aperçu du banc d'essai visuel). */
+    public void previewWar(int toolIndex) {
+        war = true;
+        warTool = WarTool.values()[Math.floorMod(toolIndex, WarTool.values().length)];
+        if (minecraft != null) rebuildWidgets();
+    }
+
     @Override
     protected void init() {
         w = width - 16;
@@ -163,7 +261,7 @@ public class MapScreen extends Screen {
         mapX = left + 8;
         mapY = top + 26;
         mapW = w - 16;
-        mapH = h - 26 - 24 - (editing() ? TOOLBAR : 0);
+        mapH = h - 26 - 24 - (editing() || warMode() ? TOOLBAR : 0);
         if (scale < 0) scale = MapRaster.fit(view, centerX, centerZ, mapW, mapH) * 0.6;
         int bx = left + w - 8;
         addRenderableWidget(Button.builder(Component.translatable("gui.done"), b -> onClose()).bounds(bx - 50, top + 5, 50, 16).build());
@@ -197,8 +295,59 @@ public class MapScreen extends Screen {
                     .bounds(mapX + mapW - 56, top + h - 21, 56, 16).build();
             lieux.setTooltip(Tooltip.create(Component.translatable("crusadecraft.lieu.open.tip")));
             addRenderableWidget(lieux);
+            if (view.war().enabled()) {
+                Button warButton = Button.builder(Component.translatable(warMode() ? "crusadecraft.warmap.leave" : "crusadecraft.warmap.open"), b -> {
+                    war = !warMode();
+                    lastWar = war;
+                    arrowing = false;
+                    warOverlay.clear();
+                    armed = 0;
+                    rebuildWidgets();
+                }).bounds(mapX + mapW - 56 - 4 - 84, top + h - 21, 84, 16).build();
+                warButton.setTooltip(Tooltip.create(Component.translatable(warMode() ? "crusadecraft.warmap.leave.tip" : "crusadecraft.warmap.open.tip")));
+                addRenderableWidget(warButton);
+            }
+            if (warMode()) initWar();
         }
         dirty = true;
+    }
+
+    // ------------------------------------------------------------------ carte de guerre : outils
+
+    private void initWar() {
+        int ty = mapY + mapH + 4;
+        int right = mapX + mapW;
+        int sideW = 34 + 2 + 76;
+        int bw = Math.max(18, Math.min(64, (mapW - sideW - 4) / WarTool.values().length - 2));
+        // Trop étroit pour les noms : un pictogramme, et le nom dans l'infobulle.
+        boolean compact = false;
+        for (WarTool t : WarTool.values()) if (font.width(t.label()) + 8 > bw) compact = true;
+        warToolButton = null;
+        int x = mapX;
+        for (WarTool t : WarTool.values()) {
+            Button b = Button.builder(compact ? t.compact() : t.label(), btn -> {
+                warTool = t;
+                arrowing = false;
+                armed = 0;
+                rebuildWidgets();
+            }).bounds(x, ty, bw, 16).build();
+            b.setTooltip(Tooltip.create(compact ? Component.empty().append(t.label()).append("\n").append(t.tip()) : t.tip()));
+            addRenderableWidget(b);
+            if (t == warTool) warToolButton = b;
+            x += bw + 2;
+        }
+        Button clear = Button.builder(armedLabel(4, "crusadecraft.warmap.clear"), b -> {
+            if (confirm(4)) CrusadeNetwork.toServer(WarMapPackets.Edit.clear());
+            rebuildWidgets();
+        }).bounds(right - 76, ty, 76, 16).build();
+        clear.setTooltip(Tooltip.create(Component.translatable("crusadecraft.warmap.clear.tip")));
+        addRenderableWidget(clear);
+        if (warTool.paints()) {
+            addRenderableWidget(Button.builder(Component.literal("◯ " + BRUSH_SIZES[brushSize]), b -> {
+                brushSize = (brushSize + 1) % BRUSH_SIZES.length;
+                rebuildWidgets();
+            }).bounds(right - 76 - 36, ty, 34, 16).tooltip(Tooltip.create(Component.translatable("crusadecraft.mapedit.brush.size.tip"))).build());
+        }
     }
 
     // ------------------------------------------------------------------ éditeur : outils et panneau
@@ -474,10 +623,12 @@ public class MapScreen extends Screen {
         g.renderOutline(mapX - 1, mapY - 1, mapW + 2, mapH + 2, Ui.GOLD_DARK);
 
         g.enableScissor(mapX, mapY, mapX + mapW, mapY + mapH);
+        if (warMode()) renderWarZones(g);
         renderPlaces(g);
         renderSeats(g);
+        if (warMode()) renderWarMarks(g);
         renderPlayer(g);
-        if (editing()) renderBrush(g, mouseX, mouseY);
+        if (editing() || warMode()) renderBrush(g, mouseX, mouseY);
         g.disableScissor();
 
         // Pied : échelle, coordonnées, mode d'emploi (ou réponse du serveur).
@@ -486,11 +637,12 @@ public class MapScreen extends Screen {
         if (Ui.inside(mouseX, mouseY, mapX, mapY, mapW, mapH)) foot += "   ·   x " + Math.round(wx) + ", z " + Math.round(wz);
         int footY = top + h - 18;
         Ui.text(g, font, Component.literal(foot), mapX, footY, Ui.TEXT_MUTED);
-        Component hint = status != null && Util.getMillis() < statusUntil ? status : editing() ? editHint() : Component.translatable("crusadecraft.map.hint");
+        Component hint = status != null && Util.getMillis() < statusUntil ? status : editing() ? editHint()
+                : warMode() ? Component.translatable("crusadecraft.warmap.hint." + warTool.key) : Component.translatable("crusadecraft.map.hint");
         int hintColor = status != null && Util.getMillis() < statusUntil ? (statusOk ? 0xFF9FD07A : 0xFFE0796E) : Ui.TEXT_MUTED;
         // Le mode d'emploi à droite, réduit s'il le faut, jamais par-dessus l'échelle.
         // Hors de l'éditeur, le bouton « Lieux » tient le coin droit du pied.
-        int reserved = editing() ? 0 : 60;
+        int reserved = editing() ? 0 : view.war().enabled() ? 60 + 88 : 60;
         int room = mapW - font.width(foot) - 16 - reserved;
         float k = Math.min(1f, room / (float) Math.max(1, font.width(hint)));
         if (k >= 0.55f) {
@@ -503,14 +655,18 @@ public class MapScreen extends Screen {
         if (editing() && tool == Tool.CHOOSE) renderPanel(g);
 
         super.render(g, mouseX, mouseY, partialTick);
-        if (Ui.inside(mouseX, mouseY, mapX, mapY, mapW, mapH) && !dragging && !painting && !overPanel(mouseX, mouseY)) {
-            List<Component> tip = tooltip(raster.ownerAt(mouseX - mapX, mouseY - mapY));
+        if (warMode() && warToolButton != null) {
+            g.renderOutline(warToolButton.getX() - 1, warToolButton.getY() - 1, warToolButton.getWidth() + 2, warToolButton.getHeight() + 2, Ui.TEXT_TITLE);
+        }
+        if (Ui.inside(mouseX, mouseY, mapX, mapY, mapW, mapH) && !dragging && !painting && !arrowing && !overPanel(mouseX, mouseY)) {
+            List<Component> tip = warMode() ? warTooltip(mouseX, mouseY) : List.of();
+            if (tip.isEmpty()) tip = tooltip(raster.ownerAt(mouseX - mapX, mouseY - mapY));
             if (!tip.isEmpty()) g.renderComponentTooltip(font, tip, mouseX, mouseY);
         }
     }
 
     private Component currentTitle() {
-        return editing() ? Component.translatable("crusadecraft.mapedit.title") : title;
+        return editing() ? Component.translatable("crusadecraft.mapedit.title") : warMode() ? Component.translatable("crusadecraft.warmap.title") : title;
     }
 
     private Component editHint() {
@@ -719,7 +875,8 @@ public class MapScreen extends Screen {
 
     /** Le cercle du pinceau sous la souris, à la taille des cases qu'il peindra. */
     private void renderBrush(GuiGraphics g, int mouseX, int mouseY) {
-        if (tool != Tool.BRUSH || !Ui.inside(mouseX, mouseY, mapX, mapY, mapW, mapH)) return;
+        boolean brush = editing() ? tool == Tool.BRUSH : warMode() && warTool.paints();
+        if (!brush || !Ui.inside(mouseX, mouseY, mapX, mapY, mapW, mapH)) return;
         int r = Math.max(2, (int) Math.round((BRUSH_SIZES[brushSize] + 0.5) * TerritoryMap.CELL / scale));
         g.renderOutline(mouseX - r, mouseY - r, 2 * r, 2 * r, 0xCCFFFFFF);
     }
@@ -767,7 +924,13 @@ public class MapScreen extends Screen {
     public boolean mouseClicked(double mouseX, double mouseY, int button) {
         if (super.mouseClicked(mouseX, mouseY, button)) return true;
         if (!Ui.inside(mouseX, mouseY, mapX, mapY, mapW, mapH) || overPanel(mouseX, mouseY)) return false;
-        if (editing() && tool == Tool.BRUSH && button == 0) {
+        if (warMode() && button == 0 && warTool == WarTool.ARROW) {
+            arrowing = true;
+            arrowX0 = arrowX1 = worldX(mouseX);
+            arrowZ0 = arrowZ1 = worldZ(mouseY);
+            return true;
+        }
+        if (((editing() && tool == Tool.BRUSH) || (warMode() && warTool.paints())) && button == 0) {
             painting = true;
             stroke.clear();
             lastPaintX = mouseX;
@@ -787,6 +950,11 @@ public class MapScreen extends Screen {
 
     @Override
     public boolean mouseDragged(double mouseX, double mouseY, int button, double dx, double dy) {
+        if (arrowing) {
+            arrowX1 = worldX(Math.max(mapX, Math.min(mapX + mapW, mouseX)));
+            arrowZ1 = worldZ(Math.max(mapY, Math.min(mapY + mapH, mouseY)));
+            return true;
+        }
         if (painting) {
             // Entre deux positions de la souris, on peint tout le trajet : un geste rapide ne laisse pas de trous.
             double dist = Math.hypot(mouseX - lastPaintX, mouseY - lastPaintY);
@@ -812,6 +980,17 @@ public class MapScreen extends Screen {
 
     @Override
     public boolean mouseReleased(double mouseX, double mouseY, int button) {
+        if (arrowing) {
+            arrowing = false;
+            // Un simple clic n'est pas une flèche : il faut l'avoir tirée.
+            if (Math.hypot(arrowX1 - arrowX0, arrowZ1 - arrowZ0) / scale >= 6) {
+                CrusadeNetwork.toServer(WarMapPackets.Edit.arrow((int) Math.round(arrowX0), (int) Math.round(arrowZ0),
+                        (int) Math.round(arrowX1), (int) Math.round(arrowZ1)));
+            } else {
+                showStatus(false, Component.translatable("crusadecraft.warmap.arrow.drag"));
+            }
+            return true;
+        }
         if (painting) {
             painting = false;
             sendStroke();
@@ -827,6 +1006,16 @@ public class MapScreen extends Screen {
 
     private void clickMap(double mouseX, double mouseY) {
         int x = (int) Math.round(worldX(mouseX)), z = (int) Math.round(worldZ(mouseY));
+        if (warMode() && warTool == WarTool.PIN) {
+            minecraft.setScreen(new WarPinForm(this, x, z, lastPinKind));
+            return;
+        }
+        if (warMode() && warTool == WarTool.REMOVE) {
+            UUID target = ownMarkNear(mouseX, mouseY);
+            if (target != null) CrusadeNetwork.toServer(WarMapPackets.Edit.remove(target));
+            else showStatus(false, Component.translatable("crusadecraft.warmap.remove.none"));
+            return;
+        }
         // Un lieu posé à la main : sa fiche.
         if (!editing() || tool == Tool.CHOOSE) {
             MapView.Place place = placeNear(mouseX, mouseY);
@@ -891,6 +1080,10 @@ public class MapScreen extends Screen {
     }
 
     private void paintAt(double mouseX, double mouseY) {
+        if (warMode()) {
+            warPaintAt(mouseX, mouseY);
+            return;
+        }
         int n = view.territories().size();
         int value = brushChoice == n ? MapView.Borders.NEUTRAL : brushChoice == n + 1 ? MapRaster.ERASED : brushChoice;
         int cx = TerritoryMap.cellOf(worldX(mouseX)), cz = TerritoryMap.cellOf(worldZ(mouseY));
@@ -910,6 +1103,15 @@ public class MapScreen extends Screen {
     /** Le geste terminé part au serveur, en paquets de taille raisonnable. */
     private void sendStroke() {
         if (stroke.isEmpty()) return;
+        if (warMode()) {
+            long[] all = stroke.toLongArray();
+            for (int from = 0; from < all.length; from += WarMapService.MAX_CELLS) {
+                long[] part = java.util.Arrays.copyOfRange(all, from, Math.min(all.length, from + WarMapService.MAX_CELLS));
+                CrusadeNetwork.toServer(WarMapPackets.Edit.paint(warTool.zone, part));
+            }
+            stroke.clear();
+            return;
+        }
         int n = view.territories().size();
         UUID owner = brushChoice >= 0 && brushChoice < n ? view.territories().get(brushChoice).id() : null;
         boolean neutral = brushChoice == n;
@@ -919,6 +1121,195 @@ public class MapScreen extends Screen {
             CrusadeNetwork.toServer(new MapEditPackets.Paint(owner, neutral, part));
         }
         stroke.clear();
+    }
+
+    // ------------------------------------------------------------------ carte de guerre : dessin et gestes
+
+    private void warPaintAt(double mouseX, double mouseY) {
+        int cx = TerritoryMap.cellOf(worldX(mouseX)), cz = TerritoryMap.cellOf(worldZ(mouseY));
+        int r = BRUSH_SIZES[brushSize];
+        for (int dx = -r; dx <= r; dx++) {
+            for (int dz = -r; dz <= r; dz++) {
+                if (dx * dx + dz * dz > r * r + r) continue;
+                long key = TerritoryMap.key(cx + dx, cz + dz);
+                if (warOverlay.containsKey(key) && warOverlay.get(key) == warTool.zone) continue;
+                warOverlay.put(key, warTool.zone);
+                stroke.add(key);
+            }
+        }
+        warLayers = null;
+    }
+
+    /** Les zones de chaque plan, en rectangles et en bords, refaites seulement quand la carte ou le pinceau changent. */
+    private List<WarLayer> warLayers() {
+        if (warLayers != null) return warLayers;
+        List<WarLayer> out = new ArrayList<>();
+        List<MapView.WarPlan> plans = new ArrayList<>(view.war().plans());
+        // Les alliés d'abord, son propre plan par-dessus.
+        plans.sort((a, b) -> Boolean.compare(a.mine(), b.mine()));
+        for (MapView.WarPlan p : plans) {
+            Long2IntOpenHashMap cells = new Long2IntOpenHashMap();
+            for (int i = 0; i < p.keys().length && i < p.kinds().length; i++) cells.put(p.keys()[i], p.kinds()[i]);
+            if (p.mine()) {
+                for (var e : warOverlay.long2IntEntrySet()) {
+                    if (e.getIntValue() < 0) cells.remove(e.getLongKey());
+                    else cells.put(e.getLongKey(), e.getIntValue());
+                }
+            }
+            for (int zone = 0; zone < ZONE_COLORS.length; zone++) {
+                LongOpenHashSet set = new LongOpenHashSet();
+                for (var e : cells.long2IntEntrySet()) if (e.getIntValue() == zone) set.add(e.getLongKey());
+                if (set.isEmpty()) continue;
+                int fill = (p.mine() ? 0x58000000 : 0x38000000) | ZONE_COLORS[zone];
+                int line = 0xD0000000 | (p.mine() ? ZONE_COLORS[zone] : p.color());
+                out.add(new WarLayer(fill, line, WebMapGeometry.rectangles(set), WebMapGeometry.border(set)));
+            }
+        }
+        warLayers = out;
+        return out;
+    }
+
+    private void renderWarZones(GuiGraphics g) {
+        for (WarLayer layer : warLayers()) {
+            for (WebMapGeometry.Rect r : layer.rects()) {
+                int x0 = screenX(r.x0() * (double) TerritoryMap.CELL), x1 = screenX((r.x1() + 1) * (double) TerritoryMap.CELL);
+                int y0 = screenY(r.z0() * (double) TerritoryMap.CELL), y1 = screenY((r.z1() + 1) * (double) TerritoryMap.CELL);
+                if (x1 < mapX || x0 > mapX + mapW || y1 < mapY || y0 > mapY + mapH) continue;
+                g.fill(x0, y0, Math.max(x1, x0 + 1), Math.max(y1, y0 + 1), layer.fill());
+            }
+            for (WebMapGeometry.Segment s : layer.edges()) {
+                int x0 = screenX(s.x0()), y0 = screenY(s.z0()), x1 = screenX(s.x1()), y1 = screenY(s.z1());
+                if (Math.max(x0, x1) < mapX || Math.min(x0, x1) > mapX + mapW || Math.max(y0, y1) < mapY || Math.min(y0, y1) > mapY + mapH) continue;
+                g.fill(Math.min(x0, x1), Math.min(y0, y1), Math.max(x0, x1) + 1, Math.max(y0, y1) + 1, layer.line());
+            }
+        }
+    }
+
+    /** Flèches, repères et sièges, par-dessus les villes. */
+    private void renderWarMarks(GuiGraphics g) {
+        for (MapView.WarPlan p : view.war().plans()) {
+            int color = 0xFF000000 | (p.mine() ? ZONE_COLORS[0] : p.color());
+            for (WarMap.Arrow a : p.arrows()) arrow(g, screenX(a.x0()), screenY(a.z0()), screenX(a.x1()), screenY(a.z1()), color);
+        }
+        if (arrowing) arrow(g, screenX(arrowX0), screenY(arrowZ0), screenX(arrowX1), screenY(arrowZ1), 0xC0000000 | ZONE_COLORS[0]);
+        for (MapView.WarPlan p : view.war().plans()) {
+            for (WarMap.Pin pin : p.pins()) {
+                int x = screenX(pin.x()), y = screenY(pin.z());
+                if (x < mapX - 40 || x > mapX + mapW + 40 || y < mapY - 20 || y > mapY + mapH + 20) continue;
+                String glyph = pinGlyph(pin.kind());
+                int gw = font.width(glyph);
+                g.drawString(font, glyph, x - gw / 2 + 1, y - 3, INK, false);
+                g.drawString(font, glyph, x - gw / 2, y - 4, 0xFF000000 | PIN_COLORS[pin.kind().ordinal()], false);
+                if (!pin.note().isEmpty() && scale <= 4) label(g, Component.literal(font.plainSubstrByWidth(pin.note(), 120)), x, y, 0.6f);
+            }
+        }
+        // Un siège bat comme un cœur : on le voit de loin.
+        float pulse = 0.6f + 0.4f * (float) Math.sin(Util.getMillis() / 220.0);
+        int alpha = Math.round(pulse * 255) << 24;
+        for (MapView.SiegeMark s : view.war().sieges()) {
+            int x = screenX(s.x()), y = screenY(s.z());
+            if (x < mapX - 20 || x > mapX + mapW + 20 || y < mapY - 20 || y > mapY + mapH + 20) continue;
+            g.fill(x - 6, y - 6, x + 6, y + 6, (alpha & 0x7F000000) | 0x200000);
+            int gw = font.width("⚔");
+            g.drawString(font, "⚔", x - gw / 2 + 1, y - 3, INK, false);
+            g.drawString(font, "⚔", x - gw / 2, y - 4, alpha | (s.color() & 0xFFFFFF), false);
+        }
+    }
+
+    /** Une flèche épaisse, cernée d'encre : un trait tourné, et deux pour la pointe. */
+    private static void arrow(GuiGraphics g, int x0, int y0, int x1, int y1, int color) {
+        double len = Math.hypot(x1 - x0, y1 - y0);
+        if (len < 2) return;
+        double angle = Math.atan2(y1 - y0, x1 - x0);
+        int head = (int) Math.max(6, Math.min(14, len / 4));
+        for (int pass = 0; pass < 2; pass++) {
+            int c = pass == 0 ? (INK & 0x00FFFFFF) | (color & 0xFF000000) : color;
+            int t = pass == 0 ? 2 : 1;
+            bar(g, x0, y0, angle, (int) Math.round(len), t, c);
+            bar(g, x1, y1, angle + Math.PI - Math.toRadians(28), head, t, c);
+            bar(g, x1, y1, angle + Math.PI + Math.toRadians(28), head, t, c);
+        }
+    }
+
+    private static void bar(GuiGraphics g, int x, int y, double angle, int length, int half, int color) {
+        g.pose().pushPose();
+        g.pose().translate(x, y, 0);
+        g.pose().mulPose(Axis.ZP.rotation((float) angle));
+        g.fill(-half, -half, length + half, half + 1, color);
+        g.pose().popPose();
+    }
+
+    /** La flèche ou le repère de son propre plan sous la souris, à six points près. */
+    private UUID ownMarkNear(double mouseX, double mouseY) {
+        MapView.WarPlan own = view.war().own();
+        if (own == null) return null;
+        UUID best = null;
+        double bestD = 6;
+        for (WarMap.Pin p : own.pins()) {
+            double d = Math.hypot(screenX(p.x()) - mouseX, screenY(p.z()) - mouseY);
+            if (d < bestD) {
+                bestD = d;
+                best = p.id();
+            }
+        }
+        for (WarMap.Arrow a : own.arrows()) {
+            double d = segmentDistance(mouseX, mouseY, screenX(a.x0()), screenY(a.z0()), screenX(a.x1()), screenY(a.z1()));
+            if (d < bestD) {
+                bestD = d;
+                best = a.id();
+            }
+        }
+        return best;
+    }
+
+    static double segmentDistance(double px, double py, double x0, double y0, double x1, double y1) {
+        double dx = x1 - x0, dy = y1 - y0, l2 = dx * dx + dy * dy;
+        double t = l2 == 0 ? 0 : Math.max(0, Math.min(1, ((px - x0) * dx + (py - y0) * dy) / l2));
+        return Math.hypot(px - (x0 + t * dx), py - (y0 + t * dy));
+    }
+
+    /** Ce que la carte de guerre dit sous la souris : un siège, un repère, une flèche, une zone. */
+    private List<Component> warTooltip(double mouseX, double mouseY) {
+        List<Component> tip = new ArrayList<>();
+        for (MapView.SiegeMark s : view.war().sieges()) {
+            if (Math.hypot(screenX(s.x()) - mouseX, screenY(s.z()) - mouseY) > 7) continue;
+            tip.add(Component.translatable("crusadecraft.warmap.siege", s.defender(), s.attacker()).withStyle(ChatFormatting.RED));
+            tip.add(Component.translatable("crusadecraft.warmap.siege.garrison", s.garrison()).withStyle(ChatFormatting.GRAY));
+            return tip;
+        }
+        for (MapView.WarPlan p : view.war().plans()) {
+            for (WarMap.Pin pin : p.pins()) {
+                if (Math.hypot(screenX(pin.x()) - mouseX, screenY(pin.z()) - mouseY) > 6) continue;
+                tip.add(Component.literal(pinGlyph(pin.kind()) + " ").append(Component.translatable("crusadecraft.warmap.mark."
+                        + pin.kind().name().toLowerCase(Locale.ROOT))).withStyle(ChatFormatting.GOLD));
+                if (!pin.note().isEmpty()) tip.add(Component.literal(pin.note()).withStyle(ChatFormatting.WHITE));
+                tip.add(p.name().copy().withStyle(ChatFormatting.GRAY));
+                if (p.mine() && warTool == WarTool.REMOVE) tip.add(Component.translatable("crusadecraft.warmap.remove.click").withStyle(ChatFormatting.DARK_GRAY));
+                return tip;
+            }
+        }
+        for (MapView.WarPlan p : view.war().plans()) {
+            for (WarMap.Arrow a : p.arrows()) {
+                if (segmentDistance(mouseX, mouseY, screenX(a.x0()), screenY(a.z0()), screenX(a.x1()), screenY(a.z1())) > 4) continue;
+                tip.add(Component.translatable("crusadecraft.warmap.arrow").withStyle(ChatFormatting.RED));
+                tip.add(p.name().copy().withStyle(ChatFormatting.GRAY));
+                if (p.mine() && warTool == WarTool.REMOVE) tip.add(Component.translatable("crusadecraft.warmap.remove.click").withStyle(ChatFormatting.DARK_GRAY));
+                return tip;
+            }
+        }
+        long key = TerritoryMap.key(TerritoryMap.cellOf(worldX(mouseX)), TerritoryMap.cellOf(worldZ(mouseY)));
+        for (MapView.WarPlan p : view.war().plans()) {
+            for (int i = 0; i < p.keys().length && i < p.kinds().length; i++) {
+                if (p.keys()[i] != key) continue;
+                int zone = p.kinds()[i];
+                if (zone < 0 || zone >= WarMap.Zone.values().length) break;
+                tip.add(Component.translatable("crusadecraft.warmap.zone." + WarMap.Zone.values()[zone].name().toLowerCase(Locale.ROOT))
+                        .withStyle(s -> s.withColor(ZONE_COLORS[zone])));
+                tip.add(p.name().copy().withStyle(ChatFormatting.GRAY));
+                return tip;
+            }
+        }
+        return tip;
     }
 
     @Override

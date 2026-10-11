@@ -92,4 +92,20 @@ class WebMapTest {
         assertEquals("inconnue.cle", ServerText.render(Component.translatable("inconnue.cle"), "fr_fr"));
         assertEquals("Lands", ServerText.render(Component.translatable("crusadecraft.webmap.lands.label"), "en_us"));
     }
+
+    @Test
+    void laPointeDUneFlecheRegardeEnArriere() {
+        // Une flèche vers l'est : sa pointe part de l'arrivée et revient vers l'ouest, de part et d'autre.
+        List<double[]> head = WebMap.arrowHead(0, 0, 600, 0);
+        assertEquals(2, head.size());
+        for (double[] h : head) {
+            assertEquals(600, h[0], 1e-9);
+            assertTrue(h[2] < 600, "la pointe revient vers le départ");
+            assertEquals(64, Math.hypot(h[2] - 600, h[3]), 1e-6, "longueur bornée à 64 blocs");
+        }
+        assertTrue(head.get(0)[3] * head.get(1)[3] < 0, "un trait de chaque côté");
+        assertEquals(8, Math.hypot(WebMap.arrowHead(0, 0, 20, 0).get(0)[2] - 20, WebMap.arrowHead(0, 0, 20, 0).get(0)[3]), 1e-6,
+                "au moins 8 blocs");
+        assertTrue(WebMap.arrowHead(5, 5, 5, 5).isEmpty(), "rien pour une flèche nulle");
+    }
 }

@@ -18,10 +18,17 @@ import java.util.UUID;
  * @param focusX  centre de la vue par défaut (sa capitale, sinon sa position)
  * @param canEdit ce joueur a le droit d'ouvrir l'éditeur de la carte
  * @param borders les frontières peintes à la main, pour les royaumes de cette carte
+ * @param war     la carte de guerre de ce joueur et de ses alliés (P18)
  */
 public record MapView(ResourceLocation dimension, int focusX, int focusZ, int playerX, int playerZ, int territoryRadius,
                       int colonyRadius, List<Territory> territories, List<Seat> seats, List<Dejure> dejure,
-                      boolean canEdit, boolean editing, Borders borders, List<Place> places) {
+                      boolean canEdit, boolean editing, Borders borders, List<Place> places, War war) {
+
+    public MapView(ResourceLocation dimension, int focusX, int focusZ, int playerX, int playerZ, int territoryRadius,
+                   int colonyRadius, List<Territory> territories, List<Seat> seats, List<Dejure> dejure,
+                   boolean canEdit, boolean editing, Borders borders, List<Place> places) {
+        this(dimension, focusX, focusZ, playerX, playerZ, territoryRadius, colonyRadius, territories, seats, dejure, canEdit, editing, borders, places, War.NONE);
+    }
 
     public MapView(ResourceLocation dimension, int focusX, int focusZ, int playerX, int playerZ, int territoryRadius,
                    int colonyRadius, List<Territory> territories, List<Seat> seats, List<Dejure> dejure,
@@ -96,6 +103,31 @@ public record MapView(ResourceLocation dimension, int focusX, int focusZ, int pl
         }
     }
 
+    /**
+     * La carte de guerre (P18) telle que ce joueur la voit : les plans de son royaume et de ses alliés, et les sièges en
+     * cours qui les concernent. {@code enabled} : il a un royaume, donc un plan à tracer.
+     */
+    public record War(boolean enabled, List<WarPlan> plans, List<SiegeMark> sieges) {
+        public static final War NONE = new War(false, List.of(), List.of());
+
+        /** Son propre plan, s'il est dans la liste. */
+        public WarPlan own() {
+            for (WarPlan p : plans) if (p.mine()) return p;
+            return null;
+        }
+    }
+
+    /**
+     * Le plan d'un royaume dans cette dimension : ses zones (chunk et rang de {@link fr.crusadecraft.core.war.WarMap.Zone}),
+     * ses flèches et ses repères. {@code mine} : le sien, celui qu'on modifie.
+     */
+    public record WarPlan(UUID realm, int color, boolean mine, net.minecraft.network.chat.Component name, long[] keys, byte[] kinds,
+                          List<fr.crusadecraft.core.war.WarMap.Arrow> arrows, List<fr.crusadecraft.core.war.WarMap.Pin> pins) {}
+
+    /** Un siège en cours : où, par qui, contre qui, et combien de défenseurs tiennent encore. */
+    public record SiegeMark(int x, int z, int color, net.minecraft.network.chat.Component attacker,
+                            net.minecraft.network.chat.Component defender, int garrison) {}
+
     public void write(FriendlyByteBuf buf) {
         buf.writeResourceLocation(dimension);
         buf.writeVarInt(focusX);
@@ -165,6 +197,78 @@ public record MapView(ResourceLocation dimension, int focusX, int focusZ, int pl
             buf.writeVarInt(p.radius());
             buf.writeInt(p.color());
         }
+        writeWar(buf, war);
+    }
+
+    private static void writeWar(FriendlyByteBuf buf, War war) {
+        buf.writeBoolean(war.enabled());
+        buf.writeVarInt(war.plans().size());
+        for (WarPlan p : war.plans()) {
+            buf.writeUUID(p.realm());
+            buf.writeInt(p.color());
+            buf.writeBoolean(p.mine());
+            buf.writeComponent(p.name());
+            buf.writeLongArray(p.keys());
+            buf.writeByteArray(p.kinds());
+            buf.writeVarInt(p.arrows().size());
+            for (fr.crusadecraft.core.war.WarMap.Arrow a : p.arrows()) {
+                buf.writeUUID(a.id());
+                buf.writeInt(a.x0());
+                buf.writeInt(a.z0());
+                buf.writeInt(a.x1());
+                buf.writeInt(a.z1());
+            }
+            buf.writeVarInt(p.pins().size());
+            for (fr.crusadecraft.core.war.WarMap.Pin pin : p.pins()) {
+                buf.writeUUID(pin.id());
+                buf.writeInt(pin.x());
+                buf.writeInt(pin.z());
+                buf.writeEnum(pin.kind());
+                buf.writeUtf(pin.note());
+            }
+        }
+        buf.writeVarInt(war.sieges().size());
+        for (SiegeMark s : war.sieges()) {
+            buf.writeInt(s.x());
+            buf.writeInt(s.z());
+            buf.writeInt(s.color());
+            buf.writeComponent(s.attacker());
+            buf.writeComponent(s.defender());
+            buf.writeVarInt(s.garrison());
+        }
+    }
+
+    /** Les flèches et les repères reçus sont tous dans la dimension de la carte : elle n'est pas répétée. */
+    private static War readWar(FriendlyByteBuf buf, ResourceLocation dim) {
+        boolean enabled = buf.readBoolean();
+        int n = buf.readVarInt();
+        List<WarPlan> plans = new ArrayList<>(n);
+        for (int i = 0; i < n; i++) {
+            UUID realm = buf.readUUID();
+            int color = buf.readInt();
+            boolean mine = buf.readBoolean();
+            net.minecraft.network.chat.Component name = buf.readComponent();
+            long[] keys = buf.readLongArray();
+            byte[] kinds = buf.readByteArray();
+            int na = buf.readVarInt();
+            List<fr.crusadecraft.core.war.WarMap.Arrow> arrows = new ArrayList<>(na);
+            for (int k = 0; k < na; k++) {
+                arrows.add(new fr.crusadecraft.core.war.WarMap.Arrow(buf.readUUID(), dim, buf.readInt(), buf.readInt(), buf.readInt(), buf.readInt()));
+            }
+            int np = buf.readVarInt();
+            List<fr.crusadecraft.core.war.WarMap.Pin> pins = new ArrayList<>(np);
+            for (int k = 0; k < np; k++) {
+                pins.add(new fr.crusadecraft.core.war.WarMap.Pin(buf.readUUID(), dim, buf.readInt(), buf.readInt(),
+                        buf.readEnum(fr.crusadecraft.core.war.WarMap.Mark.class), buf.readUtf()));
+            }
+            plans.add(new WarPlan(realm, color, mine, name, keys, kinds, arrows, pins));
+        }
+        n = buf.readVarInt();
+        List<SiegeMark> sieges = new ArrayList<>(n);
+        for (int i = 0; i < n; i++) {
+            sieges.add(new SiegeMark(buf.readInt(), buf.readInt(), buf.readInt(), buf.readComponent(), buf.readComponent(), buf.readVarInt()));
+        }
+        return new War(enabled, plans, sieges);
     }
 
     public static MapView read(FriendlyByteBuf buf) {
@@ -219,6 +323,7 @@ public record MapView(ResourceLocation dimension, int focusX, int focusZ, int pl
         for (int i = 0; i < n; i++) {
             places.add(new Place(buf.readUUID(), buf.readVarInt(), buf.readComponent(), buf.readVarInt(), buf.readVarInt(), buf.readVarInt(), buf.readInt()));
         }
-        return new MapView(dim, fx, fz, px, pz, radius, colonyRadius, territories, seats, dejure, canEdit, editing, new Borders(keys, owners), places);
+        return new MapView(dim, fx, fz, px, pz, radius, colonyRadius, territories, seats, dejure, canEdit, editing, new Borders(keys, owners), places,
+                readWar(buf, dim));
     }
 }

@@ -199,6 +199,7 @@ public final class WorldEditService {
         for (fr.crusadecraft.core.ai.Coalition c : world.coalitions()) c.members().remove(id);
         world.coalitions().removeIf(c -> c.members().isEmpty());
         data.diplomacy().forget(id);
+        data.warMap().forget(id);
         for (Realm r : data.realms()) r.mail().removeIf(l -> id.equals(l.from()));
         for (AiRealm other : world.realms()) {
             for (AiProvince p : other.provinces()) if (id.equals(p.holder())) p.setHolder(null);

@@ -51,7 +51,7 @@ public final class WorldShots {
     private static final boolean ENABLED = Boolean.getBoolean("crusadecraft.worldshots");
     private static final String WORLD = "crusadecraft-shots";
 
-    private enum Step { BOOT, LOADING, SETUP, WALL, MAP, SHEET, HERALD, REALM, LETTER, SEAL, CHANCERY, COLOMBIER, TOWNHALL, TOWNHALL_CLICK, WAR, SIEGE, CAPTURE, CAPTURED, WAR_TABLE, RAID, EDITOR, EDITOR_REALM, EDITOR_PAINT, LINEAGE_OPEN, LINEAGE_HOUSE, LINEAGE_SPAWN, LINEAGE_SHOT, STAFF_MENU, STAFF_SHOT, FORT_SHOT, SITES_MAP, PAPER_SHOT, LIEU_FORM, LIEU_SCREEN, LIEU_MAP, CHAT_MAP, WALK_IN, TITLE_SHOT, XAERO_SHOT, DONE }
+    private enum Step { BOOT, LOADING, SETUP, WALL, MAP, SHEET, HERALD, REALM, LETTER, SEAL, CHANCERY, COLOMBIER, TOWNHALL, TOWNHALL_CLICK, WAR, WAR_MAP_OPEN, WAR_MAP, WAR_MAP_SHOT, SIEGE, CAPTURE, CAPTURED, WAR_TABLE, RAID, EDITOR, EDITOR_REALM, EDITOR_PAINT, LINEAGE_OPEN, LINEAGE_HOUSE, LINEAGE_SPAWN, LINEAGE_SHOT, STAFF_MENU, STAFF_SHOT, FORT_SHOT, SITES_MAP, PAPER_SHOT, LIEU_FORM, LIEU_SCREEN, LIEU_MAP, CHAT_MAP, WALK_IN, TITLE_SHOT, XAERO_SHOT, DONE }
 
     private static Step step = Step.BOOT;
     private static int wait;
@@ -199,6 +199,30 @@ public final class WorldShots {
             case WAR -> {
                 // Le siège a commencé : garnison et bannière devant le joueur.
                 grab(mc, "siege");
+                // La carte de guerre (P18) : le souverain trace son plan pendant le siège.
+                MinecraftServer server = mc.getSingleplayerServer();
+                server.execute(() -> drawWarPlan(server));
+                step = Step.WAR_MAP_OPEN;
+                wait = 20;
+            }
+            case WAR_MAP_OPEN -> {
+                int[] v = warView;
+                if (v != null) fr.crusadecraft.client.screen.MapScreen.centerNextOn(v[0], v[1], v[2]);
+                CrusadeNetwork.toServer(new WorldPackets.RequestMap(true));
+                step = Step.WAR_MAP;
+                wait = 40;
+            }
+            case WAR_MAP -> {
+                if (mc.screen instanceof fr.crusadecraft.client.screen.MapScreen m) m.previewWar(4);
+                MapView view = mc.screen instanceof fr.crusadecraft.client.screen.MapScreen m ? m.currentView() : null;
+                CrusadeCraft.LOGGER.info("WorldShots : carte de guerre — {} plan(s), {} siège(s)", view == null ? 0 : view.war().plans().size(),
+                        view == null ? 0 : view.war().sieges().size());
+                step = Step.WAR_MAP_SHOT;
+                wait = 10;
+            }
+            case WAR_MAP_SHOT -> {
+                grab(mc, "carte_guerre");
+                mc.setScreen(null);
                 MinecraftServer server = mc.getSingleplayerServer();
                 server.execute(() -> stormBanner(server));
                 step = Step.SIEGE;
@@ -514,6 +538,7 @@ public final class WorldShots {
         fr.crusadecraft.config.CrusadeConfig.SERVER.chanceryNeedsResearch.set(false);
         fr.crusadecraft.config.CrusadeConfig.SERVER.letterDelaySeconds.set(0);
         BlockPos center = player.blockPosition().south(6);
+        colonyCenter = center;
         fr.crusadecraft.compat.minecolonies.MineColoniesTestKit.createColony(level, center, player, "Valbrume", 3);
         player.connection.teleport(center.getX() + 0.5, center.getY(), center.getZ() + 2.5, 180f, 0f);
         var realm = fr.crusadecraft.core.realm.RealmService.found(player, new fr.crusadecraft.core.realm.RealmService.FoundingRequest(
@@ -555,6 +580,65 @@ public final class WorldShots {
         fr.crusadecraft.core.war.WarService.raise(player, true);
         AiProvince capital = target.capital();
         player.connection.teleport(capital.seat().getX() + 0.5, capital.seat().getY() + 1, capital.seat().getZ() + 16.5, 180f, 8f);
+    }
+
+    /** Le centre de la colonie du joueur, noté à la fondation. */
+    private static BlockPos colonyCenter;
+
+    /** Où centrer la carte de guerre, et à quelle échelle : x, z, blocs par point. */
+    private static volatile int[] warView;
+
+    private static long[] squareOf(int cx, int cz, int r) {
+        long[] out = new long[(2 * r + 1) * (2 * r + 1)];
+        int i = 0;
+        for (int dx = -r; dx <= r; dx++) for (int dz = -r; dz <= r; dz++) out[i++] = fr.crusadecraft.core.world.TerritoryMap.key(cx + dx, cz + dz);
+        return out;
+    }
+
+    /**
+     * Le plan de bataille du joueur contre l'ennemi, tracé par le service comme depuis l'écran : la capitale ennemie en
+     * objectif, une zone d'offensive sur la route, la défense autour de chez soi, deux flèches et trois repères.
+     */
+    private static void drawWarPlan(MinecraftServer server) {
+        ServerPlayer player = server.getPlayerList().getPlayers().get(0);
+        var realm = fr.crusadecraft.core.realm.RealmService.realmOf(server, player.getUUID()).orElseThrow();
+        BlockPos home = colonyCenter != null ? colonyCenter
+                : fr.crusadecraft.compat.minecolonies.MineColoniesBridge.center(realm.capital()).orElse(player.blockPosition());
+        // La capitale assiégée touche la colonie de démonstration : l'objectif du plan est un royaume plus lointain.
+        BlockPos target = CrusadeSavedData.get(server).world().realm(enemy).orElseThrow().capital().seat();
+        double best = Double.MAX_VALUE;
+        for (AiRealm r : CrusadeSavedData.get(server).world().realms()) {
+            if (r.capital() == null) continue;
+            double d = Math.sqrt(r.capital().seat().distSqr(home));
+            if (d >= 350 && d < best) {
+                best = d;
+                target = r.capital().seat();
+            }
+        }
+        int hx = home.getX(), hz = home.getZ(), tx = target.getX(), tz = target.getZ();
+        CrusadeCraft.LOGGER.info("WorldShots : plan de guerre de {} , {} vers {} , {}", hx, hz, tx, tz);
+        double dx = tx - hx, dz = tz - hz, dist = Math.max(1, Math.hypot(dx, dz));
+        // Les points de la route, de chez soi (0) à la capitale ennemie (1).
+        java.util.function.DoubleFunction<int[]> at = t -> new int[]{(int) Math.round(hx + dx * t), (int) Math.round(hz + dz * t)};
+        double side = 90 / dist;
+        int[] mid = at.apply(0.62), rally = at.apply(0.25), ford = at.apply(0.48);
+        log("défense", fr.crusadecraft.core.war.WarMapService.paint(player, fr.crusadecraft.core.war.WarMap.Zone.DEFENSE, squareOf(hx >> 4, hz >> 4, 4)));
+        log("offensive", fr.crusadecraft.core.war.WarMapService.paint(player, fr.crusadecraft.core.war.WarMap.Zone.OFFENSIVE, squareOf(mid[0] >> 4, mid[1] >> 4, 3)));
+        log("objectif", fr.crusadecraft.core.war.WarMapService.paint(player, fr.crusadecraft.core.war.WarMap.Zone.OBJECTIF, squareOf(tx >> 4, tz >> 4, 2)));
+        int[] a0 = at.apply(0.12), a1 = at.apply(0.88);
+        // Deux flèches côte à côte, de part et d'autre de la route.
+        int ox = (int) Math.round(-dz * side), oz = (int) Math.round(dx * side);
+        log("flèche", fr.crusadecraft.core.war.WarMapService.arrow(player, a0[0] + ox, a0[1] + oz, a1[0] + ox / 3, a1[1] + oz / 3));
+        log("flèche", fr.crusadecraft.core.war.WarMapService.arrow(player, a0[0] - ox, a0[1] - oz, a1[0] - ox / 3, a1[1] - oz / 3));
+        log("repère", fr.crusadecraft.core.war.WarMapService.pin(player, rally[0], rally[1], fr.crusadecraft.core.war.WarMap.Mark.RASSEMBLEMENT, "Ralliement de l'ost"));
+        log("repère", fr.crusadecraft.core.war.WarMapService.pin(player, ford[0] + ox / 2, ford[1] + oz / 2, fr.crusadecraft.core.war.WarMap.Mark.DANGER, "Gué gardé"));
+        log("repère", fr.crusadecraft.core.war.WarMapService.pin(player, tx, tz - 40, fr.crusadecraft.core.war.WarMap.Mark.OBJECTIF, "Prendre la capitale"));
+        int[] c = at.apply(0.5);
+        warView = new int[]{c[0], c[1], (int) Math.max(2, Math.ceil(dist / 260))};
+    }
+
+    private static void log(String what, fr.crusadecraft.core.council.CouncilActions.Outcome out) {
+        CrusadeCraft.LOGGER.info("WorldShots : plan de guerre, {} — {}", what, out.message().getString());
     }
 
     /** La garnison tombe ; le joueur se poste au pied de la bannière. */

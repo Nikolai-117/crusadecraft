@@ -572,3 +572,27 @@ Demandé par Romain (5 octobre) : « que ça fonctionne par chunk directement »
   dans sa propre configuration non obligatoire ; sans Xaero il ne s'applique pas, si Xaero change il ne trouve rien
   et la couche disparaît sans planter. Le serveur envoie à chaque joueur, toutes les 5 s et seulement si elles ont
   changé, les terres des royaumes qu'il connaît (brouillard respecté), en rectangles.
+
+**P18 (10 octobre 2026) — la carte de guerre, éditée dans le jeu et sur Dynmap**
+
+- **Demandée le 5 octobre** (« pareil pour la map de guerre, où sera-t-elle éditée ? », et qu'elle soit aussi sur
+  Dynmap) : un plan de bataille par royaume de joueur, tracé **dans la carte du royaume** (bouton « ⚔ Guerre ») plutôt
+  qu'un nouvel écran : on peint sur les mêmes chunks que les terres, au même zoom, avec les mêmes villes dessous.
+- **Ce qu'on trace** : des zones peintes chunk par chunk (offensive, défense, objectif, et la gomme), des flèches
+  d'attaque, des repères annotés (objectif, ralliement, danger, note). Bornes : 64 flèches, 64 repères, 120
+  caractères par note, 4 096 chunks par coup de pinceau ; les codes de mise en forme et les sauts de ligne sont ôtés.
+- **Qui trace, qui voit** : le souverain trace le plan de son royaume ; le serveur revérifie chaque geste. Ses alliés
+  (alliance ou alliance défensive), son suzerain et ses vassaux le voient, sans pouvoir y toucher. Les royaumes de
+  l'ordinateur ne tracent rien : le plan est un outil de joueur.
+- **L'état de la guerre ne se recopie pas** : les sièges en cours sont lus dans le monde à chaque envoi de la carte
+  (attaquant, défenseur, garnison qui tient encore), jamais rangés dans le plan. Rien ne peut donc s'y périmer.
+- **Sur Dynmap**, une troisième couche « Carte de guerre » : zones en rectangles exacts avec leur bord, flèches en
+  trait épais avec leur pointe, repères avec les icônes livrées par Dynmap (drapeau rouge, drapeau bleu, danger,
+  panneau), sièges en feu. La page web étant publique pour qui a l'adresse, **les plans y sont visibles de tous** ;
+  c'est dit dans le guide, et la couche se coupe (`carteWeb.guerre`).
+- **Données en version 14** (`warMap`), absente = aucun plan ; copie datée avant mise à niveau comme pour P15. Une
+  sauvegarde faite par la 1.5.0 (format 13) rejoint les sauvegardes de non-régression : elle se charge et se réécrit
+  sans rien perdre. Un royaume dissous ou effacé emporte son plan.
+- **Un point d'entrée réservé aux tests** (`WarFieldService.siegeForTests`) : un siège ne démarre qu'au passage d'un
+  vrai joueur, ce que les GameTests n'ont pas ; on y pose donc un siège sans troupes pour vérifier qu'il s'affiche.
+  Le banc de captures, lui, montre un vrai siège.

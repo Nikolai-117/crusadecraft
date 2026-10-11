@@ -19,7 +19,7 @@ import static org.junit.jupiter.api.Assertions.assertFalse;
 import static org.junit.jupiter.api.Assertions.assertTrue;
 
 /**
- * Zéro perte : les sauvegardes faites par les anciennes versions du mod (1.0.0, 1.1.0, 1.2.0, 1.3.0), gardées dans
+ * Zéro perte : les sauvegardes faites par les anciennes versions du mod (1.0.0, 1.1.0, 1.2.0, 1.3.0, 1.5.0), gardées dans
  * {@code src/test/resources/fixtures}, se chargent avec celle-ci, se mettent à niveau et se réécrivent sans rien
  * perdre de ce qu'elles contenaient.
  */
@@ -80,8 +80,8 @@ class SaveFixturesTest {
             String diff = firstDifference(saved, again.save(new CompoundTag()), "");
             assertEquals("", diff, name + " : écrire puis relire change les données en " + diff);
         }
-        // Les formats des versions 1.0 (10), 1.1 (11) et 1.2/1.3 (12) sont tous couverts.
-        assertTrue(versions.containsAll(java.util.List.of(10, 11, 12)), "formats couverts : " + versions);
+        // Les formats des versions 1.0 (10), 1.1 (11), 1.2/1.3 (12) et 1.4/1.5 (13) sont tous couverts.
+        assertTrue(versions.containsAll(java.util.List.of(10, 11, 12, 13)), "formats couverts : " + versions);
     }
 
     /** Le premier endroit où deux données diffèrent ({@code ""} si elles sont égales), pour un message lisible. */

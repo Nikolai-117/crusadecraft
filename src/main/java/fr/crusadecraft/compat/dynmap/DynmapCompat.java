@@ -18,15 +18,16 @@ import java.util.Map;
 import java.util.Set;
 
 /**
- * Le seul endroit qui connaît Dynmap (P17) : il recopie le modèle de {@link WebMap} dans deux couches de marqueurs,
- * « Royaumes » (les chunks de chaque royaume, en aplats et en frontières) et « Lieux » (villes, forts, lieux saints…),
- * en mettant à jour ce qui existe, en créant ce qui manque et en retirant ce qui a disparu.
+ * Le seul endroit qui connaît Dynmap (P17) : il recopie le modèle de {@link WebMap} dans trois couches de marqueurs,
+ * « Royaumes » (les chunks de chaque royaume, en aplats et en frontières), « Lieux » (villes, forts, lieux saints…) et
+ * « Carte de guerre » (P18 : zones, flèches, repères, sièges), en mettant à jour ce qui existe, en créant ce qui manque
+ * et en retirant ce qui a disparu.
  *
  * <p>Les marqueurs ne sont pas gardés par Dynmap d'une partie à l'autre : ils sont redessinés au démarrage, si bien
  * qu'aucun royaume disparu ne traîne sur la carte.
  */
 final class DynmapCompat {
-    static final String REALMS = "crusadecraft.royaumes", PLACES = "crusadecraft.lieux";
+    static final String REALMS = "crusadecraft.royaumes", PLACES = "crusadecraft.lieux", WAR = "crusadecraft.guerre";
     private static volatile MarkerAPI markers;
     private static int lastHash;
 
@@ -79,13 +80,15 @@ final class DynmapCompat {
     private static void apply(MarkerAPI api, WebMap.Model model) {
         MarkerSet realms = set(api, REALMS, "Royaumes", 10);
         MarkerSet places = set(api, PLACES, "Lieux", 20);
+        MarkerSet war = set(api, WAR, "Carte de guerre", 30);
+        MarkerSet[] all = {realms, places, war};
         Map<String, AreaMarker> oldAreas = new HashMap<>();
-        for (MarkerSet s : new MarkerSet[]{realms, places}) for (AreaMarker a : s.getAreaMarkers()) oldAreas.put(a.getMarkerID(), a);
+        for (MarkerSet s : all) for (AreaMarker a : s.getAreaMarkers()) oldAreas.put(a.getMarkerID(), a);
         Set<String> keepAreas = new HashSet<>();
         for (WebMap.Area a : model.areas()) {
-            MarkerSet target = a.id().startsWith("lieu_") ? places : realms;
+            MarkerSet target = a.id().startsWith("lieu_") ? places : a.id().startsWith("guerre_") ? war : realms;
             AreaMarker m = oldAreas.get(a.id());
-            if (m == null || !a.world().equals(m.getWorld())) {
+            if (m == null || !a.world().equals(m.getWorld()) || m.getMarkerSet() != target) {
                 if (m != null) m.deleteMarker();
                 m = target.createAreaMarker(a.id(), a.label(), false, a.world(), a.xs(), a.zs(), false);
                 if (m == null) continue;
@@ -101,15 +104,16 @@ final class DynmapCompat {
         for (Map.Entry<String, AreaMarker> e : oldAreas.entrySet()) if (!keepAreas.contains(e.getKey())) e.getValue().deleteMarker();
 
         Map<String, PolyLineMarker> oldLines = new HashMap<>();
-        for (PolyLineMarker l : realms.getPolyLineMarkers()) oldLines.put(l.getMarkerID(), l);
+        for (MarkerSet s : all) for (PolyLineMarker l : s.getPolyLineMarkers()) oldLines.put(l.getMarkerID(), l);
         Set<String> keepLines = new HashSet<>();
         for (WebMap.Line l : model.lines()) {
             double[] ys = new double[l.xs().length];
             java.util.Arrays.fill(ys, 64);
+            MarkerSet target = l.id().startsWith("guerre_") ? war : realms;
             PolyLineMarker m = oldLines.get(l.id());
-            if (m == null || !l.world().equals(m.getWorld())) {
+            if (m == null || !l.world().equals(m.getWorld()) || m.getMarkerSet() != target) {
                 if (m != null) m.deleteMarker();
-                m = realms.createPolyLineMarker(l.id(), l.label(), false, l.world(), l.xs(), ys, l.zs(), false);
+                m = target.createPolyLineMarker(l.id(), l.label(), false, l.world(), l.xs(), ys, l.zs(), false);
                 if (m == null) continue;
             } else {
                 m.setCornerLocations(l.xs(), ys, l.zs());
@@ -122,14 +126,19 @@ final class DynmapCompat {
         for (Map.Entry<String, PolyLineMarker> e : oldLines.entrySet()) if (!keepLines.contains(e.getKey())) e.getValue().deleteMarker();
 
         Map<String, Marker> oldPoints = new HashMap<>();
-        for (Marker p : places.getMarkers()) oldPoints.put(p.getMarkerID(), p);
+        for (MarkerSet s : all) for (Marker p : s.getMarkers()) oldPoints.put(p.getMarkerID(), p);
         Set<String> keepPoints = new HashSet<>();
         for (WebMap.Point p : model.points()) {
             MarkerIcon icon = api.getMarkerIcon(p.icon());
             if (icon == null) icon = api.getMarkerIcon(MarkerIcon.DEFAULT);
+            MarkerSet target = p.id().startsWith("guerre_") ? war : places;
             Marker m = oldPoints.get(p.id());
+            if (m != null && m.getMarkerSet() != target) {
+                m.deleteMarker();
+                m = null;
+            }
             if (m == null) {
-                m = places.createMarker(p.id(), p.label(), false, p.world(), p.x(), p.y(), p.z(), icon, false);
+                m = target.createMarker(p.id(), p.label(), false, p.world(), p.x(), p.y(), p.z(), icon, false);
                 if (m == null) continue;
             } else {
                 m.setLocation(p.world(), p.x(), p.y(), p.z());

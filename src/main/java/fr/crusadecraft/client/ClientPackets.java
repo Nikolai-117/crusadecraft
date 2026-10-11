@@ -109,6 +109,7 @@ public final class ClientPackets {
         if (!view.editing()) fr.crusadecraft.client.map.ClientMapData.set(view);
         Minecraft mc = Minecraft.getInstance();
         if (mc.screen instanceof fr.crusadecraft.client.screen.MapScreen screen) screen.refresh(view);
+        else if (mc.screen instanceof fr.crusadecraft.client.screen.WarPinForm form) form.parent().refresh(view);
         else if (mc.screen instanceof fr.crusadecraft.client.screen.StaffScreen staff) staff.setMap(view);
         else if (open) mc.setScreen(new fr.crusadecraft.client.screen.MapScreen(view));
     }
@@ -152,6 +153,7 @@ public final class ClientPackets {
     public static void mapEditResult(boolean success, net.minecraft.network.chat.Component message) {
         Minecraft mc = Minecraft.getInstance();
         if (mc.screen instanceof fr.crusadecraft.client.screen.MapScreen screen) screen.showStatus(success, message);
+        else if (mc.screen instanceof fr.crusadecraft.client.screen.WarPinForm form) form.parent().showStatus(success, message);
         else if (mc.screen instanceof fr.crusadecraft.client.screen.MapEditForm form) form.showStatus(success, message);
         else if (mc.player != null) mc.player.displayClientMessage(message, true);
     }

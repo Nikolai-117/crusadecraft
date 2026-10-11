@@ -10,24 +10,34 @@ import fr.crusadecraft.core.place.Lieu;
 import fr.crusadecraft.core.place.LieuKind;
 import fr.crusadecraft.core.place.PlaceService;
 import fr.crusadecraft.core.realm.Realm;
+import fr.crusadecraft.core.war.WarFieldService;
+import fr.crusadecraft.core.war.WarMap;
 import fr.crusadecraft.data.CrusadeSavedData;
+import it.unimi.dsi.fastutil.longs.Long2ByteMap;
+import it.unimi.dsi.fastutil.longs.LongOpenHashSet;
 import it.unimi.dsi.fastutil.longs.LongSet;
+import net.minecraft.core.registries.Registries;
 import net.minecraft.network.chat.Component;
+import net.minecraft.resources.ResourceKey;
 import net.minecraft.resources.ResourceLocation;
 import net.minecraft.server.MinecraftServer;
 import net.minecraft.server.level.ServerLevel;
 import net.minecraft.world.level.Level;
 
 import java.util.ArrayList;
+import java.util.Comparator;
 import java.util.List;
+import java.util.Locale;
 import java.util.Map;
 import java.util.Optional;
 import java.util.UUID;
 
 /**
  * Ce que montre la carte web (P17), sans rien savoir de Dynmap : pour chaque royaume, ses chunks en rectangles et sa
- * frontière en segments, avec la fiche qui s'ouvre au clic ; pour chaque lieu, un repère et sa fiche. Le module de
- * Dynmap ({@code compat/dynmap}) ne fait que recopier ce modèle dans ses marqueurs.
+ * frontière en segments, avec la fiche qui s'ouvre au clic ; pour chaque lieu, un repère et sa fiche ; et la carte de
+ * guerre (P18) : zones, flèches, repères et sièges en cours. Le module de Dynmap ({@code compat/dynmap}) ne fait que
+ * recopier ce modèle dans ses marqueurs. Les identifiants disent la couche : {@code lieu_…}, {@code guerre_…}, le reste
+ * pour les royaumes.
  */
 public final class WebMap {
     /** Un aplat (rectangle de chunks ou région). */
@@ -41,6 +51,9 @@ public final class WebMap {
 
     /** Tout ce qu'il faut dessiner ; {@code hash} change dès que quelque chose change. */
     public record Model(List<Area> areas, List<Line> lines, List<Point> points, int hash) {}
+
+    /** Les couleurs des zones de guerre : offensive, défense, objectif (les mêmes que sur la carte du mod). */
+    static final int[] ZONE_COLORS = {0xD03A2F, 0x2F6FD0, 0xE0B020};
 
     private WebMap() {}
 
@@ -89,6 +102,7 @@ public final class WebMap {
             }
         }
         if (CrusadeConfig.SERVER.webMapPlaces.get()) addPlaces(server, data, lang, points, areas);
+        if (CrusadeConfig.SERVER.webMapWar.get()) addWar(server, data, lang, areas, lines, points);
         int hash = 17;
         for (Area a : areas) hash = hash * 31 + a.id().hashCode() * 7 + a.html().hashCode() + java.util.Arrays.hashCode(a.xs()) + java.util.Arrays.hashCode(a.zs());
         for (Line l : lines) hash = hash * 31 + l.id().hashCode() + java.util.Arrays.hashCode(l.xs()) + java.util.Arrays.hashCode(l.zs());
@@ -192,6 +206,117 @@ public final class WebMap {
             }
             points.add(new Point(id, world, name, h.toString(), l.anchor().getX() + 0.5, l.anchor().getY(), l.anchor().getZ() + 0.5, icon(l.kind())));
         }
+    }
+
+    private static ServerLevel level(MinecraftServer server, ResourceLocation dim) {
+        return server.getLevel(ResourceKey.create(Registries.DIMENSION, dim));
+    }
+
+    /**
+     * La carte de guerre (P18), en couche à part : les zones de chaque royaume (rectangles de chunks et leur bord), ses
+     * flèches d'attaque (trait et pointe), ses repères, et les sièges en cours. Elle est publique comme toute la carte
+     * web : qui a l'adresse voit les plans.
+     */
+    private static void addWar(MinecraftServer server, CrusadeSavedData data, String lang, List<Area> areas, List<Line> lines, List<Point> points) {
+        String title = text(Component.translatable("crusadecraft.warmap.title"), lang);
+        List<Map.Entry<UUID, WarMap.Plan>> plans = new ArrayList<>(data.warMap().all().entrySet());
+        plans.sort(Map.Entry.comparingByKey());
+        for (Map.Entry<UUID, WarMap.Plan> e : plans) {
+            UUID realm = e.getKey();
+            Optional<AiRealm> ai = data.world().realm(realm);
+            Optional<Realm> human = data.realm(realm);
+            if (ai.isEmpty() && human.isEmpty()) continue;
+            String realmName = ServerText.render(realmName(ai, human), lang);
+            int realmColor = ai.map(AiRealm::color).orElseGet(() -> human.get().color()) & 0xFFFFFF;
+            WarMap.Plan plan = e.getValue();
+            List<ResourceLocation> dims = new ArrayList<>(plan.dimensions());
+            dims.sort(Comparator.comparing(ResourceLocation::toString));
+            for (ResourceLocation dim : dims) {
+                ServerLevel level = level(server, dim);
+                if (level == null) continue;
+                String world = worldName(level);
+                Long2ByteMap zones = plan.zones(dim);
+                for (WarMap.Zone zone : WarMap.Zone.values()) {
+                    LongOpenHashSet cells = new LongOpenHashSet();
+                    for (var z : zones.long2ByteEntrySet()) if (z.getByteValue() == zone.ordinal()) cells.add(z.getLongKey());
+                    if (cells.isEmpty()) continue;
+                    String zoneName = text(Component.translatable("crusadecraft.warmap.zone." + zone.name().toLowerCase(Locale.ROOT)), lang);
+                    String html = "<div class=\"crusade-fiche\"><div style=\"font-size:15px;font-weight:bold\">" + esc(title)
+                            + "</div><div>" + esc(realmName) + "</div><br><b>" + esc(zoneName) + "</b> : "
+                            + esc(text(Component.translatable("crusadecraft.webmap.lands", cells.size()), lang)) + "</div>";
+                    String base = "guerre_" + realm + "_" + zone.name().toLowerCase(Locale.ROOT) + "_" + world;
+                    int color = ZONE_COLORS[zone.ordinal()];
+                    int i = 0;
+                    for (WebMapGeometry.Rect r : WebMapGeometry.rectangles(cells)) {
+                        double x0 = r.x0() * TerritoryMap.CELL, z0 = r.z0() * TerritoryMap.CELL;
+                        double x1 = (r.x1() + 1) * TerritoryMap.CELL, z1 = (r.z1() + 1) * TerritoryMap.CELL;
+                        areas.add(new Area(base + "_" + i++, world, realmName + " — " + zoneName, html,
+                                new double[]{x0, x1, x1, x0}, new double[]{z0, z0, z1, z1}, color, 0.3, color, 0));
+                    }
+                    int j = 0;
+                    for (WebMapGeometry.Segment s : WebMapGeometry.border(cells)) {
+                        lines.add(new Line(base + "_bord_" + j++, world, realmName + " — " + zoneName, html,
+                                new double[]{s.x0(), s.x1()}, new double[]{s.z0(), s.z1()}, color, 2));
+                    }
+                }
+            }
+            String arrowText = text(Component.translatable("crusadecraft.warmap.arrow"), lang);
+            for (WarMap.Arrow a : plan.arrows()) {
+                ServerLevel level = level(server, a.dim());
+                if (level == null) continue;
+                String world = worldName(level);
+                String html = "<div class=\"crusade-fiche\"><b>" + esc(title) + "</b><br>" + esc(realmName) + "<br><br><b>" + esc(arrowText) + "</b></div>";
+                lines.add(new Line("guerre_" + a.id(), world, realmName, html, new double[]{a.x0(), a.x1()}, new double[]{a.z0(), a.z1()}, realmColor, 5));
+                for (double[] head : arrowHead(a.x0(), a.z0(), a.x1(), a.z1())) {
+                    lines.add(new Line("guerre_" + a.id() + "_pointe" + (int) head[4], world, realmName, html,
+                            new double[]{head[0], head[2]}, new double[]{head[1], head[3]}, realmColor, 5));
+                }
+            }
+            for (WarMap.Pin p : plan.pins()) {
+                ServerLevel level = level(server, p.dim());
+                if (level == null) continue;
+                String kind = text(Component.translatable("crusadecraft.warmap.mark." + p.kind().name().toLowerCase(Locale.ROOT)), lang);
+                String html = "<div class=\"crusade-fiche\"><b>" + esc(title) + "</b><br>" + esc(realmName) + "<br><br><b>" + esc(kind) + "</b>"
+                        + (p.note().isBlank() ? "" : "<br>" + esc(p.note())) + "</div>";
+                points.add(new Point("guerre_" + p.id(), worldName(level), p.note().isBlank() ? kind : p.note(), html, p.x() + 0.5, 64, p.z() + 0.5,
+                        pinIcon(p.kind())));
+            }
+        }
+        // Les sièges en cours : là où une garnison tient encore.
+        for (WarFieldService.SiegeView s : WarFieldService.sieges()) {
+            ServerLevel level = level(server, s.dim());
+            if (level == null) continue;
+            String label = text(Component.translatable("crusadecraft.warmap.siege", realmLabel(data, s.defender(), lang), realmLabel(data, s.attacker(), lang)), lang);
+            String html = "<div class=\"crusade-fiche\"><b>" + esc(label) + "</b><br>"
+                    + esc(text(Component.translatable("crusadecraft.warmap.siege.garrison", s.garrison()), lang)) + "</div>";
+            points.add(new Point("guerre_siege_" + s.x() + "_" + s.z(), worldName(level), label, html, s.x() + 0.5, 64, s.z() + 0.5, "fire"));
+        }
+    }
+
+    /**
+     * Les deux traits de la pointe d'une flèche, à 25° de part et d'autre, longs d'un sixième de la flèche (8 à 64 blocs) :
+     * chacun {x0, z0, x1, z1, numéro}. Rien pour une flèche de moins d'un bloc.
+     */
+    static List<double[]> arrowHead(double x0, double z0, double x1, double z1) {
+        double dx = x1 - x0, dz = z1 - z0, len = Math.hypot(dx, dz);
+        if (len < 1) return List.of();
+        double head = Math.max(8, Math.min(64, len / 6)), ang = Math.atan2(dz, dx);
+        List<double[]> out = new ArrayList<>(2);
+        for (int side = 0; side < 2; side++) {
+            double t = ang + Math.PI + (side == 0 ? -1 : 1) * Math.toRadians(25);
+            out.add(new double[]{x1, z1, x1 + Math.cos(t) * head, z1 + Math.sin(t) * head, side});
+        }
+        return out;
+    }
+
+    /** Une icône livrée avec Dynmap, pour chaque genre de repère de guerre. */
+    static String pinIcon(WarMap.Mark kind) {
+        return switch (kind) {
+            case OBJECTIF -> "redflag";
+            case RASSEMBLEMENT -> "blueflag";
+            case DANGER -> "warning";
+            case NOTE -> "sign";
+        };
     }
 
     /** Une icône livrée avec Dynmap, selon le genre de lieu. */

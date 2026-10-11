@@ -1,4 +1,4 @@
-# CrusadeCraft 1.5.0 — installer et tester
+# CrusadeCraft 1.6.0 — installer et tester
 
 ## 1. Ce qu'il faut
 
@@ -17,10 +17,10 @@ Optionnels, déjà présents chez toi, donc activés automatiquement :
 
 ## 2. Installer
 
-1. Le fichier du mod est `E:\crusadecraft\build\libs\crusadecraft-1.5.0.jar`.
+1. Le fichier du mod est `E:\crusadecraft\build\libs\crusadecraft-1.6.0.jar`.
 2. Mets-le dans le dossier des mods de l'instance : `D:\MultiMC\instances\1.20.1\.minecraft\mods\`.
    Dans MultiMC, tu peux aussi faire clic droit sur l'instance → *Modifier* → *Mods* → *Ajouter un fichier*.
-   **Retire l'ancien** (`crusadecraft-1.4.0.jar`, ou une version plus vieille) : deux versions du mod ensemble
+   **Retire l'ancien** (`crusadecraft-1.5.0.jar`, ou une version plus vieille) : deux versions du mod ensemble
    empêchent le jeu de démarrer.
 3. Lance l'instance comme d'habitude.
 
@@ -187,6 +187,20 @@ données du mod (fichier `crusadecraft.dat` du monde) restent sur place, sans ef
     **M**) et sur la minimap, chunk par chunk, avec le nom du royaume au survol. Elles suivent l'option « Afficher les
     claims » de Xaero, et ses réglages d'opacité.
 
+### La carte de guerre
+50. Ouvre la carte du royaume (touche **virgule**) et clique sur **⚔ Guerre**, en bas à droite. Une barre d'outils
+    apparaît sous la carte : **Offensive**, **Défense**, **Objectif** (trois pinceaux qui peignent chunk par chunk,
+    clic gauche maintenu), **Gomme**, **Flèche** (clique au départ, tire jusqu'à l'arrivée, relâche), **Repère**
+    (objectif, ralliement, danger ou note, avec un petit texte) et **Retirer** (clique sur une de tes flèches ou un de
+    tes repères). Le bouton **◯** change la taille du pinceau ; **Tout effacer** demande un second clic. Le clic droit
+    déplace la carte, la molette zoome.
+51. Seul le **souverain** trace le plan de son royaume. Tes **alliés**, ton **suzerain** et tes **vassaux** voient ton
+    plan sur leur propre carte (sans pouvoir le toucher), et tu vois les leurs.
+52. Les **sièges en cours** s'affichent d'eux-mêmes (⚔ qui bat), avec la garnison qui tient encore.
+53. Sur Dynmap, coche la couche **Carte de guerre** : zones, flèches, repères et sièges y sont aussi, mis à jour
+    toutes les 20 secondes. **Attention** : la page Dynmap est la même pour tous ceux qui ont son adresse ; si tu joues
+    avec d'autres, ils y voient tes plans. Pour les cacher : `guerre = false` dans la section `carteWeb` des réglages.
+
 ## 4. Réglages
 
 Tout se règle dans `saves/<ton monde>/serverconfig/crusadecraft-server.toml`, à modifier monde fermé. Les
@@ -198,7 +212,8 @@ sections principales :
 - `territoire` (bâton de bornage et constructions en survie, coût d'une case, distance, chantiers, plafond de chunks,
   rayon de `/crusade claim`, titres à l'entrée) ;
 - `protection` (protection des terres, terres des IA, vassaux, alliés, opérateurs) ;
-- `carteWeb` (Dynmap : fréquence, langue des fiches, royaumes IA, lieux, trésor, conseil, opacité ; Xaero) ;
+- `carteWeb` (Dynmap : fréquence, langue des fiches, royaumes IA, lieux, trésor, conseil, opacité, carte de guerre ;
+  Xaero) ;
 - `diplomatie` ;
 - `guerre` (sièges, raids, anti-grief, rang Hostile entre joueurs, troupes Hundred Years War) ;
 - `ia` (fréquence des décisions, guerres entre IA et contre toi, répit après la fondation, coalitions) ;
@@ -233,5 +248,8 @@ Pour accélérer le temps pendant un test : `/time add 24000` fait passer un jou
   troupes servent en revanche aux sièges et aux raids.
 - Xaero n'a pas d'API publique pour colorer des terres : CrusadeCraft passe par une petite greffe. Si une future
   version de Xaero la casse, la couche disparaît simplement (le jeu ne plante pas).
-- La carte web Dynmap est la même pour tous ceux qui ont son adresse : pas de brouillard.
+- La carte web Dynmap est la même pour tous ceux qui ont son adresse : pas de brouillard, et les plans de guerre y
+  sont visibles de tous (la couche se coupe dans les réglages).
+- La carte de guerre est un plan : elle ne commande pas les troupes. Les sièges, eux, sont ceux qui se jouent
+  vraiment.
 - Usage personnel : ce mod n'est pas fait pour être redistribué.

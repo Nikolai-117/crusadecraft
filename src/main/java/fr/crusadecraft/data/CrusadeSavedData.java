@@ -29,7 +29,7 @@ import java.util.UUID;
  */
 public final class CrusadeSavedData extends AtomicSavedData {
     public static final String FILE_NAME = CrusadeCraft.MOD_ID;
-    public static final int DATA_VERSION = 13;
+    public static final int DATA_VERSION = 14;
 
     private final Map<UUID, Realm> realms = new LinkedHashMap<>();
     private final Map<CitizenRef, CharacterRecord> characters = new LinkedHashMap<>();
@@ -43,6 +43,8 @@ public final class CrusadeSavedData extends AtomicSavedData {
     private fr.crusadecraft.core.lineage.LineageState lineage = new fr.crusadecraft.core.lineage.LineageState();
     /** Les lieux : titres et places, leur hiérarchie et leurs fiches (P15). */
     private fr.crusadecraft.core.place.PlaceState places = new fr.crusadecraft.core.place.PlaceState();
+    /** La carte de guerre : zones, flèches et repères tracés par chaque royaume (P18). */
+    private fr.crusadecraft.core.war.WarMap warMap = new fr.crusadecraft.core.war.WarMap();
 
     public static CrusadeSavedData get(MinecraftServer server) {
         return server.getLevel(Level.OVERWORLD).getDataStorage()
@@ -98,6 +100,12 @@ public final class CrusadeSavedData extends AtomicSavedData {
         data.wars = fr.crusadecraft.core.war.WarState.load(migrated.getCompound("wars"));
         data.lineage = fr.crusadecraft.core.lineage.LineageState.load(migrated.getCompound("lineage"));
         data.places = fr.crusadecraft.core.place.PlaceState.load(migrated.getCompound("places"));
+        try {
+            data.warMap = fr.crusadecraft.core.war.WarMap.load(migrated.getCompound("warMap"));
+        } catch (RuntimeException e) {
+            // Des traits sur une carte : on les perd plutôt que le reste.
+            CrusadeCraft.LOGGER.error("CrusadeCraft : carte de guerre illisible, elle repart vierge", e);
+        }
         return data;
     }
 
@@ -115,6 +123,7 @@ public final class CrusadeSavedData extends AtomicSavedData {
         tag.put("wars", wars.save());
         tag.put("lineage", lineage.save());
         tag.put("places", places.save());
+        tag.put("warMap", warMap.save());
         return tag;
     }
 
@@ -132,6 +141,10 @@ public final class CrusadeSavedData extends AtomicSavedData {
 
     public fr.crusadecraft.core.place.PlaceState places() {
         return places;
+    }
+
+    public fr.crusadecraft.core.war.WarMap warMap() {
+        return warMap;
     }
 
     public fr.crusadecraft.core.war.WarState wars() {
@@ -203,7 +216,10 @@ public final class CrusadeSavedData extends AtomicSavedData {
 
     public boolean remove(UUID id) {
         boolean removed = realms.remove(id) != null;
-        if (removed) setDirty();
+        if (removed) {
+            warMap.forget(id);
+            setDirty();
+        }
         return removed;
     }
 }
