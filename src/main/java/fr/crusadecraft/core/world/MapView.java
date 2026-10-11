@@ -106,9 +106,17 @@ public record MapView(ResourceLocation dimension, int focusX, int focusZ, int pl
     /**
      * La carte de guerre (P18) telle que ce joueur la voit : les plans de son royaume et de ses alliés, et les sièges en
      * cours qui les concernent. {@code enabled} : il a un royaume, donc un plan à tracer.
+     *
+     * <p>L'état des guerres de son royaume s'y ajoute (P18b) : les provinces occupées et leur occupant, et les deux
+     * camps, pour tracer la ligne de front.
      */
-    public record War(boolean enabled, List<WarPlan> plans, List<SiegeMark> sieges) {
+    public record War(boolean enabled, List<WarPlan> plans, List<SiegeMark> sieges, List<Occupation> occupied,
+                      List<UUID> friends, List<UUID> foes) {
         public static final War NONE = new War(false, List.of(), List.of());
+
+        public War(boolean enabled, List<WarPlan> plans, List<SiegeMark> sieges) {
+            this(enabled, plans, sieges, List.of(), List.of(), List.of());
+        }
 
         /** Son propre plan, s'il est dans la liste. */
         public WarPlan own() {
@@ -123,6 +131,9 @@ public record MapView(ResourceLocation dimension, int focusX, int focusZ, int pl
      */
     public record WarPlan(UUID realm, int color, boolean mine, net.minecraft.network.chat.Component name, long[] keys, byte[] kinds,
                           List<fr.crusadecraft.core.war.WarMap.Arrow> arrows, List<fr.crusadecraft.core.war.WarMap.Pin> pins) {}
+
+    /** Une province IA occupée pendant une guerre, et la couleur de son occupant. */
+    public record Occupation(int province, int color) {}
 
     /** Un siège en cours : où, par qui, contre qui, et combien de défenseurs tiennent encore. */
     public record SiegeMark(int x, int z, int color, net.minecraft.network.chat.Component attacker,
@@ -236,6 +247,13 @@ public record MapView(ResourceLocation dimension, int focusX, int focusZ, int pl
             buf.writeComponent(s.defender());
             buf.writeVarInt(s.garrison());
         }
+        buf.writeVarInt(war.occupied().size());
+        for (Occupation o : war.occupied()) {
+            buf.writeVarInt(o.province());
+            buf.writeInt(o.color());
+        }
+        buf.writeCollection(war.friends(), FriendlyByteBuf::writeUUID);
+        buf.writeCollection(war.foes(), FriendlyByteBuf::writeUUID);
     }
 
     /** Les flèches et les repères reçus sont tous dans la dimension de la carte : elle n'est pas répétée. */
@@ -268,7 +286,11 @@ public record MapView(ResourceLocation dimension, int focusX, int focusZ, int pl
         for (int i = 0; i < n; i++) {
             sieges.add(new SiegeMark(buf.readInt(), buf.readInt(), buf.readInt(), buf.readComponent(), buf.readComponent(), buf.readVarInt()));
         }
-        return new War(enabled, plans, sieges);
+        n = buf.readVarInt();
+        List<Occupation> occupied = new ArrayList<>(n);
+        for (int i = 0; i < n; i++) occupied.add(new Occupation(buf.readVarInt(), buf.readInt()));
+        List<UUID> friends = buf.readList(FriendlyByteBuf::readUUID), foes = buf.readList(FriendlyByteBuf::readUUID);
+        return new War(enabled, plans, sieges, occupied, friends, foes);
     }
 
     public static MapView read(FriendlyByteBuf buf) {

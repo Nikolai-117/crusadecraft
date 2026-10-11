@@ -157,7 +157,31 @@ public final class WarMapService {
             if (!shared.contains(s.attacker()) && !shared.contains(s.defender())) continue;
             sieges.add(new MapView.SiegeMark(s.x(), s.z(), color(data, s.attacker()), name(data, s.attacker()), name(data, s.defender()), s.garrison()));
         }
-        return new MapView.War(true, plans, sieges);
+        // L'état de ses guerres : les provinces prises par l'un ou l'autre camp, et qui se bat contre qui.
+        List<MapView.Occupation> occupied = new ArrayList<>();
+        Set<UUID> friends = new LinkedHashSet<>(), foes = new LinkedHashSet<>();
+        friends.add(mine.get().id());
+        for (War w : data.wars().involving(mine.get().id())) {
+            int side = w.side(mine.get().id());
+            for (UUID r : sides(w)) {
+                int s = w.side(r);
+                if (s == side) friends.add(r);
+                else if (s != 0) foes.add(r);
+            }
+            int occupier = color(data, w.attacker());
+            for (int province : w.occupied()) occupied.add(new MapView.Occupation(province, occupier));
+        }
+        return new MapView.War(true, plans, sieges, occupied, List.copyOf(friends), List.copyOf(foes));
+    }
+
+    /** Tous ceux qui prennent part à une guerre. */
+    static Set<UUID> sides(War w) {
+        Set<UUID> out = new LinkedHashSet<>();
+        out.add(w.attacker());
+        out.add(w.defender());
+        out.addAll(w.attackerAllies());
+        out.addAll(w.defenderAllies());
+        return out;
     }
 
     static String zoneKey(WarMap.Zone zone) {

@@ -1,4 +1,4 @@
-# CrusadeCraft 1.6.0 — installer et tester
+# CrusadeCraft 1.7.0 — installer et tester
 
 ## 1. Ce qu'il faut
 
@@ -17,10 +17,10 @@ Optionnels, déjà présents chez toi, donc activés automatiquement :
 
 ## 2. Installer
 
-1. Le fichier du mod est `E:\crusadecraft\build\libs\crusadecraft-1.6.0.jar`.
+1. Le fichier du mod est `E:\crusadecraft\build\libs\crusadecraft-1.7.0.jar`.
 2. Mets-le dans le dossier des mods de l'instance : `D:\MultiMC\instances\1.20.1\.minecraft\mods\`.
    Dans MultiMC, tu peux aussi faire clic droit sur l'instance → *Modifier* → *Mods* → *Ajouter un fichier*.
-   **Retire l'ancien** (`crusadecraft-1.5.0.jar`, ou une version plus vieille) : deux versions du mod ensemble
+   **Retire l'ancien** (`crusadecraft-1.6.0.jar`, ou une version plus vieille) : deux versions du mod ensemble
    empêchent le jeu de démarrer.
 3. Lance l'instance comme d'habitude.
 
@@ -196,10 +196,23 @@ données du mod (fichier `crusadecraft.dat` du monde) restent sur place, sans ef
     déplace la carte, la molette zoome.
 51. Seul le **souverain** trace le plan de son royaume. Tes **alliés**, ton **suzerain** et tes **vassaux** voient ton
     plan sur leur propre carte (sans pouvoir le toucher), et tu vois les leurs.
-52. Les **sièges en cours** s'affichent d'eux-mêmes (⚔ qui bat), avec la garnison qui tient encore.
+52. L'**état de la guerre** se dessine tout seul : les **sièges en cours** (⚔ qui bat, avec la garnison qui tient
+    encore), la **ligne de front** en rouge entre ton camp et l'ennemi, les **provinces occupées** rayées à la couleur
+    de l'occupant. La Table de guerre ouvre directement la carte de guerre (bouton **Carte**).
 53. Sur Dynmap, coche la couche **Carte de guerre** : zones, flèches, repères et sièges y sont aussi, mis à jour
     toutes les 20 secondes. **Attention** : la page Dynmap est la même pour tous ceux qui ont son adresse ; si tu joues
     avec d'autres, ils y voient tes plans. Pour les cacher : `guerre = false` dans la section `carteWeb` des réglages.
+
+### Une carte du vrai monde
+54. La carte du royaume montre maintenant le **vrai paysage** : mers (plus sombres au large), montagnes, forêts,
+    déserts, neige, relief ombré. Là où tu es passé, ce sont les **vraies couleurs** de la surface ; ailleurs, une
+    **estimation** tirée du générateur du monde (sans tes constructions ni les villages).
+55. Le bouton de vue passe de **politique** (les royaumes en voile sur le paysage) à **de jure**, puis à **terrain**
+    (le paysage seul, frontières en trait).
+56. Le paysage se prépare à part, **sans ralentir la partie** : il arrive par morceaux, d'abord grossier puis fin,
+    autour de ce que tu regardes. La première fois, compte quelques secondes ; ensuite il est gardé dans
+    `saves/<ton monde>/data/crusadecraft_terrain/` (tu peux effacer ce dossier sans rien perdre : il se refait).
+57. La molette zoome **en douceur**, et la carte suit la souris quand tu la fais glisser.
 
 ## 4. Réglages
 
@@ -252,4 +265,6 @@ Pour accélérer le temps pendant un test : `/time add 24000` fait passer un jou
   sont visibles de tous (la couche se coupe dans les réglages).
 - La carte de guerre est un plan : elle ne commande pas les troupes. Les sièges, eux, sont ceux qui se jouent
   vraiment.
+- Sur la carte en terrain, l'inexploré est une **estimation** : ni constructions ni structures, et les biomes des mods
+  sont colorés par famille (forêt, désert, neige…), donc approximativement. Le Nether n'a pas de carte en terrain.
 - Usage personnel : ce mod n'est pas fait pour être redistribué.

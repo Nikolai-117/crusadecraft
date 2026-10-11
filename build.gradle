@@ -55,6 +55,8 @@ minecraft {
             property 'crusadecraft.worldshots', 'true'
             // -Phold=300 : la partie reste ouverte cinq minutes après les captures (pour regarder la carte web).
             property 'crusadecraft.worldshots.hold', (project.findProperty('hold') ?: '0').toString()
+            // -Pshots_world=normal : un monde ordinaire plutôt que plat (pour voir la carte en terrain).
+            property 'crusadecraft.worldshots.normal', (project.findProperty('shots_world') == 'normal').toString()
         }
 
         server {

@@ -1,6 +1,7 @@
 package fr.crusadecraft.client.screen;
 
 import fr.crusadecraft.client.KeyBindings;
+import fr.crusadecraft.client.map.ClientTerrain;
 import fr.crusadecraft.client.map.MapRaster;
 import fr.crusadecraft.client.map.MapTexture;
 import com.mojang.math.Axis;
@@ -49,7 +50,7 @@ public class MapScreen extends Screen {
     private static final int TOOLBAR = 22;
     private static final int PANEL_W = 150;
     private static final int[] BRUSH_SIZES = {0, 1, 2, 4, 8};
-    private static boolean lastDejure;
+    private static MapRaster.Mode lastMode = MapRaster.Mode.POLITICAL;
     /** Centre demandé par un autre écran (« Voir sur la carte »), appliqué à la prochaine ouverture. */
     private static int[] pendingCenter;
     private static double pendingScale = -1;
@@ -126,13 +127,19 @@ public class MapScreen extends Screen {
     record SeatKey(UUID territory, int province, String name, UUID site, int x, int z) {}
 
     private MapView view;
-    private boolean dejure = lastDejure;
+    private MapRaster.Mode mode = lastMode;
     private double centerX, centerZ, scale = -1;
     private int left, top, w, h;
     private int mapX, mapY, mapW, mapH;
     private final MapTexture texture = new MapTexture("map");
     private MapRaster.Result raster;
     private boolean dirty = true;
+    // Ce que montre l'image en mémoire : pendant un zoom ou un glissement, elle est seulement étirée ou décalée, et
+    // recalculée une fois le geste fini.
+    private double rasterX, rasterZ, rasterScale = -1;
+    private double targetScale = -1, anchorWX, anchorWZ, anchorSX, anchorSY;
+    private long lastMove, lastRaster;
+    private int terrainVersion = -1;
     private boolean dragging, moved, painting;
     private double pressX, pressY, lastPaintX, lastPaintY;
 
@@ -187,10 +194,22 @@ public class MapScreen extends Screen {
         pendingScale = blocksPerPoint;
     }
 
+    /** La prochaine carte ouverte pose la carte de guerre (depuis la Table de guerre). */
+    public static void openNextAtWar() {
+        lastWar = true;
+    }
+
     /** Bascule en vue de jure (aperçu du banc d'essai visuel). */
     public void toggleDejureForPreview() {
-        dejure = !dejure;
+        mode = mode == MapRaster.Mode.DEJURE ? MapRaster.Mode.POLITICAL : MapRaster.Mode.DEJURE;
         dirty = true;
+    }
+
+    /** Choisit la vue : politique, de jure ou terrain (aperçu du banc d'essai visuel). */
+    public void previewMode(int index) {
+        mode = MapRaster.Mode.values()[Math.floorMod(index, MapRaster.Mode.values().length)];
+        dirty = true;
+        if (minecraft != null) rebuildWidgets();
     }
 
     /** Choisit l'outil et la sélection (aperçu du banc d'essai visuel). */
@@ -263,6 +282,7 @@ public class MapScreen extends Screen {
         mapW = w - 16;
         mapH = h - 26 - 24 - (editing() || warMode() ? TOOLBAR : 0);
         if (scale < 0) scale = MapRaster.fit(view, centerX, centerZ, mapW, mapH) * 0.6;
+        targetScale = scale;
         int bx = left + w - 8;
         addRenderableWidget(Button.builder(Component.translatable("gui.done"), b -> onClose()).bounds(bx - 50, top + 5, 50, 16).build());
         addRenderableWidget(Button.builder(Component.translatable("crusadecraft.map.center"), b -> {
@@ -270,14 +290,14 @@ public class MapScreen extends Screen {
             centerZ = view.focusZ();
             dirty = true;
         }).bounds(bx - 118, top + 5, 64, 16).build());
-        Button mode = Button.builder(Component.translatable(dejure ? "crusadecraft.map.mode.dejure" : "crusadecraft.map.mode.political"), b -> {
-            dejure = !dejure;
-            lastDejure = dejure;
+        Button modeButton = Button.builder(Component.translatable("crusadecraft.map.mode." + mode.name().toLowerCase(Locale.ROOT)), b -> {
+            mode = MapRaster.Mode.values()[(mode.ordinal() + 1) % MapRaster.Mode.values().length];
+            lastMode = mode;
             dirty = true;
             rebuildWidgets();
         }).bounds(bx - 214, top + 5, 92, 16).build();
-        mode.setTooltip(Tooltip.create(Component.translatable("crusadecraft.map.mode.tip")));
-        addRenderableWidget(mode);
+        modeButton.setTooltip(Tooltip.create(Component.translatable("crusadecraft.map.mode.tip")));
+        addRenderableWidget(modeButton);
         if (view.canEdit()) {
             Button edit = Button.builder(Component.translatable(editing() ? "crusadecraft.mapedit.leave" : "crusadecraft.mapedit.enter"), b -> {
                 selected = null;
@@ -614,12 +634,33 @@ public class MapScreen extends Screen {
         int titleRoom = (left + w - 8 - (view.canEdit() ? 292 : 214)) - (left + 10) - 6;
         float titleScale = Math.max(0.7f, Math.min(1.3f, titleRoom / (float) Math.max(1, font.width(currentTitle()))));
         Ui.scaled(g, font, currentTitle(), left + 10, top + 8 + Math.round((1.3f - titleScale) * 3), titleScale, Ui.TEXT_TITLE, false);
-        if (dirty || raster == null) {
-            raster = MapRaster.render(view, mapW, mapH, centerX, centerZ, scale, dejure, overlay.isEmpty() ? null : overlay);
+        animateZoom();
+        long now = Util.getMillis();
+        // De nouvelles tuiles de terrain : on se redessine, mais pas plus de quatre fois par seconde.
+        if (ClientTerrain.version() != terrainVersion && now - lastRaster > 250) dirty = true;
+        boolean moved = centerX != rasterX || centerZ != rasterZ || scale != rasterScale;
+        boolean settling = targetScale > 0 && Math.abs(targetScale - scale) > 1e-6;
+        if (dirty || raster == null || (moved && !settling && now - lastMove > 120)) {
+            int lod = ClientTerrain.lodFor(scale);
+            ClientTerrain.ensure(view.dimension(), lod, worldX(mapX), worldZ(mapY), worldX(mapX + mapW), worldZ(mapY + mapH));
+            terrainVersion = ClientTerrain.version();
+            raster = MapRaster.render(view, mapW, mapH, centerX, centerZ, scale, mode, overlay.isEmpty() ? null : overlay, extras(lod));
             texture.upload(raster);
+            rasterX = centerX;
+            rasterZ = centerZ;
+            rasterScale = scale;
+            lastRaster = now;
             dirty = false;
         }
-        if (texture.ready()) g.blit(texture.id(), mapX, mapY, 0, 0, mapW, mapH, mapW, mapH);
+        g.fill(mapX, mapY, mapX + mapW, mapY + mapH, 0xFF000000 | MapRaster.PARCHMENT);
+        if (texture.ready()) {
+            // L'image calculée pour un autre cadrage, étirée et décalée jusqu'au cadrage présent.
+            double k = rasterScale / scale;
+            int x0 = (int) Math.round(screenX(rasterX - mapW / 2.0 * rasterScale)), y0 = (int) Math.round(screenY(rasterZ - mapH / 2.0 * rasterScale));
+            g.enableScissor(mapX, mapY, mapX + mapW, mapY + mapH);
+            g.blit(texture.id(), x0, y0, (int) Math.round(mapW * k), (int) Math.round(mapH * k), 0, 0, mapW, mapH, mapW, mapH);
+            g.disableScissor();
+        }
         g.renderOutline(mapX - 1, mapY - 1, mapW + 2, mapH + 2, Ui.GOLD_DARK);
 
         g.enableScissor(mapX, mapY, mapX + mapW, mapY + mapH);
@@ -660,7 +701,7 @@ public class MapScreen extends Screen {
         }
         if (Ui.inside(mouseX, mouseY, mapX, mapY, mapW, mapH) && !dragging && !painting && !arrowing && !overPanel(mouseX, mouseY)) {
             List<Component> tip = warMode() ? warTooltip(mouseX, mouseY) : List.of();
-            if (tip.isEmpty()) tip = tooltip(raster.ownerAt(mouseX - mapX, mouseY - mapY));
+            if (tip.isEmpty()) tip = tooltip(rasterOwner(mouseX, mouseY));
             if (!tip.isEmpty()) g.renderComponentTooltip(font, tip, mouseX, mouseY);
         }
     }
@@ -972,7 +1013,7 @@ public class MapScreen extends Screen {
             if (Math.abs(mouseX - pressX) + Math.abs(mouseY - pressY) > 3) moved = true;
             centerX -= dx * scale;
             centerZ -= dy * scale;
-            dirty = true;
+            lastMove = Util.getMillis();
             return true;
         }
         return super.mouseDragged(mouseX, mouseY, button, dx, dy);
@@ -1025,7 +1066,7 @@ public class MapScreen extends Screen {
             }
         }
         if (!editing()) {
-            int owner = raster.ownerAt((int) mouseX - mapX, (int) mouseY - mapY);
+            int owner = rasterOwner(mouseX, mouseY);
             if (owner >= 0 && owner < view.seats().size()) {
                 MapView.Territory t = view.territories().get(view.seats().get(owner).territory());
                 if (t.ai()) CrusadeNetwork.toServer(new WorldPackets.RequestAiRealm(t.id()));
@@ -1069,7 +1110,7 @@ public class MapScreen extends Screen {
             }
         }
         if (best >= 0) return best;
-        int owner = raster.ownerAt((int) mouseX - mapX, (int) mouseY - mapY);
+        int owner = rasterOwner(mouseX, mouseY);
         return owner >= 0 && owner < view.seats().size() ? owner : -1;
     }
 
@@ -1315,14 +1356,50 @@ public class MapScreen extends Screen {
     @Override
     public boolean mouseScrolled(double mouseX, double mouseY, double delta) {
         if (!Ui.inside(mouseX, mouseY, mapX, mapY, mapW, mapH) || overPanel(mouseX, mouseY)) return super.mouseScrolled(mouseX, mouseY, delta);
-        // Le point sous la souris reste en place pendant le zoom.
-        double ox = mouseX - mapX - mapW / 2.0, oz = mouseY - mapY - mapH / 2.0;
-        double wx = centerX + ox * scale, wz = centerZ + oz * scale;
-        scale = Math.max(0.5, Math.min(64, scale * (delta > 0 ? 0.8 : 1.25)));
-        centerX = wx - ox * scale;
-        centerZ = wz - oz * scale;
-        dirty = true;
+        // Le point sous la souris reste en place pendant le zoom, qui glisse jusqu'à sa nouvelle échelle.
+        if (targetScale <= 0) targetScale = scale;
+        targetScale = Math.max(0.5, Math.min(64, targetScale * (delta > 0 ? 0.8 : 1.25)));
+        anchorSX = mouseX;
+        anchorSY = mouseY;
+        anchorWX = worldX(mouseX);
+        anchorWZ = worldZ(mouseY);
+        lastMove = Util.getMillis();
         return true;
+    }
+
+    /** Un pas du zoom fluide : l'échelle rejoint la cible, le point visé reste sous la souris. */
+    private void animateZoom() {
+        if (targetScale <= 0 || Math.abs(targetScale - scale) <= 1e-6) return;
+        double next = scale + (targetScale - scale) * 0.35;
+        if (Math.abs(targetScale - next) / targetScale < 0.004) next = targetScale;
+        scale = next;
+        centerX = anchorWX - (anchorSX - mapX - mapW / 2.0) * scale;
+        centerZ = anchorWZ - (anchorSY - mapY - mapH / 2.0) * scale;
+        lastMove = Util.getMillis();
+    }
+
+    /** Le siège qui tient le pixel sous la souris, dans l'image en mémoire (peut-être calculée pour un autre cadrage). */
+    private int rasterOwner(double mouseX, double mouseY) {
+        if (raster == null || rasterScale <= 0) return MapRaster.NONE;
+        int px = (int) Math.floor((worldX(mouseX) - rasterX) / rasterScale + mapW / 2.0);
+        int py = (int) Math.floor((worldZ(mouseY) - rasterZ) / rasterScale + mapH / 2.0);
+        return raster.ownerAt(px, py);
+    }
+
+    /** Le paysage et l'état des guerres, pour le rendu. */
+    private MapRaster.Extras extras(int lod) {
+        var dim = view.dimension();
+        MapRaster.TerrainSource terrain = (x, z) -> ClientTerrain.color(dim, x, z, lod);
+        var occupied = new it.unimi.dsi.fastutil.ints.Int2IntOpenHashMap();
+        for (MapView.Occupation o : view.war().occupied()) occupied.put(o.province(), o.color() & 0xFFFFFF);
+        var friends = new it.unimi.dsi.fastutil.ints.IntOpenHashSet();
+        var foes = new it.unimi.dsi.fastutil.ints.IntOpenHashSet();
+        for (int i = 0; i < view.territories().size(); i++) {
+            UUID id = view.territories().get(i).id();
+            if (view.war().friends().contains(id)) friends.add(i);
+            if (view.war().foes().contains(id)) foes.add(i);
+        }
+        return new MapRaster.Extras(terrain, occupied, friends, foes);
     }
 
     @Override

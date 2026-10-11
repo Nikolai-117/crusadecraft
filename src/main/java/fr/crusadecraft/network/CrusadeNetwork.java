@@ -33,7 +33,7 @@ import net.minecraftforge.network.simple.SimpleChannel;
  * (distance, droits, état) avant d'agir.
  */
 public final class CrusadeNetwork {
-    private static final String VERSION = "14";
+    private static final String VERSION = "15";
 
     public static final SimpleChannel CHANNEL = NetworkRegistry.newSimpleChannel(
             ResourceLocation.tryParse(CrusadeCraft.MOD_ID + ":main"),
@@ -254,6 +254,13 @@ public final class CrusadeNetwork {
         CHANNEL.messageBuilder(fr.crusadecraft.network.packet.WarMapPackets.Edit.class, nextId++, NetworkDirection.PLAY_TO_SERVER)
                 .encoder(fr.crusadecraft.network.packet.WarMapPackets.Edit::encode).decoder(fr.crusadecraft.network.packet.WarMapPackets.Edit::decode)
                 .consumerMainThread(fr.crusadecraft.network.packet.WarMapPackets.Edit::handle).add();
+        // P18b : la carte en terrain
+        CHANNEL.messageBuilder(fr.crusadecraft.network.packet.TerrainPackets.Request.class, nextId++, NetworkDirection.PLAY_TO_SERVER)
+                .encoder(fr.crusadecraft.network.packet.TerrainPackets.Request::encode).decoder(fr.crusadecraft.network.packet.TerrainPackets.Request::decode)
+                .consumerMainThread(fr.crusadecraft.network.packet.TerrainPackets.Request::handle).add();
+        CHANNEL.messageBuilder(fr.crusadecraft.network.packet.TerrainPackets.Tile.class, nextId++, NetworkDirection.PLAY_TO_CLIENT)
+                .encoder(fr.crusadecraft.network.packet.TerrainPackets.Tile::encode).decoder(fr.crusadecraft.network.packet.TerrainPackets.Tile::decode)
+                .consumerMainThread(fr.crusadecraft.network.packet.TerrainPackets.Tile::handle).add();
     }
 
     public static void toPlayer(ServerPlayer player, Object packet) {

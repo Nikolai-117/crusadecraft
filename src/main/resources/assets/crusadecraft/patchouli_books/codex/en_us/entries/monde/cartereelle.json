@@ -1,0 +1,16 @@
+{
+  "name": "crusadecraft.codex.cartereelle",
+  "icon": "minecraft:map",
+  "category": "crusadecraft:monde",
+  "sortnum": 8,
+  "pages": [
+    {
+      "type": "patchouli:text",
+      "text": "crusadecraft.codex.cartereelle.p0"
+    },
+    {
+      "type": "patchouli:text",
+      "text": "crusadecraft.codex.cartereelle.p1"
+    }
+  ]
+}

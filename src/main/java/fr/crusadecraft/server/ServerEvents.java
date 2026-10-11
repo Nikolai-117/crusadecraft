@@ -30,6 +30,7 @@ import net.minecraftforge.event.entity.player.PlayerEvent;
 import net.minecraftforge.event.level.BlockEvent;
 import net.minecraftforge.event.server.ServerStartedEvent;
 import net.minecraftforge.event.server.ServerStoppedEvent;
+import net.minecraftforge.event.server.ServerStoppingEvent;
 import net.minecraftforge.eventbus.api.SubscribeEvent;
 import net.minecraftforge.fml.common.Mod;
 
@@ -66,6 +67,13 @@ public final class ServerEvents {
         fr.crusadecraft.core.world.EntryTitles.onLogout(event.getEntity().getUUID());
         fr.crusadecraft.core.world.ProtectionService.onLogout(event.getEntity().getUUID());
         fr.crusadecraft.core.world.TerritorySync.onLogout(event.getEntity().getUUID());
+        fr.crusadecraft.core.world.terrain.TerrainService.onLogout(event.getEntity().getUUID());
+    }
+
+    /** Avant que le monde ne se ferme : les chunks parcourus de la carte en terrain sont écrits. */
+    @SubscribeEvent
+    public static void onServerStopping(ServerStoppingEvent event) {
+        fr.crusadecraft.core.world.terrain.TerrainService.onServerStopping(event.getServer());
     }
 
     @SubscribeEvent
@@ -84,6 +92,7 @@ public final class ServerEvents {
         fr.crusadecraft.core.diplomacy.DiplomacyService.onServerStopped();
         WarFieldService.onServerStopped();
         fr.crusadecraft.core.court.TournamentService.onServerStopped();
+        fr.crusadecraft.core.world.terrain.TerrainService.onServerStopped();
     }
 
     @SubscribeEvent
@@ -133,6 +142,8 @@ public final class ServerEvents {
         fr.crusadecraft.compat.dynmap.DynmapBridge.tick(server, t);
         // Les terres des cartes du client (Xaero) : toutes les cinq secondes, seulement si elles ont changé.
         if (t % 100 == 60) fr.crusadecraft.core.world.TerritorySync.tick(server);
+        // La carte en terrain (P18b) : la vraie surface des chunks parcourus, toutes les deux secondes.
+        if (t % 40 == 17) fr.crusadecraft.core.world.terrain.TerrainService.tick(server);
     }
 
     /** Les golems d'un village assiégé ne s'en prennent pas à sa garnison. */

@@ -596,3 +596,38 @@ Demandé par Romain (5 octobre) : « que ça fonctionne par chunk directement »
 - **Un point d'entrée réservé aux tests** (`WarFieldService.siegeForTests`) : un siège ne démarre qu'au passage d'un
   vrai joueur, ce que les GameTests n'ont pas ; on y pose donc un siège sans troupes pour vérifier qu'il s'affiche.
   Le banc de captures, lui, montre un vrai siège.
+
+**P18b (11 octobre 2026) — la carte du mod sur le vrai monde**
+
+- **Ce que demandait le plan** (§6, P18) : un vrai terrain partout, même inexploré ; les couleurs réelles là où l'on
+  est passé ; des calques ; un zoom fluide ; l'état de la guerre qui se dessine tout seul.
+- **L'estimation sans générer** : chaque point est une colonne de bruit du générateur (`getBaseColumn` : roche, eau,
+  air) et le biome à sa surface, comme `/locate` et le repérage des villages de P5. Un GameTest vérifie qu'une tuile
+  calculée à 200 000 blocs ne charge aucun chunk. Ni constructions ni structures : c'est dit au joueur.
+- **Hors du fil du serveur** : un fil à part, de basse priorité, calcule les tuiles demandées, les plus grossières
+  d'abord ; les fils de génération de Minecraft font déjà ces mêmes appels en parallèle. Si un générateur de mod s'y
+  refuse, la tuile reste inconnue (parchemin) et un avertissement unique est écrit, sans planter.
+- **Trois niveaux de détail** (un point par chunk, par 4 chunks, par 16 chunks), en tuiles de 32 × 32 points,
+  choisis selon le zoom ; une tuile fine qui manque laisse voir la grossière. Cache en mémoire et sur disque
+  (`data/crusadecraft_terrain/v1`), jetable : il se refait.
+- **Les vraies couleurs** : autour de chaque joueur, les chunks déjà en mémoire sont relevés (quatre points, couleur de
+  carte du bloc en surface, eau assombrie par sa profondeur) ; ceux qu'il foule sont relus à chaque passage. Le relevé
+  remplace l'estimation à l'envoi. Il s'écrit à l'arrêt et toutes les cinq minutes.
+- **Palette d'atlas** : des genres de paysage tirés des étiquettes de biomes (Minecraft puis Forge, que suivent les
+  mods), la température en dernier recours ; la mer s'assombrit au large, la roche puis la neige gagnent en altitude,
+  le relief s'ombre comme au soleil du nord-ouest, avec la même ombre à tous les zooms.
+- **Trois vues** : politique (les royaumes en voile sur le paysage), de jure, terrain (le paysage seul, frontières en
+  trait). Le brouillard assombrit et hachure le paysage au lieu de le cacher : il cache des royaumes, pas des montagnes.
+- **L'état de la guerre** : provinces occupées rayées à la couleur de l'occupant, ligne de front en rouge entre les
+  deux camps, lues dans les guerres à chaque envoi de la carte. La Table de guerre ouvre la carte en mode guerre.
+- **Zoom fluide** : pendant un geste, l'image déjà calculée est étirée ou décalée ; elle n'est recalculée qu'une fois
+  le geste fini, et au plus quatre fois par seconde quand des tuiles arrivent.
+- La carte papier et la Table de guerre murale gardent leur parchemin : ce sont des objets du monde.
+- **Mesuré** : lire la colonne entière du générateur coûtait 4,5 s par tuile de 1 024 points (presque tout en
+  calcul des nappes d'eau souterraines) ; la surface préliminaire (une fonction de densité, de 8 en 8 blocs, affinée
+  entre deux mesures) descend à 0,45 s. Sous le niveau de la mer, de l'eau seulement dans les biomes d'eau ou dans une
+  vraie cuvette (4 blocs) : sinon les plaines basses se criblaient de flaques.
+- **Vérifié** : GameTests (aucun chunk chargé par l'estimation, vraies couleurs relevées, tuile livrée par le fil à part,
+  état de la guerre transmis, aperçu de la carte dessiné hors écran dans `run-gametest/apercu_terrain.png`) ; une
+  première capture en jeu sur un monde normal a montré les défauts corrigés ensuite (gros carrés, flaques). Romain a
+  demandé le 11 octobre de ne plus lancer le jeu : la capture en jeu du rendu final n'a pas été refaite.

@@ -156,6 +156,8 @@ public class WarScreen extends Screen {
         int lx = left + 8, half = (LIST_W - 4) / 2;
         addRenderableWidget(Button.builder(Component.translatable("gui.done"), b -> onClose()).bounds(lx, top + h - 22, half, 16).build());
         addRenderableWidget(Button.builder(Component.translatable("crusadecraft.war.map"), b -> {
+            // La carte s'ouvre en carte de guerre (P18) : c'est ce qu'on vient chercher à la Table de guerre.
+            MapScreen.openNextAtWar();
             if (minecraft != null && minecraft.getConnection() != null) CrusadeNetwork.toServer(new WorldPackets.RequestMap(true));
         }).bounds(lx + half + 4, top + h - 22, LIST_W - half - 4, 16).tooltip(Tooltip.create(Component.translatable("crusadecraft.war.map.tip"))).build());
 

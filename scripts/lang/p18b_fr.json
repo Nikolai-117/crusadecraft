@@ -1,0 +1,9 @@
+{
+  "crusadecraft.map.mode.terrain": "Vue : terrain",
+  "crusadecraft.map.mode.tip": "Politique : qui tient quoi aujourd'hui, sur le vrai paysage. De jure : les grands royaumes historiques, que l'on pourra revendiquer. Terrain : le paysage seul, frontières en trait. Là où vous n'êtes jamais allé, le paysage est une estimation.",
+  "crusadecraft.war.map.tip": "Ouvrir la carte de guerre : votre plan de bataille, celui de vos alliés, la ligne de front et les sièges en cours.",
+  "crusadecraft.codex.cartedeguerre.p1": "Seul le souverain trace le plan ; ses alliés, son suzerain et ses vassaux le voient sur leur propre carte, et il voit les leurs. L'état de la guerre s'y dessine tout seul : la ligne de front en rouge, les provinces occupées rayées à la couleur de l'occupant, les sièges en cours avec leur garnison.$(br2)Sur Dynmap, la couche $(l)Carte de guerre$() montre le plan à qui a l'adresse de la carte web.",
+  "crusadecraft.codex.cartereelle": "Une carte du vrai monde",
+  "crusadecraft.codex.cartereelle.p0": "La carte du royaume montre le vrai paysage : mers, montagnes, forêts, déserts, relief ombré. Là où vous êtes passé, ce sont les vraies couleurs de la surface ; ailleurs, une $(l)estimation$() tirée du générateur du monde, sans constructions ni structures.$(br2)Le bouton de vue passe de $(l)politique$() à $(l)de jure$() puis à $(l)terrain$(), le paysage seul.",
+  "crusadecraft.codex.cartereelle.p1": "Le paysage se prépare à part, sans ralentir la partie : il arrive par morceaux, du plus grossier au plus fin, autour de ce que vous regardez. La molette zoome en douceur.$(br2)Le Nether n'a pas de carte en terrain : son plafond de roche cache tout."
+}

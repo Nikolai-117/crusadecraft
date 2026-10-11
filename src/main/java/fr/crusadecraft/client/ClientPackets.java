@@ -149,6 +149,11 @@ public final class ClientPackets {
         else if (mc.player != null) mc.player.displayClientMessage(message, true);
     }
 
+    /** Une tuile de la carte en terrain (P18b) : la carte ouverte se redessinera d'elle-même. */
+    public static void terrainTile(net.minecraft.resources.ResourceLocation dimension, fr.crusadecraft.core.world.terrain.TerrainTile tile) {
+        fr.crusadecraft.client.map.ClientTerrain.put(dimension, tile);
+    }
+
     /** La réponse du serveur à une retouche de l'éditeur : au pied de la carte si elle est ouverte. */
     public static void mapEditResult(boolean success, net.minecraft.network.chat.Component message) {
         Minecraft mc = Minecraft.getInstance();

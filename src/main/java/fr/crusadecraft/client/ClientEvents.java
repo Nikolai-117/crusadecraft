@@ -61,5 +61,6 @@ public final class ClientEvents {
         fr.crusadecraft.client.map.ClientMapData.clear();
         fr.crusadecraft.client.map.PaperMapOverlay.clear();
         fr.crusadecraft.client.map.ClientTerritory.clear();
+        fr.crusadecraft.client.map.ClientTerrain.clear(null);
     }
 }

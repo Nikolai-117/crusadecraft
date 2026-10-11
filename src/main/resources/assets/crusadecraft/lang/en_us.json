@@ -682,7 +682,7 @@
   "crusadecraft.map.center": "Recenter",
   "crusadecraft.map.mode.political": "View: political",
   "crusadecraft.map.mode.dejure": "View: de jure",
-  "crusadecraft.map.mode.tip": "Political: who holds what today. De jure: the great historical kingdoms, which may be claimed.",
+  "crusadecraft.map.mode.tip": "Political: who holds what today, over the real landscape. De jure: the great historical kingdoms, which may be claimed. Terrain: the landscape alone, borders as lines. Where you have never been, the landscape is an estimate.",
   "crusadecraft.map.scale": "Scale: 1 dot = %s blocks",
   "crusadecraft.map.hint": "Drag: move · Wheel: zoom · Click: realm sheet",
   "crusadecraft.map.nothing_known": "No neighbouring realm is known yet. Explore: approach their villages to discover them.",
@@ -981,7 +981,7 @@
   "crusadecraft.war.f.demand": "You demand their defeat",
   "crusadecraft.war.title": "War Table",
   "crusadecraft.war.map": "Map",
-  "crusadecraft.war.map.tip": "Open the world map.",
+  "crusadecraft.war.map.tip": "Open the war map: your battle plan, your allies' plans, the front line and the sieges under way.",
   "crusadecraft.war.nobody": "No known realm. Send your heralds, or travel the world: the realms you discover appear here.",
   "crusadecraft.war.list.wars": "Ongoing wars (%s)",
   "crusadecraft.war.list.targets": "Known realms (%s)",
@@ -1973,5 +1973,9 @@
   "crusadecraft.warmap.siege.garrison": "Garrison left: %s",
   "crusadecraft.codex.cartedeguerre": "The war map",
   "crusadecraft.codex.cartedeguerre.p0": "On the realm map (comma key), the $(l)⚔ War$() button lays down your realm's battle plan. Paint $(l)offensive$(), $(l)defence$() and $(l)objective$() zones chunk by chunk, draw attack $(l)arrows$(), place annotated $(l)markers$().",
-  "crusadecraft.codex.cartedeguerre.p1": "Only the ruler draws the plan; their allies, suzerain and vassals see it on their own map, and they see theirs. Sieges under way appear by themselves, with the garrison still holding.$(br2)On Dynmap, the $(l)War map$() layer shows all of this to anyone who has the web map address."
+  "crusadecraft.codex.cartedeguerre.p1": "Only the ruler draws the plan; their allies, suzerain and vassals see it on their own map, and they see theirs. The state of the war draws itself: the front line in red, occupied provinces striped in the occupier's colour, sieges under way with their garrison.$(br2)On Dynmap, the $(l)War map$() layer shows the plan to anyone who has the web map address.",
+  "crusadecraft.map.mode.terrain": "View: terrain",
+  "crusadecraft.codex.cartereelle": "A map of the real world",
+  "crusadecraft.codex.cartereelle.p0": "The realm map shows the real landscape: seas, mountains, forests, deserts, shaded relief. Where you have been, these are the real surface colours; elsewhere, an $(l)estimate$() drawn from the world generator, without buildings or structures.$(br2)The view button goes from $(l)political$() to $(l)de jure$() then $(l)terrain$(), the landscape alone.",
+  "crusadecraft.codex.cartereelle.p1": "The landscape is prepared on the side, without slowing the game: it arrives piece by piece, coarse first then fine, around what you are looking at. The wheel zooms smoothly.$(br2)The Nether has no terrain map: its rock ceiling hides everything."
 }

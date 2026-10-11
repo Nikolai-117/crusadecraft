@@ -51,7 +51,7 @@ public final class WorldShots {
     private static final boolean ENABLED = Boolean.getBoolean("crusadecraft.worldshots");
     private static final String WORLD = "crusadecraft-shots";
 
-    private enum Step { BOOT, LOADING, SETUP, WALL, MAP, SHEET, HERALD, REALM, LETTER, SEAL, CHANCERY, COLOMBIER, TOWNHALL, TOWNHALL_CLICK, WAR, WAR_MAP_OPEN, WAR_MAP, WAR_MAP_SHOT, SIEGE, CAPTURE, CAPTURED, WAR_TABLE, RAID, EDITOR, EDITOR_REALM, EDITOR_PAINT, LINEAGE_OPEN, LINEAGE_HOUSE, LINEAGE_SPAWN, LINEAGE_SHOT, STAFF_MENU, STAFF_SHOT, FORT_SHOT, SITES_MAP, PAPER_SHOT, LIEU_FORM, LIEU_SCREEN, LIEU_MAP, CHAT_MAP, WALK_IN, TITLE_SHOT, XAERO_SHOT, DONE }
+    private enum Step { BOOT, LOADING, SETUP, WALL, MAP, SHEET, HERALD, REALM, LETTER, SEAL, CHANCERY, COLOMBIER, TOWNHALL, TOWNHALL_CLICK, WAR, WAR_MAP_OPEN, WAR_MAP, WAR_MAP_SHOT, SIEGE, CAPTURE, CAPTURED, WAR_TABLE, RAID, EDITOR, EDITOR_REALM, EDITOR_PAINT, LINEAGE_OPEN, LINEAGE_HOUSE, LINEAGE_SPAWN, LINEAGE_SHOT, STAFF_MENU, STAFF_SHOT, FORT_SHOT, SITES_MAP, PAPER_SHOT, LIEU_FORM, LIEU_SCREEN, LIEU_MAP, CHAT_MAP, WALK_IN, TITLE_SHOT, XAERO_SHOT, TERRAIN_OPEN, TERRAIN_WAIT, TERRAIN_SHOT, TERRAIN_POLITICAL, DONE }
 
     private static Step step = Step.BOOT;
     private static int wait;
@@ -440,13 +440,38 @@ public final class WorldShots {
                     step = Step.XAERO_SHOT;
                     wait = 80;
                 } else {
-                    step = Step.DONE;
+                    step = Step.TERRAIN_OPEN;
                     wait = 20;
                 }
             }
             case XAERO_SHOT -> {
                 CrusadeCraft.LOGGER.info("WorldShots : écran {}", mc.screen == null ? "aucun" : mc.screen.getClass().getName());
                 grab(mc, "xaero_carte");
+                mc.setScreen(null);
+                step = Step.TERRAIN_OPEN;
+                wait = 20;
+            }
+            case TERRAIN_OPEN -> {
+                // La carte en terrain (P18b) : large, autour du joueur, en vue « Terrain », le temps que les tuiles arrivent.
+                fr.crusadecraft.client.screen.MapScreen.centerNextOn(mc.player.getBlockX(), mc.player.getBlockZ(), 10);
+                CrusadeNetwork.toServer(new WorldPackets.RequestMap(true));
+                step = Step.TERRAIN_WAIT;
+                wait = 30;
+            }
+            case TERRAIN_WAIT -> {
+                if (mc.screen instanceof fr.crusadecraft.client.screen.MapScreen m) m.previewMode(2);
+                step = Step.TERRAIN_SHOT;
+                wait = 300;
+            }
+            case TERRAIN_SHOT -> {
+                CrusadeCraft.LOGGER.info("WorldShots : carte en terrain, {} tuile(s) reçue(s)", fr.crusadecraft.client.map.ClientTerrain.version());
+                grab(mc, "carte_terrain");
+                if (mc.screen instanceof fr.crusadecraft.client.screen.MapScreen m) m.previewMode(0);
+                step = Step.TERRAIN_POLITICAL;
+                wait = 40;
+            }
+            case TERRAIN_POLITICAL -> {
+                grab(mc, "carte_politique_terrain");
                 mc.setScreen(null);
                 step = Step.DONE;
                 wait = 20;
@@ -480,8 +505,10 @@ public final class WorldShots {
         rules.getRule(GameRules.RULE_WEATHER_CYCLE).set(false, null);
         LevelSettings settings = new LevelSettings(WORLD, GameType.CREATIVE, false, Difficulty.PEACEFUL, true, rules,
                 WorldDataConfiguration.DEFAULT);
+        // -Pshots_world=normal : un monde ordinaire, pour voir la carte en terrain ; sinon plat, plus rapide et prévisible.
+        var preset = Boolean.getBoolean("crusadecraft.worldshots.normal") ? WorldPresets.NORMAL : WorldPresets.FLAT;
         mc.createWorldOpenFlows().createFreshLevel(WORLD, settings, new WorldOptions(20261003L, true, false),
-                registries -> registries.registryOrThrow(Registries.WORLD_PRESET).getHolderOrThrow(WorldPresets.FLAT).value().createWorldDimensions());
+                registries -> registries.registryOrThrow(Registries.WORLD_PRESET).getHolderOrThrow(preset).value().createWorldDimensions());
     }
 
     /** Un mur, neuf cadres, les royaumes IA ; tout est révélé sauf le premier, gardé pour le héraut. */
