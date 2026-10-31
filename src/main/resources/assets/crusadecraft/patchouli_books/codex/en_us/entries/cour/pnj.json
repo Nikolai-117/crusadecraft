@@ -1,0 +1,16 @@
+{
+  "name": "crusadecraft.codex.pnj",
+  "icon": "minecraft:name_tag",
+  "category": "crusadecraft:cour",
+  "sortnum": 20,
+  "pages": [
+    {
+      "type": "patchouli:text",
+      "text": "crusadecraft.codex.pnj.p0"
+    },
+    {
+      "type": "patchouli:text",
+      "text": "crusadecraft.codex.pnj.p1"
+    }
+  ]
+}

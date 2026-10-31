@@ -1,0 +1,15 @@
+{
+  "crusadecraft.person.open": "Fiche",
+  "crusadecraft.person.open.tip": "Prénom, âge, traits de caractère et biographie de cette personne.",
+  "crusadecraft.person.title": "Fiche de la personne",
+  "crusadecraft.person.name": "Prénom",
+  "crusadecraft.person.age": "Âge",
+  "crusadecraft.person.traits": "Traits : %s / %s (un clic les prend ou les rend ; deux contraires ne vont pas ensemble)",
+  "crusadecraft.person.bio": "Biographie",
+  "crusadecraft.person.bio.hint": "Ce que l'on sait de cette personne…",
+  "crusadecraft.person.save": "Enregistrer",
+  "crusadecraft.lineage.edited": "Fiche de %s enregistrée.",
+  "crusadecraft.codex.pnj": "Les gens de la cour",
+  "crusadecraft.codex.pnj.p0": "Dans le registre des lignées, le bouton $(l)Fiche$() d'une personne règle son prénom, son âge, jusqu'à quatre $(l)traits$() de caractère et sa $(l)biographie$().",
+  "crusadecraft.codex.pnj.p1": "Ceux qui vivent dans le monde (Minecraft Comes Alive) ont leur journée : à la $(l)cour$() de leur royaume le jour, chez eux le soir. Quand leur royaume est en $(l)guerre$(), ils se réfugient à la cour."
+}

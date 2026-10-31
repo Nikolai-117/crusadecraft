@@ -20,7 +20,7 @@ import java.util.function.Supplier;
 
 /** Le registre des lignées (P13) : l'ouvrir, et les demandes de l'écran, toutes revérifiées par {@link LineageService}. */
 public final class LineagePackets {
-    private static final int TEXT_MAX = 64;
+    private static final int TEXT_MAX = 400;
 
     private LineagePackets() {}
 
@@ -102,7 +102,7 @@ public final class LineagePackets {
      */
     public record Action(Op op, UUID target, String text, int a, int b, UUID realm, UUID shown) {
         public enum Op {
-            NEW_HOUSE, NEW_COMMUNITY, ADD_CHILD, MARRY, RENAME, ROLE, TOGGLE_ALIVE, REMOVE, GROW, SPAWN, SYNC_TREE, ADOPT
+            NEW_HOUSE, NEW_COMMUNITY, ADD_CHILD, MARRY, RENAME, ROLE, TOGGLE_ALIVE, REMOVE, GROW, SPAWN, SYNC_TREE, ADOPT, EDIT
         }
 
         public static Action of(Op op, UUID target, UUID shown) {
@@ -148,6 +148,7 @@ public final class LineagePackets {
                 case SPAWN -> LineageService.spawn(player, p.target);
                 case SYNC_TREE -> LineageService.syncTree(player, p.target);
                 case ADOPT -> LineageService.adoptNearby(player, p.target);
+                case EDIT -> LineageService.editPerson(player, p.target, p.text, p.a, p.b);
             };
             // Une maison ou une communauté qu'on vient de créer s'ouvre aussitôt.
             if (out.success() && p.op == Op.NEW_HOUSE) shown = last(state.houses());

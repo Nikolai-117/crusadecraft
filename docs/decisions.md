@@ -654,3 +654,16 @@ Demandé par Romain (5 octobre) : « que ça fonctionne par chunk directement »
   GameTest qui crée une vraie seconde colonie MineColonies, la rattache, la confie, la voit dans le Trésor, perd son
   gouverneur et la reprend. L'écran « Villes » n'a pas été photographié en jeu.
 
+
+**P20 (31 octobre 2026) — les gens de la cour**
+
+- **Fiche d'une personne** dans le registre des lignées (bouton « Fiche ») : prénom, âge, jusqu'à quatre traits de
+  caractère pris dans le catalogue existant (deux contraires ne vont pas ensemble), biographie libre de 300
+  caractères sans codes de mise en forme. Le texte est celui de Romain : rien n'est pré-rempli.
+- **La journée** des personnes incarnées (Minecraft Comes Alive) : à la cour de leur royaume de 1 000 à 11 000
+  (centre de la capitale), chez elles ensuite, à la cour jour et nuit si leur royaume est en guerre. On ne leur donne
+  qu'un but de marche (mémoire `WALK_TARGET` des villageois), jamais plus loin que 512 blocs : leur propre
+  intelligence fait le reste et peut l'emporter. Réglable (`pnj.routines`).
+- **Pas fait** : boutons « Apparence » et « Arbre » de MCA (son écran ne s'ouvre que par ses propres paquets),
+  fêtes et deuils animés, unification des deux généalogies (maison P4 et registre P13), répliques par datapack.
+  Les traits et la biographie s'ajoutent aux personnes sans changer la version des données (absents = aucun).

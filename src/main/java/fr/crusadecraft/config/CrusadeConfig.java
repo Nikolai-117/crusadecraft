@@ -89,6 +89,7 @@ public final class CrusadeConfig {
         public final ForgeConfigSpec.IntValue domainPenalty;
         public final ForgeConfigSpec.IntValue governorTaxShare;
         public final ForgeConfigSpec.IntValue governorLevyShare;
+        public final ForgeConfigSpec.BooleanValue routines;
         public final ForgeConfigSpec.IntValue claimCommandRadius;
         public final ForgeConfigSpec.EnumValue<fr.crusadecraft.core.world.EntryTitles.Mode> entryMessages;
         public final ForgeConfigSpec.BooleanValue protection;
@@ -313,6 +314,11 @@ public final class CrusadeConfig {
                     .defineInRange("partImpotsCouronne", 50, 0, 100);
             governorLevyShare = b.comment("Part des levées d'une ville qui revient à la couronne quand on la confie à un gouverneur (modifiable ensuite).")
                     .defineInRange("partLeveesCouronne", 50, 0, 100);
+            b.pop();
+
+            b.comment("Les gens du registre qui vivent dans le monde (P20).").push("pnj");
+            routines = b.comment("Leur journée : à la cour le jour, chez eux le soir, réfugiés à la cour quand leur royaume est en guerre.")
+                    .define("routines", true);
             b.pop();
 
             b.comment("Diplomatie, titres et vassalité").push("diplomatie");

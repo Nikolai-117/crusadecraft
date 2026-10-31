@@ -160,7 +160,8 @@ public final class LineageService {
 
     private static LineageView.Row row(LineageState state, Person p, int group, boolean member, UUID house) {
         String spouse = state.person(p.spouse()).map(Person::name).orElse("");
-        return new LineageView.Row(p.id(), state.fullName(p), p.female(), p.age(), p.alive(), p.role(), group, spouse, p.inWorld(), member);
+        return new LineageView.Row(p.id(), state.fullName(p), p.female(), p.age(), p.alive(), p.role(), group, spouse, p.inWorld(), member,
+                p.traitMask(), p.bio());
     }
 
     // ------------------------------------------------------------------ créer
@@ -250,6 +251,41 @@ public final class LineageService {
         }
         data(player.server).setDirty();
         return Outcome.ok(Component.translatable("crusadecraft.lineage.renamed", name.get()));
+    }
+
+    /**
+     * La fiche d'une personne (P20) : son prénom, son âge, ses traits et ce qu'on écrit d'elle. {@code text} porte le
+     * prénom puis, après un saut de ligne, la biographie ; {@code traitMask} les traits en bits.
+     */
+    public static Outcome editPerson(ServerPlayer player, UUID personId, String text, int age, int traitMask) {
+        if (!WorldEditService.canEdit(player)) return denied();
+        Optional<Person> p = editable(player, personId);
+        if (p.isEmpty()) return Outcome.no("crusadecraft.lineage.unknown");
+        String raw = text == null ? "" : text;
+        int cut = raw.indexOf('\n');
+        Optional<String> name = name(cut < 0 ? raw : raw.substring(0, cut));
+        if (name.isEmpty()) return Outcome.no("crusadecraft.mapedit.name_invalid");
+        String bio = cut < 0 ? "" : cleanBio(raw.substring(cut + 1));
+        List<fr.crusadecraft.core.character.Trait> wanted = new ArrayList<>();
+        for (fr.crusadecraft.core.character.Trait t : fr.crusadecraft.core.character.Trait.values()) {
+            if ((traitMask & (1 << t.ordinal())) != 0) wanted.add(t);
+        }
+        Person person = p.get();
+        person.setName(name.get());
+        person.setAge(age);
+        person.setBio(bio);
+        person.setTraits(wanted, Person.MAX_TRAITS);
+        LineageState state = state(player.server);
+        Entity e = player.serverLevel().getEntity(personId);
+        if (e != null) McaBridge.rename(e, state.fullName(person));
+        data(player.server).setDirty();
+        return Outcome.ok(Component.translatable("crusadecraft.lineage.edited", state.fullName(person)));
+    }
+
+    /** Une biographie sans codes de mise en forme, sauts de ligne gardés, bornée. */
+    static String cleanBio(String raw) {
+        String s = raw.replaceAll("§.?", "").replace('\r', ' ').replaceAll("[\\p{Cntrl}&&[^\n]]", " ").strip();
+        return s.length() > Person.BIO_MAX ? s.substring(0, Person.BIO_MAX) : s;
     }
 
     public static Outcome setRole(ServerPlayer player, UUID personId, Role role) {

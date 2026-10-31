@@ -28,10 +28,16 @@ public final class Person {
     private UUID father, mother, spouse;
     /** Le royaume qu'elle sert (IA ou joueur), s'il y en a un. */
     private UUID realm;
+    /** Ses traits de caractère (P20), sans contraires ; et ce que Romain écrit de lui. */
+    private final java.util.List<fr.crusadecraft.core.character.Trait> traits = new java.util.ArrayList<>();
+    private String bio = "";
     private UUID community;
     /** Un villageois l'incarne dans le monde (Comes Alive) : dernière position connue. */
     private ResourceLocation worldDim;
     private BlockPos worldPos;
+
+    /** Traits au plus, et longueur de la biographie. */
+    public static final int MAX_TRAITS = 4, BIO_MAX = 300;
 
     public Person(UUID id, String name, boolean female, int age) {
         this.id = id;
@@ -52,6 +58,28 @@ public final class Person {
     public UUID mother() { return mother; }
     public UUID spouse() { return spouse; }
     public UUID realm() { return realm; }
+    public java.util.List<fr.crusadecraft.core.character.Trait> traits() { return java.util.Collections.unmodifiableList(traits); }
+    public String bio() { return bio; }
+
+    /** Les traits, en écartant un trait contraire à un trait déjà retenu, et au plus {@code max}. */
+    public void setTraits(java.util.Collection<fr.crusadecraft.core.character.Trait> wanted, int max) {
+        traits.clear();
+        for (fr.crusadecraft.core.character.Trait t : wanted) {
+            if (traits.size() >= max) break;
+            boolean clash = false;
+            for (fr.crusadecraft.core.character.Trait k : traits) if (k.conflictsWith(t)) clash = true;
+            if (!clash) traits.add(t);
+        }
+    }
+
+    public void setBio(String bio) { this.bio = bio == null ? "" : bio; }
+
+    /** Les traits en masque de bits (rang dans {@code Trait.values()}), pour l'écran. */
+    public int traitMask() {
+        int m = 0;
+        for (fr.crusadecraft.core.character.Trait t : traits) m |= 1 << t.ordinal();
+        return m;
+    }
     public UUID community() { return community; }
     public boolean inWorld() { return worldPos != null; }
     public ResourceLocation worldDim() { return worldDim; }
@@ -95,6 +123,12 @@ public final class Person {
         put(t, "spouse", spouse);
         put(t, "realm", realm);
         put(t, "community", community);
+        if (!traits.isEmpty()) {
+            net.minecraft.nbt.ListTag tl = new net.minecraft.nbt.ListTag();
+            for (fr.crusadecraft.core.character.Trait k : traits) tl.add(net.minecraft.nbt.StringTag.valueOf(k.name()));
+            t.put("traits", tl);
+        }
+        if (!bio.isEmpty()) t.putString("bio", bio);
         if (worldPos != null) {
             t.putString("worldDim", worldDim.toString());
             t.put("worldPos", NbtUtils.writeBlockPos(worldPos));
@@ -121,6 +155,17 @@ public final class Person {
         p.spouse = get(t, "spouse");
         p.realm = get(t, "realm");
         p.community = get(t, "community");
+        net.minecraft.nbt.ListTag tl = t.getList("traits", net.minecraft.nbt.Tag.TAG_STRING);
+        java.util.List<fr.crusadecraft.core.character.Trait> wanted = new java.util.ArrayList<>();
+        for (int i = 0; i < tl.size(); i++) {
+            try {
+                wanted.add(fr.crusadecraft.core.character.Trait.valueOf(tl.getString(i)));
+            } catch (IllegalArgumentException ignored) {
+                // Un trait disparu d'une version à l'autre : on l'oublie.
+            }
+        }
+        p.setTraits(wanted, MAX_TRAITS);
+        p.bio = t.getString("bio");
         if (t.contains("worldPos")) {
             p.worldDim = ResourceLocation.tryParse(t.getString("worldDim"));
             p.worldPos = NbtUtils.readBlockPos(t.getCompound("worldPos"));

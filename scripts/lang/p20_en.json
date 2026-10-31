@@ -1,0 +1,15 @@
+{
+  "crusadecraft.person.open": "Sheet",
+  "crusadecraft.person.open.tip": "First name, age, character traits and biography of this person.",
+  "crusadecraft.person.title": "Person sheet",
+  "crusadecraft.person.name": "First name",
+  "crusadecraft.person.age": "Age",
+  "crusadecraft.person.traits": "Traits: %s / %s (a click takes or drops them; two opposites do not go together)",
+  "crusadecraft.person.bio": "Biography",
+  "crusadecraft.person.bio.hint": "What is known of this person…",
+  "crusadecraft.person.save": "Save",
+  "crusadecraft.lineage.edited": "Sheet of %s saved.",
+  "crusadecraft.codex.pnj": "The people of the court",
+  "crusadecraft.codex.pnj.p0": "In the lineage register, a person's $(l)Sheet$() button sets their first name, age, up to four character $(l)traits$() and their $(l)biography$().",
+  "crusadecraft.codex.pnj.p1": "Those who live in the world (Minecraft Comes Alive) have their day: at their realm's $(l)court$() by day, at home in the evening. When their realm is at $(l)war$(), they take refuge at court."
+}

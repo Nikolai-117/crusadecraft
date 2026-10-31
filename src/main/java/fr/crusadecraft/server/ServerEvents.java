@@ -142,6 +142,7 @@ public final class ServerEvents {
         fr.crusadecraft.compat.dynmap.DynmapBridge.tick(server, t);
         // Les terres des cartes du client (Xaero) : toutes les cinq secondes, seulement si elles ont changé.
         if (t % 100 == 60) fr.crusadecraft.core.world.TerritorySync.tick(server);
+        if (t % 100 == 80) fr.crusadecraft.core.lineage.RoutineService.tick(server);
         // La carte en terrain (P18b) : la vraie surface des chunks parcourus, toutes les deux secondes.
         if (t % 40 == 17) fr.crusadecraft.core.world.terrain.TerrainService.tick(server);
     }

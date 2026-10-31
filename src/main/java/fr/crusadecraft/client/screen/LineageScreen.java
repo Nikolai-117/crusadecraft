@@ -153,6 +153,7 @@ public class LineageScreen extends Screen {
         if (person != null && view.canEdit()) {
             List<Button> group = new ArrayList<>();
             group.add(button("crusadecraft.lineage.rename", null, b -> minecraft.setScreen(LineageForm.rename(this, person.id(), firstName(person.name())))));
+            group.add(button("crusadecraft.person.open", "crusadecraft.person.open.tip", b -> minecraft.setScreen(new PersonForm(this, person, firstName(person.name())))));
             Component roleLabel = Component.translatable("crusadecraft.lineage.role", Component.translatable(person.role().key()));
             Button role = Button.builder(roleLabel, b -> {
                 Role[] all = Role.values();
