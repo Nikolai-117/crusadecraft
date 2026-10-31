@@ -91,6 +91,7 @@ public final class ServerEvents {
         fr.crusadecraft.core.world.TerritorySync.onServerStopped();
         fr.crusadecraft.core.diplomacy.DiplomacyService.onServerStopped();
         WarFieldService.onServerStopped();
+        fr.crusadecraft.core.war.ArmyService.onServerStopped();
         fr.crusadecraft.core.court.TournamentService.onServerStopped();
         fr.crusadecraft.core.world.terrain.TerrainService.onServerStopped();
     }
@@ -139,6 +140,7 @@ public final class ServerEvents {
         if (t % 400 == 200) fr.crusadecraft.core.place.PlaceService.sync(server);
         // Le passage d'une frontière de chunk à l'autre : une vérification par seconde suffit.
         if (t % 20 == 7) fr.crusadecraft.core.world.EntryTitles.tick(server);
+        if (t % 20 == 11) fr.crusadecraft.core.war.ArmyService.tick(server);
         fr.crusadecraft.compat.dynmap.DynmapBridge.tick(server, t);
         // Les terres des cartes du client (Xaero) : toutes les cinq secondes, seulement si elles ont changé.
         if (t % 100 == 60) fr.crusadecraft.core.world.TerritorySync.tick(server);
@@ -164,6 +166,7 @@ public final class ServerEvents {
         if (event.getEntity().level() instanceof ServerLevel level) {
             WarFieldService.onDeath(level.getServer(), event.getEntity());
             fr.crusadecraft.core.lineage.LineageService.onDeath(level.getServer(), event.getEntity());
+            fr.crusadecraft.core.war.ArmyService.onDeath(level.getServer(), event.getEntity());
         }
     }
 

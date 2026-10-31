@@ -1,0 +1,14 @@
+{
+  "crusadecraft.army.soldier": "Man-at-arms of %s",
+  "crusadecraft.army.not_raised": "Raise the army at the War table first.",
+  "crusadecraft.army.no_camp": "Go within %s blocks of a built military camp of your realm (boundary staff › Military camp).",
+  "crusadecraft.army.already": "Your army is already here: %s soldier(s).",
+  "crusadecraft.army.mustered": "%s soldier(s) mustered at the camp (one per %s men). /crusade armee suivre, tenir or demobiliser.",
+  "crusadecraft.army.none": "No soldier of your army is mustered here.",
+  "crusadecraft.army.follow": "%s soldier(s) follow you.",
+  "crusadecraft.army.hold": "%s soldier(s) hold the position where you are.",
+  "crusadecraft.army.dismissed": "%s soldier(s) go home.",
+  "crusadecraft.codex.armee": "The army in the flesh",
+  "crusadecraft.codex.armee.p0": "With the army raised (War table), go near a built $(l)military camp$() of your realm and type $(l)/crusade armee rassembler$(): your levies appear as real soldiers, one per ten men, twenty-four at most.",
+  "crusadecraft.codex.armee.p1": "$(l)/crusade armee suivre$(): they follow you. $(l)tenir$(): they hold where you stand. $(l)demobiliser$(): the survivors go home. A soldier killed is ten men fewer in your army."
+}

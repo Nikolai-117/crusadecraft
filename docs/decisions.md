@@ -697,3 +697,17 @@ Demandé par Romain (5 octobre) : « que ça fonctionne par chunk directement »
 - **Pas fait** : villages qui grandissent de camp en bourg, nouveaux villages peuplés, disputes de lieux.
 - Un test du conseil (un citoyen MineColonies qui marche jusqu'à la réunion) devient facultatif : il dépend des
   chemins que MineColonies trouve et échouait au hasard, sans rapport avec le mod.
+
+**P23 (31 octobre 2026) — les levées en chair et en os**
+
+- Armée levée à la Table de guerre, le souverain se rend près d'un **camp militaire** bâti de son royaume (48 blocs)
+  et tape `/crusade armee rassembler` : l'armée apparaît en vraies unités Hundred Years War (des golems de fer à
+  défaut, comme pour les sièges), un soldat pour 10 hommes, 24 au plus (réglable, section `guerre`). Le reste de
+  l'armée reste un chiffre.
+- **Ordres** : `suivre` (le souverain), `tenir` (là où il se tient) ; un soldat qui se bat garde sa cible.
+  `demobiliser` : les survivants quittent le monde, les hommes restent comptés.
+- **Pertes réelles** : un soldat tué retire 10 hommes à l'armée du royaume (l'armée se reforme ensuite comme avant,
+  avec les jours). Les soldats portent l'étiquette de leur royaume : on les retrouve après un redémarrage, mais leur
+  ordre retombe sur « tenir » leur place.
+- **Pas fait** : ordres depuis la carte (seulement par commande), formations, armées de l'ordinateur visibles et en
+  marche, pions sur la carte hors des chunks chargés, bouton dans l'écran de guerre.

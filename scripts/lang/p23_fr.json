@@ -1,0 +1,14 @@
+{
+  "crusadecraft.army.soldier": "Homme d'armes de %s",
+  "crusadecraft.army.not_raised": "Levez d'abord l'armée à la Table de guerre.",
+  "crusadecraft.army.no_camp": "Rendez-vous à moins de %s blocs d'un camp militaire bâti de votre royaume (bâton de bornage › Camp militaire).",
+  "crusadecraft.army.already": "Votre armée est déjà là : %s soldat(s).",
+  "crusadecraft.army.mustered": "%s soldat(s) rassemblé(s) au camp (un pour %s hommes). /crusade armee suivre, tenir ou demobiliser.",
+  "crusadecraft.army.none": "Aucun soldat de votre armée n'est rassemblé ici.",
+  "crusadecraft.army.follow": "%s soldat(s) vous suivent.",
+  "crusadecraft.army.hold": "%s soldat(s) tiennent la position où vous êtes.",
+  "crusadecraft.army.dismissed": "%s soldat(s) rentrent chez eux.",
+  "crusadecraft.codex.armee": "L'armée en chair et en os",
+  "crusadecraft.codex.armee.p0": "Armée levée (Table de guerre), rends-toi près d'un $(l)camp militaire$() bâti de ton royaume et tape $(l)/crusade armee rassembler$() : tes levées apparaissent en vrais soldats, un pour dix hommes, vingt-quatre au plus.",
+  "crusadecraft.codex.armee.p1": "$(l)/crusade armee suivre$() : ils te suivent. $(l)tenir$() : ils gardent l'endroit où tu es. $(l)demobiliser$() : les survivants rentrent. Un soldat tué, ce sont dix hommes de moins dans ton armée."
+}

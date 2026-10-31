@@ -2046,5 +2046,17 @@
   "crusadecraft.civ.undone": "%s computer construction(s) undone: their blocks gradually return to what they were.",
   "crusadecraft.codex.civ": "Realms that build",
   "crusadecraft.codex.civ.p0": "If you turn it on (the $(l)civilisations$() section of the settings, off at first), the computer's realms build on their own: a tower, a camp, an outpost, then a fort for duchies and above, on their own lands, near their cities.",
-  "crusadecraft.codex.civ.p1": "They only build in loaded chunks, never in a colony, only on flat natural ground, and within the allowed zone. Every replaced block is noted: $(l)/crusade civ annuler$() undoes everything. Back up your world before turning it on."
+  "crusadecraft.codex.civ.p1": "They only build in loaded chunks, never in a colony, only on flat natural ground, and within the allowed zone. Every replaced block is noted: $(l)/crusade civ annuler$() undoes everything. Back up your world before turning it on.",
+  "crusadecraft.army.soldier": "Man-at-arms of %s",
+  "crusadecraft.army.not_raised": "Raise the army at the War table first.",
+  "crusadecraft.army.no_camp": "Go within %s blocks of a built military camp of your realm (boundary staff › Military camp).",
+  "crusadecraft.army.already": "Your army is already here: %s soldier(s).",
+  "crusadecraft.army.mustered": "%s soldier(s) mustered at the camp (one per %s men). /crusade armee suivre, tenir or demobiliser.",
+  "crusadecraft.army.none": "No soldier of your army is mustered here.",
+  "crusadecraft.army.follow": "%s soldier(s) follow you.",
+  "crusadecraft.army.hold": "%s soldier(s) hold the position where you are.",
+  "crusadecraft.army.dismissed": "%s soldier(s) go home.",
+  "crusadecraft.codex.armee": "The army in the flesh",
+  "crusadecraft.codex.armee.p0": "With the army raised (War table), go near a built $(l)military camp$() of your realm and type $(l)/crusade armee rassembler$(): your levies appear as real soldiers, one per ten men, twenty-four at most.",
+  "crusadecraft.codex.armee.p1": "$(l)/crusade armee suivre$(): they follow you. $(l)tenir$(): they hold where you stand. $(l)demobiliser$(): the survivors go home. A soldier killed is ten men fewer in your army."
 }

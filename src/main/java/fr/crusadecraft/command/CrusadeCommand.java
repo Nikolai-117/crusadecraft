@@ -80,6 +80,16 @@ public final class CrusadeCommand {
                                 .suggests((ctx, b) -> SharedSuggestionProvider.suggest(
                                         CrusadeSavedData.get(ctx.getSource().getServer()).realms().stream().map(Realm::name), b))
                                 .executes(CrusadeCommand::dissolve)))
+                // Les levées en chair et en os (P23), pour le souverain.
+                .then(Commands.literal("armee")
+                        .then(Commands.literal("rassembler").executes(ctx -> say(ctx,
+                                fr.crusadecraft.core.war.ArmyService.muster(ctx.getSource().getPlayerOrException()))))
+                        .then(Commands.literal("suivre").executes(ctx -> say(ctx, fr.crusadecraft.core.war.ArmyService.order(
+                                ctx.getSource().getPlayerOrException(), fr.crusadecraft.core.war.ArmyService.Order.FOLLOW))))
+                        .then(Commands.literal("tenir").executes(ctx -> say(ctx, fr.crusadecraft.core.war.ArmyService.order(
+                                ctx.getSource().getPlayerOrException(), fr.crusadecraft.core.war.ArmyService.Order.HOLD))))
+                        .then(Commands.literal("demobiliser").executes(ctx -> say(ctx,
+                                fr.crusadecraft.core.war.ArmyService.dismiss(ctx.getSource().getPlayerOrException())))))
                 // Les civilisations autonomes (P22) : où elles en sont, et tout défaire.
                 .then(Commands.literal("civ").requires(src -> src.hasPermission(2))
                         .executes(ctx -> {

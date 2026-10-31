@@ -130,6 +130,8 @@ public final class CrusadeConfig {
         public final ForgeConfigSpec.BooleanValue sieges;
         public final ForgeConfigSpec.IntValue siegeRadius;
         public final ForgeConfigSpec.IntValue captureSeconds;
+        public final ForgeConfigSpec.IntValue menPerSoldier;
+        public final ForgeConfigSpec.IntValue armyCap;
         public final ForgeConfigSpec.BooleanValue raids;
         public final ForgeConfigSpec.IntValue raidMinutes;
         public final ForgeConfigSpec.BooleanValue antiGrief;
@@ -368,6 +370,10 @@ public final class CrusadeConfig {
             sieges = b.comment("Sièges en jeu : approcher le siège d'un royaume ennemi fait paraître sa garnison et sa bannière à capturer.")
                     .define("sieges", true);
             siegeRadius = b.comment("Distance au siège ennemi à partir de laquelle le siège commence.").defineInRange("rayonSiege", 48, 16, 256);
+            menPerSoldier = b.comment("Levées en chair et en os (P23) : combien d'hommes de l'armée fait un soldat rassemblé au camp.")
+                    .defineInRange("hommesParSoldat", 10, 1, 1000);
+            armyCap = b.comment("Soldats au plus rassemblés en même temps par un royaume (le reste de l'armée reste un chiffre).")
+                    .defineInRange("soldatsMax", 24, 1, 200);
             captureSeconds = b.comment("Secondes à tenir la bannière, sans garnison autour, pour prendre la province.")
                     .defineInRange("secondesCapture", 10, 3, 600);
             raids = b.comment("Les ennemis lancent des raids sur vos colonies (vos gardes MineColonies les repoussent).").define("raids", true);
