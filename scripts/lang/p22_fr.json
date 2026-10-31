@@ -1,0 +1,8 @@
+{
+  "crusadecraft.civ.info.on": "Civilisations autonomes : actives. %s construction(s) posée(s) par l'ordinateur de lui-même. /crusade civ annuler les défait.",
+  "crusadecraft.civ.info.off": "Civilisations autonomes : coupées (section civilisations des réglages). %s construction(s) posée(s) par l'ordinateur de lui-même.",
+  "crusadecraft.civ.undone": "%s construction(s) de l'ordinateur défaite(s) : leurs blocs reviennent peu à peu à leur état d'avant.",
+  "crusadecraft.codex.civ": "Les royaumes qui bâtissent",
+  "crusadecraft.codex.civ.p0": "Si tu l'actives (section $(l)civilisations$() des réglages, coupée au départ), les royaumes de l'ordinateur bâtissent d'eux-mêmes : une tour, un camp, un avant-poste, puis un fort pour les duchés et au-delà, sur leurs propres terres, près de leurs villes.",
+  "crusadecraft.codex.civ.p1": "Ils ne bâtissent que dans les chunks chargés, jamais dans une colonie, seulement sur un sol naturel et plat, et dans la zone permise. Chaque bloc remplacé est noté : $(l)/crusade civ annuler$() défait tout. Sauvegarde ton monde avant d'activer."
+}

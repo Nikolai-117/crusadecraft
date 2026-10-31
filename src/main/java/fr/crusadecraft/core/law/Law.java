@@ -14,7 +14,9 @@ public enum Law {
     AUTORITE(1, level("aucune", null), level("limitee", null), level("elevee", Research.CHANCELLERIE),
             level("absolue", Research.AUTORITE_ROYALE)),
     CODE_CHEVALERESQUE(0, level("aucun", null), level("proclame", Research.CHEVALERIE)),
-    JUSTICE_ROYALE(0, level("coutumiere", null), level("royale", Research.CHANCELLERIE));
+    JUSTICE_ROYALE(0, level("coutumiere", null), level("royale", Research.CHANCELLERIE)),
+    /** Qui succède à la tête de la maison royale (P21) : l'ordre suit {@code LifeService.Succession}. */
+    SUCCESSION(0, level("primogeniture", null), level("egalitaire", null), level("anciennete", null), level("elective", null));
 
     /** Un niveau de loi et la recherche qui l'ouvre ({@code null} : toujours ouvert). */
     public record Level(String id, ResourceLocation research) {}

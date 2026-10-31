@@ -246,6 +246,7 @@ public final class SiteService {
                     BlockPos below = pos.below(d);
                     BlockState here = level.getBlockState(below);
                     if (!here.canBeReplaced() && here.getFluidState().isEmpty()) break;
+                    journal(level, site, below, here);
                     level.setBlock(below, p.state(), Block.UPDATE_ALL);
                     changed++;
                 }
@@ -255,6 +256,7 @@ public final class SiteService {
                 // On ne vide jamais un coffre, un tonneau ou un four : ce qui a un contenu reste.
                 boolean keep = want.isAir() && level.getBlockEntity(pos) != null;
                 if (!here.equals(want) && !keep && !(want.isAir() && here.isAir())) {
+                    journal(level, site, pos, here);
                     level.setBlock(pos, want, Block.UPDATE_ALL);
                     changed++;
                 }
@@ -267,6 +269,49 @@ public final class SiteService {
             PLANS.remove(site.id());
         }
         return changed;
+    }
+
+    /** Un chantier de l'ordinateur note ce qu'il remplace, sous son propre identifiant : de quoi le défaire bloc par bloc. */
+    private static void journal(ServerLevel level, Site site, BlockPos pos, BlockState before) {
+        if (!site.auto()) return;
+        data(level.getServer()).wars().damage().record(site.id(), level.dimension().location(), pos.immutable(), before, null);
+    }
+
+    /**
+     * Un royaume de l'ordinateur pose une construction de lui-même (P22) : en chantier, jamais trop près d'une autre,
+     * avec le journal de ses blocs. Les vérifications du terrain sont faites par celui qui choisit l'endroit.
+     */
+    public static Optional<Site> placeForAi(MinecraftServer server, ServerLevel level, SiteKind kind, AiRealm owner, BlockPos ground, Direction front) {
+        CrusadeSavedData data = data(server);
+        for (Site other : data.world().sites()) {
+            if (!other.dimension().equals(level.dimension().location())) continue;
+            double room = (kind.size() + other.kind().size()) / 2.0 + 3;
+            if (Math.abs(other.anchor().getX() - ground.getX()) < room && Math.abs(other.anchor().getZ() - ground.getZ()) < room) return Optional.empty();
+        }
+        Site site = new Site(UUID.randomUUID(), kind, nearestPlace(server, level, ground), owner.id(), level.dimension().location(), ground, front,
+                owner.color(), false, RealmService.currentDay(server));
+        site.setAuto(true);
+        data.world().add(site);
+        data.setDirty();
+        CrusadeCraft.LOGGER.info("CrusadeCraft : {} pose de lui-même un chantier {} en {}", owner.place(), kind, ground);
+        return Optional.of(site);
+    }
+
+    /**
+     * Défait les constructions que l'ordinateur a posées de lui-même : elles quittent le registre, et chaque bloc
+     * qu'elles avaient remplacé revient, quelques dizaines par seconde. Renvoie le nombre de constructions défaites.
+     */
+    public static int undoAuto(MinecraftServer server) {
+        CrusadeSavedData data = data(server);
+        List<Site> auto = new java.util.ArrayList<>();
+        for (Site s : data.world().sites()) if (s.auto()) auto.add(s);
+        for (Site s : auto) {
+            data.world().removeSite(s.id());
+            PLANS.remove(s.id());
+            data.wars().damage().release(s.id());
+        }
+        data.setDirty();
+        return auto.size();
     }
 
     /** Banc d'essai : fait avancer un chantier tout de suite (sans attendre les ticks). */

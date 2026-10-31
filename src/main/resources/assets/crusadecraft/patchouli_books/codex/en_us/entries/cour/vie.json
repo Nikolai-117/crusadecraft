@@ -1,0 +1,16 @@
+{
+  "name": "crusadecraft.codex.vie",
+  "icon": "minecraft:clock",
+  "category": "crusadecraft:cour",
+  "sortnum": 21,
+  "pages": [
+    {
+      "type": "patchouli:text",
+      "text": "crusadecraft.codex.vie.p0"
+    },
+    {
+      "type": "patchouli:text",
+      "text": "crusadecraft.codex.vie.p1"
+    }
+  ]
+}

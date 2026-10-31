@@ -90,6 +90,14 @@ public final class CrusadeConfig {
         public final ForgeConfigSpec.IntValue governorTaxShare;
         public final ForgeConfigSpec.IntValue governorLevyShare;
         public final ForgeConfigSpec.BooleanValue routines;
+        public final ForgeConfigSpec.BooleanValue lifeCycle;
+        public final ForgeConfigSpec.IntValue daysPerYear;
+        public final ForgeConfigSpec.BooleanValue lineageDeaths;
+        public final ForgeConfigSpec.BooleanValue civActive;
+        public final ForgeConfigSpec.IntValue civDays;
+        public final ForgeConfigSpec.IntValue civChance;
+        public final ForgeConfigSpec.IntValue civMaxPerRealm;
+        public final ForgeConfigSpec.IntValue civRadius;
         public final ForgeConfigSpec.IntValue claimCommandRadius;
         public final ForgeConfigSpec.EnumValue<fr.crusadecraft.core.world.EntryTitles.Mode> entryMessages;
         public final ForgeConfigSpec.BooleanValue protection;
@@ -319,6 +327,24 @@ public final class CrusadeConfig {
             b.comment("Les gens du registre qui vivent dans le monde (P20).").push("pnj");
             routines = b.comment("Leur journée : à la cour le jour, chez eux le soir, réfugiés à la cour quand leur royaume est en guerre.")
                     .define("routines", true);
+            b.pop();
+
+            b.comment("Le cycle de vie (P21) : chacun vieillit et peut mourir ; les héritiers prennent la suite. Le joueur ne vieillit pas.")
+                    .push("vie");
+            lifeCycle = b.comment("Faire passer les années.").define("actif", true);
+            daysPerYear = b.comment("Combien de jours du monde font une année (un jour du monde dure 20 minutes).").defineInRange("joursParAn", 20, 1, 3650);
+            lineageDeaths = b.comment("Les gens du registre des lignées vieillissent et meurent aussi (sinon : seulement les souverains de l'ordinateur et leur conseil).")
+                    .define("mortsDuRegistre", true);
+            b.pop();
+
+            b.comment("Les civilisations autonomes (P22) : les royaumes de l'ordinateur bâtissent d'eux-mêmes tours, camps et forts sur leurs terres.",
+                    "C'est la seule partie du mod qui change le monde sans geste de votre part : sauvegardez le monde avant de l'activer.",
+                    "Seulement dans les chunks chargés, jamais dans une colonie, chaque bloc noté ; /crusade civ annuler défait tout.").push("civilisations");
+            civActive = b.comment("Laisser les royaumes de l'ordinateur bâtir d'eux-mêmes (coupé par défaut).").define("actif", false);
+            civDays = b.comment("Tous les combien de jours du monde ils y pensent.").defineInRange("joursEntreChantiers", 5, 1, 365);
+            civChance = b.comment("Chances, en pour cent, qu'un royaume se décide ce jour-là.").defineInRange("chance", 50, 0, 100);
+            civMaxPerRealm = b.comment("Constructions au plus qu'un royaume pose de lui-même.").defineInRange("maxParRoyaume", 4, 0, 32);
+            civRadius = b.comment("Zone permise : à moins de tant de blocs de l'origine du monde (0 : partout).").defineInRange("rayonAutorise", 3000, 0, 100000);
             b.pop();
 
             b.comment("Diplomatie, titres et vassalité").push("diplomatie");

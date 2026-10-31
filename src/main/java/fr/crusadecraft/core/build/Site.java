@@ -35,6 +35,8 @@ public final class Site {
     /** La communauté du registre des lignées qui l'habite (village), sinon {@code null}. */
     private UUID community;
     private final long createdDay;
+    /** Posée par un royaume de l'ordinateur de lui-même (P22) : chaque bloc remplacé est noté, pour pouvoir tout défaire. */
+    private boolean auto;
 
     public Site(UUID id, SiteKind kind, String name, UUID owner, ResourceLocation dimension, BlockPos anchor, Direction facing,
                 int color, boolean instant, long createdDay) {
@@ -60,6 +62,8 @@ public final class Site {
     public int color() { return color; }
     public boolean instant() { return instant; }
     public int progress() { return progress; }
+    public boolean auto() { return auto; }
+    public void setAuto(boolean auto) { this.auto = auto; }
     public boolean built() { return built; }
     public int province() { return province; }
     public long createdDay() { return createdDay; }
@@ -98,6 +102,7 @@ public final class Site {
         t.putInt("province", province);
         t.putLong("created", createdDay);
         if (community != null) t.putUUID("community", community);
+        if (auto) t.putBoolean("auto", true);
         return t;
     }
 
@@ -111,6 +116,7 @@ public final class Site {
         s.built = t.getBoolean("built");
         s.province = t.contains("province") ? t.getInt("province") : -1;
         if (t.hasUUID("community")) s.community = t.getUUID("community");
+        s.auto = t.getBoolean("auto");
         return s;
     }
 }

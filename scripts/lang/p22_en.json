@@ -1,0 +1,8 @@
+{
+  "crusadecraft.civ.info.on": "Autonomous civilisations: on. %s construction(s) placed by the computer on its own. /crusade civ annuler undoes them.",
+  "crusadecraft.civ.info.off": "Autonomous civilisations: off (civilisations section of the settings). %s construction(s) placed by the computer on its own.",
+  "crusadecraft.civ.undone": "%s computer construction(s) undone: their blocks gradually return to what they were.",
+  "crusadecraft.codex.civ": "Realms that build",
+  "crusadecraft.codex.civ.p0": "If you turn it on (the $(l)civilisations$() section of the settings, off at first), the computer's realms build on their own: a tower, a camp, an outpost, then a fort for duchies and above, on their own lands, near their cities.",
+  "crusadecraft.codex.civ.p1": "They only build in loaded chunks, never in a colony, only on flat natural ground, and within the allowed zone. Every replaced block is noted: $(l)/crusade civ annuler$() undoes everything. Back up your world before turning it on."
+}

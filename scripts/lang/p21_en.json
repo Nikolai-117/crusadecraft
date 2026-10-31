@@ -1,0 +1,16 @@
+{
+  "crusadecraft.law.succession": "Succession",
+  "crusadecraft.law.succession.primogeniture": "Primogeniture",
+  "crusadecraft.law.succession.primogeniture.desc": "The eldest child inherits the house, sons first.",
+  "crusadecraft.law.succession.egalitaire": "Equal",
+  "crusadecraft.law.succession.egalitaire.desc": "The eldest child inherits, daughter or son.",
+  "crusadecraft.law.succession.anciennete": "Seniority",
+  "crusadecraft.law.succession.anciennete.desc": "The oldest member of the house inherits.",
+  "crusadecraft.law.succession.elective": "Elective",
+  "crusadecraft.law.succession.elective.desc": "The house picks its most notable adult (the one with the most traits).\nThe ambitious like it.",
+  "crusadecraft.chronicle.death": "%s died aged %s.",
+  "crusadecraft.news.succession": "%s has died; %s succeeds them at the head of %s.",
+  "crusadecraft.codex.vie": "The cycle of life",
+  "crusadecraft.codex.vie.p0": "Time passes: every $(l)20 days$() of the world (configurable), everyone ages one year. Before 50, death is rare; then old age takes over, and nobody lives past 100. You, the player, do not age.",
+  "crusadecraft.codex.vie.p1": "When the head of a house dies, the heir takes their place according to your realm's $(l)Succession$() law: primogeniture, equal, seniority or elective. The computer's rulers die too, and the world learns the name of their successor."
+}

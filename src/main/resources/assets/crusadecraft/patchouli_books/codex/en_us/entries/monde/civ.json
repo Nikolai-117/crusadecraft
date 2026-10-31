@@ -1,0 +1,16 @@
+{
+  "name": "crusadecraft.codex.civ",
+  "icon": "minecraft:stone_bricks",
+  "category": "crusadecraft:monde",
+  "sortnum": 30,
+  "pages": [
+    {
+      "type": "patchouli:text",
+      "text": "crusadecraft.codex.civ.p0"
+    },
+    {
+      "type": "patchouli:text",
+      "text": "crusadecraft.codex.civ.p1"
+    }
+  ]
+}

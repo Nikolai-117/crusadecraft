@@ -80,6 +80,20 @@ public final class CrusadeCommand {
                                 .suggests((ctx, b) -> SharedSuggestionProvider.suggest(
                                         CrusadeSavedData.get(ctx.getSource().getServer()).realms().stream().map(Realm::name), b))
                                 .executes(CrusadeCommand::dissolve)))
+                // Les civilisations autonomes (P22) : où elles en sont, et tout défaire.
+                .then(Commands.literal("civ").requires(src -> src.hasPermission(2))
+                        .executes(ctx -> {
+                            var server = ctx.getSource().getServer();
+                            long auto = CrusadeSavedData.get(server).world().sites().stream().filter(fr.crusadecraft.core.build.Site::auto).count();
+                            boolean on = fr.crusadecraft.config.CrusadeConfig.SERVER.civActive.get();
+                            ctx.getSource().sendSuccess(() -> Component.translatable(on ? "crusadecraft.civ.info.on" : "crusadecraft.civ.info.off", auto), false);
+                            return (int) auto;
+                        })
+                        .then(Commands.literal("annuler").executes(ctx -> {
+                            int n = fr.crusadecraft.core.build.SiteService.undoAuto(ctx.getSource().getServer());
+                            ctx.getSource().sendSuccess(() -> Component.translatable("crusadecraft.civ.undone", n), true);
+                            return n;
+                        })))
                 .then(Commands.literal("monde").requires(src -> src.hasPermission(2))
                         .then(Commands.literal("info").executes(CrusadeCommand::worldInfo))
                         .then(Commands.literal("generer").executes(ctx -> {

@@ -1,0 +1,16 @@
+{
+  "crusadecraft.law.succession": "Succession",
+  "crusadecraft.law.succession.primogeniture": "Primogéniture",
+  "crusadecraft.law.succession.primogeniture.desc": "L'aîné des enfants hérite de la maison, les fils d'abord.",
+  "crusadecraft.law.succession.egalitaire": "Égalitaire",
+  "crusadecraft.law.succession.egalitaire.desc": "L'aîné des enfants hérite, fille ou fils.",
+  "crusadecraft.law.succession.anciennete": "Ancienneté",
+  "crusadecraft.law.succession.anciennete.desc": "Le doyen de la maison hérite.",
+  "crusadecraft.law.succession.elective": "Élective",
+  "crusadecraft.law.succession.elective.desc": "La maison choisit l'adulte le plus marquant (celui qui a le plus de traits).\nLes ambitieux l'apprécient.",
+  "crusadecraft.chronicle.death": "%s est mort à %s ans.",
+  "crusadecraft.news.succession": "%s est mort ; %s lui succède à la tête de %s.",
+  "crusadecraft.codex.vie": "Le cycle de vie",
+  "crusadecraft.codex.vie.p0": "Le temps passe : tous les $(l)20 jours$() du monde (réglable), chacun vieillit d'un an. Avant 50 ans, on meurt rarement ; ensuite, la vieillesse gagne, et personne ne passe 100 ans. Toi, le joueur, tu ne vieillis pas.",
+  "crusadecraft.codex.vie.p1": "Quand le chef d'une maison meurt, l'héritier prend sa place selon la loi de $(l)Succession$() de ton royaume : primogéniture, égalitaire, ancienneté ou élective. Les souverains de l'ordinateur meurent aussi, et le monde apprend le nom de leur successeur."
+}

@@ -114,6 +114,11 @@ public final class LawEffects {
         boolean up = to > from;
         int p = 0;
         switch (law) {
+            case SUCCESSION -> {
+                // Les ambitieux préfèrent l'élection, les loyaux la tradition.
+                if (traits.contains(Trait.AMBITIEUX)) p += to == 3 ? 3 : -1;
+                if (traits.contains(Trait.LOYAL)) p += to == 0 ? 2 : -1;
+            }
             case FISCALITE -> {
                 p += up ? -3 : 2;
                 if (traits.contains(Trait.AVARE)) p += up ? -3 : 2;

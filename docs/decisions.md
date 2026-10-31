@@ -667,3 +667,33 @@ Demandé par Romain (5 octobre) : « que ça fonctionne par chunk directement »
 - **Pas fait** : boutons « Apparence » et « Arbre » de MCA (son écran ne s'ouvre que par ses propres paquets),
   fêtes et deuils animés, unification des deux généalogies (maison P4 et registre P13), répliques par datapack.
   Les traits et la biographie s'ajoutent aux personnes sans changer la version des données (absents = aucun).
+
+**P21 (31 octobre 2026) — le cycle de vie**
+
+- **Les années passent** : tous les 20 jours du monde (réglable, `vie.joursParAn`), chacun vieillit d'un an — les gens
+  du registre et les souverains de l'ordinateur avec leur conseil. Mourir dans l'année : 3 ‰ avant 50 ans, puis
+  3 + (âge − 50)² / 2 ‰, plafonné à 90 %, et personne ne passe 100 ans. Le joueur ne vieillit pas.
+- **Héritage** : à la mort du chef d'une maison, l'héritier selon la nouvelle loi **Succession** du royaume
+  (primogéniture, fils d'abord ; égalitaire ; ancienneté ; élective, l'adulte qui a le plus de traits). Sans enfant,
+  le doyen. La loi entre dans le système de lois existant (vote du conseil, ou passage en force au prestige).
+- **Trônes de l'ordinateur** : un successeur (un conseiller adulte pour les lois élective et d'ancienneté, sinon un
+  héritier tiré au hasard), annoncé dans les nouvelles du monde.
+- Une personne incarnée qui meurt de vieillesse meurt aussi dans le monde (son villageois). Les morts du registre se
+  coupent seules (`vie.mortsDuRegistre`) si Romain veut garder ses personnages.
+- **Pas fait** : héritage de l'or et des objets (seul le joueur en possède), crises de succession appuyées sur les
+  factions, arbre illustré sur plusieurs générations, partage d'un royaume IA entre héritiers.
+
+**P22 (31 octobre 2026) — les civilisations autonomes**
+
+- Les royaumes de l'ordinateur posent d'eux-mêmes une tour, un camp, un avant-poste puis un fort (duchés et
+  au-delà), quatre au plus par royaume, sur leurs propres terres, à 40–100 blocs d'une de leurs villes, en chantier
+  bloc par bloc comme ceux des joueurs.
+- **Coupé par défaut** (`civilisations.actif = false`) : c'est la seule partie du mod qui change le monde sans geste
+  de Romain. Zone permise (3 000 blocs autour de l'origine par défaut), chunks déjà chargés seulement, jamais dans une
+  colonie, seulement sur un sol naturel (terre, herbe, sable, pierre, neige, gravier) et plat à trois blocs près.
+- **Tout se défait** : chaque bloc remplacé est noté au registre des dégâts sous l'identifiant du chantier ;
+  `/crusade civ annuler` retire ces constructions du registre et remet les blocs d'avant, quarante-huit par
+  quart de seconde. `/crusade civ` dit où on en est.
+- **Pas fait** : villages qui grandissent de camp en bourg, nouveaux villages peuplés, disputes de lieux.
+- Un test du conseil (un citoyen MineColonies qui marche jusqu'à la réunion) devient facultatif : il dépend des
+  chemins que MineColonies trouve et échouait au hasard, sans rapport avec le mod.

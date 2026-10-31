@@ -264,6 +264,8 @@ public final class WorldService {
             for (AiRealm r : world.realms()) simulateDay(r, held.getOrDefault(r.id(), List.of()), day);
             fr.crusadecraft.core.war.WarService.onNewDay(server, day);
             fr.crusadecraft.core.ai.AiBrain.onNewDay(server, day);
+            fr.crusadecraft.core.lineage.LifeService.onNewDay(server, day);
+            fr.crusadecraft.core.ai.CivService.onNewDay(server, day);
             world.setLastEconomyDay(day);
         }
         if (world.lastEconomyDay() < today) world.setLastEconomyDay(today);
