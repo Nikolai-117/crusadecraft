@@ -1,4 +1,4 @@
-# CrusadeCraft 2.0.0 — installer et tester
+# CrusadeCraft 2.1.0 — installer et tester
 
 ## 1. Ce qu'il faut
 
@@ -17,7 +17,7 @@ Optionnels, déjà présents chez toi, donc activés automatiquement :
 
 ## 2. Installer
 
-1. Le fichier du mod est `E:\crusadecraft\build\libs\crusadecraft-2.0.0.jar`.
+1. Le fichier du mod est `E:\crusadecraft\build\libs\crusadecraft-2.1.0.jar`.
 2. Mets-le dans le dossier des mods de l'instance : `D:\MultiMC\instances\1.20.1\.minecraft\mods\`.
    Dans MultiMC, tu peux aussi faire clic droit sur l'instance → *Modifier* → *Mods* → *Ajouter un fichier*.
    **Retire l'ancien** (`crusadecraft-1.8.0.jar`, ou une version plus vieille) : deux versions du mod ensemble
@@ -266,8 +266,16 @@ données du mod (fichier `crusadecraft.dat` du monde) restent sur place, sans ef
     `/crusade armee demobiliser` : les survivants rentrent chez eux.
 73. **Les pertes sont réelles** : un soldat tué, ce sont dix hommes de moins dans ton armée.
 
+### Le commerce
+75. Un **traité de commerce** (proposé ou accepté au Colombier) trace une **route** entre ta capitale et celle de
+    l'autre royaume : en pointillés dorés sur la carte du royaume (survole-la pour voir ce qu'elle rapporte), et sur
+    Dynmap dans la couche **Routes commerciales**.
+76. Chaque jour, elle rapporte de l'or : la part de base d'avant, **plus une pièce tous les 400 blocs** de route (dix
+    au plus). Une route lointaine vaut donc davantage. Les traités de commerce entre royaumes de l'ordinateur ont aussi
+    leur route.
+
 ### Si le jeu rame
-74. `/crusade perf` (opérateur) dit combien de temps chaque partie du mod prend à chaque tick du serveur, et
+77. `/crusade perf` (opérateur) dit combien de temps chaque partie du mod prend à chaque tick du serveur, et
     `/crusade perf reset` remet les mesures à zéro. Un tick dure 50 ms : le total du mod doit rester bien en dessous.
 
 ## 4. Réglages
@@ -281,8 +289,8 @@ sections principales :
 - `territoire` (bâton de bornage et constructions en survie, coût d'une case, distance, chantiers, plafond de chunks,
   rayon de `/crusade claim`, titres à l'entrée) ;
 - `protection` (protection des terres, terres des IA, vassaux, alliés, opérateurs) ;
-- `carteWeb` (Dynmap : fréquence, langue des fiches, royaumes IA, lieux, trésor, conseil, opacité, carte de guerre ;
-  Xaero) ;
+- `carteWeb` (Dynmap : fréquence, langue des fiches, royaumes IA, lieux, trésor, conseil, opacité, carte de guerre,
+  routes de commerce ; Xaero) ;
 - `villes` (limite de domaine par rang, impôts perdus au-delà, parts de la couronne proposées pour un gouverneur) ;
 - `pnj` (la journée des gens de la cour) ;
 - `vie` (années, jours par an, morts du registre) ;
@@ -335,5 +343,5 @@ Pour accélérer le temps pendant un test : `/time add 24000` fait passer un jou
 - Les gens de la cour ont un but de marche, pas une laisse : l'intelligence de Minecraft Comes Alive peut l'emporter.
 - Les royaumes de l'ordinateur bâtissent sur plans (tours, camps, forts), pas de façon libre, et ne fondent pas de
   nouveaux villages d'eux-mêmes.
-- Pas encore de commerce entre royaumes.
+- Le commerce suit les traités : pas encore de caravanes qui marchent, ni de marchandises une à une.
 - Usage personnel : ce mod n'est pas fait pour être redistribué.

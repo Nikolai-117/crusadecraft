@@ -27,7 +27,7 @@ import java.util.Set;
  * qu'aucun royaume disparu ne traîne sur la carte.
  */
 final class DynmapCompat {
-    static final String REALMS = "crusadecraft.royaumes", PLACES = "crusadecraft.lieux", WAR = "crusadecraft.guerre";
+    static final String REALMS = "crusadecraft.royaumes", PLACES = "crusadecraft.lieux", WAR = "crusadecraft.guerre", TRADE = "crusadecraft.commerce";
     private static volatile MarkerAPI markers;
     private static int lastHash;
 
@@ -81,7 +81,8 @@ final class DynmapCompat {
         MarkerSet realms = set(api, REALMS, "Royaumes", 10);
         MarkerSet places = set(api, PLACES, "Lieux", 20);
         MarkerSet war = set(api, WAR, "Carte de guerre", 30);
-        MarkerSet[] all = {realms, places, war};
+        MarkerSet trade = set(api, TRADE, "Routes commerciales", 25);
+        MarkerSet[] all = {realms, places, war, trade};
         Map<String, AreaMarker> oldAreas = new HashMap<>();
         for (MarkerSet s : all) for (AreaMarker a : s.getAreaMarkers()) oldAreas.put(a.getMarkerID(), a);
         Set<String> keepAreas = new HashSet<>();
@@ -109,7 +110,7 @@ final class DynmapCompat {
         for (WebMap.Line l : model.lines()) {
             double[] ys = new double[l.xs().length];
             java.util.Arrays.fill(ys, 64);
-            MarkerSet target = l.id().startsWith("guerre_") ? war : realms;
+            MarkerSet target = l.id().startsWith("guerre_") ? war : l.id().startsWith("commerce_") ? trade : realms;
             PolyLineMarker m = oldLines.get(l.id());
             if (m == null || !l.world().equals(m.getWorld()) || m.getMarkerSet() != target) {
                 if (m != null) m.deleteMarker();

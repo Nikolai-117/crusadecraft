@@ -103,6 +103,7 @@ public final class WebMap {
         }
         if (CrusadeConfig.SERVER.webMapPlaces.get()) addPlaces(server, data, lang, points, areas);
         if (CrusadeConfig.SERVER.webMapWar.get()) addWar(server, data, lang, areas, lines, points);
+        if (CrusadeConfig.SERVER.webMapTrade.get()) addTrade(server, data, lang, lines);
         int hash = 17;
         for (Area a : areas) hash = hash * 31 + a.id().hashCode() * 7 + a.html().hashCode() + java.util.Arrays.hashCode(a.xs()) + java.util.Arrays.hashCode(a.zs());
         for (Line l : lines) hash = hash * 31 + l.id().hashCode() + java.util.Arrays.hashCode(l.xs()) + java.util.Arrays.hashCode(l.zs());
@@ -307,6 +308,21 @@ public final class WebMap {
             out.add(new double[]{x1, z1, x1 + Math.cos(t) * head, z1 + Math.sin(t) * head, side});
         }
         return out;
+    }
+
+    /** Les routes de commerce (P25), en trait doré d'une capitale à l'autre, dans leur propre couche. */
+    private static void addTrade(MinecraftServer server, CrusadeSavedData data, String lang, List<Line> lines) {
+        for (fr.crusadecraft.core.diplomacy.TradeService.Route r : fr.crusadecraft.core.diplomacy.TradeService.routes(server)) {
+            ServerLevel level = level(server, r.dim());
+            if (level == null) continue;
+            String a = ServerText.render(fr.crusadecraft.core.diplomacy.TradeService.name(data, r.a()), lang);
+            String b = ServerText.render(fr.crusadecraft.core.diplomacy.TradeService.name(data, r.b()), lang);
+            String title = text(Component.translatable("crusadecraft.trade.route"), lang);
+            String html = "<div class=\"crusade-fiche\"><b>" + esc(title) + "</b><br>" + esc(a) + " ↔ " + esc(b) + "<br><br>"
+                    + esc(text(Component.translatable("crusadecraft.trade.income", r.income(), r.distance()), lang)) + "</div>";
+            lines.add(new Line("commerce_" + r.a() + "_" + r.b(), worldName(level), title + " : " + a + " ↔ " + b, html,
+                    new double[]{r.x0() + 0.5, r.x1() + 0.5}, new double[]{r.z0() + 0.5, r.z1() + 0.5}, 0xD4A017, 3));
+        }
     }
 
     /** Une icône livrée avec Dynmap, pour chaque genre de repère de guerre. */

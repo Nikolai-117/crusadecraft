@@ -22,7 +22,16 @@ import java.util.UUID;
  */
 public record MapView(ResourceLocation dimension, int focusX, int focusZ, int playerX, int playerZ, int territoryRadius,
                       int colonyRadius, List<Territory> territories, List<Seat> seats, List<Dejure> dejure,
-                      boolean canEdit, boolean editing, Borders borders, List<Place> places, War war) {
+                      boolean canEdit, boolean editing, Borders borders, List<Place> places, War war, List<TradeLine> routes) {
+
+    public MapView(ResourceLocation dimension, int focusX, int focusZ, int playerX, int playerZ, int territoryRadius,
+                   int colonyRadius, List<Territory> territories, List<Seat> seats, List<Dejure> dejure,
+                   boolean canEdit, boolean editing, Borders borders, List<Place> places, War war) {
+        this(dimension, focusX, focusZ, playerX, playerZ, territoryRadius, colonyRadius, territories, seats, dejure, canEdit, editing, borders, places, war, List.of());
+    }
+
+    /** Une route de commerce (P25) entre deux capitales, ce qu'elle rapporte par jour, et ses deux royaumes. */
+    public record TradeLine(int x0, int z0, int x1, int z1, long income, net.minecraft.network.chat.Component a, net.minecraft.network.chat.Component b) {}
 
     public MapView(ResourceLocation dimension, int focusX, int focusZ, int playerX, int playerZ, int territoryRadius,
                    int colonyRadius, List<Territory> territories, List<Seat> seats, List<Dejure> dejure,
@@ -209,6 +218,16 @@ public record MapView(ResourceLocation dimension, int focusX, int focusZ, int pl
             buf.writeInt(p.color());
         }
         writeWar(buf, war);
+        buf.writeVarInt(routes.size());
+        for (TradeLine r : routes) {
+            buf.writeInt(r.x0());
+            buf.writeInt(r.z0());
+            buf.writeInt(r.x1());
+            buf.writeInt(r.z1());
+            buf.writeVarLong(r.income());
+            buf.writeComponent(r.a());
+            buf.writeComponent(r.b());
+        }
     }
 
     private static void writeWar(FriendlyByteBuf buf, War war) {
@@ -345,7 +364,13 @@ public record MapView(ResourceLocation dimension, int focusX, int focusZ, int pl
         for (int i = 0; i < n; i++) {
             places.add(new Place(buf.readUUID(), buf.readVarInt(), buf.readComponent(), buf.readVarInt(), buf.readVarInt(), buf.readVarInt(), buf.readInt()));
         }
+        War war = readWar(buf, dim);
+        n = buf.readVarInt();
+        List<TradeLine> routes = new ArrayList<>(n);
+        for (int i = 0; i < n; i++) {
+            routes.add(new TradeLine(buf.readInt(), buf.readInt(), buf.readInt(), buf.readInt(), buf.readVarLong(), buf.readComponent(), buf.readComponent()));
+        }
         return new MapView(dim, fx, fz, px, pz, radius, colonyRadius, territories, seats, dejure, canEdit, editing, new Borders(keys, owners), places,
-                readWar(buf, dim));
+                war, routes);
     }
 }

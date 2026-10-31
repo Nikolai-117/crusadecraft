@@ -21,7 +21,6 @@ import net.minecraftforge.gametest.GameTestHolder;
 import net.minecraftforge.gametest.PrefixGameTestTemplate;
 
 import java.util.Optional;
-import java.util.Random;
 
 /** Les civilisations autonomes (P22) : un royaume IA ouvre un chantier sur ses terres, note ses blocs, et tout se défait. */
 @GameTestHolder(CrusadeCraft.MOD_ID)
@@ -47,10 +46,23 @@ public final class CivGameTests {
             // Hors de la zone permise : rien.
             w.check(!CivService.inZone(cx, cz, 10), "la zone permise ne limite rien");
 
-            Optional<Site> site = Optional.empty();
-            Random random = new Random(7);
-            for (int i = 0; i < 6 && site.isEmpty(); i++) site = CivService.tryBuild(server, ai, random);
-            w.check(site.isPresent(), "le royaume n'a trouvé aucun endroit où bâtir sur ses terres plates");
+            // Une parcelle d'herbe plate, dégagée, sur les terres du royaume : le relief du monde de test change d'une
+            // partie à l'autre, le test ne doit pas en dépendre.
+            int px = cx + 32, pz = cz;
+            int y0 = h.getLevel().getHeightmapPos(net.minecraft.world.level.levelgen.Heightmap.Types.MOTION_BLOCKING_NO_LEAVES,
+                    new BlockPos(px, 0, pz)).getY();
+            for (int dx = -12; dx <= 12; dx++) {
+                for (int dz = -12; dz <= 12; dz++) {
+                    for (int dy = -3; dy <= 16; dy++) {
+                        BlockPos q = new BlockPos(px + dx, y0 + dy, pz + dz);
+                        h.getLevel().setBlock(q, dy < -1 ? net.minecraft.world.level.block.Blocks.DIRT.defaultBlockState()
+                                : dy == -1 ? net.minecraft.world.level.block.Blocks.GRASS_BLOCK.defaultBlockState()
+                                : net.minecraft.world.level.block.Blocks.AIR.defaultBlockState(), 2);
+                    }
+                }
+            }
+            Optional<Site> site = CivService.tryBuildAt(server, ai, h.getLevel(), px, pz);
+            w.check(site.isPresent(), "le royaume ne bâtit pas sur une parcelle plate de ses terres");
             Site s = site.get();
             w.check(s.auto() && s.kind() == SiteKind.TOUR && !s.built(), "le premier chantier n'est pas une tour en cours");
             w.check(s.owner().equals(ai.id()), "le chantier n'est pas à ce royaume");

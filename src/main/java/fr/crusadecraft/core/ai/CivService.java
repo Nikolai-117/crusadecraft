@@ -98,6 +98,16 @@ public final class CivService {
         return Optional.empty();
     }
 
+    /** Bâtir à cet endroit précis, s'il convient (bancs d'essai : un terrain préparé plutôt qu'un hasard du relief). */
+    public static Optional<Site> tryBuildAt(MinecraftServer server, AiRealm ai, ServerLevel level, int x, int z) {
+        int built = 0;
+        for (Site s : CrusadeSavedData.get(server).world().sites()) if (s.auto() && ai.id().equals(s.owner())) built++;
+        SiteKind kind = nextKind(built, ai.rank());
+        Optional<BlockPos> ground = suitable(server, level, ai, kind, x, z, 0);
+        if (ground.isEmpty()) return Optional.empty();
+        return SiteService.placeForAi(server, level, kind, ai, ground.get(), Direction.SOUTH);
+    }
+
     /**
      * Un endroit où bâtir : chunks chargés, dans la zone, sur les terres de ce royaume, hors de toute colonie, sur un
      * sol naturel et à peu près plat (trois blocs d'écart au plus), sans rien de bâti par-dessus.

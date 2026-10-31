@@ -1,0 +1,8 @@
+{
+  "crusadecraft.trade.route": "Route commerciale",
+  "crusadecraft.trade.income": "+%s pièces par jour pour chacun, sur %s blocs de route.",
+  "crusadecraft.trade.income.short": "+%s pièces par jour",
+  "crusadecraft.codex.commerce": "Le commerce",
+  "crusadecraft.codex.commerce.p0": "Un $(l)traité de commerce$() (au Colombier) ouvre une route entre ta capitale et celle de l'autre royaume. Elle se voit sur la carte du royaume, en pointillés dorés, et sur Dynmap, dans la couche $(l)Routes commerciales$().",
+  "crusadecraft.codex.commerce.p1": "Chaque jour, la route rapporte de l'or : une part de base, plus une pièce tous les 400 blocs de route (dix au plus). Les marchands font le trajet pour ce qu'on ne trouve pas chez soi : les routes lointaines valent davantage."
+}

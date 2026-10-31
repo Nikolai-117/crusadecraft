@@ -665,6 +665,7 @@ public class MapScreen extends Screen {
 
         g.enableScissor(mapX, mapY, mapX + mapW, mapY + mapH);
         if (warMode()) renderWarZones(g);
+        if (!editing()) renderTrade(g);
         renderPlaces(g);
         renderSeats(g);
         if (warMode()) renderWarMarks(g);
@@ -701,6 +702,7 @@ public class MapScreen extends Screen {
         }
         if (Ui.inside(mouseX, mouseY, mapX, mapY, mapW, mapH) && !dragging && !painting && !arrowing && !overPanel(mouseX, mouseY)) {
             List<Component> tip = warMode() ? warTooltip(mouseX, mouseY) : List.of();
+            if (tip.isEmpty() && !editing()) tip = tradeTooltip(mouseX, mouseY);
             if (tip.isEmpty()) tip = tooltip(rasterOwner(mouseX, mouseY));
             if (!tip.isEmpty()) g.renderComponentTooltip(font, tip, mouseX, mouseY);
         }
@@ -1162,6 +1164,36 @@ public class MapScreen extends Screen {
             CrusadeNetwork.toServer(new MapEditPackets.Paint(owner, neutral, part));
         }
         stroke.clear();
+    }
+
+    // ------------------------------------------------------------------ commerce (P25)
+
+    /** Les routes de commerce : un trait doré pointillé d'une capitale à l'autre, une pièce au milieu. */
+    private void renderTrade(GuiGraphics g) {
+        for (MapView.TradeLine r : view.routes()) {
+            int x0 = screenX(r.x0()), y0 = screenY(r.z0()), x1 = screenX(r.x1()), y1 = screenY(r.z1());
+            double len = Math.hypot(x1 - x0, y1 - y0);
+            if (len < 4) continue;
+            double angle = Math.atan2(y1 - y0, x1 - x0);
+            for (double d = 0; d < len; d += 9) {
+                int sx = (int) Math.round(x0 + Math.cos(angle) * d), sy = (int) Math.round(y0 + Math.sin(angle) * d);
+                if (sx < mapX - 10 || sx > mapX + mapW + 10 || sy < mapY - 10 || sy > mapY + mapH + 10) continue;
+                bar(g, sx, sy, angle, (int) Math.min(5, len - d), 1, 0xE0D4A017);
+            }
+            int mx = (x0 + x1) / 2, my = (y0 + y1) / 2;
+            g.fill(mx - 3, my - 3, mx + 3, my + 3, INK);
+            g.fill(mx - 2, my - 2, mx + 2, my + 2, 0xFFE7BD55);
+        }
+    }
+
+    private List<Component> tradeTooltip(double mouseX, double mouseY) {
+        for (MapView.TradeLine r : view.routes()) {
+            if (segmentDistance(mouseX, mouseY, screenX(r.x0()), screenY(r.z0()), screenX(r.x1()), screenY(r.z1())) > 4) continue;
+            return List.of(Component.translatable("crusadecraft.trade.route").withStyle(ChatFormatting.GOLD),
+                    r.a().copy().append(" ↔ ").append(r.b()).withStyle(ChatFormatting.WHITE),
+                    Component.translatable("crusadecraft.trade.income.short", r.income()).withStyle(ChatFormatting.GRAY));
+        }
+        return List.of();
     }
 
     // ------------------------------------------------------------------ carte de guerre : dessin et gestes

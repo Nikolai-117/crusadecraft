@@ -1,0 +1,16 @@
+{
+  "name": "crusadecraft.codex.commerce",
+  "icon": "minecraft:emerald",
+  "category": "crusadecraft:monde",
+  "sortnum": 31,
+  "pages": [
+    {
+      "type": "patchouli:text",
+      "text": "crusadecraft.codex.commerce.p0"
+    },
+    {
+      "type": "patchouli:text",
+      "text": "crusadecraft.codex.commerce.p1"
+    }
+  ]
+}

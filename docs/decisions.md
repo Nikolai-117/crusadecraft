@@ -724,3 +724,15 @@ Demandé par Romain (5 octobre) : « que ça fonctionne par chunk directement »
 - **Pas fait** : l'écran de réglages en jeu (les réglages restent dans le fichier du monde), et le commerce (prévu
   après P24).
 
+**P25 (31 octobre 2026) — le commerce, version 2.1.0**
+
+- Le traité de commerce existait (Colombier) et rapportait déjà de l'or ; il trace maintenant une **route** entre les
+  deux capitales (centre de la colonie d'un joueur, siège d'un royaume IA), visible sur la carte du royaume (pointillés
+  dorés, revenu au survol) et sur Dynmap (couche « Routes commerciales », coupable : `carteWeb.commerce`).
+- **La distance rapporte** : une pièce de plus par jour tous les 400 blocs de route, dix au plus, en plus de la part
+  de base d'avant. Une route courte rapporte comme avant.
+- Sur la carte du mod, un joueur voit ses propres routes, et celles entre deux royaumes qu'il connaît.
+- **Pas fait** : caravanes qui marchent sur le monde, marchandises une à une, monnaie State Marks.
+
+- Le GameTest des constructions de l'ordinateur (P22) prépare désormais sa propre parcelle d'herbe plate : le relief du
+  monde de test change à chaque partie, et le test échouait au hasard selon le terrain tiré.

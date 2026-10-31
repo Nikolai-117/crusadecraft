@@ -1,0 +1,8 @@
+{
+  "crusadecraft.trade.route": "Trade route",
+  "crusadecraft.trade.income": "+%s coins a day for each side, over %s blocks of road.",
+  "crusadecraft.trade.income.short": "+%s coins a day",
+  "crusadecraft.codex.commerce": "Trade",
+  "crusadecraft.codex.commerce.p0": "A $(l)trade treaty$() (at the Dovecote) opens a route between your capital and the other realm's. It shows on the realm map, as golden dots, and on Dynmap, in the $(l)Trade routes$() layer.",
+  "crusadecraft.codex.commerce.p1": "Every day the route brings gold: a base share, plus one coin per 400 blocks of road (ten at most). Merchants travel for what is not found at home: distant routes are worth more."
+}

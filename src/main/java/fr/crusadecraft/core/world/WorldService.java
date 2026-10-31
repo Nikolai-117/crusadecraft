@@ -400,7 +400,27 @@ public final class WorldService {
         return new MapView(dim, focusX, focusZ, player.getBlockX(), player.getBlockZ(), CrusadeConfig.SERVER.territoryRadius.get(),
                 CrusadeConfig.SERVER.colonyRadius.get(), territories, seats, dejure, canEdit, editing, borders(world, dim, index),
                 fr.crusadecraft.core.place.PlaceService.mapPlaces(server, dim),
-                editing ? MapView.War.NONE : fr.crusadecraft.core.war.WarMapService.view(player, dim));
+                editing ? MapView.War.NONE : fr.crusadecraft.core.war.WarMapService.view(player, dim), editing ? List.of() : tradeLines(player, dim));
+    }
+
+    /** Les routes de commerce (P25) de cette dimension que ce joueur connaît : les siennes, et celles entre royaumes connus. */
+    static List<MapView.TradeLine> tradeLines(ServerPlayer player, ResourceLocation dim) {
+        CrusadeSavedData data = CrusadeSavedData.get(player.server);
+        UUID mine = RealmService.realmOf(player.server, player.getUUID()).map(Realm::id).orElse(null);
+        List<MapView.TradeLine> out = new ArrayList<>();
+        for (fr.crusadecraft.core.diplomacy.TradeService.Route r : fr.crusadecraft.core.diplomacy.TradeService.routes(player.server)) {
+            if (!r.dim().equals(dim)) continue;
+            boolean own = r.a().equals(mine) || r.b().equals(mine);
+            if (!own && !(known(data, r.a(), player) && known(data, r.b(), player))) continue;
+            out.add(new MapView.TradeLine(r.x0(), r.z0(), r.x1(), r.z1(), r.income(), fr.crusadecraft.core.diplomacy.TradeService.name(data, r.a()),
+                    fr.crusadecraft.core.diplomacy.TradeService.name(data, r.b())));
+        }
+        return out;
+    }
+
+    private static boolean known(CrusadeSavedData data, UUID realm, ServerPlayer player) {
+        Optional<AiRealm> ai = data.world().realm(realm);
+        return ai.map(a -> a.discoveredBy(player.getUUID())).orElse(data.realm(realm).isPresent());
     }
 
     /** Les cases peintes des royaumes de cette carte (les autres restent dans le brouillard), et les terres libres. */

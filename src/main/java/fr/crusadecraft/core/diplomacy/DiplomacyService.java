@@ -560,7 +560,9 @@ public final class DiplomacyService {
             }
             // Commerce
             if (rel.has(Treaty.COMMERCE, day)) {
-                long trade = 2 + ai.map(a -> a.capital() == null ? 0L : (long) a.capital().development() / 20).orElse(0L);
+                // P25 : plus la route est longue entre les deux capitales, plus elle rapporte.
+                long trade = TradeService.income(2 + ai.map(a -> a.capital() == null ? 0L : (long) a.capital().development() / 20).orElse(0L),
+                        TradeService.distance(server, realm.id(), otherId).orElse(0));
                 TreasuryService.credit(server, realm, LedgerCategory.COMMERCE, trade);
             }
             rel.prune(day);
