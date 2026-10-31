@@ -145,6 +145,11 @@ final class TreasuryPanel {
         if (!c.capital()) tip.add(Component.translatable("crusadecraft.treasury.colony.province", percent(v.provinceMultiplier())).withStyle(ChatFormatting.GRAY));
         if (c.raided()) tip.add(Component.translatable("crusadecraft.treasury.colony.raided").withStyle(ChatFormatting.RED));
         if (c.upkeep() > 0) tip.add(Component.translatable("crusadecraft.treasury.colony.upkeep", c.upkeep()).withStyle(ChatFormatting.GRAY));
+        if (!c.governor().isEmpty()) {
+            tip.add(Component.translatable("crusadecraft.treasury.colony.governor", c.governor(), c.crownShare()).withStyle(ChatFormatting.AQUA));
+        } else if (c.overDomain()) {
+            tip.add(Component.translatable("crusadecraft.treasury.colony.over_domain", 100 - c.crownShare()).withStyle(ChatFormatting.RED));
+        }
         return tip;
     }
 

@@ -631,3 +631,26 @@ Demandé par Romain (5 octobre) : « que ça fonctionne par chunk directement »
   état de la guerre transmis, aperçu de la carte dessiné hors écran dans `run-gametest/apercu_terrain.png`) ; une
   première capture en jeu sur un monde normal a montré les défauts corrigés ensuite (gros carrés, flaques). Romain a
   demandé le 11 octobre de ne plus lancer le jeu : la capture en jeu du rendu final n'a pas été refaite.
+
+**P19 (31 octobre 2026) — les villes du royaume**
+
+- **Rattacher** une autre colonie qu'on possède : depuis l'écran « Villes » du menu royal, en se tenant dedans (la
+  Borne de frontière reste un second chemin). On ne passe que par `annexOwnColony` : CrusadeCraft ne crée, ne cède ni
+  ne transfère jamais de colonie MineColonies ; le souverain en reste le propriétaire technique.
+- **Limite de domaine**, à la manière de CK3 : un souverain tient en direct 2, 3, 4, 6 ou 8 villes selon son rang
+  (réglable) ; chaque ville tenue en direct au-delà rend 30 % d'impôts en moins (réglable). La capitale compte
+  d'abord, puis les villes dans leur ordre d'entrée : c'est toujours la dernière rattachée qui pâtit.
+- **Gouverneurs** : une personne vivante du registre des lignées, de la maison du souverain ou rattachée à son
+  royaume. Elle tient la ville pour la couronne, qui n'en reçoit que la part convenue des impôts et des levées
+  (50 % chacune par défaut, réglable ensuite ville par ville, de 10 en 10). Une ville confiée sort du domaine.
+  L'entretien militaire de la ville se partage dans la même proportion.
+- **Un gouverneur mort ou effacé du registre, une ville perdue** : les termes tombent d'eux-mêmes (vérifiés à chaque
+  calcul du Trésor et à l'ouverture de l'écran), la ville revient en direct. Rien ne reste attaché à un fantôme.
+- **Ce qui n'est pas fait** : céder une colonie en propriété MineColonies à un PNJ est impossible (MineColonies exige
+  un joueur propriétaire) ; le gouverneur n'agit pas encore de lui-même (il viendra avec les PNJ vivants de P20).
+- **Données en version 15** (`cities` dans chaque royaume), absentes = toutes les villes en direct, comme avant ;
+  canal réseau en version 16.
+- **Vérifié** sans lancer le jeu (demande de Romain du 11 octobre) : tests unitaires des règles et de la sauvegarde,
+  GameTest qui crée une vraie seconde colonie MineColonies, la rattache, la confie, la voit dans le Trésor, perd son
+  gouverneur et la reprend. L'écran « Villes » n'a pas été photographié en jeu.
+

@@ -129,6 +129,14 @@ public final class ClientPackets {
         else if (open) mc.setScreen(new fr.crusadecraft.client.screen.LieuxScreen(view));
     }
 
+    /** Les villes du royaume (P19) : rafraîchit l'écran ouvert, ou l'ouvre. */
+    public static void cities(fr.crusadecraft.core.realm.CityView view, boolean open, net.minecraft.network.chat.Component message, boolean success) {
+        Minecraft mc = Minecraft.getInstance();
+        if (mc.screen instanceof fr.crusadecraft.client.screen.CitiesScreen screen) screen.refresh(view, message, success);
+        else if (open) mc.setScreen(new fr.crusadecraft.client.screen.CitiesScreen(view));
+        else if (message != null && mc.player != null) mc.player.displayClientMessage(message, true);
+    }
+
     /** Le bâton a visé le sol en mode « Lieu » : on nomme le lieu à poser. */
     public static void lieuForm(fr.crusadecraft.core.place.LieuKind kind, net.minecraft.core.BlockPos pos) {
         Minecraft.getInstance().setScreen(fr.crusadecraft.client.screen.LieuForm.create(null, kind, pos, null));

@@ -33,7 +33,7 @@ import net.minecraftforge.network.simple.SimpleChannel;
  * (distance, droits, état) avant d'agir.
  */
 public final class CrusadeNetwork {
-    private static final String VERSION = "15";
+    private static final String VERSION = "16";
 
     public static final SimpleChannel CHANNEL = NetworkRegistry.newSimpleChannel(
             ResourceLocation.tryParse(CrusadeCraft.MOD_ID + ":main"),
@@ -254,6 +254,16 @@ public final class CrusadeNetwork {
         CHANNEL.messageBuilder(fr.crusadecraft.network.packet.WarMapPackets.Edit.class, nextId++, NetworkDirection.PLAY_TO_SERVER)
                 .encoder(fr.crusadecraft.network.packet.WarMapPackets.Edit::encode).decoder(fr.crusadecraft.network.packet.WarMapPackets.Edit::decode)
                 .consumerMainThread(fr.crusadecraft.network.packet.WarMapPackets.Edit::handle).add();
+        // P19 : les villes du royaume
+        CHANNEL.messageBuilder(fr.crusadecraft.network.packet.CityPackets.Request.class, nextId++, NetworkDirection.PLAY_TO_SERVER)
+                .encoder(fr.crusadecraft.network.packet.CityPackets.Request::encode).decoder(fr.crusadecraft.network.packet.CityPackets.Request::decode)
+                .consumerMainThread(fr.crusadecraft.network.packet.CityPackets.Request::handle).add();
+        CHANNEL.messageBuilder(fr.crusadecraft.network.packet.CityPackets.Open.class, nextId++, NetworkDirection.PLAY_TO_CLIENT)
+                .encoder(fr.crusadecraft.network.packet.CityPackets.Open::encode).decoder(fr.crusadecraft.network.packet.CityPackets.Open::decode)
+                .consumerMainThread(fr.crusadecraft.network.packet.CityPackets.Open::handle).add();
+        CHANNEL.messageBuilder(fr.crusadecraft.network.packet.CityPackets.Action.class, nextId++, NetworkDirection.PLAY_TO_SERVER)
+                .encoder(fr.crusadecraft.network.packet.CityPackets.Action::encode).decoder(fr.crusadecraft.network.packet.CityPackets.Action::decode)
+                .consumerMainThread(fr.crusadecraft.network.packet.CityPackets.Action::handle).add();
         // P18b : la carte en terrain
         CHANNEL.messageBuilder(fr.crusadecraft.network.packet.TerrainPackets.Request.class, nextId++, NetworkDirection.PLAY_TO_SERVER)
                 .encoder(fr.crusadecraft.network.packet.TerrainPackets.Request::encode).decoder(fr.crusadecraft.network.packet.TerrainPackets.Request::decode)

@@ -1,0 +1,16 @@
+{
+  "name": "crusadecraft.codex.villes",
+  "icon": "minecraft:bell",
+  "category": "crusadecraft:royaume",
+  "sortnum": 3,
+  "pages": [
+    {
+      "type": "patchouli:text",
+      "text": "crusadecraft.codex.villes.p0"
+    },
+    {
+      "type": "patchouli:text",
+      "text": "crusadecraft.codex.villes.p1"
+    }
+  ]
+}

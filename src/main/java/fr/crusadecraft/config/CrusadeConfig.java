@@ -85,6 +85,10 @@ public final class CrusadeConfig {
         public final ForgeConfigSpec.IntValue buildBlocksPerStep;
         public final ForgeConfigSpec.IntValue buildStepSeconds;
         public final ForgeConfigSpec.ConfigValue<java.util.List<? extends Integer>> claimCaps;
+        public final ForgeConfigSpec.ConfigValue<java.util.List<? extends Integer>> domainLimits;
+        public final ForgeConfigSpec.IntValue domainPenalty;
+        public final ForgeConfigSpec.IntValue governorTaxShare;
+        public final ForgeConfigSpec.IntValue governorLevyShare;
         public final ForgeConfigSpec.IntValue claimCommandRadius;
         public final ForgeConfigSpec.EnumValue<fr.crusadecraft.core.world.EntryTitles.Mode> entryMessages;
         public final ForgeConfigSpec.BooleanValue protection;
@@ -297,6 +301,18 @@ public final class CrusadeConfig {
             webMapOpacity = b.comment("Opacité de la couleur des terres (0 : transparentes, 1 : pleines).").defineInRange("opacite", 0.35, 0.0, 1.0);
             clientTerritory = b.comment("Envoyer aux joueurs les terres des royaumes qu'ils connaissent, pour Xaero's World Map et Minimap.")
                     .define("xaero", true);
+            b.pop();
+
+            b.comment("Les villes du royaume (P19) : les colonies rattachées, tenues en direct ou confiées à un gouverneur.").push("villes");
+            domainLimits = b.comment("Villes qu'un souverain tient en direct sans pénalité, selon son rang : baronnie, comté, duché, royaume, empire.",
+                            "Au-delà, chaque ville tenue en direct rend moins d'impôts ; une ville confiée à un gouverneur ne compte pas.")
+                    .defineList("limiteDomaine", java.util.List.of(2, 3, 4, 6, 8), o -> o instanceof Integer i && i >= 1);
+            domainPenalty = b.comment("Impôts perdus, en pour cent, sur chaque ville tenue en direct au-delà de la limite.")
+                    .defineInRange("penaliteDomaine", 30, 0, 100);
+            governorTaxShare = b.comment("Part des impôts d'une ville qui revient à la couronne quand on la confie à un gouverneur (modifiable ensuite).")
+                    .defineInRange("partImpotsCouronne", 50, 0, 100);
+            governorLevyShare = b.comment("Part des levées d'une ville qui revient à la couronne quand on la confie à un gouverneur (modifiable ensuite).")
+                    .defineInRange("partLeveesCouronne", 50, 0, 100);
             b.pop();
 
             b.comment("Diplomatie, titres et vassalité").push("diplomatie");

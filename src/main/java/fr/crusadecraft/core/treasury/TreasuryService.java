@@ -129,8 +129,15 @@ public final class TreasuryService {
         double province = LawEffects.provinceMultiplier(realm.laws());
         double steward = stewardBonus(server, realm);
         double research = MineColoniesBridge.researchEffect(realm.capital(), Law.Research.FISCALITE);
+        // Un gouverneur mort ou une ville perdue : la ville revient en direct avant de compter.
+        fr.crusadecraft.core.realm.CityService.sweep(server, realm);
         List<TreasuryView.ColonyLine> lines = new ArrayList<>();
         int population = 0;
+        // Les villes tenues en direct au-delà de la limite du rang rendent moins ; celles confiées à un gouverneur, sa part.
+        int penalty = fr.crusadecraft.config.CrusadeConfig.SERVER.domainPenalty.get();
+        java.util.Set<ColonyRef> over = fr.crusadecraft.core.realm.CityRules.overLimit(realm.allColonies(), realm.cities(),
+                fr.crusadecraft.core.realm.CityRules.domainLimit(realm.rank(), fr.crusadecraft.config.CrusadeConfig.SERVER.domainLimits.get()));
+        var lineage = CrusadeSavedData.get(server).lineage();
         for (ColonyRef colony : realm.allColonies()) {
             if (!MineColoniesBridge.exists(colony)) continue;
             ColonyReport report = MineColoniesBridge.report(colony);
@@ -142,8 +149,15 @@ public final class TreasuryService {
             TaxRules.ColonyTax tax = TaxRules.compute(buildings, taxes, upkeep, m);
             // Une province en révolte ne paie rien.
             boolean revolt = realm.intrigue().inRevolt(colony, RealmService.currentDay(server));
+            fr.crusadecraft.core.realm.CityTerms terms = realm.cityTerms(colony).orElse(null);
+            double share = fr.crusadecraft.core.realm.CityRules.taxFactor(terms, over.contains(colony), penalty);
+            boolean governed = !fr.crusadecraft.core.realm.CityRules.direct(terms);
+            // Un gouverneur entretient sa ville pour sa part ; la couronne paie le reste.
+            long upkeepDue = governed ? Math.round(tax.upkeep() * share) : tax.upkeep();
+            String governor = governed ? lineage.person(terms.governor()).map(lineage::fullName).orElse("?") : "";
             lines.add(new TreasuryView.ColonyLine(report.name(), capital, report.happiness(), buildings.size(),
-                    active && !revolt ? tax.collected() : 0, tax.upkeep(), report.raided()));
+                    active && !revolt ? Math.round(tax.collected() * share) : 0, upkeepDue, report.raided(), governor,
+                    (int) Math.round(share * 100), over.contains(colony)));
         }
         return new Forecast(lines, domainIncome(server, realm, population, meetingBonus), salaries(server, realm),
                 steward, research);

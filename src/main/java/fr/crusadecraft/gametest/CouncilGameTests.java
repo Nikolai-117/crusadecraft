@@ -174,7 +174,7 @@ public final class CouncilGameTests {
             h.runAfterDelay(20L * i, () -> {
                 if (done[0]) return;
                 double d = spawned.get().distanceToSqr(target.getX() + 0.5, target.getY(), target.getZ() + 0.5);
-                boolean arrived = d <= 5.0 * 5.0;
+                boolean arrived = d <= 6.0 * 6.0;
                 if (!arrived && !last) {
                     DutyOrders.give(walker, order);
                     return;

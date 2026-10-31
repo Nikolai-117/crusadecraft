@@ -36,6 +36,8 @@ public final class Realm {
     private boolean feminineTitle;
     private ColonyRef capital;
     private final List<ColonyRef> provinces = new ArrayList<>();
+    /** Les villes confiées à un gouverneur (P19) ; les autres sont tenues en direct. */
+    private final Map<ColonyRef, CityTerms> cities = new java.util.LinkedHashMap<>();
     private TitleRank rank;
     private RealmState state = RealmState.ACTIVE;
     private long foundedDay;
@@ -154,6 +156,21 @@ public final class Realm {
         return post;
     }
 
+    /** Les termes d'une ville confiée à un gouverneur ; rien pour une ville tenue en direct. */
+    public java.util.Optional<CityTerms> cityTerms(ColonyRef colony) {
+        return java.util.Optional.ofNullable(cities.get(colony));
+    }
+
+    public Map<ColonyRef, CityTerms> cities() {
+        return Collections.unmodifiableMap(cities);
+    }
+
+    /** Confie une ville ({@code null} ou sans gouverneur : elle revient en direct à la couronne). */
+    public void setCityTerms(ColonyRef colony, CityTerms terms) {
+        if (terms == null || terms.governor() == null || !holds(colony) || colony.equals(capital)) cities.remove(colony);
+        else cities.put(colony, terms);
+    }
+
     public boolean holds(ColonyRef colony) {
         return capital.equals(colony) || provinces.contains(colony);
     }
@@ -178,6 +195,7 @@ public final class Realm {
 
     public void removeProvince(ColonyRef colony) {
         provinces.remove(colony);
+        cities.remove(colony);
     }
 
     public CompoundTag save() {
@@ -194,6 +212,9 @@ public final class Realm {
         ListTag list = new ListTag();
         for (ColonyRef p : provinces) list.add(p.save());
         tag.put("provinces", list);
+        ListTag cityTag = new ListTag();
+        for (Map.Entry<ColonyRef, CityTerms> e : cities.entrySet()) cityTag.add(e.getValue().save(e.getKey()));
+        tag.put("cities", cityTag);
         tag.putString("rank", rank.name());
         tag.putString("state", state.name());
         tag.putLong("founded", foundedDay);
@@ -242,6 +263,12 @@ public final class Realm {
         ListTag list = tag.getList("provinces", Tag.TAG_COMPOUND);
         for (int i = 0; i < list.size(); i++) {
             realm.addProvince(ColonyRef.load(list.getCompound(i)));
+        }
+        ListTag cityTag = tag.getList("cities", Tag.TAG_COMPOUND);
+        for (int i = 0; i < cityTag.size(); i++) {
+            CompoundTag c = cityTag.getCompound(i);
+            CityTerms terms = CityTerms.load(c);
+            if (terms != null) realm.setCityTerms(ColonyRef.load(c.getCompound("colony")), terms);
         }
         realm.state = RealmState.byName(tag.getString("state"));
         ListTag councilTag = tag.getList("council", Tag.TAG_COMPOUND);

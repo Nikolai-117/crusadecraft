@@ -125,7 +125,9 @@ public final class WarService {
         int men = 0;
         for (ColonyRef colony : r.allColonies()) {
             ColonyReport report = MineColoniesBridge.report(colony);
-            men += report.guards() * 6 + report.citizens() / 3;
+            // Une ville confiée à un gouverneur ne lève pour la couronne que la part convenue (P19).
+            men += (int) Math.round((report.guards() * 6 + report.citizens() / 3) * fr.crusadecraft.core.realm.CityRules.levyFactor(
+                    r.cityTerms(colony).orElse(null)));
         }
         return Math.max(5, men);
     }

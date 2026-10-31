@@ -168,6 +168,11 @@ public class RealmScreen extends Screen {
             }).bounds(house.getX() - 2 - 58, top + 34, 58, 16).build();
             lieux.setTooltip(Tooltip.create(Component.translatable("crusadecraft.lieu.open.tip")));
             addRenderableWidget(lieux);
+            Button cities = Button.builder(Component.translatable("crusadecraft.city.open"), b -> {
+                if (minecraft != null && minecraft.getConnection() != null) CrusadeNetwork.toServer(new fr.crusadecraft.network.packet.CityPackets.Request());
+            }).bounds(lieux.getX() - 2 - 52, top + 34, 52, 16).build();
+            cities.setTooltip(Tooltip.create(Component.translatable("crusadecraft.city.open.tip")));
+            addRenderableWidget(cities);
         }
         if (tab == Tab.CONSEIL) {
             Button intrigues = Button.builder(Component.translatable("crusadecraft.intrigue.open"), b -> {
@@ -271,7 +276,7 @@ public class RealmScreen extends Screen {
         Ui.scaled(g, font, Component.literal(view.name()), left + 56, top + 12, 1.6f, Ui.TEXT_TITLE, false);
         Component sub = Component.translatable("crusadecraft.realm.header.sub", rankTitle, view.house());
         // La devise et la ligne du rang s'arrêtent avant les boutons de l'en-tête.
-        int room = left + w - 8 - (view.pendingEvents() > 0 ? 124 : 0) - (tab == Tab.ROYAUME ? 68 : 0) - (left + 56) - 4;
+        int room = left + w - 8 - (view.pendingEvents() > 0 ? 124 : 0) - (tab == Tab.ROYAUME ? 64 + 2 + 58 + 2 + 52 + 4 : 0) - (left + 56) - 4;
         Ui.text(g, font, Component.literal(font.plainSubstrByWidth(sub.getString(), room)), left + 56, top + 29, Ui.TEXT);
         if (!view.motto().isEmpty()) {
             Ui.text(g, font, Component.literal(font.plainSubstrByWidth("« " + view.motto() + " »", room)).withStyle(ChatFormatting.ITALIC),

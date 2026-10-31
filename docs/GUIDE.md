@@ -1,4 +1,4 @@
-# CrusadeCraft 1.7.0 — installer et tester
+# CrusadeCraft 1.8.0 — installer et tester
 
 ## 1. Ce qu'il faut
 
@@ -17,10 +17,10 @@ Optionnels, déjà présents chez toi, donc activés automatiquement :
 
 ## 2. Installer
 
-1. Le fichier du mod est `E:\crusadecraft\build\libs\crusadecraft-1.7.0.jar`.
+1. Le fichier du mod est `E:\crusadecraft\build\libs\crusadecraft-1.8.0.jar`.
 2. Mets-le dans le dossier des mods de l'instance : `D:\MultiMC\instances\1.20.1\.minecraft\mods\`.
    Dans MultiMC, tu peux aussi faire clic droit sur l'instance → *Modifier* → *Mods* → *Ajouter un fichier*.
-   **Retire l'ancien** (`crusadecraft-1.6.0.jar`, ou une version plus vieille) : deux versions du mod ensemble
+   **Retire l'ancien** (`crusadecraft-1.7.0.jar`, ou une version plus vieille) : deux versions du mod ensemble
    empêchent le jeu de démarrer.
 3. Lance l'instance comme d'habitude.
 
@@ -214,6 +214,24 @@ données du mod (fichier `crusadecraft.dat` du monde) restent sur place, sans ef
     `saves/<ton monde>/data/crusadecraft_terrain/` (tu peux effacer ce dossier sans rien perdre : il se refait).
 57. La molette zoome **en douceur**, et la carte suit la souris quand tu la fais glisser.
 
+### Les villes du royaume (plusieurs colonies)
+58. Pour avoir plusieurs colonies MineColonies, il faut d'abord autoriser MineColonies à en donner plusieurs au même
+    joueur : réglage `allowinfinitecolonies = true` dans `saves/<ton monde>/serverconfig/minecolonies-server.toml` (c'est un réglage
+    de MineColonies, pas de CrusadeCraft).
+59. Fonde ta deuxième colonie normalement. Tiens-toi **dedans**, ouvre le menu royal (onglet Royaume) et clique sur
+    **Villes**, puis sur **Rattacher « nom de la colonie »**. (La Borne de frontière posée dans la colonie marche aussi.)
+60. Dans l'écran **Villes**, chaque ville a trois boutons :
+    - le **gouverneur** : « En direct » (tu la gouvernes toi-même) ; chaque clic la confie à la personne suivante de
+      ton registre des lignées (Maj + clic : la précédente), jusqu'à revenir à « En direct » ;
+    - **Impôts %** et **Levées %** : la part qui revient à la couronne quand la ville a un gouverneur (clic : +10,
+      Maj + clic : −10). Le gouverneur garde le reste.
+61. Ton rang fixe combien de villes tu tiens **en direct** sans pénalité (2 pour une baronnie, 3 pour un comté, 4 pour
+    un duché, 6 pour un royaume, 8 pour un empire). Au-delà, chaque ville de trop rend 30 % d'impôts en moins (son nom
+    est en rouge) : confie-la à un gouverneur, ou monte en rang. La capitale reste toujours à toi.
+62. Les gouverneurs sont les personnes **vivantes** de ta maison, ou rattachées à ton royaume, dans le registre des
+    lignées. Si un gouverneur meurt, sa ville revient en direct. Tu restes le propriétaire MineColonies de chaque
+    colonie : le gouverneur la tient pour toi.
+
 ## 4. Réglages
 
 Tout se règle dans `saves/<ton monde>/serverconfig/crusadecraft-server.toml`, à modifier monde fermé. Les
@@ -227,6 +245,7 @@ sections principales :
 - `protection` (protection des terres, terres des IA, vassaux, alliés, opérateurs) ;
 - `carteWeb` (Dynmap : fréquence, langue des fiches, royaumes IA, lieux, trésor, conseil, opacité, carte de guerre ;
   Xaero) ;
+- `villes` (limite de domaine par rang, impôts perdus au-delà, parts de la couronne proposées pour un gouverneur) ;
 - `diplomatie` ;
 - `guerre` (sièges, raids, anti-grief, rang Hostile entre joueurs, troupes Hundred Years War) ;
 - `ia` (fréquence des décisions, guerres entre IA et contre toi, répit après la fondation, coalitions) ;
@@ -241,7 +260,7 @@ Chaque système peut être coupé.
 | Commande | Effet |
 | --- | --- |
 | `/crusade liste` | Les royaumes du monde |
-| `/crusade info [joueur]` | Le détail d'un royaume |
+| `/crusade info <joueur>` | Le royaume d'un joueur (sans nom : à qui est le chunk où tu te tiens, pour tous) |
 | `/crusade colonie` | La colonie sous tes pieds et son royaume |
 | `/crusade royaume [joueur]` | Le détail d'un royaume (l'ancien `/crusade info`) |
 | `/crusade lieux` | Ouvre l'écran des lieux (pour tous) |

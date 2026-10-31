@@ -19,8 +19,17 @@ public record TreasuryView(String realmName, long day, long gold, long debtLimit
                            boolean canWithdraw) {
 
     /** Une colonie dans la prévision : son impôt de demain, son entretien militaire. */
+    /**
+     * Une ville et ce qu'elle rend à la couronne. {@code governor} : celui qui la tient pour la couronne (vide : tenue en
+     * direct) ; {@code crownShare} : la part des impôts qui revient à la couronne, en pour cent ; {@code overDomain} :
+     * tenue en direct au-delà de la limite de domaine (P19).
+     */
     public record ColonyLine(String name, boolean capital, double happiness, int buildings, long collected,
-                             long upkeep, boolean raided) {}
+                             long upkeep, boolean raided, String governor, int crownShare, boolean overDomain) {
+        public ColonyLine(String name, boolean capital, double happiness, int buildings, long collected, long upkeep, boolean raided) {
+            this(name, capital, happiness, buildings, collected, upkeep, raided, "", 100, false);
+        }
+    }
 
     /** Un poste des comptes du jour. */
     public record Entry(LedgerCategory category, long amount) {}
@@ -60,6 +69,9 @@ public record TreasuryView(String realmName, long day, long gold, long debtLimit
             buf.writeLong(c.collected());
             buf.writeLong(c.upkeep());
             buf.writeBoolean(c.raided());
+            buf.writeUtf(c.governor());
+            buf.writeVarInt(c.crownShare());
+            buf.writeBoolean(c.overDomain());
         }
         buf.writeLong(domain);
         buf.writeLong(salaries);
@@ -94,7 +106,7 @@ public record TreasuryView(String realmName, long day, long gold, long debtLimit
         List<ColonyLine> colonies = new ArrayList<>(n);
         for (int i = 0; i < n; i++) {
             colonies.add(new ColonyLine(buf.readUtf(), buf.readBoolean(), buf.readDouble(), buf.readVarInt(),
-                    buf.readLong(), buf.readLong(), buf.readBoolean()));
+                    buf.readLong(), buf.readLong(), buf.readBoolean(), buf.readUtf(), buf.readVarInt(), buf.readBoolean()));
         }
         long domain = buf.readLong();
         long salaries = buf.readLong();
