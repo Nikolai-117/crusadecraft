@@ -90,6 +90,29 @@ public final class CrusadeCommand {
                                 ctx.getSource().getPlayerOrException(), fr.crusadecraft.core.war.ArmyService.Order.HOLD))))
                         .then(Commands.literal("demobiliser").executes(ctx -> say(ctx,
                                 fr.crusadecraft.core.war.ArmyService.dismiss(ctx.getSource().getPlayerOrException())))))
+                // Ce que coûte chaque système sur le serveur (P24).
+                .then(Commands.literal("perf").requires(src -> src.hasPermission(2))
+                        .executes(ctx -> {
+                            var lines = fr.crusadecraft.core.Perf.report();
+                            long ticks = fr.crusadecraft.core.Perf.ticks();
+                            ctx.getSource().sendSuccess(() -> Component.translatable("crusadecraft.perf.header", ticks, ticks / 20), false);
+                            if (lines.isEmpty()) ctx.getSource().sendSuccess(() -> Component.translatable("crusadecraft.perf.none"), false);
+                            double total = 0;
+                            for (var l : lines) {
+                                total += l.msPerTick();
+                                String perTick = String.format(java.util.Locale.ROOT, "%.3f", l.msPerTick());
+                                String max = String.format(java.util.Locale.ROOT, "%.2f", l.maxMs());
+                                ctx.getSource().sendSuccess(() -> Component.translatable("crusadecraft.perf.line", l.system(), perTick, max, l.calls()), false);
+                            }
+                            String sum = String.format(java.util.Locale.ROOT, "%.3f", total);
+                            ctx.getSource().sendSuccess(() -> Component.translatable("crusadecraft.perf.total", sum), false);
+                            return lines.size();
+                        })
+                        .then(Commands.literal("reset").executes(ctx -> {
+                            fr.crusadecraft.core.Perf.reset();
+                            ctx.getSource().sendSuccess(() -> Component.translatable("crusadecraft.perf.reset"), false);
+                            return 1;
+                        })))
                 // Les civilisations autonomes (P22) : où elles en sont, et tout défaire.
                 .then(Commands.literal("civ").requires(src -> src.hasPermission(2))
                         .executes(ctx -> {

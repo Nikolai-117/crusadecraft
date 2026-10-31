@@ -1,0 +1,7 @@
+{
+  "crusadecraft.perf.header": "CrusadeCraft : temps passé par système, sur %s ticks (%s s) :",
+  "crusadecraft.perf.none": "Rien de mesuré pour l'instant.",
+  "crusadecraft.perf.line": "  %s : %s ms par tick (pire appel %s ms, %s appels)",
+  "crusadecraft.perf.total": "Total : %s ms par tick (un tick dure 50 ms).",
+  "crusadecraft.perf.reset": "Mesures remises à zéro."
+}

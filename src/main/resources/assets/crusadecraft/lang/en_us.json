@@ -2058,5 +2058,10 @@
   "crusadecraft.army.dismissed": "%s soldier(s) go home.",
   "crusadecraft.codex.armee": "The army in the flesh",
   "crusadecraft.codex.armee.p0": "With the army raised (War table), go near a built $(l)military camp$() of your realm and type $(l)/crusade armee rassembler$(): your levies appear as real soldiers, one per ten men, twenty-four at most.",
-  "crusadecraft.codex.armee.p1": "$(l)/crusade armee suivre$(): they follow you. $(l)tenir$(): they hold where you stand. $(l)demobiliser$(): the survivors go home. A soldier killed is ten men fewer in your army."
+  "crusadecraft.codex.armee.p1": "$(l)/crusade armee suivre$(): they follow you. $(l)tenir$(): they hold where you stand. $(l)demobiliser$(): the survivors go home. A soldier killed is ten men fewer in your army.",
+  "crusadecraft.perf.header": "CrusadeCraft: time spent per system, over %s ticks (%s s):",
+  "crusadecraft.perf.none": "Nothing measured yet.",
+  "crusadecraft.perf.line": "  %s: %s ms per tick (worst call %s ms, %s calls)",
+  "crusadecraft.perf.total": "Total: %s ms per tick (a tick lasts 50 ms).",
+  "crusadecraft.perf.reset": "Measurements reset."
 }

@@ -149,21 +149,34 @@ public final class ArmyService {
         return Outcome.ok(Component.translatable("crusadecraft.army.dismissed", n));
     }
 
-    /** Chaque seconde : chaque armée suit son souverain ou regagne son poste. */
+    /** Le royaume d'un soldat de levée, lu dans son étiquette. */
+    static UUID realmOf(Entity e) {
+        for (String tag : e.getTags()) {
+            if (!tag.startsWith(TAG + ":")) continue;
+            try {
+                return UUID.fromString(tag.substring(TAG.length() + 1));
+            } catch (IllegalArgumentException ignored) {
+                return null;
+            }
+        }
+        return null;
+    }
+
+    /** Chaque seconde : chaque armée suit son souverain ou regagne son poste. Une seule passe sur les entités par monde. */
     public static void tick(MinecraftServer server) {
         if (COMMANDS.isEmpty()) return;
         CrusadeSavedData data = CrusadeSavedData.get(server);
-        for (Map.Entry<UUID, Command> e : COMMANDS.entrySet()) {
-            Optional<Realm> realm = data.realm(e.getKey());
-            if (realm.isEmpty()) continue;
-            ServerPlayer ruler = server.getPlayerList().getPlayer(realm.get().ruler());
-            for (ServerLevel level : server.getAllLevels()) {
-                for (Mob m : soldiers(level, e.getKey())) {
-                    if (!(m instanceof PathfinderMob mob) || mob.getTarget() != null) continue;
-                    BlockPos goal = e.getValue().order() == Order.FOLLOW && ruler != null && ruler.level() == level
-                            ? ruler.blockPosition() : e.getValue().post();
-                    if (mob.blockPosition().distSqr(goal) > 25) mob.getNavigation().moveTo(goal.getX() + 0.5, goal.getY(), goal.getZ() + 0.5, 1.0);
-                }
+        Map<UUID, ServerPlayer> rulers = new HashMap<>();
+        for (UUID id : COMMANDS.keySet()) data.realm(id).ifPresent(r -> rulers.put(id, server.getPlayerList().getPlayer(r.ruler())));
+        for (ServerLevel level : server.getAllLevels()) {
+            for (Entity e : level.getAllEntities()) {
+                if (!(e instanceof PathfinderMob mob) || !mob.isAlive() || !e.getTags().contains(TAG) || mob.getTarget() != null) continue;
+                UUID realm = realmOf(e);
+                Command c = realm == null ? null : COMMANDS.get(realm);
+                if (c == null) continue;
+                ServerPlayer ruler = rulers.get(realm);
+                BlockPos goal = c.order() == Order.FOLLOW && ruler != null && ruler.level() == level ? ruler.blockPosition() : c.post();
+                if (mob.blockPosition().distSqr(goal) > 25) mob.getNavigation().moveTo(goal.getX() + 0.5, goal.getY(), goal.getZ() + 0.5, 1.0);
             }
         }
     }
@@ -171,19 +184,13 @@ public final class ArmyService {
     /** Un soldat de levée tombe : un homme de moins pour de bon, dans l'armée de son royaume. */
     public static void onDeath(MinecraftServer server, Entity entity) {
         if (!entity.getTags().contains(TAG)) return;
-        for (String tag : entity.getTags()) {
-            if (!tag.startsWith(TAG + ":")) continue;
-            try {
-                UUID realmId = UUID.fromString(tag.substring(TAG.length() + 1));
-                CrusadeSavedData data = CrusadeSavedData.get(server);
-                data.realm(realmId).ifPresent(r -> {
-                    int men = WarService.men(r);
-                    r.setArmyMen(Math.max(0, men - CrusadeConfig.SERVER.menPerSoldier.get()));
-                    data.setDirty();
-                });
-            } catch (IllegalArgumentException ignored) {
-                // Une étiquette abîmée : rien à compter.
-            }
-        }
+        UUID realmId = realmOf(entity);
+        if (realmId == null) return;
+        CrusadeSavedData data = CrusadeSavedData.get(server);
+        data.realm(realmId).ifPresent(r -> {
+            int men = WarService.men(r);
+            r.setArmyMen(Math.max(0, men - CrusadeConfig.SERVER.menPerSoldier.get()));
+            data.setDirty();
+        });
     }
 }

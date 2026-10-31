@@ -1,4 +1,4 @@
-# CrusadeCraft 1.8.0 — installer et tester
+# CrusadeCraft 2.0.0 — installer et tester
 
 ## 1. Ce qu'il faut
 
@@ -17,10 +17,10 @@ Optionnels, déjà présents chez toi, donc activés automatiquement :
 
 ## 2. Installer
 
-1. Le fichier du mod est `E:\crusadecraft\build\libs\crusadecraft-1.8.0.jar`.
+1. Le fichier du mod est `E:\crusadecraft\build\libs\crusadecraft-2.0.0.jar`.
 2. Mets-le dans le dossier des mods de l'instance : `D:\MultiMC\instances\1.20.1\.minecraft\mods\`.
    Dans MultiMC, tu peux aussi faire clic droit sur l'instance → *Modifier* → *Mods* → *Ajouter un fichier*.
-   **Retire l'ancien** (`crusadecraft-1.7.0.jar`, ou une version plus vieille) : deux versions du mod ensemble
+   **Retire l'ancien** (`crusadecraft-1.8.0.jar`, ou une version plus vieille) : deux versions du mod ensemble
    empêchent le jeu de démarrer.
 3. Lance l'instance comme d'habitude.
 
@@ -232,6 +232,44 @@ données du mod (fichier `crusadecraft.dat` du monde) restent sur place, sans ef
     lignées. Si un gouverneur meurt, sa ville revient en direct. Tu restes le propriétaire MineColonies de chaque
     colonie : le gouverneur la tient pour toi.
 
+### Les gens de la cour
+63. Dans le registre des lignées, choisis une personne et clique sur **Fiche** : prénom, âge, jusqu'à **quatre traits**
+    de caractère (deux contraires, comme Brave et Lâche, ne vont pas ensemble) et une **biographie** libre.
+64. Ceux qui vivent dans le monde (apparus avec Minecraft Comes Alive) ont leur journée : **à la cour** de ton royaume
+    le jour (le centre de ta capitale), **chez eux** le soir. Quand ton royaume est **en guerre**, ils se réfugient à la
+    cour, jour et nuit. Ils gardent leur propre intelligence : parfois, elle l'emporte.
+
+### Le temps qui passe
+65. Toutes les **20 journées** du monde (réglable), chacun vieillit d'un an : les gens du registre, les souverains de
+    l'ordinateur et leur conseil. Avant 50 ans, on meurt rarement ; ensuite, la vieillesse gagne ; personne ne passe
+    100 ans. **Toi, tu ne vieillis pas.**
+66. Quand le chef d'une maison meurt, l'héritier prend sa place selon la nouvelle loi **Succession** (menu royal,
+    onglet Lois) : **primogéniture** (l'aîné des enfants, les fils d'abord), **égalitaire** (l'aîné, fille ou fils),
+    **ancienneté** (le doyen de la maison) ou **élective** (l'adulte qui a le plus de traits).
+67. Quand un souverain de l'ordinateur meurt, son successeur monte sur le trône et la nouvelle passe dans les
+    chroniques du monde. Pour garder tes personnages du registre en vie : `mortsDuRegistre = false` (section `vie`).
+
+### Les royaumes qui bâtissent (à activer)
+68. **Coupé au départ.** Section `civilisations` des réglages, `actif = true` : les royaumes de l'ordinateur posent
+    d'eux-mêmes une tour, un camp, un avant-poste, puis un fort (duchés et au-delà), sur leurs propres terres, près de
+    leurs villes, en chantier bloc par bloc.
+69. Ils ne bâtissent que dans les chunks **déjà chargés**, jamais dans une colonie, seulement sur un sol naturel et
+    plat, et à moins de 3 000 blocs du centre du monde (réglable). **Sauvegarde ton monde avant d'activer.**
+70. Chaque bloc qu'ils remplacent est noté : `/crusade civ annuler` défait tout, et les blocs d'avant reviennent peu
+    à peu. `/crusade civ` dit combien ils en ont posé.
+
+### L'armée en chair et en os
+71. Lève l'armée à la Table de guerre, puis va près d'un **camp militaire** bâti de ton royaume (bâton de bornage ›
+    Camp militaire) et tape `/crusade armee rassembler` : tes levées apparaissent en vrais soldats (Hundred Years
+    War), **un pour dix hommes**, vingt-quatre au plus.
+72. `/crusade armee suivre` : ils te suivent. `/crusade armee tenir` : ils gardent l'endroit où tu es.
+    `/crusade armee demobiliser` : les survivants rentrent chez eux.
+73. **Les pertes sont réelles** : un soldat tué, ce sont dix hommes de moins dans ton armée.
+
+### Si le jeu rame
+74. `/crusade perf` (opérateur) dit combien de temps chaque partie du mod prend à chaque tick du serveur, et
+    `/crusade perf reset` remet les mesures à zéro. Un tick dure 50 ms : le total du mod doit rester bien en dessous.
+
 ## 4. Réglages
 
 Tout se règle dans `saves/<ton monde>/serverconfig/crusadecraft-server.toml`, à modifier monde fermé. Les
@@ -246,8 +284,12 @@ sections principales :
 - `carteWeb` (Dynmap : fréquence, langue des fiches, royaumes IA, lieux, trésor, conseil, opacité, carte de guerre ;
   Xaero) ;
 - `villes` (limite de domaine par rang, impôts perdus au-delà, parts de la couronne proposées pour un gouverneur) ;
+- `pnj` (la journée des gens de la cour) ;
+- `vie` (années, jours par an, morts du registre) ;
+- `civilisations` (coupé par défaut : constructions de l'ordinateur, fréquence, chance, nombre, zone permise) ;
 - `diplomatie` ;
-- `guerre` (sièges, raids, anti-grief, rang Hostile entre joueurs, troupes Hundred Years War) ;
+- `guerre` (sièges, raids, anti-grief, rang Hostile entre joueurs, troupes Hundred Years War, hommes par soldat et
+  soldats au plus pour l'armée en chair et en os) ;
 - `ia` (fréquence des décisions, guerres entre IA et contre toi, répit après la fondation, coalitions) ;
 - `intrigues` (événements, factions, complots, révoltes) ;
 - `cour` (recherche exigée pour la Lice) ;
@@ -266,6 +308,9 @@ Chaque système peut être coupé.
 | `/crusade lieux` | Ouvre l'écran des lieux (pour tous) |
 | `/crusade ici` | Où tu te tiens : place proche, région, royaume et suzerains (pour tous) |
 | `/crusade claim`, `unclaim`, `map`, `info` | Le territoire (pour tous, voir plus haut) |
+| `/crusade armee rassembler`, `suivre`, `tenir`, `demobiliser` | L'armée en chair et en os (pour le souverain) |
+| `/crusade civ`, `/crusade civ annuler` | Les constructions de l'ordinateur : combien, et tout défaire |
+| `/crusade perf`, `/crusade perf reset` | Le temps pris par chaque partie du mod |
 | `/crusade reconcilier` | Revérifie l'état des royaumes |
 | `/crusade monde info` | Le monde IA |
 | `/crusade monde generer` | Régénère les royaumes IA autour de toi |
@@ -276,8 +321,9 @@ Pour accélérer le temps pendant un test : `/time add 24000` fait passer un jou
 
 ## 6. Limites connues
 
-- Les armées IA ne sont pas pilotées par les commandes de Hundred Years War, qui n'a pas d'API publique. Ses
-  troupes servent en revanche aux sièges et aux raids.
+- Les armées de l'ordinateur ne marchent pas en vrai sur le monde : elles restent des chiffres. Ta propre armée,
+  elle, se rassemble en vrais soldats, mais reçoit ses ordres par commande (pas encore depuis la carte).
+- Les soldats rassemblés oublient leur ordre au redémarrage du serveur : ils tiennent alors leur place.
 - Xaero n'a pas d'API publique pour colorer des terres : CrusadeCraft passe par une petite greffe. Si une future
   version de Xaero la casse, la couche disparaît simplement (le jeu ne plante pas).
 - La carte web Dynmap est la même pour tous ceux qui ont son adresse : pas de brouillard, et les plans de guerre y
@@ -286,4 +332,8 @@ Pour accélérer le temps pendant un test : `/time add 24000` fait passer un jou
   vraiment.
 - Sur la carte en terrain, l'inexploré est une **estimation** : ni constructions ni structures, et les biomes des mods
   sont colorés par famille (forêt, désert, neige…), donc approximativement. Le Nether n'a pas de carte en terrain.
+- Les gens de la cour ont un but de marche, pas une laisse : l'intelligence de Minecraft Comes Alive peut l'emporter.
+- Les royaumes de l'ordinateur bâtissent sur plans (tours, camps, forts), pas de façon libre, et ne fondent pas de
+  nouveaux villages d'eux-mêmes.
+- Pas encore de commerce entre royaumes.
 - Usage personnel : ce mod n'est pas fait pour être redistribué.

@@ -711,3 +711,16 @@ Demandé par Romain (5 octobre) : « que ça fonctionne par chunk directement »
   ordre retombe sur « tenir » leur place.
 - **Pas fait** : ordres depuis la carte (seulement par commande), formations, armées de l'ordinateur visibles et en
   marche, pions sur la carte hors des chunks chargés, bouton dans l'écran de guerre.
+
+**P24 (31 octobre 2026) — finitions, version 2.0.0**
+
+- **`/crusade perf`** : chaque appel périodique du serveur est chronométré (deux lectures d'horloge), avec le total,
+  la moyenne par tick et le pire appel par système ; `/crusade perf reset` remet à zéro.
+- **Budgets revus** : l'armée en chair et en os ne parcourt plus les entités qu'une fois par monde et par seconde (au
+  lieu d'une fois par royaume) ; les journées de la cour ne regardent que les personnes incarnées ; années et
+  constructions de l'ordinateur ne tournent qu'une fois par jour du monde.
+- **Guide complet** : `GUIDE.md` (sections 63 à 74), Codex (gens de la cour, cycle de vie, royaumes qui bâtissent,
+  armée), et le guide en ligne.
+- **Pas fait** : l'écran de réglages en jeu (les réglages restent dans le fichier du monde), et le commerce (prévu
+  après P24).
+

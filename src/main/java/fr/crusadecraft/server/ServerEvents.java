@@ -122,31 +122,37 @@ public final class ServerEvents {
         if (event.phase != TickEvent.Phase.END) return;
         var server = event.getServer();
         int t = server.getTickCount();
-        if (t % 600 == 0) CharacterService.periodic(server);
-        if (t % 40 == 0) fr.crusadecraft.core.council.CouncilService.tick(server);
-        if (t % 100 == 50) fr.crusadecraft.core.council.RequestService.deliver(server);
-        if (t % 1200 == 300) fr.crusadecraft.core.council.RequestService.periodic(server);
-        if (t % 2400 == 900) fr.crusadecraft.core.council.CouncilService.applyHappiness(server);
-        if (t % 40 == 20) fr.crusadecraft.core.world.WorldService.tick(server);
-        if (t % 40 == 30) fr.crusadecraft.core.diplomacy.DiplomacyService.tick(server);
-        if (t % (CrusadeConfig.SERVER.aiLetterMinutes.get() * 1200) == 600) fr.crusadecraft.core.diplomacy.DiplomacyService.aiLetters(server);
-        if (t % 20 == 10) WarFieldService.tick(server);
-        if (t % 5 == 2) WarFieldService.restoreTick(server);
+        // Chaque système est chronométré pour /crusade perf (P24).
+        fr.crusadecraft.core.Perf.tick();
+        if (t % 600 == 0) perf("personnages", () -> CharacterService.periodic(server));
+        if (t % 40 == 0) perf("conseil", () -> fr.crusadecraft.core.council.CouncilService.tick(server));
+        if (t % 100 == 50) perf("requetes", () -> fr.crusadecraft.core.council.RequestService.deliver(server));
+        if (t % 1200 == 300) perf("requetes", () -> fr.crusadecraft.core.council.RequestService.periodic(server));
+        if (t % 2400 == 900) perf("bonheur", () -> fr.crusadecraft.core.council.CouncilService.applyHappiness(server));
+        if (t % 40 == 20) perf("monde", () -> fr.crusadecraft.core.world.WorldService.tick(server));
+        if (t % 40 == 30) perf("diplomatie", () -> fr.crusadecraft.core.diplomacy.DiplomacyService.tick(server));
+        if (t % (CrusadeConfig.SERVER.aiLetterMinutes.get() * 1200) == 600) perf("lettres", () -> fr.crusadecraft.core.diplomacy.DiplomacyService.aiLetters(server));
+        if (t % 20 == 10) perf("guerre", () -> WarFieldService.tick(server));
+        if (t % 5 == 2) perf("reparations", () -> WarFieldService.restoreTick(server));
         // P14 : le bâton de bornage en marchant (deux fois par seconde), les chantiers (chaque tick, par petits lots).
-        if (t % 10 == 4) fr.crusadecraft.core.world.TerritoryService.walkTick(server);
-        if (t % 40 == 12) fr.crusadecraft.core.world.PaperMapService.tick(server);
-        fr.crusadecraft.core.build.SiteService.tick(server, t);
+        if (t % 10 == 4) perf("baton", () -> fr.crusadecraft.core.world.TerritoryService.walkTick(server));
+        if (t % 40 == 12) perf("cartes_papier", () -> fr.crusadecraft.core.world.PaperMapService.tick(server));
+        perf("chantiers", () -> fr.crusadecraft.core.build.SiteService.tick(server, t));
         // Les lieux suivent le monde (une ville renommée, un royaume disparu) : toutes les vingt secondes suffisent.
-        if (t % 400 == 200) fr.crusadecraft.core.place.PlaceService.sync(server);
+        if (t % 400 == 200) perf("lieux", () -> fr.crusadecraft.core.place.PlaceService.sync(server));
         // Le passage d'une frontière de chunk à l'autre : une vérification par seconde suffit.
-        if (t % 20 == 7) fr.crusadecraft.core.world.EntryTitles.tick(server);
-        if (t % 20 == 11) fr.crusadecraft.core.war.ArmyService.tick(server);
-        fr.crusadecraft.compat.dynmap.DynmapBridge.tick(server, t);
+        if (t % 20 == 7) perf("titres_entree", () -> fr.crusadecraft.core.world.EntryTitles.tick(server));
+        if (t % 20 == 11) perf("armees", () -> fr.crusadecraft.core.war.ArmyService.tick(server));
+        perf("dynmap", () -> fr.crusadecraft.compat.dynmap.DynmapBridge.tick(server, t));
         // Les terres des cartes du client (Xaero) : toutes les cinq secondes, seulement si elles ont changé.
-        if (t % 100 == 60) fr.crusadecraft.core.world.TerritorySync.tick(server);
-        if (t % 100 == 80) fr.crusadecraft.core.lineage.RoutineService.tick(server);
+        if (t % 100 == 60) perf("xaero", () -> fr.crusadecraft.core.world.TerritorySync.tick(server));
+        if (t % 100 == 80) perf("routines_pnj", () -> fr.crusadecraft.core.lineage.RoutineService.tick(server));
         // La carte en terrain (P18b) : la vraie surface des chunks parcourus, toutes les deux secondes.
-        if (t % 40 == 17) fr.crusadecraft.core.world.terrain.TerrainService.tick(server);
+        if (t % 40 == 17) perf("terrain", () -> fr.crusadecraft.core.world.terrain.TerrainService.tick(server));
+    }
+
+    private static void perf(String system, Runnable task) {
+        fr.crusadecraft.core.Perf.run(system, task);
     }
 
     /** Les golems d'un village assiégé ne s'en prennent pas à sa garnison. */
