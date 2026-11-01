@@ -55,13 +55,11 @@ public enum NationStyle {
     }
 
     /**
-     * Une enceinte autour de ses villes de cette taille ? Jamais autour d'un hameau ; jamais à la japonaise
-     * (Heian-kyō n'avait pas de muraille continue) ; le bourg médiéval ne s'entoure de murs qu'une fois ville.
+     * Une enceinte autour de ses villes de cette taille ? Décidé avec Romain (P36) : aucune pour un hameau ou un
+     * village, une palissade pour un bourg, la grande muraille du thème pour une ville ou une capitale.
      */
     public boolean walled(TownSize size) {
-        if (size == TownSize.HAMEAU || size == TownSize.QUARTIER || this == JAPONAISE) return false;
-        if (this == EUROPEENNE) return size == TownSize.VILLE || size == TownSize.CAPITALE;
-        return true;
+        return size.walls() != TownSize.Walls.NONE;
     }
 
     /** La matière de l'enceinte : pierre, briques grises, briques crues du Nil, levée de terre viking. */

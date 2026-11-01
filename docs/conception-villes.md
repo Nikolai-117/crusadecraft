@@ -1,5 +1,17 @@
 # Fiche de conception des villes
 
+## Décidé avec Romain (1er novembre 2026)
+
+- **Cinq tailles** : hameau, village, bourg, ville, capitale.
+- **Niveaux des bâtiments** : hameau et village de 1 à 3, jamais plus ; bourg au niveau 3 (« un début de grand
+  village ») ; ville et capitale au niveau maximal.
+- **Enceintes, en pièces des packs uniquement** : aucune pour le hameau et le village ; une palissade pour le bourg ;
+  pour la ville et la capitale, les grandes murailles du pack de chaque thème, avec leurs portes et leurs tours.
+- **Toute ville et toute capitale** ont leur marché, leurs étals, leur entrepôt, leur temple, leur cimetière, leur
+  caserne, leurs tours, leurs portes et un port quand elles touchent l'eau ; le nombre de maisons suit le nombre
+  d'habitants.
+
+
 Le but : des villes « incroyables », composées seulement de pièces des packs installés, que tu choisis. Cette fiche
 propose une base pour chaque taille et chaque style. Change ce que tu veux : ajoute, retire, remplace.
 Les noms des pièces viennent de [l'inventaire](catalogue-plans.md) ; tu peux les voir dans le jeu (plan d'architecte,

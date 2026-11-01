@@ -41,7 +41,16 @@ public final class TownPlanner {
         NAMES.put(TownSize.Role.HOUSE, Set.of("residence", "altresidence", "citizen", "cottage", "grachtenpand"));
         NAMES.put(TownSize.Role.TAVERN, Set.of("tavern", "senethouse"));
         NAMES.put(TownSize.Role.FARM, Set.of("farmer", "altfarmer", "farm"));
-        NAMES.put(TownSize.Role.MARKET, Set.of("warehouse", "altwarehouse", "plazamarket", "bazaar", "landwhouse"));
+        NAMES.put(TownSize.Role.MARKET, Set.of("plazamarket", "bazaar", "market", "marketcart", "postoffice"));
+        NAMES.put(TownSize.Role.WAREHOUSE, Set.of("warehouse", "altwarehouse", "landwhouse", "whousecart"));
+        NAMES.put(TownSize.Role.GRAVEYARD, Set.of("graveyard", "altgraveyard", "koyagraveyard", "isis_grave", "red_graves"));
+        NAMES.put(TownSize.Role.HOSPITAL, Set.of("hospital"));
+        NAMES.put(TownSize.Role.SCHOOL, Set.of("school", "library", "altlibrary", "university", "universitylibrary", "isis_school"));
+        NAMES.put(TownSize.Role.STALL, Set.of());
+        NAMES.put(TownSize.Role.LAMP, Set.of());
+        NAMES.put(TownSize.Role.STATUE, Set.of());
+        NAMES.put(TownSize.Role.GARDEN, Set.of());
+        NAMES.put(TownSize.Role.DECOR, Set.of());
         NAMES.put(TownSize.Role.CHURCH, Set.of("mysticalsite", "church", "cathedral", "temple_isis", "mountkoya", "townmastaba"));
         NAMES.put(TownSize.Role.BARRACKS, Set.of("barracks", "altbarracks", "castle", "fort"));
         NAMES.put(TownSize.Role.TOWER, Set.of("guardtower", "altguardtower", "tower", "fieldtower", "firelookout", "towersmall", "barrackstower"));
@@ -52,11 +61,15 @@ public final class TownPlanner {
     /** Le plus grand côté permis par genre : une cathédrale de quatre-vingts blocs n'entre pas dans un bourg. */
     static int maxFootprint(TownSize.Role role) {
         return switch (role) {
-            case TOWNHALL -> 64;
-            case BARRACKS, CHURCH -> 48;
-            case TAVERN, FARM, MARKET -> 40;
-            case HOUSE, CRAFT -> 32;
-            case PLAZA, TOWER -> 24;
+            case TOWNHALL -> 80;
+            case BARRACKS, CHURCH, SCHOOL -> 64;
+            case TAVERN, FARM, MARKET, WAREHOUSE, GRAVEYARD, HOSPITAL -> 52;
+            case HOUSE, CRAFT -> 40;
+            case PLAZA, TOWER -> 28;
+            case STATUE, GARDEN -> 16;
+            case DECOR -> 14;
+            case STALL -> 12;
+            case LAMP -> 7;
         };
     }
 
@@ -64,6 +77,23 @@ public final class TownPlanner {
     public static boolean matches(TownSize.Role role, String path) {
         String p = path.toLowerCase(Locale.ROOT);
         String base = PlanRules.base(PlanRef.label(p));
+        // Les décors se reconnaissent à leur rôle (dossier « decorations ») : étals, lanternes, statues, puits et fontaines.
+        if (role.decor() && PlanKinds.kind(p) == PlanKinds.DECORATION) {
+            String r = PlanKinds.role(p);
+            switch (role) {
+                case STALL -> { if (r.equals("etal")) return true; }
+                case LAMP -> { if (r.equals("lanterne")) return true; }
+                case STATUE -> { if (r.equals("statue")) return true; }
+                case GARDEN -> { if (r.equals("jardin") || r.equals("fontaine")) return true; }
+                case DECOR -> {
+                    if (!r.equals("place") && !r.equals("aqueduc")) return true;
+                }
+                case PLAZA -> { if (r.equals("puits") || r.equals("fontaine")) return true; }
+                default -> { }
+            }
+        }
+        if (role == TownSize.Role.STALL || role == TownSize.Role.LAMP || role == TownSize.Role.STATUE || role == TownSize.Role.GARDEN
+                || role == TownSize.Role.DECOR) return false;
         if (role == TownSize.Role.HOUSE && p.contains("/house/") && !base.contains("guard") && !base.contains("dock") && !base.startsWith("dorm")) {
             return true;
         }
@@ -87,39 +117,122 @@ public final class TownPlanner {
         List<TownSize.Role> program = new ArrayList<>(size.program());
         List<TownSize.Role> roles = new ArrayList<>();
         if (size.hasCenter()) {
-            Optional<Plan> hall = pick(pack.get(), entries, TownSize.Role.TOWNHALL, size.level(), random, used);
+            Optional<Plan> hall = pick(pack.get(), entries, TownSize.Role.TOWNHALL, size.level(), size.minLevel(), size.maxLevel(), random, used);
             if (hall.isEmpty()) return Optional.empty();
             boxes.add(box(hall.get()));
             refs.add(hall.get().ref().encode());
             roles.add(TownSize.Role.TOWNHALL);
         }
         for (TownSize.Role role : program) {
-            int level = size.level() - (role == TownSize.Role.HOUSE ? random.nextInt(2) : 0);
-            Optional<Plan> p = pick(pack.get(), entries, role, level, random, used);
+            int level = role == TownSize.Role.HOUSE && size.maxLevel() > size.minLevel()
+                    ? size.minLevel() + random.nextInt(size.maxLevel() - size.minLevel() + 1) : size.level();
+            Optional<Plan> p = pick(pack.get(), entries, role, level, size.minLevel(), size.maxLevel(), random, used);
             if (p.isEmpty()) continue;
             boxes.add(box(p.get()));
             refs.add(p.get().ref().encode());
             roles.add(role);
         }
         if (boxes.isEmpty()) return Optional.empty();
+        int core = boxes.size();
+        // P36 : le remplissage, après le programme — quelques modèles par genre, répétés, posés s'ils tiennent.
+        Map<TownSize.Role, List<Plan>> variants = new java.util.EnumMap<>(TownSize.Role.class);
+        Set<String> fillUsed = new HashSet<>(used);
+        for (TownSize.Role role : size.fill()) {
+            List<Plan> list = variants.computeIfAbsent(role, r -> new ArrayList<>());
+            if (list.size() >= (role == TownSize.Role.HOUSE ? 7 : role == TownSize.Role.DECOR || role == TownSize.Role.GARDEN ? 6 : 3)) continue;
+            int level = role == TownSize.Role.HOUSE && size.maxLevel() > size.minLevel()
+                    ? size.minLevel() + random.nextInt(size.maxLevel() - size.minLevel() + 1) : size.level();
+            pick(pack.get(), entries, role, level, size.minLevel(), size.maxLevel(), random, fillUsed).ifPresent(list::add);
+        }
+        int[] turn = new int[TownSize.Role.values().length];
+        for (TownSize.Role role : size.fill()) {
+            List<Plan> list = variants.get(role);
+            if (list == null || list.isEmpty()) continue;
+            Plan p = list.get(turn[role.ordinal()]++ % list.size());
+            boxes.add(box(p));
+            refs.add(p.ref().encode());
+            roles.add(role);
+        }
         TownLayout.Pattern pattern = size.hasCenter() ? style.pattern() : TownLayout.Pattern.RUE;
-        TownLayout.Layout layout = TownLayout.plan(pattern, boxes, roles, style.walled(size), seed);
+        TownLayout.Layout layout = TownLayout.plan(pattern, boxes, roles, false, seed, core);
         List<TownPlan.Piece> pieces = new ArrayList<>();
+        List<TownLayout.Rect> rects = new ArrayList<>();
         for (int i = 0; i < boxes.size(); i++) {
             TownLayout.Spot s = layout.spots().get(i);
-            if (s != null) pieces.add(new TownPlan.Piece(refs.get(i), s.x(), s.z(), s.rotation().ordinal(), 0));
+            if (s == null) continue;
+            pieces.add(new TownPlan.Piece(refs.get(i), s.x(), s.z(), s.rotation().ordinal(), 0));
+            rects.add(TownLayout.rect(boxes.get(i), s));
         }
-        TownPlan town = new TownPlan(style.name(), size, pieces, pack(layout.streets()), layout.extent());
-        town.setWalls(pack(layout.walls()));
+        List<int[]> streets = new ArrayList<>(layout.streets());
+        int extent = layout.extent();
+        // P36 : l'enceinte en pièces de muraille du pack (palissade d'un bourg, grande muraille d'une ville).
+        Optional<WallSets.Kit> kit = WallSets.kit(style, size.walls(), pack.get(), entries);
+        if (kit.isPresent()) {
+            int x0 = 0, z0 = 0, x1 = 0, z1 = 0;
+            for (TownLayout.Rect r : rects) {
+                x0 = Math.min(x0, r.x0());
+                z0 = Math.min(z0, r.z0());
+                x1 = Math.max(x1, r.x1());
+                z1 = Math.max(z1, r.z1());
+            }
+            int margin = kit.get().thickness() / 2 + 4;
+            final int ix0 = x0 - margin + 1, iz0 = z0 - margin + 1, ix1 = x1 + margin - 1, iz1 = z1 + margin - 1;
+            streets.removeIf(c -> c[0] < ix0 || c[0] > ix1 || c[1] < iz0 || c[1] > iz1);
+            WallSets.Ring ring = WallSets.assemble(kit.get(), x0 - margin, z0 - margin, x1 + margin, z1 + margin);
+            pieces.addAll(ring.pieces());
+            // Pas de rue sous les murs, sauf sous les portes ; de chaque porte, une rue jusqu'à la ville.
+            streets.removeIf(c -> under(ring.rects(), c[0], c[1]) && !under(ring.gateRects(), c[0], c[1]));
+            for (int[] g : ring.gates()) streets.addAll(gateStreet(g, streets, rects, ring.rects()));
+            extent = 2 * Math.max(Math.max(Math.abs(x0 - margin), Math.abs(x1 + margin)), Math.max(Math.abs(z0 - margin), Math.abs(z1 + margin))) + 20;
+        }
+        TownPlan town = new TownPlan(style.name(), size, pieces, pack(streets), extent);
         CrusadeCraft.LOGGER.info("CrusadeCraft : ville {} ({}, plan {}) dressée avec {} bâtiments sur {} du pack {}", size, style, pattern,
                 pieces.size(), boxes.size(), pack.get());
         return Optional.of(town);
+    }
+
+    private static boolean under(List<TownLayout.Rect> rects, int x, int z) {
+        for (TownLayout.Rect r : rects) if (r.contains(x, z)) return true;
+        return false;
+    }
+
+    /** De la porte vers l'intérieur, une rue de trois de large jusqu'à la première rue de la ville (ou un bâtiment). */
+    static List<int[]> gateStreet(int[] gate, List<int[]> streets, List<TownLayout.Rect> buildings, List<TownLayout.Rect> walls) {
+        java.util.Set<Long> known = new java.util.HashSet<>();
+        for (int[] c : streets) known.add(((long) c[0] << 32) | (c[1] & 0xFFFFFFFFL));
+        net.minecraft.core.Direction out = net.minecraft.core.Direction.values()[gate[2]];
+        int dx = -out.getStepX(), dz = -out.getStepZ();
+        List<int[]> cells = new ArrayList<>();
+        int x = gate[0], z = gate[1];
+        for (int step = 0; step < 80; step++) {
+            boolean reached = false;
+            for (int w = -1; w <= 1; w++) {
+                int cx = x + (dx == 0 ? w : 0), cz = z + (dz == 0 ? w : 0);
+                if (under(buildings, cx, cz)) return cells;
+                if (known.contains(((long) cx << 32) | (cz & 0xFFFFFFFFL))) reached = true;
+                cells.add(new int[]{cx, cz});
+            }
+            if (reached && step > 2) return cells;
+            x += dx;
+            z += dz;
+        }
+        return cells;
     }
 
     private static long[] pack(List<int[]> cells) {
         long[] out = new long[cells.size()];
         for (int i = 0; i < out.length; i++) out[i] = ((long) cells.get(i)[0] << 32) | (cells.get(i)[1] & 0xFFFFFFFFL);
         return out;
+    }
+
+    /** De l'eau (ou un autre fluide) sur le bord du plan : posé seul, il se répandrait. */
+    static boolean leaks(Plan p) {
+        int minX = -(p.sizeX() / 2), maxX = p.sizeX() - 1 - p.sizeX() / 2, minZ = -(p.sizeZ() / 2), maxZ = p.sizeZ() - 1 - p.sizeZ() / 2;
+        for (Blueprints.Placement pl : p.placements()) {
+            if (pl.state().getFluidState().isEmpty()) continue;
+            if (pl.x() == minX || pl.x() == maxX || pl.z() == minZ || pl.z() == maxZ) return true;
+        }
+        return false;
     }
 
     static TownLayout.Box box(Plan p) {
@@ -131,9 +244,20 @@ public final class TownPlanner {
      * proche du niveau voulu dont l'emprise convient.
      */
     static Optional<Plan> pick(String pack, List<String> entries, TownSize.Role role, int level, Random random, Set<String> used) {
+        return pick(pack, entries, role, level, 1, 5, random, used);
+    }
+
+    /**
+     * Un plan de ce genre : un modèle tiré au sort (un autre que ceux déjà pris, tant qu'il en reste), au niveau le plus
+     * proche du niveau voulu sans sortir de la fourchette de la taille ({@code min}–{@code max}), dont l'emprise convient.
+     * Un plan sans niveau (une seule version) convient toujours.
+     */
+    static Optional<Plan> pick(String pack, List<String> entries, TownSize.Role role, int level, int min, int max, Random random, Set<String> used) {
         Map<String, List<String>> byBase = new LinkedHashMap<>();
         for (String e : entries) {
             if (!matches(role, e)) continue;
+            int lv = PlanRules.level(PlanRef.label(e));
+            if (lv != 0 && (lv < min || lv > max)) continue;
             String label = PlanRef.label(e);
             String base = e.substring(0, Math.max(0, e.lastIndexOf('/') + 1)) + PlanRules.base(label);
             byBase.computeIfAbsent(base, k -> new ArrayList<>()).add(e);
@@ -149,13 +273,14 @@ public final class TownPlanner {
             levels.sort((a, b) -> {
                 int la = PlanRules.level(PlanRef.label(a)), lb = PlanRules.level(PlanRef.label(b));
                 int c = Integer.compare(Math.abs(la - want), Math.abs(lb - want));
-                return c != 0 ? c : Integer.compare(la, lb);
+                return c != 0 ? c : Integer.compare(lb, la);
             });
             for (String path : levels) {
-                if (attempts++ > 12) return Optional.empty();
+                if (attempts++ > 16) return Optional.empty();
                 Optional<Plan> p = PlanLibrary.load(new PlanRef(PlanRef.Source.PACK, pack, path), false);
+                if (p.isPresent() && role.decor() && leaks(p.get())) continue;
                 if (p.isPresent() && p.get().footprint() <= maxFootprint(role) && !p.get().placements().isEmpty()) {
-                    used.add(base);
+                    if (!role.decor()) used.add(base);
                     return p;
                 }
             }

@@ -80,6 +80,7 @@ class PlanLogicTest {
         assertEquals(TownSize.CAPITALE, TownSize.forCity(5, true));
         assertEquals(TownSize.VILLE, TownSize.forCity(50, false));
         assertEquals(TownSize.BOURG, TownSize.forCity(28, false));
+        assertEquals(TownSize.VILLAGE, TownSize.forCity(20, false));
         assertEquals(TownSize.HAMEAU, TownSize.forCity(12, false));
         assertTrue(TownSize.CAPITALE.program().size() > TownSize.VILLE.program().size());
         assertFalse(TownSize.QUARTIER.hasCenter());
@@ -184,6 +185,59 @@ class PlanLogicTest {
         assertEquals(PlanKinds.BATIMENT, PlanKinds.kind("fundamentals/residence3.blueprint"));
         assertEquals("", PlanKinds.role("fundamentals/residence3.blueprint"));
         assertEquals(PlanKinds.AUTRE, PlanKinds.kind("maison.nbt"));
+    }
+
+    @Test
+    void uneEnceinteDePieces() {
+        WallSets.Part segment = new WallSets.Part("s", 6, 9, java.util.EnumSet.of(net.minecraft.core.Direction.NORTH, net.minecraft.core.Direction.SOUTH),
+                net.minecraft.core.Direction.WEST);
+        WallSets.Part corner = new WallSets.Part("c", 7, 7, java.util.EnumSet.of(net.minecraft.core.Direction.SOUTH, net.minecraft.core.Direction.EAST), null);
+        WallSets.Part gate = new WallSets.Part("g", 7, 7, java.util.EnumSet.of(net.minecraft.core.Direction.NORTH, net.minecraft.core.Direction.SOUTH), null);
+        WallSets.Part tower = new WallSets.Part("t", 7, 7, null, null);
+        WallSets.Ring ring = WallSets.assemble(new WallSets.Kit(segment, null, corner, gate, tower), -60, -50, 60, 50);
+        assertEquals(4, ring.gates().size(), "une porte par côté");
+        // Les portes sur les axes : x = 0 au nord et au sud, z = 0 à l'ouest et à l'est.
+        for (int[] g : ring.gates()) assertTrue(Math.abs(g[0]) <= 4 || Math.abs(g[1]) <= 4, "porte hors de l'axe");
+        // Les angles tournés pour continuer le mur : nord-ouest vers le sud et l'est, nord-est vers le sud et l'ouest…
+        List<TownPlan.Piece> corners = ring.pieces().stream().filter(p -> p.ref().equals("c")).toList();
+        assertEquals(4, corners.size());
+        assertEquals(0, corners.get(0).rotation());
+        assertEquals(java.util.EnumSet.of(net.minecraft.core.Direction.SOUTH, net.minecraft.core.Direction.WEST),
+                WallSets.rotate(corner.attach(), corners.get(1).rotation()));
+        // Rien ne déborde de l'enceinte de plus d'une épaisseur de mur.
+        for (TownLayout.Rect r : ring.rects()) {
+            assertTrue(r.x0() >= -66 && r.x1() <= 66 && r.z0() >= -56 && r.z1() <= 56, "pièce hors de l'enceinte : " + r);
+        }
+        assertTrue(ring.pieces().stream().filter(p -> p.ref().equals("s")).count() >= 16, "trop peu de segments");
+        assertTrue(ring.pieces().stream().anyMatch(p -> p.ref().equals("t")), "pas de tour");
+    }
+
+    @Test
+    void lesTaillesDecideesAvecRomain() {
+        assertEquals(5, java.util.Arrays.stream(TownSize.values()).filter(TownSize::hasCenter).count());
+        assertEquals(3, TownSize.VILLAGE.maxLevel());
+        assertEquals(3, TownSize.HAMEAU.maxLevel());
+        assertEquals(5, TownSize.VILLE.minLevel());
+        assertEquals(TownSize.Walls.NONE, TownSize.VILLAGE.walls());
+        assertEquals(TownSize.Walls.PALISADE, TownSize.BOURG.walls());
+        assertEquals(TownSize.Walls.BIG, TownSize.CAPITALE.walls());
+        for (TownSize.Role r : List.of(TownSize.Role.MARKET, TownSize.Role.STALL, TownSize.Role.WAREHOUSE, TownSize.Role.CHURCH, TownSize.Role.GRAVEYARD,
+                TownSize.Role.BARRACKS, TownSize.Role.TOWER)) {
+            assertTrue(TownSize.VILLE.program().contains(r), "une ville sans " + r);
+            assertTrue(TownSize.CAPITALE.program().contains(r), "une capitale sans " + r);
+        }
+        long villeHouses = TownSize.VILLE.program().stream().filter(r -> r == TownSize.Role.HOUSE).count();
+        long capHouses = TownSize.CAPITALE.program().stream().filter(r -> r == TownSize.Role.HOUSE).count();
+        assertTrue(capHouses > villeHouses && villeHouses > 8, "les maisons ne suivent pas la population");
+        assertTrue(TownPlanner.matches(TownSize.Role.GRAVEYARD, "mystic/graveyard3.blueprint"));
+        assertTrue(TownPlanner.matches(TownSize.Role.WAREHOUSE, "craftsmanship/storage/warehouse5.blueprint"));
+        assertTrue(TownPlanner.matches(TownSize.Role.STALL, "decorations/stalls/stall_food.blueprint"));
+        assertTrue(TownPlanner.matches(TownSize.Role.LAMP, "decorations/misc/lampstand_a.blueprint"));
+        assertFalse(TownPlanner.matches(TownSize.Role.LAMP, "fundamentals/residence3.blueprint"));
+        assertEquals("walls/segment/segment5.blueprint", WallSets.resolve(List.of("walls/segment/segment1.blueprint", "walls/segment/segment5.blueprint",
+                "walls/segment/segmentx.blueprint"), "walls/segment/segment", true, 5).orElseThrow());
+        assertEquals("walls/segment/segment1.blueprint", WallSets.resolve(List.of("walls/segment/segment1.blueprint", "walls/segment/segment5.blueprint"),
+                "walls/segment/segment", false, 5).orElseThrow());
     }
 
     @Test

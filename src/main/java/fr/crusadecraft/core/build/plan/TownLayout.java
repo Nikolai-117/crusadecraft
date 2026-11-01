@@ -97,10 +97,15 @@ public final class TownLayout {
         final List<Integer> pending = new ArrayList<>();
 
         Placer(List<Box> boxes, List<TownSize.Role> roles) {
+            this(boxes, roles, boxes.size());
+        }
+
+        /** Seuls les {@code core} premiers attendent d'abord leur place ; les autres viennent au remplissage. */
+        Placer(List<Box> boxes, List<TownSize.Role> roles, int core) {
             this.boxes = boxes;
             this.roles = roles;
             this.spots = new Spot[boxes.size()];
-            for (int i = 0; i < boxes.size(); i++) pending.add(i);
+            for (int i = 0; i < core; i++) pending.add(i);
         }
 
         boolean fits(Rect r) {
@@ -109,9 +114,13 @@ public final class TownLayout {
             return true;
         }
 
+        /** P36 : pendant le remplissage, rien ne sort de la ville déjà posée. */
+        Rect bounds;
+
         boolean put(int i, Spot s) {
             if (spots[i] != null) return false;
             Rect r = rect(boxes.get(i), s);
+            if (bounds != null && (r.x0() < bounds.x0() || r.x1() > bounds.x1() || r.z0() < bounds.z0() || r.z1() > bounds.z1())) return false;
             if (!fits(r)) return false;
             spots[i] = s;
             taken.add(r);
@@ -158,6 +167,8 @@ public final class TownLayout {
         final boolean alongX;
         final int line, hw, side, from, to;
         int cursor;
+        /** P36 : au remplissage, un retrait et un écart tirés au sort (une rue vivante n'est pas une règle). */
+        java.util.Random jitter;
 
         Frontage(boolean alongX, int line, int hw, int side, int from, int to) {
             this.alongX = alongX;
@@ -177,7 +188,9 @@ public final class TownLayout {
         boolean place(Placer p, int i, int gap) {
             Box b = p.boxes.get(i);
             Rotation r = rotation();
-            int doorPerp = line + side * hw;
+            int setback = jitter == null ? 0 : jitter.nextInt(3);
+            gap = jitter == null ? gap : 1 + jitter.nextInt(3);
+            int doorPerp = line + side * (hw + setback);
             Spot t = alongX ? byDoor(b, r, 0, doorPerp) : byDoor(b, r, doorPerp, 0);
             Rect rr = rect(b, t);
             int lo = alongX ? rr.x0() : rr.z0(), hi = alongX ? rr.x1() : rr.z1();
@@ -227,12 +240,21 @@ public final class TownLayout {
      * reprises plus longues jusqu'à ce que tout tienne (cinq essais).
      */
     public static Layout plan(Pattern pattern, List<Box> boxes, List<TownSize.Role> roles, boolean walled, long seed) {
+        return plan(pattern, boxes, roles, walled, seed, boxes.size());
+    }
+
+    /**
+     * P36 : les {@code core} premiers forment le programme de la ville ; les suivants la remplissent (maisons, lanternes,
+     * étals, puits, statues le long des rues, jardins dans les îlots), posés seulement là où ils tiennent sans agrandir
+     * la ville.
+     */
+    public static Layout plan(Pattern pattern, List<Box> boxes, List<TownSize.Role> roles, boolean walled, long seed, int core) {
         double area = 0;
-        for (Box b : boxes) area += (b.w() + 3.0) * (b.d() + 3.0);
+        for (int i = 0; i < core; i++) area += (boxes.get(i).w() + 3.0) * (boxes.get(i).d() + 3.0);
         int length = (int) Math.max(24, Math.sqrt(area) * 0.75);
         Placer best = null;
         for (int attempt = 0; attempt < 6; attempt++) {
-            Placer p = new Placer(boxes, roles);
+            Placer p = new Placer(boxes, roles, core);
             switch (pattern) {
                 case MARCHE -> marche(p, length);
                 case CASTRUM -> castrum(p, length);
@@ -246,7 +268,83 @@ public final class TownLayout {
             if (p.pending.isEmpty()) break;
             length = (int) (length * 1.35);
         }
+        densify(best, core, seed);
         return finish(best, pattern, walled);
+    }
+
+    /**
+     * Le remplissage : chaque côté de chaque rue, dans les limites de la ville déjà posée, reçoit ce qui y tient ; puis
+     * les jardins se glissent dans les cœurs d'îlots et les coins libres.
+     */
+    private static void densify(Placer p, int core, long seed) {
+        if (core >= p.boxes.size()) return;
+        Rect box = null;
+        for (int i = 0; i < core; i++) {
+            Rect r = p.rectOf(i);
+            if (r == null) continue;
+            box = box == null ? r : new Rect(Math.min(box.x0(), r.x0()), Math.min(box.z0(), r.z0()), Math.max(box.x1(), r.x1()), Math.max(box.z1(), r.z1()));
+        }
+        if (box == null) return;
+        p.bounds = box.grow(2);
+        for (int i = core; i < p.boxes.size(); i++) if (p.roles.get(i) != TownSize.Role.GARDEN) p.pending.add(i);
+        // Le long des rues : les deux côtés de chaque tronçon, du centre vers le bord.
+        List<Frontage> sides = new ArrayList<>();
+        for (Rect c : new ArrayList<>(p.corridors)) {
+            boolean alongX = c.x1() - c.x0() >= c.z1() - c.z0();
+            int hw = alongX ? (c.z1() - c.z0()) / 2 : (c.x1() - c.x0()) / 2;
+            int line = alongX ? (c.z0() + c.z1()) / 2 : (c.x0() + c.x1()) / 2;
+            int a = alongX ? Math.max(c.x0(), p.bounds.x0()) : Math.max(c.z0(), p.bounds.z0());
+            int b = alongX ? Math.min(c.x1(), p.bounds.x1()) : Math.min(c.z1(), p.bounds.z1());
+            if (b - a < 4) continue;
+            sides.add(new Frontage(alongX, line, hw, -1, a, b));
+            sides.add(new Frontage(alongX, line, hw, 1, a, b));
+        }
+        java.util.Random rnd = new java.util.Random(seed);
+        for (Frontage f : sides) f.jitter = rnd;
+        // Les carrefours d'abord : une placette à chaque croisement (puits, statue, lanterne, étal) aux quatre coins.
+        corners(p, rnd);
+        placeAlong(p, sides);
+        // Puis des ruelles parallèles aux grandes rues, là où la place est libre (les rangs de parcelles de derrière),
+        // bordées à leur tour : les îlots se remplissent au lieu de rester en herbe.
+        int depth = 9;
+        int houses = 0;
+        for (int i = 0; i < p.boxes.size(); i++) {
+            if (p.roles.get(i) != TownSize.Role.HOUSE) continue;
+            depth += Math.max(p.boxes.get(i).w(), p.boxes.get(i).d());
+            houses++;
+        }
+        depth = houses == 0 ? 11 : depth / (houses + 1);
+        int pitch = 2 * depth + 2 * LANE + 3;
+        List<Frontage> lanes = new ArrayList<>();
+        for (Rect c : new ArrayList<>(p.corridors)) {
+            boolean alongX = c.x1() - c.x0() >= c.z1() - c.z0();
+            if ((alongX ? c.x1() - c.x0() : c.z1() - c.z0()) < 24) continue;
+            int line = alongX ? (c.z0() + c.z1()) / 2 : (c.x0() + c.x1()) / 2;
+            int a = alongX ? Math.max(c.x0(), p.bounds.x0()) : Math.max(c.z0(), p.bounds.z0());
+            int b = alongX ? Math.min(c.x1(), p.bounds.x1()) : Math.min(c.z1(), p.bounds.z1());
+            for (int k = 1; k <= 6; k++) {
+                for (int sgn : new int[]{-1, 1}) {
+                    int l = line + sgn * k * pitch;
+                    if (alongX ? (l < p.bounds.z0() + depth || l > p.bounds.z1() - depth) : (l < p.bounds.x0() + depth || l > p.bounds.x1() - depth)) continue;
+                    lanes.addAll(freeLane(p, alongX, l, a, b));
+                }
+            }
+        }
+        for (Frontage f : lanes) f.jitter = rnd;
+        placeAlong(p, lanes);
+        // Les jardins, puis le reste du mobilier, semés au hasard dans ce qui reste (arrière-cours, coins, bords).
+        List<Integer> scatter = new ArrayList<>();
+        for (int i = core; i < p.boxes.size(); i++) if (p.roles.get(i) == TownSize.Role.GARDEN) scatter.add(i);
+        for (Integer i : p.pending) if (p.roles.get(i).decor()) scatter.add(i);
+        p.pending.clear();
+        java.util.Random random = new java.util.Random(seed ^ 0x5DEECE66DL);
+        int w = p.bounds.x1() - p.bounds.x0() + 1, d = p.bounds.z1() - p.bounds.z0() + 1;
+        for (Integer i : scatter) {
+            for (int attempt = 0; attempt < 60; attempt++) {
+                if (p.put(i, new Spot(p.bounds.x0() + random.nextInt(w), p.bounds.z0() + random.nextInt(d), Rotation.values()[random.nextInt(4)]))) break;
+            }
+        }
+        p.bounds = null;
     }
 
     /** Le bourg médiéval : la place du marché au carrefour, la grand-rue est-ouest, la rue du sud. */
@@ -255,17 +353,18 @@ public final class TownLayout {
         int q = plaza >= 0 ? Math.max(p.boxes.get(plaza).w(), p.boxes.get(plaza).d()) / 2 + 3 : 7;
         if (plaza >= 0) p.put(plaza, new Spot(0, 0, Rotation.NONE));
         p.taken.add(new Rect(-q, -q, q, q));
-        // L'hôtel de ville sur le côté nord de la place, porte sur la place.
-        p.put(0, byDoor(p.boxes.get(0), Rotation.NONE, 0, -q));
+        // L'hôtel de ville sur le côté nord de la place, porte sur la place (une venelle entre les deux).
+        p.put(0, byDoor(p.boxes.get(0), Rotation.NONE, 0, -q - 1));
         Rect hall = p.rectOf(0);
         p.streetX(0, MAIN, -length, -q - 1);
         p.streetX(0, MAIN, q + 1, length);
         p.streetZ(0, MAIN, q + 1, length / 2 + q);
         // L'église et le marché couvert sur la place, à côté de l'hôtel de ville ; la taverne en face.
-        fill(p, List.of(new Frontage(true, -q, 0, -1, hall == null ? MAIN + 1 : hall.x1() + 2, q + length / 2),
-                new Frontage(true, -q, 0, -1, hall == null ? -MAIN - 1 : hall.x0() - 2, -q - length / 2)), only(TownSize.Role.CHURCH, TownSize.Role.MARKET));
-        fill(p, List.of(new Frontage(true, q, 0, 1, -MAIN - 1, -q - length / 2), new Frontage(true, q, 0, 1, MAIN + 1, q + length / 2)),
-                only(TownSize.Role.TAVERN, TownSize.Role.CRAFT));
+        fill(p, List.of(new Frontage(true, -q - 1, 0, -1, hall == null ? MAIN + 1 : hall.x1() + 2, q + length / 2),
+                new Frontage(true, -q - 1, 0, -1, hall == null ? -MAIN - 1 : hall.x0() - 2, -q - length / 2)),
+                only(TownSize.Role.CHURCH, TownSize.Role.MARKET, TownSize.Role.STATUE));
+        fill(p, List.of(new Frontage(true, q + 1, 0, 1, -MAIN - 1, -q - length / 2), new Frontage(true, q + 1, 0, 1, MAIN + 1, q + length / 2)),
+                only(TownSize.Role.TAVERN, TownSize.Role.CRAFT, TownSize.Role.STALL));
         // Les parcelles le long de la grand-rue, de la place vers les portes ; puis la rue du sud.
         List<Frontage> high = List.of(new Frontage(true, 0, MAIN, -1, q + 1, length), new Frontage(true, 0, MAIN, 1, -q - 1, -length),
                 new Frontage(true, 0, MAIN, 1, q + 1, length), new Frontage(true, 0, MAIN, -1, -q - 1, -length));
@@ -286,10 +385,10 @@ public final class TownLayout {
         int q = plaza >= 0 ? Math.max(p.boxes.get(plaza).w(), p.boxes.get(plaza).d()) / 2 + 3 : 8;
         if (plaza >= 0) p.put(plaza, new Spot(0, 0, Rotation.NONE));
         p.taken.add(new Rect(-q, -q, q, q));
-        // La basilique au nord du forum, le temple en face, au sud.
-        p.put(0, byDoor(p.boxes.get(0), Rotation.NONE, 0, -q));
+        // La basilique au nord du forum, le temple en face, au sud (une venelle entre eux et le forum).
+        p.put(0, byDoor(p.boxes.get(0), Rotation.NONE, 0, -q - 1));
         int temple = p.first(TownSize.Role.CHURCH);
-        if (temple >= 0) p.put(temple, byDoor(p.boxes.get(temple), Rotation.CLOCKWISE_180, 0, q));
+        if (temple >= 0) p.put(temple, byDoor(p.boxes.get(temple), Rotation.CLOCKWISE_180, 0, q + 1));
         Rect north = p.rectOf(0), south = temple >= 0 ? p.rectOf(temple) : null;
         int depth = p.maxDepth(), pitch = 2 * depth + 2 * LANE + 4;
         // Decumanus maximus (est-ouest) de part et d'autre du forum, cardo maximus (nord-sud) au-delà de la basilique et du temple.
@@ -317,10 +416,10 @@ public final class TownLayout {
         List<Frontage> cardo = List.of(new Frontage(false, 0, MAIN, -1, cs, length), new Frontage(false, 0, MAIN, 1, cs, length),
                 new Frontage(false, 0, MAIN, -1, cn, -length), new Frontage(false, 0, MAIN, 1, cn, -length));
         // Les marchés et les tavernes sur les grandes rues près du forum ; la garde au bout, vers les portes.
-        fill(p, decumanus, only(TownSize.Role.MARKET, TownSize.Role.TAVERN, TownSize.Role.CRAFT));
+        fill(p, decumanus, only(TownSize.Role.MARKET, TownSize.Role.STALL, TownSize.Role.WAREHOUSE, TownSize.Role.TAVERN, TownSize.Role.CRAFT));
         List<Frontage> gates = List.of(new Frontage(true, 0, MAIN, -1, length, q + 1), new Frontage(true, 0, MAIN, 1, -length, -q - 1),
                 new Frontage(false, 0, MAIN, 1, length, cs), new Frontage(false, 0, MAIN, -1, -length, cn));
-        fill(p, gates, only(TownSize.Role.BARRACKS, TownSize.Role.TOWER));
+        fill(p, gates, only(TownSize.Role.BARRACKS, TownSize.Role.TOWER, TownSize.Role.GRAVEYARD));
         fill(p, decumanus, ANY);
         fill(p, cardo, ANY);
         fill(p, secondary, ANY);
@@ -474,6 +573,80 @@ public final class TownLayout {
         p.streetX(0, MAIN, -length, length);
         fill(p, List.of(new Frontage(true, 0, MAIN, -1, 0, length), new Frontage(true, 0, MAIN, 1, -1, -length),
                 new Frontage(true, 0, MAIN, 1, 0, length), new Frontage(true, 0, MAIN, -1, -1, -length)), ANY);
+    }
+
+    /** Une placette à chaque croisement de rues : les décors en attente se posent aux coins, tournés vers le carrefour. */
+    private static void corners(Placer p, java.util.Random rnd) {
+        List<Rect> cs = p.corridors;
+        for (int a = 0; a < cs.size(); a++) {
+            for (int b = a + 1; b < cs.size(); b++) {
+                Rect x = cs.get(a), y = cs.get(b);
+                if (!x.overlaps(y, 0)) continue;
+                int cx = (Math.max(x.x0(), y.x0()) + Math.min(x.x1(), y.x1())) / 2, cz = (Math.max(x.z0(), y.z0()) + Math.min(x.z1(), y.z1())) / 2;
+                int reach = Math.max(x.x1() - x.x0(), x.z1() - x.z0()) < Math.max(y.x1() - y.x0(), y.z1() - y.z0())
+                        ? Math.min(x.x1() - x.x0(), x.z1() - x.z0()) : Math.min(y.x1() - y.x0(), y.z1() - y.z0());
+                for (int[] q : new int[][]{{-1, -1}, {1, -1}, {1, 1}, {-1, 1}}) {
+                    for (Integer i : new ArrayList<>(p.pending)) {
+                        TownSize.Role r = p.roles.get(i);
+                        if (r != TownSize.Role.PLAZA && r != TownSize.Role.STATUE && r != TownSize.Role.LAMP && r != TownSize.Role.STALL
+                                && r != TownSize.Role.DECOR) continue;
+                        Box bx = p.boxes.get(i);
+                        int off = reach / 2 + 2 + Math.max(bx.w(), bx.d()) / 2;
+                        if (p.put(i, new Spot(cx + q[0] * off, cz + q[1] * off, facingCenter(q[0], q[1])))) break;
+                    }
+                }
+            }
+        }
+    }
+
+    /** Chaque élément en attente, sur la première rive de rue où il tient (en repartant du début de chaque rive). */
+    private static void placeAlong(Placer p, List<Frontage> sides) {
+        if (sides.isEmpty()) return;
+        // Les rives sont prises dans un ordre mêlé : la ville ne se remplit pas rue après rue, d'un seul côté.
+        java.util.Collections.shuffle(sides, new java.util.Random(sides.size() * 31L + p.taken.size()));
+        // Chaque rive se remplit de proche en proche ; quand plus rien ne tient nulle part, on s'arrête.
+        int misses = 0;
+        for (Integer i : new ArrayList<>(p.pending)) {
+            boolean placed = false;
+            for (Frontage f : sides) {
+                if (f.place(p, i, 1)) {
+                    placed = true;
+                    break;
+                }
+            }
+            misses = placed ? 0 : misses + 1;
+            if (misses > 24) return;
+        }
+    }
+
+    /**
+     * Une ruelle sur cette ligne, découpée en tronçons libres (là où aucun bâtiment ne la barre) d'au moins douze
+     * cases ; chaque tronçon devient une rue et ses deux rives.
+     */
+    private static List<Frontage> freeLane(Placer p, boolean alongX, int line, int a, int b) {
+        List<Frontage> out = new ArrayList<>();
+        int start = -1;
+        for (int t = a; t <= b + 1; t++) {
+            boolean free = t <= b;
+            if (free) {
+                Rect cell = alongX ? new Rect(t, line - LANE, t, line + LANE) : new Rect(line - LANE, t, line + LANE, t);
+                for (Rect r : p.taken) if (r.overlaps(cell, 0)) {
+                    free = false;
+                    break;
+                }
+            }
+            if (free && start < 0) start = t;
+            if (!free && start >= 0) {
+                if (t - 1 - start >= 12) {
+                    if (alongX) p.streetX(line, LANE, start, t - 1);
+                    else p.streetZ(line, LANE, start, t - 1);
+                    out.add(new Frontage(alongX, line, LANE, -1, start, t - 1));
+                    out.add(new Frontage(alongX, line, LANE, 1, start, t - 1));
+                }
+                start = -1;
+            }
+        }
+        return out;
     }
 
     // ------------------------------------------------------------------ rues, murs, emprise

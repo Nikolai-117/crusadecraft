@@ -958,3 +958,23 @@ Demandé par Romain (5 octobre) : « que ça fonctionne par chunk directement »
 - Vérifié : tests unitaires, 77 GameTests (dont la ville devenue colonie et rattachée au royaume), et dans le jeu de
   développement. Canal réseau en version 23.
 
+**P36 (1er novembre 2026) — les villes conçues avec Romain, version 3.5.0**
+
+- Ses choix : cinq tailles (hameau, village, bourg, ville, capitale) ; plans de niveau 1 à 3 pour le hameau et le
+  village, 3 pour le bourg, au plus haut pour la ville et la capitale ; aucune enceinte avant le bourg, une palissade
+  pour le bourg, la grande muraille du thème pour la ville et la capitale ; toute ville a son marché, ses étals, son
+  entrepôt, son temple, son cimetière, sa caserne, ses tours, ses portes, et des maisons en proportion des habitants.
+- **Enceintes en pièces des packs** (`WallSets`) : un jeu de pièces par thème et par sorte (grande muraille,
+  palissade) ; angles aux coins, segments bout à bout, porte au milieu de chaque côté sur l'axe de la grande rue, tour
+  tous les quatre segments ; chaque pièce tournée d'après ses raccords mesurés, face pleine vers le dehors. Les
+  murailles, routes et décors gardent l'orientation de leur dessin (seuls les bâtiments sont tournés par leur porte).
+  L'enceinte serre le bâti, les rues sont coupées à l'intérieur, une rue relie chaque porte à la ville.
+- **Des villes pleines et vivantes** (Romain : « que toute cette place soit utilisée », « organique, comme les villes de
+  créateurs ou dans la vraie vie ») : après le programme, un remplissage jusqu'à ce que plus rien ne tienne — maisons
+  variées, artisans, lanternes, étals, statues, puits, mobilier de rue — le long des rues puis de ruelles parallèles
+  ouvertes là où la place est libre, avec retraits et écarts tirés au sort ; une placette à chaque carrefour ; jardins
+  et décors semés au hasard dans les arrière-cours. Un décor qui a de l'eau sur ses bords (un morceau de bassin) est
+  écarté : posé seul, il fuyait.
+- Le port attend : il demande de connaître l'eau autour de la ville au moment du plan.
+- Vérifié : 201 tests unitaires, 77 GameTests, six villes de taille « ville » bâties et regardées dans le jeu.
+

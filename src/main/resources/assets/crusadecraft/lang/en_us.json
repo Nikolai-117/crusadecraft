@@ -2451,5 +2451,6 @@
   "crusadecraft.plan.chip.1": "Walls",
   "crusadecraft.plan.chip.2": "Roads",
   "crusadecraft.plan.chip.3": "Decor",
-  "crusadecraft.plan.hud.hint.raise": "Page↑ / Page↓: raise, lower"
+  "crusadecraft.plan.hud.hint.raise": "Page↑ / Page↓: raise, lower",
+  "crusadecraft.town.size.village": "village"
 }

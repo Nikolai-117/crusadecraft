@@ -33,7 +33,10 @@ public final class PlanBuilder {
      *                 tonneaux (une ville de l'ordinateur, sans colonie)
      */
     public static Plan build(PlanRef ref, RawPlan raw, boolean keepHuts) {
-        Direction front = front(raw);
+        // P36 : seuls les bâtiments sont tournés d'après leur porte ; murailles, routes et décors gardent l'orientation
+        // de leur dessin, dont dépendent leurs raccords.
+        boolean building = ref.source() != PlanRef.Source.PACK || PlanKinds.kind(ref.path()) == PlanKinds.BATIMENT;
+        Direction front = building ? front(raw) : Direction.SOUTH;
         Rotation r0 = inverse(Blueprints.rotation(front));
         int ox = raw.sizeX() / 2, oz = raw.sizeZ() / 2;
         boolean swap = r0 == Rotation.CLOCKWISE_90 || r0 == Rotation.COUNTERCLOCKWISE_90;

@@ -262,6 +262,15 @@ public final class PlanTool {
                 case BARRACKS -> 0xB0413A;
                 case TOWER -> 0x8E8E8E;
                 case CRAFT -> 0xA88B5E;
+                case WAREHOUSE -> 0xC9A86A;
+                case GRAVEYARD -> 0x7E8A78;
+                case HOSPITAL -> 0xE8E2D2;
+                case SCHOOL -> 0x8FA8C9;
+                case STALL -> 0xE0C060;
+                case LAMP -> 0xF2D27A;
+                case STATUE -> 0xBDBDBD;
+                case GARDEN -> 0x5E9E4A;
+                case DECOR -> 0xC8B48A;
             };
         }
         return 0xB5714A;

@@ -2451,5 +2451,6 @@
   "crusadecraft.plan.chip.1": "Murs",
   "crusadecraft.plan.chip.2": "Routes",
   "crusadecraft.plan.chip.3": "Décors",
-  "crusadecraft.plan.hud.hint.raise": "Page↑ / Page↓ : monter, descendre"
+  "crusadecraft.plan.hud.hint.raise": "Page↑ / Page↓ : monter, descendre",
+  "crusadecraft.town.size.village": "village"
 }
