@@ -129,6 +129,25 @@ public final class Journals extends SavedData {
         return true;
     }
 
+    /** Une pose de l'outil est-elle encore en cours ? */
+    public static boolean pasting(MinecraftServer server, UUID id) {
+        for (Job j : get(server).jobs) if (j.id.equals(id)) return true;
+        return false;
+    }
+
+    /** P35 : on garde ce qui est bâti pour de bon — le journal s'efface, on ne pourra plus le défaire. */
+    public static void discard(MinecraftServer server, UUID id) {
+        Journals index = get(server);
+        index.jobs.removeIf(j -> j.id.equals(id));
+        index.undoing.remove(id);
+        ResourceLocation dim = index.dims.remove(id);
+        for (List<UUID> stack : index.stacks.values()) stack.remove(id);
+        PLACEMENTS.remove(id);
+        index.setDirty();
+        if (dim != null) forget(server, id, journal(server, id, dim));
+        index.dims.remove(id);
+    }
+
     public static boolean undoing(MinecraftServer server, UUID id) {
         return get(server).undoing.contains(id);
     }

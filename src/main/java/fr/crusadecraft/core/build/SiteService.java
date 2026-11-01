@@ -71,6 +71,11 @@ public final class SiteService {
         return CrusadeSavedData.get(server);
     }
 
+    /** P35 : la construction n'est plus suivie (devenue colonie) : son plan quitte la mémoire. */
+    public static void forgetPlan(UUID id) {
+        PLANS.remove(id);
+    }
+
     /** Le plan d'une construction, gardé en mémoire le temps du chantier (P34 : celui de sa ville, d'après les packs). */
     static List<Blueprints.Placement> plan(Site site) {
         return PLANS.computeIfAbsent(site.id(), id -> site.town() != null
@@ -591,7 +596,8 @@ public final class SiteService {
      * construction porte l'identifiant de la pose : « Défaire la ville » rend le terrain comme pour les autres.
      */
     public static Component registerToolTown(ServerPlayer player, UUID id, BlockPos ground, fr.crusadecraft.core.build.plan.NationStyle style,
-                                             fr.crusadecraft.core.build.plan.TownSize size, fr.crusadecraft.core.build.plan.TownPlan town) {
+                                             fr.crusadecraft.core.build.plan.TownSize size, fr.crusadecraft.core.build.plan.TownPlan town, int rotation) {
+        town.setRotation(rotation);
         MinecraftServer server = player.server;
         ServerLevel level = player.serverLevel();
         CrusadeSavedData data = data(server);

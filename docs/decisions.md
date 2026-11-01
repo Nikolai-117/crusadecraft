@@ -938,3 +938,23 @@ Demandé par Romain (5 octobre) : « que ça fonctionne par chunk directement »
 - Les habitants d'une ville arrivent sur la case de rue la plus proche du centre (place, forum, avenue), plus dans
   l'hôtel de ville. Canal réseau en version 22 : client et serveur doivent avoir la même version.
 
+**P35 (1er novembre 2026) — inventaire des plans, villes faites siennes, fantôme du plan, version 3.4.0**
+
+- **Inventaire** (`docs/catalogue-plans.md`, et `.json` pour la suite) : les 13 packs des six styles lus dans l'instance
+  (sans rien modifier), rangés en murailles, routes et ouvrages, décorations, bâtiments ; taille au-dessus du sol,
+  niveaux, côtés d'accroche des murailles (mesurés sur le bord du plan, segments par leurs petits côtés), entrée des
+  bâtiments. C'est l'étape 1 demandée avant de recomposer les villes ; la composition attend les choix de Romain.
+- **Faire sienne une ville** : colonie MineColonies créée par son API sur l'hôtel de ville, chaque cabane reposée et
+  son bâtiment enregistré (pack, plan, niveau, emprise). La ville quitte le registre des constructions et son journal ;
+  une nation fondée par elle seule disparaît. « Fonder mon royaume ici » ouvre l'écran de fondation, la distance au
+  Trône étant levée pour cet hôtel de ville seulement.
+- **Catalogue** : sortes (dossier du plan) et rôles (nom), puces de filtre, étoile des favoris (communs au monde,
+  enregistrés avec lui) et étagère « ★ Mes favoris ».
+- **Fantôme** (demandé « comme Schematica ») : le serveur envoie la surface du plan (40 000 blocs au plus) ; le client
+  la prépare une fois par orientation dans un tampon de sommets (faces cachées sautées), puis la dessine en
+  transparence à chaque image. Décalages et position figée restent côté client ; la pose part du client et le serveur
+  revérifie l'outil, les droits et la distance (160 blocs). Pas de fantôme pour une ville entière (trop de blocs) :
+  son cadre.
+- Vérifié : tests unitaires, 77 GameTests (dont la ville devenue colonie et rattachée au royaume), et dans le jeu de
+  développement. Canal réseau en version 23.
+

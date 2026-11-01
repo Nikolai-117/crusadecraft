@@ -1,4 +1,4 @@
-# CrusadeCraft 3.3.1 — installer et tester
+# CrusadeCraft 3.4.0 — installer et tester
 
 ## 1. Ce qu'il faut
 
@@ -17,7 +17,7 @@ Optionnels, déjà présents chez toi, donc activés automatiquement :
 
 ## 2. Installer
 
-1. Le fichier du mod est `E:\crusadecraft\build\libs\crusadecraft-3.3.1.jar`.
+1. Le fichier du mod est `E:\crusadecraft\build\libs\crusadecraft-3.4.0.jar`.
 2. Mets-le dans le dossier des mods de l'instance : `D:\MultiMC\instances\1.20.1\.minecraft\mods\`.
    Dans MultiMC, tu peux aussi faire clic droit sur l'instance → *Modifier* → *Mods* → *Ajouter un fichier*.
    **Retire l'ancien** (`crusadecraft-1.8.0.jar`, ou une version plus vieille) : deux versions du mod ensemble
@@ -244,9 +244,22 @@ données du mod (fichier `crusadecraft.dat` du monde) restent sur place, sans ef
     un plan et montre à droite sa taille et un **aperçu vu du ciel** (pour une ville entière : son plan, avec sa légende,
     et « Autre tirage » pour une autre variante) ; double-clic ou « Prendre ce plan » pour le prendre, flèches et Entrée
     au clavier.
+    **Le fantôme, comme Schematica** : un plan choisi s'affiche en transparence là où il tombera. **R** le tourne,
+    **Page↑ / Page↓** le monte ou le descend, **les flèches** le poussent devant, derrière, à gauche, à droite (selon ton
+    regard), **G** le fige sur place (tu peux tourner autour) ou le libère, **Début** le remet sous le viseur ; le clic
+    droit pose exactement là où il est. Toutes ces touches se changent dans Options › Commandes › CrusadeCraft. Une ville
+    entière, trop grande pour un fantôme, se montre par son cadre.
+    **Filtres et favoris** : sous la recherche du catalogue, Tout · Bâtis · Murs · Routes · Décors · ★ ; le panneau d'un
+    plan dit sa sorte et son rôle (segment, angle, porte, tour, puits, lanterne…) ; « ★ Favori » le range dans
+    l'étagère « ★ Mes favoris », commune au monde. L'inventaire complet des pièces est dans `docs/catalogue-plans.md`.
     Une **ville entière** posée à l'outil devient une ville du monde : sur la carte, avec ses habitants. Posée sur les
     terres d'un royaume, elle le rejoint ; sur une terre libre, elle **fonde une nation** de son style, dont elle est
-    la capitale. On la défait comme les autres (« Défaire la ville » dans l'éditeur). Pour composer ta propre ville,
+    la capitale. On la défait comme les autres (« Défaire la ville » dans l'éditeur).
+    **La faire sienne** : après la pose, le message propose **[Faire ma colonie]** et **[Fonder mon royaume ici]** (aussi
+    dans l'éditeur, sur la construction de la ville, et par `/crusade ville colonie` ou `/crusade ville royaume` en s'y
+    tenant). La ville devient une vraie colonie MineColonies : chaque bâtiment est enregistré à son niveau, avec son pack
+    et son plan, les colons arrivent et y travaillent ; elle rejoint ton royaume, ou l'écran de fondation s'ouvre avec
+    elle pour capitale. Elle ne se « défait » plus ensuite : c'est une colonie comme les autres. Pour composer ta propre ville,
     pose les bâtiments un à un depuis les packs : chaque pose se défait.
 53m. **Tes propres plans** : dépose tes `.nbt` (bloc de structure) et `.schem` (WorldEdit) dans
     `crusadecraft/plans/` du dossier du jeu (`/crusade plan dossier` donne le chemin). Tes packs Structurize (scans du
@@ -447,6 +460,7 @@ Chaque système peut être coupé.
 | `/crusade perf`, `/crusade perf reset` | Le temps pris par chaque partie du mod |
 | `/crusade reglages` | L'écran des réglages du monde (opérateurs, propriétaire d'un monde solo) |
 | `/crusade plan annuler` | Défaire la dernière pose du plan d'architecte |
+| `/crusade ville colonie` · `/crusade ville royaume` | Faire de la ville où l'on se tient sa colonie, ou y fonder son royaume |
 | `/crusade plan dossier` | Le dossier où déposer ses fichiers .nbt et .schem |
 | `/crusade renommer royaume <nom>`, `renommer ville <nom>` | Renommer son royaume, ou la ville où l'on se tient |
 | `/crusade reconcilier` | Revérifie l'état des royaumes |

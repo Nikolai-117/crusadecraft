@@ -295,6 +295,57 @@ public final class PlanGameTests {
         }
     }
 
+    /**
+     * P35 : une ville entière posée à l'outil devient une vraie colonie MineColonies : la colonie naît sur son hôtel de
+     * ville, ses bâtiments sont enregistrés à leur niveau, et elle rejoint le royaume du joueur.
+     */
+    @GameTest(template = TestWorld.TEMPLATE, setupTicks = TestWorld.SETUP_TICKS, batch = "p35_colonie", timeoutTicks = 600)
+    public static void villeDevientColonie(GameTestHelper h) {
+        TestWorld w = TestWorld.realm(h, "Valbrume");
+        var server = h.getLevel().getServer();
+        ServerLevel level = h.getLevel();
+        var data = CrusadeSavedData.get(server);
+        fr.crusadecraft.core.ColonyRef made = null;
+        BlockPos hallPos = null;
+        try {
+            data.world().clear();
+            data.world().markGenerated(RealmService.currentDay(server));
+            WorldEditService.grantForTests(w.ruler.getUUID(), true);
+            w.ruler.setItemInHand(InteractionHand.MAIN_HAND, new ItemStack(ModItems.PLAN.get()));
+            w.check(PlanTool.choose(w.ruler, PlanTool.townRef(NationStyle.EUROPEENNE, TownSize.HAMEAU)).success(), "le hameau n'est pas choisi");
+            BlockPos at = ground(level, w.center.getX() - 3200, w.center.getZ() + 3200);
+            PlanTool.paste(w.ruler, w.ruler.getMainHandItem(), at);
+            Site town = data.world().sites().stream().filter(s -> s.town() != null).findFirst().orElse(null);
+            w.check(town != null, "la ville posée n'est pas au registre");
+            for (int i = 0; i < 400 && Journals.pasting(server, town.id()); i++) Journals.tick(server);
+            w.check(!Journals.pasting(server, town.id()), "la pose ne s'achève pas");
+            var huts = fr.crusadecraft.core.build.plan.TownColony.huts(town);
+            w.check(huts.size() >= 3, "trop peu de cabanes retrouvées dans la ville (" + huts.size() + ")");
+            hallPos = huts.stream().filter(fr.crusadecraft.core.build.plan.TownColony.HutSpot::townHall).map(fr.crusadecraft.core.build.plan.TownColony.HutSpot::pos)
+                    .findFirst().orElse(null);
+            w.check(hallPos != null, "pas d'hôtel de ville parmi les cabanes");
+            var out = fr.crusadecraft.core.build.plan.TownColony.makeColony(w.ruler, town.id(), false);
+            w.check(out.success(), "la colonie est refusée : " + out.message().getString());
+            made = fr.crusadecraft.compat.minecolonies.MineColoniesBridge.colonyAt(level, hallPos).orElse(null);
+            w.check(made != null, "aucune colonie sur l'hôtel de ville");
+            w.check(w.realm.holds(made), "la colonie ne rejoint pas le royaume du joueur");
+            w.check(data.world().site(town.id()).isEmpty(), "la ville reste au registre des constructions");
+            w.check(fr.crusadecraft.compat.minecolonies.MineColoniesBridge.townHallLevel(made) >= 1, "l'hôtel de ville n'a pas de niveau");
+            h.succeed();
+        } finally {
+            if (made != null) w.realm.removeProvince(made);
+            if (hallPos != null) fr.crusadecraft.compat.minecolonies.MineColoniesTestKit.deleteColonyAt(level, hallPos);
+            for (var person : new ArrayList<>(data.lineage().persons())) {
+                var e = level.getEntity(person.id());
+                if (e != null) e.discard();
+            }
+            data.lineage().clear();
+            data.world().clear();
+            WorldEditService.grantForTests(w.ruler.getUUID(), false);
+            w.cleanup();
+        }
+    }
+
     @GameTest(template = TestWorld.TEMPLATE, setupTicks = TestWorld.SETUP_TICKS, batch = "p34_outil", timeoutTicks = 400)
     public static void planArchitecte(GameTestHelper h) {
         TestWorld w = TestWorld.realm(h, "Valbrume");

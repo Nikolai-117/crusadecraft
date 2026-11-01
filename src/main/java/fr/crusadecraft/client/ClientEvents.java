@@ -23,6 +23,7 @@ public final class ClientEvents {
         Minecraft mc = Minecraft.getInstance();
         if (mc.player == null) return;
         fr.crusadecraft.client.map.StaffPreview.tick(mc);
+        fr.crusadecraft.client.map.PlanControl.tick(mc);
         if (mc.screen != null) return;
         while (KeyBindings.UNDO_BORNAGE.consumeClick()) {
             CrusadeNetwork.toServer(fr.crusadecraft.network.packet.StaffPackets.Action.of(fr.crusadecraft.network.packet.StaffPackets.Action.Op.UNDO));

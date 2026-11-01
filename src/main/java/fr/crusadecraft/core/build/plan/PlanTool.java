@@ -18,8 +18,10 @@ import java.util.UUID;
  * revérifié ici : seul un joueur en créatif ou qui a l'éditeur de la carte pose quoi que ce soit.
  */
 public final class PlanTool {
-    /** L'étagère des villes entières, en tête du catalogue. */
-    public static final String TOWNS = "@villes";
+    /** L'étagère des villes entières, en tête du catalogue ; celle des favoris, juste après. */
+    public static final String TOWNS = "@villes", FAVORITES = "@favoris";
+    /** La sorte d'une ville entière, à part des sortes de plans. */
+    public static final int TOWN_KIND = 5;
     private static final String TOWN_PREFIX = "town:";
 
     private PlanTool() {}
@@ -41,21 +43,60 @@ public final class PlanTool {
             if (pack.isEmpty()) continue;
             for (TownSize size : TownSize.values()) {
                 if (size == TownSize.QUARTIER) continue;
-                out.add(new PlanLibrary.Entry(townRef(style, size), pack.get(), style.name()));
+                out.add(new PlanLibrary.Entry(townRef(style, size), pack.get(), style.name(), TOWN_KIND));
             }
         }
         return out;
     }
 
+    private static int favoritesCount;
+
+    /** Les plans favoris du monde, en entrées du catalogue (rangées par pack). */
+    public static List<PlanLibrary.Entry> favorites(net.minecraft.server.MinecraftServer server) {
+        List<PlanLibrary.Entry> out = new ArrayList<>();
+        for (String ref : PlanFavorites.get(server).all()) {
+            if (ref.startsWith(TOWN_PREFIX)) {
+                String[] parts = ref.substring(TOWN_PREFIX.length()).split(":");
+                out.add(new PlanLibrary.Entry(ref, "", parts.length > 0 ? parts[0] : "", TOWN_KIND));
+                continue;
+            }
+            PlanRef.decode(ref).ifPresent(r -> out.add(new PlanLibrary.Entry(ref, r.label(), r.pack() + (r.category().isEmpty() ? "" : " · " + r.category()),
+                    r.source() == PlanRef.Source.PACK ? PlanKinds.kind(r.path()) : PlanKinds.AUTRE)));
+        }
+        out.sort(java.util.Comparator.comparing(PlanLibrary.Entry::category));
+        return out;
+    }
+
+    public static List<PlanLibrary.Source> sources(net.minecraft.server.MinecraftServer server) {
+        favoritesCount = PlanFavorites.get(server).all().size();
+        return sources();
+    }
+
     public static List<PlanLibrary.Source> sources() {
         List<PlanLibrary.Source> out = new ArrayList<>();
         out.add(new PlanLibrary.Source(TOWNS, "", towns().size()));
+        out.add(new PlanLibrary.Source(FAVORITES, "", favoritesCount));
         out.addAll(PlanLibrary.sources());
         return out;
     }
 
-    public static List<PlanLibrary.Entry> entries(String source) {
+    public static List<PlanLibrary.Entry> entries(net.minecraft.server.MinecraftServer server, String source) {
+        if (FAVORITES.equals(source)) return favorites(server);
         return TOWNS.equals(source) ? towns() : PlanLibrary.entries(source);
+    }
+
+    /** Marque ou démarque un plan favori (la ville entière sans son tirage). */
+    public static Outcome toggleFavorite(ServerPlayer player, String ref) {
+        if (!allowed(player)) return Outcome.no("crusadecraft.plan.denied");
+        String key = ref;
+        if (ref.startsWith(TOWN_PREFIX)) {
+            String[] parts = ref.substring(TOWN_PREFIX.length()).split(":");
+            if (parts.length >= 2) key = TOWN_PREFIX + parts[0] + ":" + parts[1];
+        } else if (PlanRef.decode(ref).isEmpty()) {
+            return Outcome.no("crusadecraft.plan.unreadable");
+        }
+        boolean now = PlanFavorites.get(player.server).toggle(key);
+        return Outcome.ok(Component.translatable(now ? "crusadecraft.plan.favorite.added" : "crusadecraft.plan.favorite.removed"));
     }
 
     /** Choisit ce que l'outil tenu posera. */
@@ -89,6 +130,7 @@ public final class PlanTool {
         if (plan.isEmpty()) return Outcome.no("crusadecraft.plan.unreadable");
         Plan p = plan.get();
         PlanItem.setChoice(held.get(), new PlanItem.Choice(ref, p.name(), p.sizeX(), p.sizeY(), p.sizeZ(), p.groundY(), rotation, false, 0, 0, 0));
+        sendGhost(player, ref);
         return Outcome.ok(Component.translatable("crusadecraft.plan.chosen", p.name(), p.sizeX(), p.sizeY(), p.sizeZ()));
     }
 
@@ -106,7 +148,7 @@ public final class PlanTool {
      * ville : bâtiments selon leur rôle, rues, enceinte.
      */
     public record Detail(String ref, String name, int sizeX, int sizeY, int sizeZ, int pieces, int huts, boolean walled, int gridW, int gridH,
-                         int[] colors) {}
+                         int[] colors, int kind, String role) {}
 
     /** Le plus grand côté de l'aperçu, en cases. */
     public static final int PREVIEW = 72;
@@ -130,13 +172,15 @@ public final class PlanTool {
             int[][] grid = townPreview(town.get(), style);
             Component name = Component.translatable("crusadecraft.plan.town_name", Component.translatable(style.key()), Component.translatable(size.key()));
             return Optional.of(new Detail(ref, name.getString(), town.get().extent(), 0, town.get().extent(), town.get().pieces().size(), 0,
-                    town.get().walls().length > 0, grid[0][0], grid[0][1], grid[1]));
+                    town.get().walls().length > 0, grid[0][0], grid[0][1], grid[1], TOWN_KIND, ""));
         }
         Optional<Plan> plan = PlanRef.decode(ref).flatMap(r -> PlanLibrary.load(r, true));
         if (plan.isEmpty()) return Optional.empty();
         Plan p = plan.get();
         int[][] grid = planPreview(p);
-        return Optional.of(new Detail(ref, p.name(), p.sizeX(), p.sizeY(), p.sizeZ(), 1, p.huts(), false, grid[0][0], grid[0][1], grid[1]));
+        String path = p.ref().source() == PlanRef.Source.PACK ? p.ref().path() : "";
+        return Optional.of(new Detail(ref, p.name(), p.sizeX(), p.sizeY(), p.sizeZ(), 1, p.huts(), false, grid[0][0], grid[0][1], grid[1],
+                path.isEmpty() ? PlanKinds.AUTRE : PlanKinds.kind(path), path.isEmpty() ? "" : PlanKinds.role(path)));
     }
 
     /** Le dessus d'un plan, vu du ciel : la couleur de carte du bloc le plus haut de chaque colonne, plus claire en hauteur. */
@@ -228,6 +272,58 @@ public final class PlanTool {
         return (r << 16) | (g << 8) | b;
     }
 
+    /** Au plus, les blocs envoyés pour le fantôme : la surface d'un grand bâtiment tient dedans. */
+    public static final int GHOST_MAX = 40_000;
+
+    /**
+     * Les blocs du fantôme d'un plan (P35) : ceux qu'on voit (un voisin au moins n'est pas dans le plan), sans les
+     * fondations ni l'air, positions tassées en un entier et états par leur numéro.
+     */
+    static int[][] ghost(Plan plan) {
+        it.unimi.dsi.fastutil.longs.LongOpenHashSet solid = new it.unimi.dsi.fastutil.longs.LongOpenHashSet();
+        for (var p : plan.placements()) if (!p.foundation() && !p.state().isAir()) solid.add(net.minecraft.core.BlockPos.asLong(p.x(), p.y(), p.z()));
+        it.unimi.dsi.fastutil.ints.IntArrayList pos = new it.unimi.dsi.fastutil.ints.IntArrayList(), ids = new it.unimi.dsi.fastutil.ints.IntArrayList();
+        for (var p : plan.placements()) {
+            if (p.foundation() || p.state().isAir()) continue;
+            boolean seen = false;
+            for (net.minecraft.core.Direction d : net.minecraft.core.Direction.values()) {
+                if (!solid.contains(net.minecraft.core.BlockPos.asLong(p.x() + d.getStepX(), p.y() + d.getStepY(), p.z() + d.getStepZ()))) {
+                    seen = true;
+                    break;
+                }
+            }
+            if (!seen) continue;
+            if (pos.size() >= GHOST_MAX) break;
+            pos.add(fr.crusadecraft.core.build.plan.PlanTool.pack(p.x(), p.y(), p.z()));
+            ids.add(net.minecraft.world.level.block.Block.getId(p.state()));
+        }
+        return new int[][]{pos.toIntArray(), ids.toIntArray()};
+    }
+
+    public static int pack(int x, int y, int z) {
+        return ((x + 512) & 0x3FF) << 20 | ((y + 512) & 0x3FF) << 10 | ((z + 512) & 0x3FF);
+    }
+
+    /** Envoie au joueur le fantôme d'un plan (rien pour une ville entière : trop de blocs, le cadre suffit). */
+    public static void sendGhost(ServerPlayer player, String ref) {
+        if (ref == null || ref.isEmpty() || ref.startsWith(TOWN_PREFIX)) return;
+        PlanRef.decode(ref).flatMap(r -> PlanLibrary.load(r, true)).ifPresent(plan -> {
+            int[][] g = ghost(plan);
+            fr.crusadecraft.network.CrusadeNetwork.toPlayer(player, new fr.crusadecraft.network.packet.PlanPackets.Ghost(ref, g[0], g[1]));
+        });
+    }
+
+    /** Pose là où le fantôme est, envoyé par le client : revérifié (l'outil en main, les droits, la distance). */
+    public static void pasteAt(ServerPlayer player, net.minecraft.core.BlockPos ground) {
+        Optional<ItemStack> held = PlanItem.held(player);
+        if (held.isEmpty()) return;
+        if (player.distanceToSqr(ground.getCenter()) > 160.0 * 160.0 || !player.serverLevel().isLoaded(ground)) {
+            player.displayClientMessage(Component.translatable("crusadecraft.plan.too_far"), true);
+            return;
+        }
+        paste(player, held.get(), ground);
+    }
+
     public static void rotate(ServerPlayer player, ItemStack stack) {
         PlanItem.rotate(stack);
         int rot = PlanItem.choice(stack).map(PlanItem.Choice::rotation).orElse(0);
@@ -256,7 +352,9 @@ public final class PlanTool {
             player.sendSystemMessage(Component.translatable("crusadecraft.plan.pasting", choice.name()));
             // La ville posée est une ville du monde : sur la carte, à un royaume, avec ses habitants.
             player.sendSystemMessage(fr.crusadecraft.core.build.SiteService.registerToolTown(player, id, ground,
-                    NationStyle.byOrdinal(choice.style()), TownSize.byOrdinal(choice.size()), town.get()));
+                    NationStyle.byOrdinal(choice.style()), TownSize.byOrdinal(choice.size()), town.get(), choice.rotation()));
+            // P35 : la faire sienne, d'un clic dans le message.
+            player.sendSystemMessage(TownColony.offer(id));
             return;
         } else {
             if (PlanRef.decode(choice.ref()).flatMap(r -> PlanLibrary.load(r, true)).isEmpty()) {

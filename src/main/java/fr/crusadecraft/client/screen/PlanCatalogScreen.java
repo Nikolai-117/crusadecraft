@@ -1,6 +1,7 @@
 package fr.crusadecraft.client.screen;
 
 import fr.crusadecraft.core.build.plan.NationStyle;
+import fr.crusadecraft.core.build.plan.PlanKinds;
 import fr.crusadecraft.core.build.plan.PlanLibrary;
 import fr.crusadecraft.core.build.plan.PlanRef;
 import fr.crusadecraft.core.build.plan.PlanTool;
@@ -50,9 +51,27 @@ public class PlanCatalogScreen extends Screen {
     private boolean loading;
     private long lastClick, lastNanos;
     private int lastClickRow = -1;
+    private Button favorite;
+    /** Le filtre des sortes : −1 tout, une sorte de {@link PlanKinds}, ou {@link #ONLY_FAVORITES}. */
+    private int filter = -1;
+    private static final int ONLY_FAVORITES = 9;
+    private static final int[] CHIPS = {-1, PlanKinds.BATIMENT, PlanKinds.MURAILLE, PlanKinds.ROUTE, PlanKinds.DECORATION, ONLY_FAVORITES};
+    /** Les favoris du monde, tels que le serveur les a envoyés. */
+    private static final java.util.Set<String> FAVORITES = new java.util.HashSet<>();
 
     /** Une ligne de la liste : un en-tête de dossier, ou un plan. */
-    private record Row(Component text, String ref, boolean header, Component full) {}
+    private record Row(Component text, String ref, boolean header, Component full, int kind) {}
+
+    public static void setFavorites(List<String> refs) {
+        FAVORITES.clear();
+        FAVORITES.addAll(refs);
+        if (net.minecraft.client.Minecraft.getInstance().screen instanceof PlanCatalogScreen screen) screen.rebuildRows();
+    }
+
+    /** La clé d'un favori : pour une ville entière, sans son tirage. */
+    private static boolean isFavorite(String ref) {
+        return ref != null && FAVORITES.contains(ref);
+    }
 
     public PlanCatalogScreen(List<PlanLibrary.Source> sources, String folder) {
         super(Component.translatable("crusadecraft.plan.catalog"));
@@ -72,7 +91,7 @@ public class PlanCatalogScreen extends Screen {
         dx = left + w - 8 - dw;
         lx = sx + SOURCES_W + 8;
         lw = dx - 8 - lx;
-        listTop = top + 44;
+        listTop = top + 58;
         listBottom = top + h - 24;
         String previous = search == null ? "" : search.getValue();
         search = new EditBox(font, lx, top + 25, lw, 14, Component.translatable("crusadecraft.plan.search"));
@@ -88,6 +107,10 @@ public class PlanCatalogScreen extends Screen {
                 .bounds(dx + 4, listBottom - 18, dw - 8, 16).build());
         reroll = addRenderableWidget(Button.builder(Component.translatable("crusadecraft.plan.reroll"), b -> rerollSelected())
                 .bounds(dx + 4, listBottom - 36, dw - 8, 16).build());
+        favorite = addRenderableWidget(Button.builder(Component.translatable("crusadecraft.plan.favorite.add"), b -> {
+            if (selected >= 0 && selected < rows.size()) CrusadeNetwork.toServer(new PlanPackets.ToggleFavorite(rows.get(selected).ref()));
+        }).bounds(dx + 4, listBottom - 36, dw - 8, 16).build());
+        favorite.setY(listBottom - 36);
         if (source != null && entries.isEmpty() && !loading) request(source);
         rebuildRows();
     }
@@ -119,6 +142,7 @@ public class PlanCatalogScreen extends Screen {
     private static Component sourceLabel(PlanLibrary.Source s) {
         if (PlanTool.TOWNS.equals(s.id())) return Component.translatable("crusadecraft.plan.source.towns");
         if (PlanLibrary.FILES.equals(s.id())) return Component.translatable("crusadecraft.plan.source.files");
+        if (PlanTool.FAVORITES.equals(s.id())) return Component.translatable("crusadecraft.plan.source.favorites");
         return Component.literal(s.label());
     }
 
@@ -152,6 +176,9 @@ public class PlanCatalogScreen extends Screen {
 
     private static Component categoryLabel(String sourceId, String category) {
         if (PlanTool.TOWNS.equals(sourceId)) return Component.translatable(NationStyle.byName(category, NationStyle.EUROPEENNE).key());
+        if (PlanTool.FAVORITES.equals(sourceId) && NationStyle.byName(category, null) != null) {
+            return Component.translatable("crusadecraft.plan.source.towns").append(" · ").append(Component.translatable(NationStyle.byName(category, null).key()));
+        }
         return Component.literal(category.isEmpty() ? "/" : category);
     }
 
@@ -162,11 +189,12 @@ public class PlanCatalogScreen extends Screen {
         for (PlanLibrary.Entry e : entries) {
             Component label = entryLabel(e);
             if (!q.isEmpty() && !label.getString().toLowerCase(Locale.ROOT).contains(q) && !e.category().toLowerCase(Locale.ROOT).contains(q)) continue;
+            if (filter == ONLY_FAVORITES ? !isFavorite(e.ref()) : filter >= 0 && e.kind() != filter) continue;
             if (!e.category().equals(category)) {
                 category = e.category();
-                rows.add(new Row(categoryLabel(source, category), null, true, null));
+                rows.add(new Row(categoryLabel(source, category), null, true, null, -1));
             }
-            rows.add(new Row(rowLabel(e), e.ref(), false, label));
+            rows.add(new Row(rowLabel(e), e.ref(), false, label, e.kind()));
         }
         if (selected >= rows.size() || (selected >= 0 && rows.get(selected).header())) selected = -1;
     }
@@ -241,6 +269,7 @@ public class PlanCatalogScreen extends Screen {
         g.drawString(font, n, lx + lw - font.width(n), top + 9, Ui.TEXT_MUTED, false);
 
         renderSources(g, mouseX, mouseY);
+        renderChips(g, mouseX, mouseY);
         renderList(g, mouseX, mouseY);
         renderDetail(g);
 
@@ -251,6 +280,16 @@ public class PlanCatalogScreen extends Screen {
         boolean has = selected >= 0 && selected < rows.size();
         take.visible = has;
         reroll.visible = has && isTown(rows.get(selected).ref());
+        favorite.visible = has;
+        if (has) {
+            // Favori et autre tirage côte à côte pour une ville entière ; le favori seul sur la ligne sinon.
+            boolean two = reroll.visible;
+            favorite.setX(dx + 4);
+            favorite.setWidth(two ? (dw - 8) / 2 - 1 : dw - 8);
+            reroll.setX(dx + 4 + (dw - 8) / 2 + 1);
+            reroll.setWidth((dw - 8) / 2 - 1);
+            favorite.setMessage(Component.translatable(isFavorite(rows.get(selected).ref()) ? "crusadecraft.plan.favorite.remove" : "crusadecraft.plan.favorite.add"));
+        }
         super.render(g, mouseX, mouseY, partial);
     }
 
@@ -275,6 +314,45 @@ public class PlanCatalogScreen extends Screen {
             y += SOURCE_H;
         }
         g.disableScissor();
+    }
+
+    /** Le libellé d'une puce de filtre. */
+    private static Component chipLabel(int chip) {
+        return switch (chip) {
+            case -1 -> Component.translatable("crusadecraft.plan.filter.all");
+            case ONLY_FAVORITES -> Component.literal("★");
+            default -> Component.translatable("crusadecraft.plan.chip." + chip);
+        };
+    }
+
+    /** Les puces de filtre, de gauche à droite ; renvoie leurs bornes {x0, x1}. */
+    private int[][] chipBounds() {
+        // Des puces de même largeur, qui remplissent la ligne ; l'étoile, plus étroite, au bout.
+        int[][] out = new int[CHIPS.length][2];
+        int gap = 2, star = 14;
+        int each = (lw - star - gap * (CHIPS.length - 1)) / (CHIPS.length - 1);
+        int x = lx;
+        for (int i = 0; i < CHIPS.length; i++) {
+            int wdt = CHIPS[i] == ONLY_FAVORITES ? star : each;
+            out[i][0] = x;
+            out[i][1] = x + wdt;
+            x += wdt + gap;
+        }
+        return out;
+    }
+
+    private void renderChips(GuiGraphics g, int mouseX, int mouseY) {
+        int y = top + 43;
+        int[][] b = chipBounds();
+        for (int i = 0; i < CHIPS.length; i++) {
+            boolean on = filter == CHIPS[i];
+            boolean hover = mouseX >= b[i][0] && mouseX < b[i][1] && mouseY >= y && mouseY < y + 12;
+            g.fill(b[i][0], y, b[i][1], y + 12, on ? 0xFF6E5528 : hover ? 0x50C9A55C : Ui.PANEL_INNER);
+            g.renderOutline(b[i][0], y, b[i][1] - b[i][0], 12, on ? Ui.GOLD : Ui.GOLD_DARK);
+            Component label = chipLabel(CHIPS[i]);
+            int tw = Math.min(font.width(label), b[i][1] - b[i][0] - 4);
+            Ui.fitted(g, font, label, b[i][0] + (b[i][1] - b[i][0] - tw) / 2, y + 2, b[i][1] - b[i][0] - 4, on ? Ui.TEXT_TITLE : Ui.TEXT);
+        }
     }
 
     private void renderList(GuiGraphics g, int mouseX, int mouseY) {
@@ -306,7 +384,8 @@ public class PlanCatalogScreen extends Screen {
                 } else if (hover) {
                     g.fill(lx, iy, lx + lw, iy + ROW_H, 0x25C9A55C);
                 }
-                Ui.fitted(g, font, r.text(), lx + 10, iy + 2, lw - 14, i == selected ? Ui.TEXT_TITLE : hover ? 0xFFFFF6DF : Ui.TEXT);
+                Ui.fitted(g, font, r.text(), lx + 10, iy + 2, lw - 24, i == selected ? Ui.TEXT_TITLE : hover ? 0xFFFFF6DF : Ui.TEXT);
+                if (isFavorite(r.ref())) g.drawString(font, "★", lx + lw - 10, iy + 2, Ui.GOLD, false);
             }
             y += ROW_H;
         }
@@ -362,12 +441,19 @@ public class PlanCatalogScreen extends Screen {
             y += 10;
             Ui.fitted(g, font, Component.translatable(d.walled() ? "crusadecraft.plan.detail.walled" : "crusadecraft.plan.detail.open"), dx + 6, y, dw - 12, Ui.TEXT_MUTED);
             y += 10;
-        } else if (d.huts() > 0) {
+        } else if (!d.role().isEmpty() || d.kind() != PlanKinds.AUTRE) {
+            Component kind = Component.translatable("crusadecraft.plan.kind." + d.kind());
+            Component line = d.role().isEmpty() ? kind : kind.copy().append(" · ").append(Component.translatable("crusadecraft.plan.role." + d.role()));
+            Ui.fitted(g, font, line, dx + 6, y, dw - 12, Ui.GOLD);
+            y += 10;
+        }
+        if (!town && d.huts() > 0) {
             Ui.fitted(g, font, Component.translatable("crusadecraft.plan.detail.huts", d.huts()), dx + 6, y, dw - 12, Ui.TEXT_MUTED);
             y += 10;
         }
         // L'aperçu vu du ciel, qui paraît en fondu.
-        int bottom = (town ? reroll.getY() : take.getY()) - 6 - (town ? legendHeight() + 6 : 0);
+        boolean showLegend = town && favorite.getY() - 6 - y - legendHeight() - 6 >= 56;
+        int bottom = favorite.getY() - 6 - (showLegend ? legendHeight() + 6 : 0);
         int area = Math.min(dw - 12, bottom - y - 4);
         if (area > 24 && d.gridW() > 0 && d.gridH() > 0) {
             float scale = Math.min(area / (float) d.gridW(), area / (float) d.gridH());
@@ -388,7 +474,7 @@ public class PlanCatalogScreen extends Screen {
             }
             Component north = Component.translatable("crusadecraft.plan.detail.north");
             g.drawString(font, north, px + pw - font.width(north) - 2, py + 2, 0xFFFFF6DF, true);
-            if (town) legend(g, dx + 6, py + ph + 6);
+            if (showLegend) legend(g, dx + 6, py + ph + 6);
         }
     }
 
@@ -429,6 +515,17 @@ public class PlanCatalogScreen extends Screen {
     @Override
     public boolean mouseClicked(double mx, double my, int button) {
         if (super.mouseClicked(mx, my, button)) return true;
+        int[][] chips = chipBounds();
+        for (int i = 0; i < CHIPS.length; i++) {
+            if (mx >= chips[i][0] && mx < chips[i][1] && my >= top + 43 && my < top + 55) {
+                filter = filter == CHIPS[i] ? -1 : CHIPS[i];
+                scrollTarget = 0;
+                selected = -1;
+                rebuildRows();
+                selectNext(1);
+                return true;
+            }
+        }
         int y0 = top + 24, y1 = top + h - 24;
         if (mx >= sx && mx < sx + SOURCES_W && my >= y0 && my < y1) {
             int i = (int) ((my - y0 - 3) / SOURCE_H + sourceScroll);

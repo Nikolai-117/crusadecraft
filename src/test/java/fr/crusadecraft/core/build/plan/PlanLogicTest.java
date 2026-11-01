@@ -168,6 +168,25 @@ class PlanLogicTest {
     }
 
     @Test
+    void sortesEtRolesDesPlans() {
+        assertEquals(PlanKinds.MURAILLE, PlanKinds.kind("walls/segment/segment3.blueprint"));
+        assertEquals("segment", PlanKinds.role("walls/segment/segment3.blueprint"));
+        assertEquals("raccord_t", PlanKinds.role("walls/corner/tcorner2.blueprint"));
+        assertEquals("angle_rentrant", PlanKinds.role("walls/corner/innercorner1.blueprint"));
+        assertEquals("porte", PlanKinds.role("walls/wall_main/gate2.blueprint"));
+        assertEquals("tour", PlanKinds.role("walls/city_walltower/walltower1.blueprint"));
+        assertEquals(PlanKinds.ROUTE, PlanKinds.kind("infrastructure/forum/plaza_a.blueprint"));
+        assertEquals("place", PlanKinds.role("infrastructure/forum/plaza_a.blueprint"));
+        assertEquals("pont", PlanKinds.role("infrastructure/bridge/stone3.blueprint"));
+        assertEquals(PlanKinds.DECORATION, PlanKinds.kind("decorations/misc/smallwell.blueprint"));
+        assertEquals("puits", PlanKinds.role("decorations/misc/smallwell.blueprint"));
+        assertEquals("lanterne", PlanKinds.role("decorations/misc/lampstand_a.blueprint"));
+        assertEquals(PlanKinds.BATIMENT, PlanKinds.kind("fundamentals/residence3.blueprint"));
+        assertEquals("", PlanKinds.role("fundamentals/residence3.blueprint"));
+        assertEquals(PlanKinds.AUTRE, PlanKinds.kind("maison.nbt"));
+    }
+
+    @Test
     void rotationsComposees() {
         assertArrayEquals(new int[]{-3, 2}, PlanBuilder.turn(2, 3, Rotation.CLOCKWISE_90));
         assertArrayEquals(new int[]{2, 3}, PlanBuilder.turn(PlanBuilder.turn(2, 3, Rotation.CLOCKWISE_90)[0],

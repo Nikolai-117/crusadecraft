@@ -118,6 +118,18 @@ public final class CrusadeCommand {
                         .then(Commands.literal("ville").then(Commands.argument("nom", StringArgumentType.greedyString())
                                 .executes(ctx -> say(ctx, fr.crusadecraft.core.realm.NameService.renameColonyHere(ctx.getSource().getPlayerOrException(),
                                         StringArgumentType.getString(ctx, "nom")))))))
+                // P35 : faire sienne une ville posée — colonie MineColonies, ou capitale d'un royaume à fonder.
+                .then(Commands.literal("ville")
+                        .then(Commands.literal("colonie")
+                                .executes(ctx -> say(ctx, fr.crusadecraft.core.build.plan.TownColony.makeColony(ctx.getSource().getPlayerOrException(), null, false)))
+                                .then(Commands.argument("ville", net.minecraft.commands.arguments.UuidArgument.uuid())
+                                        .executes(ctx -> say(ctx, fr.crusadecraft.core.build.plan.TownColony.makeColony(ctx.getSource().getPlayerOrException(),
+                                                net.minecraft.commands.arguments.UuidArgument.getUuid(ctx, "ville"), false)))))
+                        .then(Commands.literal("royaume")
+                                .executes(ctx -> say(ctx, fr.crusadecraft.core.build.plan.TownColony.makeColony(ctx.getSource().getPlayerOrException(), null, true)))
+                                .then(Commands.argument("ville", net.minecraft.commands.arguments.UuidArgument.uuid())
+                                        .executes(ctx -> say(ctx, fr.crusadecraft.core.build.plan.TownColony.makeColony(ctx.getSource().getPlayerOrException(),
+                                                net.minecraft.commands.arguments.UuidArgument.getUuid(ctx, "ville"), true))))))
                 // P34 : le plan d'architecte — défaire sa dernière pose, voir où déposer ses fichiers.
                 .then(Commands.literal("plan")
                         .then(Commands.literal("annuler").executes(ctx -> say(ctx, fr.crusadecraft.core.build.plan.PlanTool.undoLast(

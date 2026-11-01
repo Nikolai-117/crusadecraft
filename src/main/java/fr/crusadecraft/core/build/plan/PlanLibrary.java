@@ -31,8 +31,8 @@ public final class PlanLibrary {
     /** Une étagère du catalogue : un pack, ou les fichiers du joueur. */
     public record Source(String id, String label, int count) {}
 
-    /** Un plan du catalogue : sa référence encodée, son nom, son dossier. */
-    public record Entry(String ref, String label, String category) {}
+    /** Un plan du catalogue : sa référence encodée, son nom, son dossier, sa sorte ({@link PlanKinds}). */
+    public record Entry(String ref, String label, String category, int kind) {}
 
     /** Le nom de l'étagère des fichiers. */
     public static final String FILES = "@fichiers";
@@ -91,7 +91,7 @@ public final class PlanLibrary {
                     String rel = root.getValue().relativize(p).toString().replace('\\', '/');
                     PlanRef ref = new PlanRef(PlanRef.Source.FILE, root.getKey(), rel);
                     String cat = ref.category();
-                    out.add(new Entry(ref.encode(), ref.label(), cat.isEmpty() ? root.getKey() : root.getKey() + "/" + cat));
+                    out.add(new Entry(ref.encode(), ref.label(), cat.isEmpty() ? root.getKey() : root.getKey() + "/" + cat, PlanKinds.AUTRE));
                 });
             } catch (IOException e) {
                 CrusadeCraft.LOGGER.warn("CrusadeCraft : le dossier de plans {} ne se lit pas", root.getValue(), e);
@@ -114,7 +114,7 @@ public final class PlanLibrary {
         List<Entry> out = new ArrayList<>();
         for (String path : packEntries(source)) {
             PlanRef ref = new PlanRef(PlanRef.Source.PACK, source, path);
-            out.add(new Entry(ref.encode(), ref.label(), ref.category()));
+            out.add(new Entry(ref.encode(), ref.label(), ref.category(), PlanKinds.kind(path)));
         }
         return out;
     }

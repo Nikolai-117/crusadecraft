@@ -433,7 +433,7 @@ public class MapScreen extends Screen {
 
     /** Où commence la partie « royaume » du panneau, relativement à son bord haut. */
     private static int panelRealmTop(MapView.Seat s) {
-        if (s.site() != null && s.site().id() != null) return 36 + 12 + (s.site().town() ? 3 : 2) * 16;
+        if (s.site() != null && s.site().id() != null) return 36 + 12 + (s.site().town() ? 4 : 2) * 16;
         return 36 + (s.provinceId() >= 0 ? 4 * 16 : 34);
     }
 
@@ -505,13 +505,33 @@ public class MapScreen extends Screen {
                 y += 16;
                 Button undo = Button.builder(armedLabel(7, "crusadecraft.town.undo"), b -> {
                     if (confirm(7)) {
-                        CrusadeNetwork.toServer(new MapEditPackets.TownAction(-1, s.site().id(), true));
+                        CrusadeNetwork.toServer(new MapEditPackets.TownAction(-1, s.site().id(), MapEditPackets.TownAction.UNDO));
                         selected = null;
                     }
                     rebuildWidgets();
                 }).bounds(px, y, bw, 15).build();
                 undo.setTooltip(Tooltip.create(Component.translatable("crusadecraft.town.undo.tip")));
                 addRenderableWidget(undo);
+                // P35 : la faire sienne — colonie MineColonies, ou capitale d'un royaume à fonder.
+                y += 16;
+                Button colony = Button.builder(armedLabel(8, "crusadecraft.colony.button"), b -> {
+                    if (confirm(8)) {
+                        CrusadeNetwork.toServer(new MapEditPackets.TownAction(-1, s.site().id(), MapEditPackets.TownAction.COLONY));
+                        selected = null;
+                    }
+                    rebuildWidgets();
+                }).bounds(px, y, bw / 2 - 1, 15).build();
+                colony.setTooltip(Tooltip.create(Component.translatable("crusadecraft.colony.offer.colony.tip")));
+                addRenderableWidget(colony);
+                Button realmButton = Button.builder(armedLabel(9, "crusadecraft.colony.button.realm"), b -> {
+                    if (confirm(9)) {
+                        CrusadeNetwork.toServer(new MapEditPackets.TownAction(-1, s.site().id(), MapEditPackets.TownAction.REALM));
+                        selected = null;
+                    }
+                    rebuildWidgets();
+                }).bounds(px + bw / 2 + 1, y, bw / 2 - 1, 15).build();
+                realmButton.setTooltip(Tooltip.create(Component.translatable("crusadecraft.colony.offer.realm.tip")));
+                addRenderableWidget(realmButton);
             }
         } else if (s.provinceId() >= 0) {
             addRenderableWidget(Button.builder(Component.translatable("crusadecraft.mapedit.city.rename"), b ->
@@ -548,7 +568,7 @@ public class MapScreen extends Screen {
             // P34 : bâtir la ville pour de vrai, aux bâtiments du style de son royaume.
             if (s.town() < 0) {
                 Button build = Button.builder(armedLabel(6, "crusadecraft.town.build"), b -> {
-                    if (confirm(6)) CrusadeNetwork.toServer(new MapEditPackets.TownAction(s.provinceId(), null, false));
+                    if (confirm(6)) CrusadeNetwork.toServer(new MapEditPackets.TownAction(s.provinceId(), null, MapEditPackets.TownAction.BUILD));
                     rebuildWidgets();
                 }).bounds(px, y, bw, 15).build();
                 build.setTooltip(Tooltip.create(Component.translatable("crusadecraft.town.build.tip")));

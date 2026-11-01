@@ -33,7 +33,7 @@ import net.minecraftforge.network.simple.SimpleChannel;
  * (distance, droits, état) avant d'agir.
  */
 public final class CrusadeNetwork {
-    private static final String VERSION = "22";
+    private static final String VERSION = "23";
 
     public static final SimpleChannel CHANNEL = NetworkRegistry.newSimpleChannel(
             ResourceLocation.tryParse(CrusadeCraft.MOD_ID + ":main"),
@@ -226,6 +226,24 @@ public final class CrusadeNetwork {
         CHANNEL.messageBuilder(fr.crusadecraft.network.packet.PlanPackets.Entries.class, nextId++, NetworkDirection.PLAY_TO_CLIENT)
                 .encoder(fr.crusadecraft.network.packet.PlanPackets.Entries::encode).decoder(fr.crusadecraft.network.packet.PlanPackets.Entries::decode)
                 .consumerMainThread(fr.crusadecraft.network.packet.PlanPackets.Entries::handle).add();
+        CHANNEL.messageBuilder(fr.crusadecraft.network.packet.PlanPackets.Ghost.class, nextId++, NetworkDirection.PLAY_TO_CLIENT)
+                .encoder(fr.crusadecraft.network.packet.PlanPackets.Ghost::encode).decoder(fr.crusadecraft.network.packet.PlanPackets.Ghost::decode)
+                .consumerMainThread(fr.crusadecraft.network.packet.PlanPackets.Ghost::handle).add();
+        CHANNEL.messageBuilder(fr.crusadecraft.network.packet.PlanPackets.GhostRequest.class, nextId++, NetworkDirection.PLAY_TO_SERVER)
+                .encoder(fr.crusadecraft.network.packet.PlanPackets.GhostRequest::encode).decoder(fr.crusadecraft.network.packet.PlanPackets.GhostRequest::decode)
+                .consumerMainThread(fr.crusadecraft.network.packet.PlanPackets.GhostRequest::handle).add();
+        CHANNEL.messageBuilder(fr.crusadecraft.network.packet.PlanPackets.Place.class, nextId++, NetworkDirection.PLAY_TO_SERVER)
+                .encoder(fr.crusadecraft.network.packet.PlanPackets.Place::encode).decoder(fr.crusadecraft.network.packet.PlanPackets.Place::decode)
+                .consumerMainThread(fr.crusadecraft.network.packet.PlanPackets.Place::handle).add();
+        CHANNEL.messageBuilder(fr.crusadecraft.network.packet.PlanPackets.Rotate.class, nextId++, NetworkDirection.PLAY_TO_SERVER)
+                .encoder(fr.crusadecraft.network.packet.PlanPackets.Rotate::encode).decoder(fr.crusadecraft.network.packet.PlanPackets.Rotate::decode)
+                .consumerMainThread(fr.crusadecraft.network.packet.PlanPackets.Rotate::handle).add();
+        CHANNEL.messageBuilder(fr.crusadecraft.network.packet.PlanPackets.ToggleFavorite.class, nextId++, NetworkDirection.PLAY_TO_SERVER)
+                .encoder(fr.crusadecraft.network.packet.PlanPackets.ToggleFavorite::encode).decoder(fr.crusadecraft.network.packet.PlanPackets.ToggleFavorite::decode)
+                .consumerMainThread(fr.crusadecraft.network.packet.PlanPackets.ToggleFavorite::handle).add();
+        CHANNEL.messageBuilder(fr.crusadecraft.network.packet.PlanPackets.Favorites.class, nextId++, NetworkDirection.PLAY_TO_CLIENT)
+                .encoder(fr.crusadecraft.network.packet.PlanPackets.Favorites::encode).decoder(fr.crusadecraft.network.packet.PlanPackets.Favorites::decode)
+                .consumerMainThread(fr.crusadecraft.network.packet.PlanPackets.Favorites::handle).add();
         CHANNEL.messageBuilder(fr.crusadecraft.network.packet.PlanPackets.DetailRequest.class, nextId++, NetworkDirection.PLAY_TO_SERVER)
                 .encoder(fr.crusadecraft.network.packet.PlanPackets.DetailRequest::encode).decoder(fr.crusadecraft.network.packet.PlanPackets.DetailRequest::decode)
                 .consumerMainThread(fr.crusadecraft.network.packet.PlanPackets.DetailRequest::handle).add();

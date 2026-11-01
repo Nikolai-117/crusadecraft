@@ -35,8 +35,12 @@ public final class PlanPackets {
                 player.displayClientMessage(Component.translatable("crusadecraft.plan.denied"), true);
                 return;
             }
-            if (p.source.isEmpty()) CrusadeNetwork.toPlayer(player, new Catalog(PlanTool.sources(), PlanLibrary.folderForDisplay()));
-            else CrusadeNetwork.toPlayer(player, new Entries(p.source, PlanTool.entries(p.source)));
+            if (p.source.isEmpty()) {
+                CrusadeNetwork.toPlayer(player, new Catalog(PlanTool.sources(player.server), PlanLibrary.folderForDisplay()));
+                CrusadeNetwork.toPlayer(player, new Favorites(fr.crusadecraft.core.build.plan.PlanFavorites.get(player.server).all()));
+            } else {
+                CrusadeNetwork.toPlayer(player, new Entries(p.source, PlanTool.entries(player.server, p.source)));
+            }
         }
     }
 
@@ -73,6 +77,7 @@ public final class PlanPackets {
                 buf.writeUtf(e.ref(), REF_MAX);
                 buf.writeUtf(e.label(), REF_MAX);
                 buf.writeUtf(e.category(), REF_MAX);
+                buf.writeVarInt(e.kind());
             }
         }
 
@@ -80,7 +85,7 @@ public final class PlanPackets {
             String source = buf.readUtf(REF_MAX);
             int n = buf.readVarInt();
             List<PlanLibrary.Entry> out = new ArrayList<>(n);
-            for (int i = 0; i < n; i++) out.add(new PlanLibrary.Entry(buf.readUtf(REF_MAX), buf.readUtf(REF_MAX), buf.readUtf(REF_MAX)));
+            for (int i = 0; i < n; i++) out.add(new PlanLibrary.Entry(buf.readUtf(REF_MAX), buf.readUtf(REF_MAX), buf.readUtf(REF_MAX), buf.readVarInt()));
             return new Entries(source, out);
         }
 
@@ -117,15 +122,105 @@ public final class PlanPackets {
             buf.writeVarInt(d.gridW());
             buf.writeVarInt(d.gridH());
             buf.writeVarIntArray(d.colors());
+            buf.writeVarInt(d.kind());
+            buf.writeUtf(d.role(), 64);
         }
 
         public static Detail decode(FriendlyByteBuf buf) {
             return new Detail(new PlanTool.Detail(buf.readUtf(REF_MAX), buf.readUtf(REF_MAX), buf.readVarInt(), buf.readVarInt(), buf.readVarInt(),
-                    buf.readVarInt(), buf.readVarInt(), buf.readBoolean(), buf.readVarInt(), buf.readVarInt(), buf.readVarIntArray(PlanTool.PREVIEW * PlanTool.PREVIEW * 4)));
+                    buf.readVarInt(), buf.readVarInt(), buf.readBoolean(), buf.readVarInt(), buf.readVarInt(), buf.readVarIntArray(PlanTool.PREVIEW * PlanTool.PREVIEW * 4),
+                    buf.readVarInt(), buf.readUtf(64)));
         }
 
         public static void handle(Detail p, Supplier<NetworkEvent.Context> ctx) {
             DistExecutor.unsafeRunWhenOn(Dist.CLIENT, () -> () -> ClientPackets.planDetail(p.detail));
+        }
+    }
+
+    /** Les blocs du fantôme d'un plan, pour l'aperçu en transparence. */
+    public record Ghost(String ref, int[] positions, int[] states) {
+        public static void encode(Ghost p, FriendlyByteBuf buf) {
+            buf.writeUtf(p.ref, REF_MAX);
+            buf.writeVarIntArray(p.positions);
+            buf.writeVarIntArray(p.states);
+        }
+
+        public static Ghost decode(FriendlyByteBuf buf) {
+            return new Ghost(buf.readUtf(REF_MAX), buf.readVarIntArray(PlanTool.GHOST_MAX), buf.readVarIntArray(PlanTool.GHOST_MAX));
+        }
+
+        public static void handle(Ghost p, Supplier<NetworkEvent.Context> ctx) {
+            DistExecutor.unsafeRunWhenOn(Dist.CLIENT, () -> () -> ClientPackets.planGhost(p.ref, p.positions, p.states));
+        }
+    }
+
+    /** Redemander le fantôme du plan tenu (après une reconnexion). */
+    public record GhostRequest(String ref) {
+        public static void encode(GhostRequest p, FriendlyByteBuf buf) { buf.writeUtf(p.ref, REF_MAX); }
+
+        public static GhostRequest decode(FriendlyByteBuf buf) { return new GhostRequest(buf.readUtf(REF_MAX)); }
+
+        public static void handle(GhostRequest p, Supplier<NetworkEvent.Context> ctx) {
+            ServerPlayer player = ctx.get().getSender();
+            if (player != null && PlanTool.allowed(player)) PlanTool.sendGhost(player, p.ref);
+        }
+    }
+
+    /** Poser le plan tenu là où est son fantôme. */
+    public record Place(net.minecraft.core.BlockPos ground) {
+        public static void encode(Place p, FriendlyByteBuf buf) { buf.writeBlockPos(p.ground); }
+
+        public static Place decode(FriendlyByteBuf buf) { return new Place(buf.readBlockPos()); }
+
+        public static void handle(Place p, Supplier<NetworkEvent.Context> ctx) {
+            ServerPlayer player = ctx.get().getSender();
+            if (player != null) PlanTool.pasteAt(player, p.ground);
+        }
+    }
+
+    /** Tourner le plan tenu d'un quart de tour (touche R). */
+    public record Rotate() {
+        public static void encode(Rotate p, FriendlyByteBuf buf) {}
+
+        public static Rotate decode(FriendlyByteBuf buf) { return new Rotate(); }
+
+        public static void handle(Rotate p, Supplier<NetworkEvent.Context> ctx) {
+            ServerPlayer player = ctx.get().getSender();
+            if (player != null) fr.crusadecraft.item.PlanItem.held(player).ifPresent(st -> PlanTool.rotate(player, st));
+        }
+    }
+
+    /** Marquer ou démarquer un plan favori. */
+    public record ToggleFavorite(String ref) {
+        public static void encode(ToggleFavorite p, FriendlyByteBuf buf) { buf.writeUtf(p.ref, REF_MAX); }
+
+        public static ToggleFavorite decode(FriendlyByteBuf buf) { return new ToggleFavorite(buf.readUtf(REF_MAX)); }
+
+        public static void handle(ToggleFavorite p, Supplier<NetworkEvent.Context> ctx) {
+            ServerPlayer player = ctx.get().getSender();
+            if (player == null) return;
+            Outcome out = PlanTool.toggleFavorite(player, p.ref);
+            player.displayClientMessage(out.message(), true);
+            CrusadeNetwork.toPlayer(player, new Favorites(fr.crusadecraft.core.build.plan.PlanFavorites.get(player.server).all()));
+        }
+    }
+
+    /** Les plans favoris du monde. */
+    public record Favorites(List<String> refs) {
+        public static void encode(Favorites p, FriendlyByteBuf buf) {
+            buf.writeVarInt(p.refs.size());
+            for (String r : p.refs) buf.writeUtf(r, REF_MAX);
+        }
+
+        public static Favorites decode(FriendlyByteBuf buf) {
+            int n = buf.readVarInt();
+            List<String> out = new ArrayList<>(n);
+            for (int i = 0; i < n; i++) out.add(buf.readUtf(REF_MAX));
+            return new Favorites(out);
+        }
+
+        public static void handle(Favorites p, Supplier<NetworkEvent.Context> ctx) {
+            DistExecutor.unsafeRunWhenOn(Dist.CLIENT, () -> () -> ClientPackets.planFavorites(p.refs));
         }
     }
 

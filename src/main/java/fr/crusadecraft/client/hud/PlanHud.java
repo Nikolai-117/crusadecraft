@@ -10,7 +10,6 @@ import net.minecraft.client.gui.GuiGraphics;
 import net.minecraft.network.chat.Component;
 import net.minecraft.util.Mth;
 import net.minecraft.world.item.ItemStack;
-import net.minecraft.world.phys.BlockHitResult;
 import net.minecraftforge.client.gui.overlay.ForgeGui;
 
 import java.util.ArrayList;
@@ -23,7 +22,7 @@ import java.util.Optional;
  * d'avancement, même l'outil rangé. Il paraît et s'efface en fondu.
  */
 public final class PlanHud {
-    private static final int W = 196, PAD = 7;
+    private static final int W = 236, PAD = 7;
     private static float alpha;
     private static long lastNanos;
     private static String jobName;
@@ -90,17 +89,30 @@ public final class PlanHud {
                         ? Component.translatable("crusadecraft.plan.hud.extent", c.sizeX(), c.sizeZ())
                         : Component.translatable("crusadecraft.plan.tooltip.size", c.sizeX(), c.sizeY(), c.sizeZ())});
                 lines.add(new Component[]{Component.translatable("crusadecraft.plan.hud.door"), facing(c.rotation())});
-                Optional<BlockHitResult> aim = PlanItem.aim(mc.player);
-                lines.add(new Component[]{Component.translatable("crusadecraft.plan.hud.target"), aim.map(hit -> (Component) Component.translatable(
-                        "crusadecraft.plan.hud.distance", (int) Math.round(Math.sqrt(hit.getBlockPos().distToCenterSqr(mc.player.getEyePosition()))),
-                        hit.getBlockPos().getX(), hit.getBlockPos().getY(), hit.getBlockPos().getZ()))
+                Optional<net.minecraft.core.BlockPos> target = fr.crusadecraft.client.map.PlanControl.ground(mc);
+                lines.add(new Component[]{Component.translatable(fr.crusadecraft.client.map.PlanControl.frozen()
+                        ? "crusadecraft.plan.hud.frozen" : "crusadecraft.plan.hud.target"), target.map(pos -> (Component) Component.translatable(
+                        "crusadecraft.plan.hud.distance", (int) Math.round(Math.sqrt(pos.distToCenterSqr(mc.player.getEyePosition()))),
+                        pos.getX(), pos.getY(), pos.getZ()))
                         .orElse(Component.translatable("crusadecraft.plan.hud.no_target"))});
+                int[] off = fr.crusadecraft.client.map.PlanControl.offset();
+                if (off[0] != 0 || off[1] != 0 || off[2] != 0) {
+                    lines.add(new Component[]{Component.translatable("crusadecraft.plan.hud.shift"),
+                            Component.translatable("crusadecraft.plan.hud.shift.value", off[0], off[1], off[2])});
+                }
+                if (!c.town()) {
+                    int n = fr.crusadecraft.client.map.GhostRenderer.ref().equals(c.ref()) ? fr.crusadecraft.client.map.GhostRenderer.size() : -1;
+                    lines.add(new Component[]{Component.translatable("crusadecraft.plan.hud.ghost"), n < 0
+                            ? Component.translatable("crusadecraft.plan.loading") : Component.translatable("crusadecraft.plan.hud.ghost.blocks", n)});
+                }
             } else {
                 lines.add(new Component[]{Component.translatable("crusadecraft.plan.hud.none"), null});
             }
         }
         List<Component> hints = alpha >= 0.04f ? List.of(Component.translatable("crusadecraft.plan.hud.hint.place"),
-                Component.translatable("crusadecraft.plan.hud.hint.turn"), Component.translatable("crusadecraft.plan.hud.hint.catalog")) : List.of();
+                Component.translatable("crusadecraft.plan.hud.hint.turn"), Component.translatable("crusadecraft.plan.hud.hint.raise"),
+                Component.translatable("crusadecraft.plan.hud.hint.move"), Component.translatable("crusadecraft.plan.hud.hint.freeze"),
+                Component.translatable("crusadecraft.plan.hud.hint.catalog")) : List.of();
         h = PAD + (alpha >= 0.04f ? 12 + lines.size() * 11 + 4 + hints.size() * 10 : 0) + (job ? 22 : 0) + PAD - 2;
 
         // Le panneau : fond sombre, liseré doré, filet de lumière en haut.

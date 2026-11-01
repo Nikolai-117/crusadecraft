@@ -118,24 +118,33 @@ public final class MapEditPackets {
         }
     }
 
-    /** P34 : bâtir une ville de la carte d'après les plans de son style ({@code undo} : défaire la ville bâtie de ce siège). */
-    public record TownAction(int province, UUID site, boolean undo) {
+    /**
+     * P34 : bâtir une ville de la carte d'après les plans de son style ; défaire la ville bâtie ; P35 : en faire sa
+     * colonie, ou y fonder son royaume.
+     */
+    public record TownAction(int province, UUID site, int op) {
+        public static final int BUILD = 0, UNDO = 1, COLONY = 2, REALM = 3;
+
         public static void encode(TownAction p, FriendlyByteBuf buf) {
             buf.writeVarInt(p.province);
             buf.writeBoolean(p.site != null);
             if (p.site != null) buf.writeUUID(p.site);
-            buf.writeBoolean(p.undo);
+            buf.writeVarInt(p.op);
         }
 
         public static TownAction decode(FriendlyByteBuf buf) {
             int province = buf.readVarInt();
             UUID site = buf.readBoolean() ? buf.readUUID() : null;
-            return new TownAction(province, site, buf.readBoolean());
+            return new TownAction(province, site, buf.readVarInt());
         }
 
         public static void handle(TownAction p, Supplier<NetworkEvent.Context> ctx) {
-            run(ctx, pl -> p.undo ? fr.crusadecraft.core.build.SiteService.undoTown(pl, p.site)
-                    : fr.crusadecraft.core.build.SiteService.buildTown(pl, p.province));
+            run(ctx, pl -> switch (p.op) {
+                case UNDO -> fr.crusadecraft.core.build.SiteService.undoTown(pl, p.site);
+                case COLONY -> fr.crusadecraft.core.build.plan.TownColony.makeColony(pl, p.site, false);
+                case REALM -> fr.crusadecraft.core.build.plan.TownColony.makeColony(pl, p.site, true);
+                default -> fr.crusadecraft.core.build.SiteService.buildTown(pl, p.province);
+            });
         }
     }
 

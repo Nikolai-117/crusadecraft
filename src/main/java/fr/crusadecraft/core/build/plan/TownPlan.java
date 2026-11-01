@@ -47,6 +47,8 @@ public final class TownPlan {
     private long[] walls = new long[0];
     private int[] wallY = new int[0];
     private final int extent;
+    /** P35 : le quart de tour de toute la ville (posée tournée au plan d'architecte), 0 sinon. */
+    private int rotation;
     private boolean surveyed;
     private int total;
 
@@ -65,6 +67,8 @@ public final class TownPlan {
     public long[] streets() { return streets; }
     public int[] streetY() { return streetY; }
     public long[] walls() { return walls; }
+    public int rotation() { return rotation; }
+    public void setRotation(int rotation) { this.rotation = Math.floorMod(rotation, 4); }
     public int[] wallY() { return wallY; }
     public void setWalls(long[] walls) { this.walls = walls; }
     public int extent() { return extent; }
@@ -101,6 +105,7 @@ public final class TownPlan {
         t.putInt("extent", extent);
         t.putBoolean("surveyed", surveyed);
         t.putInt("total", total);
+        if (rotation != 0) t.putInt("rotation", rotation);
         return t;
     }
 
@@ -123,6 +128,7 @@ public final class TownPlan {
         plan.wallY = t.getIntArray("wallY");
         plan.surveyed = t.getBoolean("surveyed");
         plan.total = t.getInt("total");
+        plan.rotation = Math.floorMod(t.getInt("rotation"), 4);
         return plan;
     }
 }

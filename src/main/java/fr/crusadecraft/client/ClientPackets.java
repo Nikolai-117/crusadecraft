@@ -124,6 +124,21 @@ public final class ClientPackets {
         Minecraft.getInstance().setScreen(new fr.crusadecraft.client.screen.PlanCatalogScreen(sources, folder));
     }
 
+    public static void planGhost(String ref, int[] positions, int[] states) {
+        net.minecraft.world.level.block.state.BlockState[] st = new net.minecraft.world.level.block.state.BlockState[states.length];
+        for (int i = 0; i < states.length; i++) st[i] = net.minecraft.world.level.block.Block.stateById(states[i]);
+        fr.crusadecraft.client.map.GhostRenderer.set(ref, positions, st);
+    }
+
+    /** Le clic droit avec le plan d'architecte : poser là où est son fantôme. */
+    public static boolean placePlan() {
+        return fr.crusadecraft.client.map.PlanControl.place(Minecraft.getInstance());
+    }
+
+    public static void planFavorites(java.util.List<String> refs) {
+        fr.crusadecraft.client.screen.PlanCatalogScreen.setFavorites(refs);
+    }
+
     public static void planDetail(fr.crusadecraft.core.build.plan.PlanTool.Detail detail) {
         if (Minecraft.getInstance().screen instanceof fr.crusadecraft.client.screen.PlanCatalogScreen screen) screen.showDetail(detail);
     }

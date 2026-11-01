@@ -97,25 +97,31 @@ public class PlanItem extends Item {
     @Override
     public InteractionResult useOn(UseOnContext ctx) {
         if (ctx.getPlayer() == null) return InteractionResult.PASS;
-        if (ctx.getLevel().isClientSide()) return InteractionResult.SUCCESS;
-        if (ctx.getPlayer() instanceof ServerPlayer player) {
-            if (player.isShiftKeyDown()) PlanTool.rotate(player, ctx.getItemInHand());
-            else PlanTool.paste(player, ctx.getItemInHand(), ctx.getClickedPos());
+        if (ctx.getLevel().isClientSide()) {
+            // La pose part du client, là où est le fantôme (décalé, figé) ; sans plan choisi, le catalogue.
+            if (!ctx.getPlayer().isShiftKeyDown()) {
+                if (choice(ctx.getItemInHand()).isPresent()) {
+                    DistExecutor.unsafeCallWhenOn(Dist.CLIENT, () -> fr.crusadecraft.client.ClientPackets::placePlan);
+                } else {
+                    DistExecutor.unsafeRunWhenOn(Dist.CLIENT, () -> fr.crusadecraft.client.ClientPackets::requestPlanCatalog);
+                }
+            }
+            return InteractionResult.SUCCESS;
         }
+        if (ctx.getPlayer() instanceof ServerPlayer player && player.isShiftKeyDown()) PlanTool.rotate(player, ctx.getItemInHand());
         return InteractionResult.CONSUME;
     }
 
     @Override
     public InteractionResultHolder<ItemStack> use(Level level, Player player, InteractionHand hand) {
         ItemStack stack = player.getItemInHand(hand);
-        Optional<BlockHitResult> far = aim(player);
         if (player.isShiftKeyDown()) {
             if (player instanceof ServerPlayer sp) PlanTool.rotate(sp, stack);
-        } else if (far.isPresent() && choice(stack).isPresent()) {
-            // Un bloc visé au loin : on pose là.
-            if (player instanceof ServerPlayer sp) PlanTool.paste(sp, stack, far.get().getBlockPos());
         } else if (level.isClientSide()) {
-            DistExecutor.unsafeRunWhenOn(Dist.CLIENT, () -> fr.crusadecraft.client.ClientPackets::requestPlanCatalog);
+            // Un fantôme à l'écran (visé au loin ou figé) : on pose là ; sinon, vers le ciel, le catalogue.
+            boolean placed = choice(stack).isPresent() && Boolean.TRUE.equals(
+                    DistExecutor.unsafeCallWhenOn(Dist.CLIENT, () -> fr.crusadecraft.client.ClientPackets::placePlan));
+            if (!placed) DistExecutor.unsafeRunWhenOn(Dist.CLIENT, () -> fr.crusadecraft.client.ClientPackets::requestPlanCatalog);
         }
         return InteractionResultHolder.sidedSuccess(stack, level.isClientSide());
     }

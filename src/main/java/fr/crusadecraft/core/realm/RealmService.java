@@ -69,8 +69,17 @@ public final class RealmService {
      * Fonde le royaume si tout est encore valable. Renvoie le royaume créé, ou vide avec un message
      * déjà envoyé au joueur.
      */
+    /** P35 : les fondations accordées depuis une ville posée (le joueur peut être loin de son hôtel de ville). */
+    private static final java.util.Map<java.util.UUID, BlockPos> GRANTED = new java.util.concurrent.ConcurrentHashMap<>();
+
+    /** Le joueur peut fonder son royaume sur l'hôtel de ville en {@code pos} sans s'en approcher (une seule fois). */
+    public static void grantFounding(ServerPlayer player, BlockPos pos) {
+        GRANTED.put(player.getUUID(), pos.immutable());
+    }
+
     public static Optional<Realm> found(ServerPlayer player, FoundingRequest request) {
-        if (player.distanceToSqr(request.thronePos().getCenter()) > 64) {
+        boolean granted = request.thronePos().equals(GRANTED.get(player.getUUID()));
+        if (!granted && player.distanceToSqr(request.thronePos().getCenter()) > 64) {
             player.sendSystemMessage(Component.translatable("crusadecraft.founding.too_far"));
             return Optional.empty();
         }

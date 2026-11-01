@@ -33,11 +33,10 @@ public final class PlanPreview {
         if (tool.isEmpty()) return;
         Optional<PlanItem.Choice> c = PlanItem.choice(tool);
         if (c.isEmpty() || c.get().sizeX() <= 0) return;
-        Optional<BlockHitResult> aimed = PlanItem.aim(mc.player);
-        if (aimed.isEmpty()) return;
-        BlockHitResult hit = aimed.get();
+        Optional<BlockPos> target = PlanControl.ground(mc);
+        if (target.isEmpty()) return;
         PlanItem.Choice choice = c.get();
-        BlockPos ground = hit.getBlockPos();
+        BlockPos ground = target.get();
         int[] box = bounds(choice.sizeX(), choice.sizeZ(), choice.rotation());
         double y0 = ground.getY() - choice.groundY(), y1 = y0 + choice.sizeY();
         AABB all = new AABB(ground.getX() + box[0], y0, ground.getZ() + box[1], ground.getX() + box[2] + 1, y1, ground.getZ() + box[3] + 1);
@@ -55,6 +54,23 @@ public final class PlanPreview {
         LevelRenderer.renderLineBox(pose, lines, door, 0.95f, 0.35f, 0.30f, 1.0f);
         buffers.endBatch(RenderType.lines());
         pose.popPose();
+        // Le fantôme : les blocs du plan en transparence, s'ils sont arrivés (rien pour une ville entière).
+        if (!choice.town()) {
+            if (!GhostRenderer.ref().equals(choice.ref())) requestGhost(choice.ref());
+            else GhostRenderer.render(pose, event.getProjectionMatrix(), cam, ground, choice.rotation());
+        }
+    }
+
+    private static String asked = "";
+    private static long askedAt;
+
+    /** Demande le fantôme du plan tenu, une fois (puis toutes les dix secondes s'il ne vient pas). */
+    private static void requestGhost(String ref) {
+        long now = net.minecraft.Util.getMillis();
+        if (ref.equals(asked) && now - askedAt < 10_000) return;
+        asked = ref;
+        askedAt = now;
+        fr.crusadecraft.network.CrusadeNetwork.toServer(new fr.crusadecraft.network.packet.PlanPackets.GhostRequest(ref));
     }
 
     /** {x0, z0, x1, z1} de l'emprise tournée, relatifs au bloc visé (comme les plans : milieu, entrée au sud avant rotation). */
