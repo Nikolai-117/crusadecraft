@@ -100,7 +100,9 @@ dependencies {
 
     // MineColonies et sa pile, aux versions exactes de l'instance de Romain.
     implementation fg.deobf("curse.maven:minecolonies-245506:${minecolonies_file}")
-    runtimeOnly fg.deobf("curse.maven:structurize-298744:${structurize_file}")
+    // P34 : on lit les plans des packs de style (MineColonies, Byzantine, ceux du joueur) par l'API de Structurize,
+    // au moment du jeu ; aucun plan n'est copié dans notre jar.
+    implementation fg.deobf("curse.maven:structurize-298744:${structurize_file}")
     runtimeOnly fg.deobf("curse.maven:blockui-522992:${blockui_file}")
     runtimeOnly fg.deobf("curse.maven:domum-ornamentum-527361:${domum_file}")
     runtimeOnly fg.deobf("curse.maven:jei-238222:${jei_file}")
@@ -120,6 +122,11 @@ dependencies {
     if (project.findProperty('with_xaero') == 'true') {
         runtimeOnly fg.deobf("local:xaeroworldmap:${xaero_worldmap_version}")
         runtimeOnly fg.deobf("local:xaerominimap:${xaero_minimap_version}")
+    }
+    // Byzantine (P34) : le pack de style que Romain a donné (romain, Nil, shogun), dans libs/local, chargé en
+    // développement pour essayer les nations à thème, sauf -Pwith_byzantine=false. Jamais redistribué.
+    if (project.findProperty('with_byzantine') != 'false' && file("libs/local/Byzantine-1.21.1-${byzantine_version}.jar").exists()) {
+        runtimeOnly fg.deobf("local:Byzantine-1.21.1:${byzantine_version}")
     }
     if (project.findProperty('with_mca') != 'false') {
         runtimeOnly fg.deobf("local:minecraft-comes-alive:${mca_version}")

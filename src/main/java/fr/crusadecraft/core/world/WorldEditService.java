@@ -47,6 +47,20 @@ public final class WorldEditService {
     }
 
     /** La taille d'une ville posée à la main, qui fixe sa population de départ. */
+    /** P34 : le style des villes bâties d'un royaume de l'ordinateur. */
+    public static fr.crusadecraft.core.council.CouncilActions.Outcome setStyle(net.minecraft.server.level.ServerPlayer player, UUID realm,
+                                                                              fr.crusadecraft.core.build.plan.NationStyle style) {
+        if (!canEdit(player)) return fr.crusadecraft.core.council.CouncilActions.Outcome.no("crusadecraft.mapedit.denied");
+        java.util.Optional<AiRealm> r = fr.crusadecraft.data.CrusadeSavedData.get(player.server).world().realm(realm);
+        if (r.isEmpty()) return fr.crusadecraft.core.council.CouncilActions.Outcome.no("crusadecraft.mapedit.realm.unknown");
+        r.get().setStyle(style);
+        fr.crusadecraft.data.CrusadeSavedData.get(player.server).setDirty();
+        boolean installed = fr.crusadecraft.core.build.plan.PlanLibrary.packFor(style).isPresent();
+        return fr.crusadecraft.core.council.CouncilActions.Outcome.ok(net.minecraft.network.chat.Component.translatable(
+                installed ? "crusadecraft.style.set" : "crusadecraft.style.set.missing",
+                AiNames.realm(r.get().rank(), r.get().place()), net.minecraft.network.chat.Component.translatable(style.key())));
+    }
+
     public enum CitySize {
         HAMEAU(12), BOURG(28), VILLE(50);
 

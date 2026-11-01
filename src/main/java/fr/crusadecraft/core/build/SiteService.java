@@ -71,9 +71,11 @@ public final class SiteService {
         return CrusadeSavedData.get(server);
     }
 
-    /** Le plan d'une construction, gardé en mémoire le temps du chantier. */
+    /** Le plan d'une construction, gardé en mémoire le temps du chantier (P34 : celui de sa ville, d'après les packs). */
     static List<Blueprints.Placement> plan(Site site) {
-        return PLANS.computeIfAbsent(site.id(), id -> Blueprints.plan(site.kind(), Banners.dye(site.color())));
+        return PLANS.computeIfAbsent(site.id(), id -> site.town() != null
+                ? fr.crusadecraft.core.build.plan.TownPlanner.placements(site.town())
+                : Blueprints.plan(site.kind(), Banners.dye(site.color())));
     }
 
     /** « Fort de Valcourt » : la nature de la construction et le lieu qui lui donne son nom. */
@@ -122,7 +124,7 @@ public final class SiteService {
         // Une construction ne se pose pas sur une autre.
         for (Site other : data.world().sites()) {
             if (!other.dimension().equals(level.dimension().location())) continue;
-            double room = (kind.size() + other.kind().size()) / 2.0 + 3;
+            double room = (kind.size() + other.extent()) / 2.0 + 3;
             if (Math.abs(other.anchor().getX() - ground.getX()) < room && Math.abs(other.anchor().getZ() - ground.getZ()) < room) {
                 return Outcome.no("crusadecraft.site.too_close", displayName(other));
             }
@@ -218,13 +220,17 @@ public final class SiteService {
         CrusadeSavedData data = data(server);
         int step = CrusadeConfig.SERVER.buildStepSeconds.get() * 20;
         boolean progressiveTurn = tick % step == 0;
+        // P34 : une ville bâtie d'après les plans compte cent mille blocs ; elle avance chaque seconde, à son rythme.
+        boolean townTurn = tick % 20 == 0;
         int budget = INSTANT_BUDGET;
-        for (Site site : data.world().sites()) {
+        for (Site site : new java.util.ArrayList<>(data.world().sites())) {
             if (site.built()) continue;
-            if (!site.instant() && !progressiveTurn) continue;
+            boolean town = site.town() != null;
+            if (!site.instant() && !(town ? townTurn : progressiveTurn)) continue;
             ServerLevel level = server.getLevel(ResourceKey.create(Registries.DIMENSION, site.dimension()));
             if (level == null || !level.hasChunkAt(site.anchor())) continue;
-            int allowed = site.instant() ? budget : CrusadeConfig.SERVER.buildBlocksPerStep.get();
+            if (town && fr.crusadecraft.core.build.plan.Journals.undoing(server, site.id())) continue;
+            int allowed = site.instant() ? budget : town ? CrusadeConfig.SERVER.townBlocksPerSecond.get() : CrusadeConfig.SERVER.buildBlocksPerStep.get();
             int used = advance(level, site, allowed);
             if (site.instant()) budget -= used;
             data.setDirty();
@@ -235,6 +241,7 @@ public final class SiteService {
 
     /** Pose jusqu'à {@code allowed} blocs du chantier ; un bloc déjà en place ne compte pas. Renvoie le nombre posé. */
     static int advance(ServerLevel level, Site site, int allowed) {
+        if (site.town() != null) return advanceTown(level, site, allowed);
         List<Blueprints.Placement> plan = plan(site);
         Rotation rotation = Blueprints.rotation(site.facing());
         int changed = 0, i = site.progress();
@@ -271,6 +278,28 @@ public final class SiteService {
         return changed;
     }
 
+    /**
+     * P34 : le chantier d'une ville d'après les plans. Au premier coup de pioche, le terrain est relevé (et gardé) ;
+     * chaque bloc remplacé est noté dans le journal de la ville, qu'elle soit de l'ordinateur ou de l'éditeur.
+     */
+    private static int advanceTown(ServerLevel level, Site site, int allowed) {
+        fr.crusadecraft.core.build.plan.TownPlan town = site.town();
+        if (!town.surveyed()) {
+            fr.crusadecraft.core.build.plan.TownPlanner.survey(level, site.anchor(), town);
+            PLANS.remove(site.id());
+        }
+        List<Blueprints.Placement> plan = plan(site);
+        if (town.total() != plan.size()) town.setTotal(plan.size());
+        int[] r = fr.crusadecraft.core.build.plan.PlanPlacer.advance(level, site.anchor(), Rotation.NONE, plan, site.progress(), allowed,
+                fr.crusadecraft.core.build.plan.Journals.journal(level.getServer(), site.id(), site.dimension()));
+        site.setProgress(r[0]);
+        if (r[0] >= plan.size()) {
+            site.setBuilt(true);
+            PLANS.remove(site.id());
+        }
+        return r[1];
+    }
+
     /** Un chantier de l'ordinateur note ce qu'il remplace, sous son propre identifiant : de quoi le défaire bloc par bloc. */
     private static void journal(ServerLevel level, Site site, BlockPos pos, BlockState before) {
         if (!site.auto()) return;
@@ -285,7 +314,7 @@ public final class SiteService {
         CrusadeSavedData data = data(server);
         for (Site other : data.world().sites()) {
             if (!other.dimension().equals(level.dimension().location())) continue;
-            double room = (kind.size() + other.kind().size()) / 2.0 + 3;
+            double room = (kind.size() + other.extent()) / 2.0 + 3;
             if (Math.abs(other.anchor().getX() - ground.getX()) < room && Math.abs(other.anchor().getZ() - ground.getZ()) < room) return Optional.empty();
         }
         Site site = new Site(UUID.randomUUID(), kind, nearestPlace(server, level, ground), owner.id(), level.dimension().location(), ground, front,
@@ -309,6 +338,8 @@ public final class SiteService {
             data.world().removeSite(s.id());
             PLANS.remove(s.id());
             data.wars().damage().release(s.id());
+            // P34 : une ville d'après les plans a son propre journal.
+            if (s.town() != null) fr.crusadecraft.core.build.plan.Journals.undo(server, s.id());
             // P28 : un village de l'ordinateur emporte sa ville et ses habitants.
             if (s.kind() == SiteKind.VILLAGE) forgetSettlement(server, s);
         }
@@ -357,14 +388,22 @@ public final class SiteService {
      * familles), le chantier noté bloc par bloc. Le terrain est vérifié par celui qui choisit l'endroit.
      */
     public static Optional<Site> foundVillageForAi(MinecraftServer server, ServerLevel level, AiRealm owner, BlockPos ground, Direction front) {
+        return foundVillageForAi(server, level, owner, ground, front, null);
+    }
+
+    /** P34 : le même village, bâti d'après les plans du style de son royaume ({@code town}, ou le plan du code sans lui). */
+    public static Optional<Site> foundVillageForAi(MinecraftServer server, ServerLevel level, AiRealm owner, BlockPos ground, Direction front,
+                                                   fr.crusadecraft.core.build.plan.TownPlan town) {
         CrusadeSavedData data = data(server);
-        if (crowded(data, level, SiteKind.VILLAGE, ground)) return Optional.empty();
+        if (crowded(data, level, town != null ? town.extent() : SiteKind.VILLAGE.size(), ground, null)) return Optional.empty();
         long today = RealmService.currentDay(server);
         String name = new LineageGenerator(ground.asLong() ^ today).placeName();
         Optional<AiProvince> city = WorldEditService.addCity(server, level, owner.id(), name, WorldEditService.CitySize.HAMEAU, ground.getX(), ground.getZ());
         if (city.isEmpty()) return Optional.empty();
-        Site site = new Site(UUID.randomUUID(), SiteKind.VILLAGE, name, owner.id(), level.dimension().location(), ground, front, owner.color(), false, today);
+        Site site = new Site(UUID.randomUUID(), SiteKind.VILLAGE, name, owner.id(), level.dimension().location(), ground,
+                town != null ? Direction.SOUTH : front, owner.color(), false, today);
         site.setAuto(true);
+        site.setTown(town);
         site.setProvince(city.get().id());
         Community c = new LineageGenerator(ground.asLong() * 31 + today).community(data.lineage(), name, CommunityKind.VILLAGE, owner.id(),
                 fr.crusadecraft.core.ai.VillageService.FOUNDING_FAMILIES);
@@ -377,11 +416,18 @@ public final class SiteService {
 
     /** Un quartier contre un village de l'ordinateur (P28) : même ville, même communauté. */
     public static Optional<Site> quarterForAi(MinecraftServer server, ServerLevel level, AiRealm owner, Site village, BlockPos ground, Direction front) {
+        return quarterForAi(server, level, owner, village, ground, front, null);
+    }
+
+    /** P34 : le même quartier, de quelques bâtiments d'après les plans ({@code town}). */
+    public static Optional<Site> quarterForAi(MinecraftServer server, ServerLevel level, AiRealm owner, Site village, BlockPos ground, Direction front,
+                                              fr.crusadecraft.core.build.plan.TownPlan town) {
         CrusadeSavedData data = data(server);
-        if (crowded(data, level, SiteKind.QUARTIER, ground)) return Optional.empty();
-        Site site = new Site(UUID.randomUUID(), SiteKind.QUARTIER, village.name(), owner.id(), level.dimension().location(), ground, front,
-                owner.color(), false, RealmService.currentDay(server));
+        if (crowded(data, level, town != null ? town.extent() : SiteKind.QUARTIER.size(), ground, null)) return Optional.empty();
+        Site site = new Site(UUID.randomUUID(), SiteKind.QUARTIER, village.name(), owner.id(), level.dimension().location(), ground,
+                town != null ? Direction.SOUTH : front, owner.color(), false, RealmService.currentDay(server));
         site.setAuto(true);
+        site.setTown(town);
         site.setProvince(village.province());
         site.setCommunity(village.community());
         data.world().add(site);
@@ -391,9 +437,14 @@ public final class SiteService {
 
     /** Une autre construction à moins de la moitié des deux tailles (et trois blocs) : la place est prise. */
     private static boolean crowded(CrusadeSavedData data, ServerLevel level, SiteKind kind, BlockPos ground) {
+        return crowded(data, level, kind.size(), ground, null);
+    }
+
+    /** Une autre construction à moins de la moitié des deux emprises (et trois blocs) ; {@code except} ne compte pas. */
+    private static boolean crowded(CrusadeSavedData data, ServerLevel level, int size, BlockPos ground, UUID except) {
         for (Site other : data.world().sites()) {
-            if (!other.dimension().equals(level.dimension().location())) continue;
-            double room = (kind.size() + other.kind().size()) / 2.0 + 3;
+            if (!other.dimension().equals(level.dimension().location()) || other.id().equals(except)) continue;
+            double room = (size + other.extent()) / 2.0 + 3;
             if (Math.abs(other.anchor().getX() - ground.getX()) < room && Math.abs(other.anchor().getZ() - ground.getZ()) < room) return true;
         }
         return false;
@@ -420,8 +471,108 @@ public final class SiteService {
     /** La part bâtie d'un chantier, en pour cent. */
     public static int percent(Site site) {
         if (site.built()) return 100;
+        if (site.town() != null && !PLANS.containsKey(site.id())) {
+            int t = site.town().total();
+            return t == 0 ? 0 : Math.min(99, site.progress() * 100 / t);
+        }
         int total = plan(site).size();
         return total == 0 ? 100 : Math.min(99, site.progress() * 100 / total);
+    }
+
+    // ------------------------------------------------------------------ villes d'après les plans (P34)
+
+    /** La ville bâtie (ou en chantier) d'une ville de la carte, s'il y en a une. */
+    public static Optional<Site> townOf(MinecraftServer server, int province) {
+        for (Site s : data(server).world().sites()) if (s.town() != null && s.province() == province && s.kind() == SiteKind.VILLAGE) return Optional.of(s);
+        return Optional.empty();
+    }
+
+    /**
+     * L'éditeur bâtit une ville de la carte, d'un coup, avec les bâtiments du style de son royaume : sa taille suit
+     * sa population. Le chantier commence quand quelqu'un est assez près pour que l'endroit soit chargé.
+     */
+    public static Outcome buildTown(ServerPlayer player, int provinceId) {
+        if (!WorldEditService.canEdit(player)) return Outcome.no("crusadecraft.mapedit.denied");
+        return startTown(player.server, provinceId, true, false).map(s -> Outcome.ok(Component.translatable("crusadecraft.town.started", s.name(),
+                Component.translatable(s.town().size().key()),
+                Component.translatable(fr.crusadecraft.core.build.plan.NationStyle.byName(s.town().style(), fr.crusadecraft.core.build.plan.NationStyle.EUROPEENNE).key()))))
+                .orElseGet(() -> Outcome.no(townRefusal(player.server, provinceId)));
+    }
+
+    /** Pourquoi une ville de la carte ne peut pas être bâtie (clé de traduction). */
+    private static String townRefusal(MinecraftServer server, int provinceId) {
+        if (townOf(server, provinceId).isPresent()) return "crusadecraft.town.exists";
+        for (AiRealm r : data(server).world().realms()) {
+            for (AiProvince p : r.provinces()) if (p.id() == provinceId) return "crusadecraft.town.no_pack";
+        }
+        return "crusadecraft.mapedit.city.unknown";
+    }
+
+    /**
+     * Ouvre le chantier d'une ville de la carte (éditeur, ou ville de l'ordinateur qui prend corps). Rien si elle a
+     * déjà sa ville, ou si aucun pack de son style n'est installé.
+     */
+    public static Optional<Site> startTown(MinecraftServer server, int provinceId, boolean instant, boolean auto) {
+        CrusadeSavedData data = data(server);
+        if (townOf(server, provinceId).isPresent()) return Optional.empty();
+        for (AiRealm r : data.world().realms()) {
+            for (AiProvince p : r.provinces()) {
+                if (p.id() != provinceId) continue;
+                ServerLevel level = server.getLevel(ResourceKey.create(Registries.DIMENSION, p.dimension()));
+                if (level == null) return Optional.empty();
+                fr.crusadecraft.core.build.plan.TownSize size = fr.crusadecraft.core.build.plan.TownSize.forCity(p.population(), p.capital());
+                long seed = p.id() * 0x9E3779B97F4A7C15L ^ r.id().getLeastSignificantBits();
+                Optional<fr.crusadecraft.core.build.plan.TownPlan> town = fr.crusadecraft.core.build.plan.TownPlanner.plan(r.style(), size, seed);
+                if (town.isEmpty()) return Optional.empty();
+                UUID owner = p.holder() == null ? r.id() : p.holder();
+                long today = RealmService.currentDay(server);
+                Site site = new Site(UUID.randomUUID(), SiteKind.VILLAGE, p.name(), owner, p.dimension(), p.seat(), Direction.SOUTH,
+                        r.color(), instant, today);
+                site.setAuto(auto);
+                site.setProvince(p.id());
+                site.setTown(town.get());
+                Community c = new LineageGenerator(p.seat().asLong() * 31 + today).community(data.lineage(), p.name(), CommunityKind.VILLAGE, owner,
+                        size.families());
+                site.setCommunity(c.id());
+                data.world().add(site);
+                data.setDirty();
+                CrusadeCraft.LOGGER.info("CrusadeCraft : la ville {} prend corps ({}, {}) en {}", p.name(), size, r.style(), p.seat());
+                return Optional.of(site);
+            }
+        }
+        return Optional.empty();
+    }
+
+    /**
+     * L'éditeur défait une ville bâtie d'après les plans : le terrain revient bloc par bloc, ses habitants partent,
+     * la ville reste sur la carte.
+     */
+    public static Outcome undoTown(ServerPlayer player, UUID siteId) {
+        if (!WorldEditService.canEdit(player)) return Outcome.no("crusadecraft.mapedit.denied");
+        CrusadeSavedData data = data(player.server);
+        Optional<Site> site = data.world().site(siteId);
+        if (site.isEmpty() || site.get().town() == null) return Outcome.no("crusadecraft.town.not_a_town");
+        data.world().removeSite(siteId);
+        PLANS.remove(siteId);
+        fr.crusadecraft.core.build.plan.Journals.undo(player.server, siteId);
+        forgetPeople(player.server, site.get());
+        data.setDirty();
+        return Outcome.ok(Component.translatable("crusadecraft.town.undone", site.get().name()));
+    }
+
+    /** Les habitants d'une construction et leur communauté quittent le registre (et le monde). */
+    private static void forgetPeople(MinecraftServer server, Site site) {
+        if (site.community() == null) return;
+        var state = data(server).lineage();
+        for (var p : new java.util.ArrayList<>(state.residents(site.community()))) {
+            if (p.inWorld()) {
+                ServerLevel level = server.getLevel(ResourceKey.create(Registries.DIMENSION, p.worldDim()));
+                net.minecraft.world.entity.Entity e = level == null ? null : level.getEntity(p.id());
+                if (e != null) e.discard();
+            }
+            state.remove(p.id());
+        }
+        state.removeCommunity(site.community());
     }
 
     // ------------------------------------------------------------------ éditeur

@@ -31,6 +31,7 @@ public final class ModCreativeTabs {
                 output.accept(ModItems.CHANCERY.get());
                 output.accept(ModItems.SEAL.get());
                 output.accept(ModItems.BORNAGE.get());
+                output.accept(ModItems.PLAN.get());
             })
             .build());
 

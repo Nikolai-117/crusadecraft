@@ -104,6 +104,41 @@ public final class MapEditPackets {
         }
     }
 
+    /** P34 : le style d'un royaume de l'ordinateur (les packs de ses villes bâties). */
+    public record SetStyle(UUID realm, int style) {
+        public static void encode(SetStyle p, FriendlyByteBuf buf) {
+            buf.writeUUID(p.realm);
+            buf.writeVarInt(p.style);
+        }
+
+        public static SetStyle decode(FriendlyByteBuf buf) { return new SetStyle(buf.readUUID(), buf.readVarInt()); }
+
+        public static void handle(SetStyle p, Supplier<NetworkEvent.Context> ctx) {
+            run(ctx, pl -> WorldEditService.setStyle(pl, p.realm, fr.crusadecraft.core.build.plan.NationStyle.byOrdinal(p.style)));
+        }
+    }
+
+    /** P34 : bâtir une ville de la carte d'après les plans de son style ({@code undo} : défaire la ville bâtie de ce siège). */
+    public record TownAction(int province, UUID site, boolean undo) {
+        public static void encode(TownAction p, FriendlyByteBuf buf) {
+            buf.writeVarInt(p.province);
+            buf.writeBoolean(p.site != null);
+            if (p.site != null) buf.writeUUID(p.site);
+            buf.writeBoolean(p.undo);
+        }
+
+        public static TownAction decode(FriendlyByteBuf buf) {
+            int province = buf.readVarInt();
+            UUID site = buf.readBoolean() ? buf.readUUID() : null;
+            return new TownAction(province, site, buf.readBoolean());
+        }
+
+        public static void handle(TownAction p, Supplier<NetworkEvent.Context> ctx) {
+            run(ctx, pl -> p.undo ? fr.crusadecraft.core.build.SiteService.undoTown(pl, p.site)
+                    : fr.crusadecraft.core.build.SiteService.buildTown(pl, p.province));
+        }
+    }
+
     /** P33 : un royaume de l'ordinateur passe sous un autre (fusion). */
     public record MergeRealm(UUID from, UUID into) {
         public static void encode(MergeRealm p, FriendlyByteBuf buf) {

@@ -118,6 +118,15 @@ public final class CrusadeCommand {
                         .then(Commands.literal("ville").then(Commands.argument("nom", StringArgumentType.greedyString())
                                 .executes(ctx -> say(ctx, fr.crusadecraft.core.realm.NameService.renameColonyHere(ctx.getSource().getPlayerOrException(),
                                         StringArgumentType.getString(ctx, "nom")))))))
+                // P34 : le plan d'architecte — défaire sa dernière pose, voir où déposer ses fichiers.
+                .then(Commands.literal("plan")
+                        .then(Commands.literal("annuler").executes(ctx -> say(ctx, fr.crusadecraft.core.build.plan.PlanTool.undoLast(
+                                ctx.getSource().getPlayerOrException()))))
+                        .then(Commands.literal("dossier").executes(ctx -> {
+                            ctx.getSource().sendSuccess(() -> Component.translatable("crusadecraft.plan.folder",
+                                    fr.crusadecraft.core.build.plan.PlanLibrary.folderForDisplay()), false);
+                            return 1;
+                        })))
                 // L'écran des réglages du monde (P30) ; il dit lui-même s'il est réservé.
                 .then(Commands.literal("reglages").executes(ctx -> {
                     fr.crusadecraft.network.packet.SettingsPackets.send(ctx.getSource().getPlayerOrException(), true);

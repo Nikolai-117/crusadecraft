@@ -36,7 +36,11 @@ public final class Blueprints {
      * Une étape du chantier : un bloc à poser (relatif au point d'ancrage, avant rotation), ou une colonne de
      * fondation ({@code foundation}) qui comble le terrain sous le sol jusqu'à la roche.
      */
-    public record Placement(int x, int y, int z, BlockState state, boolean foundation) {}
+    public record Placement(int x, int y, int z, BlockState state, boolean foundation, net.minecraft.nbt.CompoundTag tag) {
+        public Placement(int x, int y, int z, BlockState state, boolean foundation) {
+            this(x, y, z, state, foundation, null);
+        }
+    }
 
     private Blueprints() {}
 

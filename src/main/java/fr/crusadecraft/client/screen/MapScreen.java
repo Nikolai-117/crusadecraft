@@ -428,13 +428,13 @@ public class MapScreen extends Screen {
         if (i < 0) return Math.min(108, mapH - 8);
         MapView.Seat s = view.seats().get(i);
         boolean ai = s.territory() >= 0 && s.territory() < view.territories().size() && view.territories().get(s.territory()).ai();
-        return Math.min(panelRealmTop(s) + 14 + (ai ? 4 : 3) * 16 + 4, mapH - 8);
+        return Math.min(panelRealmTop(s) + 14 + (ai ? 5 : 3) * 16 + 4, mapH - 8);
     }
 
     /** Où commence la partie « royaume » du panneau, relativement à son bord haut. */
     private static int panelRealmTop(MapView.Seat s) {
-        if (s.site() != null && s.site().id() != null) return 36 + 12 + 2 * 16;
-        return 36 + (s.provinceId() >= 0 ? 3 * 16 : 34);
+        if (s.site() != null && s.site().id() != null) return 36 + 12 + (s.site().town() ? 3 : 2) * 16;
+        return 36 + (s.provinceId() >= 0 ? 4 * 16 : 34);
     }
 
     /** « Fort de Valcourt » pour une construction, « Poste de garde » pour MineColonies, sinon le nom du siège. */
@@ -500,6 +500,19 @@ public class MapScreen extends Screen {
             }).bounds(px, y, bw, 15).build();
             delete.setTooltip(Tooltip.create(Component.translatable("crusadecraft.mapedit.site.delete.tip")));
             addRenderableWidget(delete);
+            if (s.site().town()) {
+                // P34 : une ville bâtie d'après les plans se défait, et le terrain revient.
+                y += 16;
+                Button undo = Button.builder(armedLabel(7, "crusadecraft.town.undo"), b -> {
+                    if (confirm(7)) {
+                        CrusadeNetwork.toServer(new MapEditPackets.TownAction(-1, s.site().id(), true));
+                        selected = null;
+                    }
+                    rebuildWidgets();
+                }).bounds(px, y, bw, 15).build();
+                undo.setTooltip(Tooltip.create(Component.translatable("crusadecraft.town.undo.tip")));
+                addRenderableWidget(undo);
+            }
         } else if (s.provinceId() >= 0) {
             addRenderableWidget(Button.builder(Component.translatable("crusadecraft.mapedit.city.rename"), b ->
                     minecraft.setScreen(MapEditForm.renameCity(this, s.provinceId(), s.name()))).bounds(px, y, bw / 2 - 1, 15).build());
@@ -531,6 +544,22 @@ public class MapScreen extends Screen {
                 delete.setTooltip(Tooltip.create(Component.translatable("crusadecraft.mapedit.city.delete.capital")));
             }
             addRenderableWidget(delete);
+            y += 16;
+            // P34 : bâtir la ville pour de vrai, aux bâtiments du style de son royaume.
+            if (s.town() < 0) {
+                Button build = Button.builder(armedLabel(6, "crusadecraft.town.build"), b -> {
+                    if (confirm(6)) CrusadeNetwork.toServer(new MapEditPackets.TownAction(s.provinceId(), null, false));
+                    rebuildWidgets();
+                }).bounds(px, y, bw, 15).build();
+                build.setTooltip(Tooltip.create(Component.translatable("crusadecraft.town.build.tip")));
+                addRenderableWidget(build);
+            } else {
+                Button state = Button.builder(s.town() >= 100 ? Component.translatable("crusadecraft.town.built")
+                        : Component.translatable("crusadecraft.town.building", s.town()), b -> {}).bounds(px, y, bw, 15).build();
+                state.active = false;
+                state.setTooltip(Tooltip.create(Component.translatable("crusadecraft.town.state.tip")));
+                addRenderableWidget(state);
+            }
         }
         int ownerIndex = s.provinceId() >= 0 && s.origin() >= 0 && s.origin() < view.territories().size() ? s.origin() : s.territory();
         MapView.Territory owner = view.territories().get(ownerIndex);
@@ -553,6 +582,15 @@ public class MapScreen extends Screen {
         if (owner.ai()) {
             addRenderableWidget(Button.builder(Component.translatable("crusadecraft.mapedit.realm.edit"), b ->
                     minecraft.setScreen(MapEditForm.editRealm(this, owner))).bounds(px, y, bw, 15).build());
+            y += 16;
+            // P34 : le style de ses villes bâties, qu'on fait défiler (Maj : en arrière).
+            fr.crusadecraft.core.build.plan.NationStyle style = fr.crusadecraft.core.build.plan.NationStyle.byOrdinal(Math.max(0, owner.style()));
+            Component styleLabel = Component.translatable("crusadecraft.style.label", Component.translatable(style.key()));
+            Button styleButton = Button.builder(Component.literal(font.plainSubstrByWidth(styleLabel.getString(), bw - 6)), b ->
+                    CrusadeNetwork.toServer(new MapEditPackets.SetStyle(owner.id(), style.ordinal() + (hasShiftDown() ? -1 : 1))))
+                    .bounds(px, y, bw, 15).build();
+            styleButton.setTooltip(Tooltip.create(Component.translatable("crusadecraft.style.tip")));
+            addRenderableWidget(styleButton);
             y += 16;
             addRenderableWidget(Button.builder(armedLabel(2, "crusadecraft.mapedit.realm.delete"), b -> {
                 if (confirm(2)) {

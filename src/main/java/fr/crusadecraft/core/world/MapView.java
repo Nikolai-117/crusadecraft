@@ -78,10 +78,15 @@ public record MapView(ResourceLocation dimension, int focusX, int focusZ, int pl
      * @param handMade posé à la main dans l'éditeur
      */
     public record Territory(UUID id, boolean ai, boolean mine, String label, TitleRank rank, int color, String ruler,
-                            boolean rulerFemale, AiPersonality personality, int population, AiFaith faith, boolean handMade) {
+                            boolean rulerFemale, AiPersonality personality, int population, AiFaith faith, boolean handMade, int style) {
         public Territory(UUID id, boolean ai, boolean mine, String label, TitleRank rank, int color, String ruler,
                          boolean rulerFemale, AiPersonality personality, int population) {
-            this(id, ai, mine, label, rank, color, ruler, rulerFemale, personality, population, null, false);
+            this(id, ai, mine, label, rank, color, ruler, rulerFemale, personality, population, null, false, -1);
+        }
+
+        public Territory(UUID id, boolean ai, boolean mine, String label, TitleRank rank, int color, String ruler,
+                         boolean rulerFemale, AiPersonality personality, int population, AiFaith faith, boolean handMade) {
+            this(id, ai, mine, label, rank, color, ruler, rulerFemale, personality, population, faith, handMade, -1);
         }
     }
 
@@ -92,14 +97,19 @@ public record MapView(ResourceLocation dimension, int focusX, int focusZ, int pl
      * @param origin     l'indice du royaume IA d'origine d'une province (celui qui la tient s'il n'a pas été conquis), sinon −1
      */
     public record Seat(int territory, String name, int x, int z, boolean capital, int dejure, boolean village, boolean province,
-                       int provinceId, int origin, SiteInfo site) {
+                       int provinceId, int origin, SiteInfo site, int town) {
         public Seat(int territory, String name, int x, int z, boolean capital, int dejure, boolean village, boolean province) {
-            this(territory, name, x, z, capital, dejure, village, province, -1, -1, null);
+            this(territory, name, x, z, capital, dejure, village, province, -1, -1, null, -1);
         }
 
         public Seat(int territory, String name, int x, int z, boolean capital, int dejure, boolean village, boolean province,
                     int provinceId, int origin) {
-            this(territory, name, x, z, capital, dejure, village, province, provinceId, origin, null);
+            this(territory, name, x, z, capital, dejure, village, province, provinceId, origin, null, -1);
+        }
+
+        public Seat(int territory, String name, int x, int z, boolean capital, int dejure, boolean village, boolean province,
+                    int provinceId, int origin, SiteInfo site) {
+            this(territory, name, x, z, capital, dejure, village, province, provinceId, origin, site, -1);
         }
     }
 
@@ -107,8 +117,12 @@ public record MapView(ResourceLocation dimension, int focusX, int focusZ, int pl
      * Une construction sur la carte (P14) : son identifiant (vide pour un poste de garde MineColonies), sa nature
      * ({@link #GUARD_POST} pour un poste de garde), son territoire, l'avancement du chantier et sa garnison.
      */
-    public record SiteInfo(java.util.UUID id, int kind, int radius, int percent, int garrison) {
+    public record SiteInfo(java.util.UUID id, int kind, int radius, int percent, int garrison, boolean town) {
         public static final int GUARD_POST = 99;
+
+        public SiteInfo(java.util.UUID id, int kind, int radius, int percent, int garrison) {
+            this(id, kind, radius, percent, garrison, false);
+        }
     }
 
     public record Dejure(String place, int color) {}
@@ -192,6 +206,7 @@ public record MapView(ResourceLocation dimension, int focusX, int focusZ, int pl
             buf.writeBoolean(t.faith() != null);
             if (t.faith() != null) buf.writeEnum(t.faith());
             buf.writeBoolean(t.handMade());
+            buf.writeVarInt(t.style() + 1);
         }
         buf.writeVarInt(seats.size());
         for (Seat s : seats) {
@@ -213,7 +228,9 @@ public record MapView(ResourceLocation dimension, int focusX, int focusZ, int pl
                 buf.writeVarInt(s.site().radius());
                 buf.writeVarInt(s.site().percent());
                 buf.writeVarInt(s.site().garrison());
+                buf.writeBoolean(s.site().town());
             }
+            buf.writeVarInt(s.town() + 1);
         }
         buf.writeVarInt(dejure.size());
         for (Dejure d : dejure) {
@@ -368,7 +385,8 @@ public record MapView(ResourceLocation dimension, int focusX, int focusZ, int pl
             AiPersonality personality = buf.readBoolean() ? buf.readEnum(AiPersonality.class) : null;
             int population = buf.readVarInt();
             AiFaith faith = buf.readBoolean() ? buf.readEnum(AiFaith.class) : null;
-            territories.add(new Territory(id, ai, mine, label, rank, color, ruler, female, personality, population, faith, buf.readBoolean()));
+            boolean handMade = buf.readBoolean();
+            territories.add(new Territory(id, ai, mine, label, rank, color, ruler, female, personality, population, faith, handMade, buf.readVarInt() - 1));
         }
         n = buf.readVarInt();
         List<Seat> seats = new ArrayList<>(n);
@@ -383,9 +401,9 @@ public record MapView(ResourceLocation dimension, int focusX, int focusZ, int pl
             SiteInfo site = null;
             if (buf.readBoolean()) {
                 UUID siteId = buf.readBoolean() ? buf.readUUID() : null;
-                site = new SiteInfo(siteId, buf.readVarInt(), buf.readVarInt(), buf.readVarInt(), buf.readVarInt());
+                site = new SiteInfo(siteId, buf.readVarInt(), buf.readVarInt(), buf.readVarInt(), buf.readVarInt(), buf.readBoolean());
             }
-            seats.add(new Seat(territory, name, x, z, capital, dj, village, province, provinceId, origin, site));
+            seats.add(new Seat(territory, name, x, z, capital, dj, village, province, provinceId, origin, site, buf.readVarInt() - 1));
         }
         n = buf.readVarInt();
         List<Dejure> dejure = new ArrayList<>(n);

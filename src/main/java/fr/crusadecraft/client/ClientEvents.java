@@ -35,6 +35,12 @@ public final class ClientEvents {
         }
     }
 
+    /** P34 : le cadre du plan d'architecte, là où il posera. */
+    @SubscribeEvent
+    public static void onRenderLevel(net.minecraftforge.client.event.RenderLevelStageEvent event) {
+        fr.crusadecraft.client.map.PlanPreview.render(event);
+    }
+
     /** L'info-bulle d'une carte papier : à qui sont les terres en son centre (P14). */
     @SubscribeEvent
     public static void onTooltip(net.minecraftforge.event.entity.player.ItemTooltipEvent event) {

@@ -125,10 +125,23 @@ public final class CivService {
         return Optional.of(level.getHeightmapPos(Heightmap.Types.MOTION_BLOCKING_NO_LEAVES, new BlockPos(x, 0, z)).below());
     }
 
+    /**
+     * P34 : la place d'une ville bâtie d'après les plans, de ce côté. Chaque bâtiment se pose à la hauteur de son
+     * terrain : on demande moins de plat qu'à un fort (dix blocs d'écart), mais toujours la terre du royaume, aucune
+     * colonie et un sol naturel.
+     */
+    static Optional<BlockPos> suitableTown(MinecraftServer server, ServerLevel level, AiRealm ai, int extent, int x, int z, int radius) {
+        if (refusal(server, level, ai, Math.max(2, extent / 2), 10, x, z, radius) != null) return Optional.empty();
+        return Optional.of(level.getHeightmapPos(Heightmap.Types.MOTION_BLOCKING_NO_LEAVES, new BlockPos(x, 0, z)).below());
+    }
+
     /** Pourquoi cet endroit ne convient pas, en clair ({@code null} s'il convient) : pour {@link #suitable} et les bancs d'essai. */
     public static String refusal(MinecraftServer server, ServerLevel level, AiRealm ai, SiteKind kind, int x, int z, int radius) {
+        return refusal(server, level, ai, Math.max(2, kind.size() / 2), 3, x, z, radius);
+    }
+
+    static String refusal(MinecraftServer server, ServerLevel level, AiRealm ai, int half, int maxSlope, int x, int z, int radius) {
         if (!inZone(x, z, radius)) return "hors de la zone permise";
-        int half = Math.max(2, kind.size() / 2);
         int[][] probes = {{0, 0}, {-half, -half}, {half, -half}, {-half, half}, {half, half}, {0, -half}, {0, half}, {-half, 0}, {half, 0}};
         int min = Integer.MAX_VALUE, max = Integer.MIN_VALUE;
         for (int[] d : probes) {
@@ -144,7 +157,7 @@ public final class CivService {
             min = Math.min(min, top.getY());
             max = Math.max(max, top.getY());
         }
-        if (max - min > 3) return "pas assez plat (" + min + " à " + max + ")";
+        if (max - min > maxSlope) return "pas assez plat (" + min + " à " + max + ")";
         return null;
     }
 }

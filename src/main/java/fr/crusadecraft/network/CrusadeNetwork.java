@@ -33,7 +33,7 @@ import net.minecraftforge.network.simple.SimpleChannel;
  * (distance, droits, état) avant d'agir.
  */
 public final class CrusadeNetwork {
-    private static final String VERSION = "20";
+    private static final String VERSION = "21";
 
     public static final SimpleChannel CHANNEL = NetworkRegistry.newSimpleChannel(
             ResourceLocation.tryParse(CrusadeCraft.MOD_ID + ":main"),
@@ -217,6 +217,24 @@ public final class CrusadeNetwork {
         CHANNEL.messageBuilder(fr.crusadecraft.network.packet.SettingsPackets.Request.class, nextId++, NetworkDirection.PLAY_TO_SERVER)
                 .encoder(fr.crusadecraft.network.packet.SettingsPackets.Request::encode).decoder(fr.crusadecraft.network.packet.SettingsPackets.Request::decode)
                 .consumerMainThread(fr.crusadecraft.network.packet.SettingsPackets.Request::handle).add();
+        CHANNEL.messageBuilder(fr.crusadecraft.network.packet.PlanPackets.Request.class, nextId++, NetworkDirection.PLAY_TO_SERVER)
+                .encoder(fr.crusadecraft.network.packet.PlanPackets.Request::encode).decoder(fr.crusadecraft.network.packet.PlanPackets.Request::decode)
+                .consumerMainThread(fr.crusadecraft.network.packet.PlanPackets.Request::handle).add();
+        CHANNEL.messageBuilder(fr.crusadecraft.network.packet.PlanPackets.Catalog.class, nextId++, NetworkDirection.PLAY_TO_CLIENT)
+                .encoder(fr.crusadecraft.network.packet.PlanPackets.Catalog::encode).decoder(fr.crusadecraft.network.packet.PlanPackets.Catalog::decode)
+                .consumerMainThread(fr.crusadecraft.network.packet.PlanPackets.Catalog::handle).add();
+        CHANNEL.messageBuilder(fr.crusadecraft.network.packet.PlanPackets.Entries.class, nextId++, NetworkDirection.PLAY_TO_CLIENT)
+                .encoder(fr.crusadecraft.network.packet.PlanPackets.Entries::encode).decoder(fr.crusadecraft.network.packet.PlanPackets.Entries::decode)
+                .consumerMainThread(fr.crusadecraft.network.packet.PlanPackets.Entries::handle).add();
+        CHANNEL.messageBuilder(fr.crusadecraft.network.packet.PlanPackets.Choose.class, nextId++, NetworkDirection.PLAY_TO_SERVER)
+                .encoder(fr.crusadecraft.network.packet.PlanPackets.Choose::encode).decoder(fr.crusadecraft.network.packet.PlanPackets.Choose::decode)
+                .consumerMainThread(fr.crusadecraft.network.packet.PlanPackets.Choose::handle).add();
+        CHANNEL.messageBuilder(MapEditPackets.SetStyle.class, nextId++, NetworkDirection.PLAY_TO_SERVER)
+                .encoder(MapEditPackets.SetStyle::encode).decoder(MapEditPackets.SetStyle::decode)
+                .consumerMainThread(MapEditPackets.SetStyle::handle).add();
+        CHANNEL.messageBuilder(MapEditPackets.TownAction.class, nextId++, NetworkDirection.PLAY_TO_SERVER)
+                .encoder(MapEditPackets.TownAction::encode).decoder(MapEditPackets.TownAction::decode)
+                .consumerMainThread(MapEditPackets.TownAction::handle).add();
         CHANNEL.messageBuilder(MapEditPackets.MergeRealm.class, nextId++, NetworkDirection.PLAY_TO_SERVER)
                 .encoder(MapEditPackets.MergeRealm::encode).decoder(MapEditPackets.MergeRealm::decode)
                 .consumerMainThread(MapEditPackets.MergeRealm::handle).add();

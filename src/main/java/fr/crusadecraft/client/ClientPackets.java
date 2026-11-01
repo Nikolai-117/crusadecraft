@@ -115,6 +115,19 @@ public final class ClientPackets {
     }
 
     /** Le menu du bâton de bornage (clic droit dans le vide). */
+    /** P34 : le catalogue du plan d'architecte (le serveur répond par ses étagères). */
+    public static void requestPlanCatalog() {
+        fr.crusadecraft.network.CrusadeNetwork.toServer(new fr.crusadecraft.network.packet.PlanPackets.Request(""));
+    }
+
+    public static void planCatalog(java.util.List<fr.crusadecraft.core.build.plan.PlanLibrary.Source> sources, String folder) {
+        Minecraft.getInstance().setScreen(new fr.crusadecraft.client.screen.PlanCatalogScreen(sources, folder));
+    }
+
+    public static void planEntries(String source, java.util.List<fr.crusadecraft.core.build.plan.PlanLibrary.Entry> entries) {
+        if (Minecraft.getInstance().screen instanceof fr.crusadecraft.client.screen.PlanCatalogScreen screen) screen.showEntries(source, entries);
+    }
+
     public static void openStaffMenu() {
         Minecraft.getInstance().setScreen(new fr.crusadecraft.client.screen.StaffScreen());
     }

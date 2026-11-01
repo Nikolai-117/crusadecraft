@@ -55,6 +55,12 @@ public final class AiRealm {
     /** Sa foi (P10) : tirée de son identifiant, pour les mondes générés avant qu'elle n'existe. */
     private AiFaith faith;
 
+    /** P34 : le style de ses villes bâties (les packs où elle prend ses bâtiments). */
+    private fr.crusadecraft.core.build.plan.NationStyle style = fr.crusadecraft.core.build.plan.NationStyle.EUROPEENNE;
+
+    public fr.crusadecraft.core.build.plan.NationStyle style() { return style; }
+    public void setStyle(fr.crusadecraft.core.build.plan.NationStyle style) { this.style = style == null ? this.style : style; }
+
     public AiFaith faith() { return faith; }
     public void setFaith(AiFaith faith) { this.faith = faith; }
 
@@ -144,6 +150,7 @@ public final class AiRealm {
         for (Map.Entry<UUID, Long> e : discoveredBy.entrySet()) d.putLong(e.getKey().toString(), e.getValue());
         t.put("discovered", d);
         if (handMade) t.putBoolean("handMade", true);
+        t.putString("style", style.name());
         return t;
     }
 
@@ -172,6 +179,7 @@ public final class AiRealm {
         }
         if (t.contains("faith")) r.faith = AiFaith.byName(t.getString("faith"), r.faith);
         r.handMade = t.getBoolean("handMade");
+        r.style = fr.crusadecraft.core.build.plan.NationStyle.byName(t.getString("style"), r.style);
         return r;
     }
 }

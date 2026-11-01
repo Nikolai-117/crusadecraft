@@ -59,6 +59,7 @@ public final class ServerEvents {
         ConflictDetector.logAtStartup();
         MineColoniesEvents.assumeReadyIfSilent();
         RealmService.reconcileAll(event.getServer());
+        fr.crusadecraft.core.build.plan.PlanLibrary.ensureFolder();
     }
 
     /** Un joueur part : on lui renverra le centre de ses cartes papier à son retour. */
@@ -86,6 +87,8 @@ public final class ServerEvents {
         fr.crusadecraft.core.world.Territory.onServerStopped();
         fr.crusadecraft.core.world.TerritoryService.onServerStopped();
         fr.crusadecraft.core.build.SiteService.onServerStopped();
+        fr.crusadecraft.core.build.plan.PlanLibrary.onServerStopped();
+        fr.crusadecraft.core.build.plan.Journals.onServerStopped();
         fr.crusadecraft.core.world.PaperMapService.onServerStopped();
         fr.crusadecraft.core.world.EntryTitles.onServerStopped();
         fr.crusadecraft.compat.dynmap.DynmapBridge.onServerStopped();
@@ -143,6 +146,8 @@ public final class ServerEvents {
         if (t % 10 == 4) perf("baton", () -> fr.crusadecraft.core.world.TerritoryService.walkTick(server));
         if (t % 40 == 12) perf("cartes_papier", () -> fr.crusadecraft.core.world.PaperMapService.tick(server));
         perf("chantiers", () -> fr.crusadecraft.core.build.SiteService.tick(server, t));
+        perf("plans", () -> fr.crusadecraft.core.build.plan.Journals.tick(server));
+        if (t % 200 == 173) perf("villes IA", () -> fr.crusadecraft.core.build.plan.AiTowns.tick(server));
         // Les lieux suivent le monde (une ville renommée, un royaume disparu) : toutes les vingt secondes suffisent.
         if (t % 400 == 200) perf("lieux", () -> fr.crusadecraft.core.place.PlaceService.sync(server));
         // Le passage d'une frontière de chunk à l'autre : une vérification par seconde suffit.

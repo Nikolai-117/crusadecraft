@@ -53,6 +53,10 @@ public final class ModItems {
     public static final RegistryObject<Item> BORNAGE = ITEMS.register("baton_de_bornage",
             () -> new fr.crusadecraft.item.BornageStaffItem(new Item.Properties().stacksTo(1).rarity(Rarity.UNCOMMON)));
 
+    /** P34 : l'outil de construction créatif. */
+    public static final RegistryObject<Item> PLAN = ITEMS.register("plan_architecte",
+            () -> new fr.crusadecraft.item.PlanItem(new Item.Properties().stacksTo(1).rarity(Rarity.UNCOMMON)));
+
     private ModItems() {}
 
     public static void register(IEventBus modBus) {

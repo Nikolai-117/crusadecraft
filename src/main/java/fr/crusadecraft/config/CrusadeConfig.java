@@ -114,6 +114,10 @@ public final class CrusadeConfig {
         public final ForgeConfigSpec.IntValue civVillageDays;
         public final ForgeConfigSpec.IntValue civQuarterDays;
         public final ForgeConfigSpec.IntValue civMaxVillages;
+        public final ForgeConfigSpec.BooleanValue aiTowns;
+        public final ForgeConfigSpec.IntValue aiTownRange;
+        public final ForgeConfigSpec.IntValue aiTownsAtOnce;
+        public final ForgeConfigSpec.IntValue townBlocksPerSecond;
         public final ForgeConfigSpec.IntValue claimCommandRadius;
         public final ForgeConfigSpec.BooleanValue coloniesJoinZone;
         public final ForgeConfigSpec.EnumValue<fr.crusadecraft.core.world.EntryTitles.Mode> entryMessages;
@@ -398,6 +402,18 @@ public final class CrusadeConfig {
             civQuarterDays = b.comment("Jours entre deux quartiers d'un village (de hameau en bourg, de bourg en ville : trois quartiers au plus).")
                     .defineInRange("joursEntreQuartiers", 8, 1, 3650);
             civMaxVillages = b.comment("Villages au plus qu'un royaume fonde de lui-même.").defineInRange("villagesMax", 2, 0, 16);
+            b.pop();
+
+            b.comment("Les villes de l'ordinateur bâties pour de vrai (P34), avec les bâtiments des packs de style (MineColonies, Byzantine) :",
+                    "chaque royaume a son style (européen, chinois, japonais, égyptien, romain, nordique), réglé dans l'éditeur de la carte.",
+                    "Chaque bloc remplacé est noté : l'éditeur défait une ville (« Défaire la ville »), /crusade civ annuler défait les autres.").push("villesIA");
+            aiTowns = b.comment("Une ville de l'ordinateur prend corps quand un joueur s'en approche : son hôtel de ville, ses maisons, ses rues.",
+                    "Coupé par défaut, car cela change le monde ; jamais là où des joueurs ont longtemps vécu, ni près d'une colonie.")
+                    .define("batirEnApprochant", false);
+            aiTownRange = b.comment("Distance, en blocs, à laquelle un joueur réveille une ville.").defineInRange("distance", 160, 48, 512);
+            aiTownsAtOnce = b.comment("Villes en chantier en même temps, au plus.").defineInRange("chantiersEnMemeTemps", 2, 1, 16);
+            townBlocksPerSecond = b.comment("Blocs posés chaque seconde par le chantier d'une ville (une ville moyenne en compte cent mille).")
+                    .defineInRange("blocsParSeconde", 80, 1, 5000);
             b.pop();
 
             b.comment("Le commerce (P29) : caravanes sur les routes, marchandises des royaumes.").push("commerce");

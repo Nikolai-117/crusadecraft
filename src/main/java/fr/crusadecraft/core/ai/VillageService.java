@@ -129,9 +129,14 @@ public final class VillageService {
 
     /** Fonde un village à cet endroit précis s'il convient (aussi pour les bancs d'essai, {@code radius} 0 : partout). */
     public static Optional<Site> foundAt(MinecraftServer server, AiRealm ai, ServerLevel level, int x, int z, int radius) {
-        Optional<BlockPos> ground = CivService.suitable(server, level, ai, SiteKind.VILLAGE, x, z, radius);
+        // P34 : avec un pack de son style, le hameau est bâti d'après ses plans (hôtel de ville, maisons, ferme).
+        Optional<fr.crusadecraft.core.build.plan.TownPlan> town = fr.crusadecraft.core.build.plan.TownPlanner.plan(ai.style(),
+                fr.crusadecraft.core.build.plan.TownSize.HAMEAU, ((long) x << 32) ^ z ^ ai.id().getMostSignificantBits());
+        Optional<BlockPos> ground = town.isPresent()
+                ? CivService.suitableTown(server, level, ai, town.get().extent(), x, z, radius)
+                : CivService.suitable(server, level, ai, SiteKind.VILLAGE, x, z, radius);
         if (ground.isEmpty()) return Optional.empty();
-        Optional<Site> site = SiteService.foundVillageForAi(server, level, ai, ground.get(), Direction.SOUTH);
+        Optional<Site> site = SiteService.foundVillageForAi(server, level, ai, ground.get(), Direction.SOUTH, town.orElse(null));
         site.ifPresent(s -> dispute(server, ai, level, s));
         return site;
     }
@@ -140,16 +145,20 @@ public final class VillageService {
     public static Optional<Site> growAt(MinecraftServer server, AiRealm ai, Site village, Random random) {
         ServerLevel level = server.getLevel(ResourceKey.create(Registries.DIMENSION, village.dimension()));
         if (level == null) return Optional.empty();
-        List<int[]> spots = quarterSpots(ring());
+        // P34 : contre une ville bâtie d'après les plans, le quartier l'est aussi, et l'écart suit les deux emprises.
+        fr.crusadecraft.core.build.plan.TownPlan town = village.town() == null ? null : fr.crusadecraft.core.build.plan.TownPlanner.plan(ai.style(),
+                fr.crusadecraft.core.build.plan.TownSize.QUARTIER, random.nextLong()).orElse(null);
+        List<int[]> spots = quarterSpots(town == null ? ring() : (village.extent() + town.extent()) / 2 + 4);
         int start = random.nextInt(spots.size());
         for (int i = 0; i < spots.size(); i++) {
             int[] o = spots.get((start + i) % spots.size());
             int x = village.anchor().getX() + o[0], z = village.anchor().getZ() + o[1];
-            Optional<BlockPos> ground = CivService.suitable(server, level, ai, SiteKind.QUARTIER, x, z, 0);
-            if (ground.isEmpty() || Math.abs(ground.get().getY() - village.anchor().getY()) > 4) continue;
+            Optional<BlockPos> ground = town == null ? CivService.suitable(server, level, ai, SiteKind.QUARTIER, x, z, 0)
+                    : CivService.suitableTown(server, level, ai, town.extent(), x, z, 0);
+            if (ground.isEmpty() || Math.abs(ground.get().getY() - village.anchor().getY()) > (town == null ? 4 : 10)) continue;
             Direction front = Direction.getNearest(-o[0], 0, -o[1]);
             if (!front.getAxis().isHorizontal()) front = Direction.SOUTH;
-            Optional<Site> q = SiteService.quarterForAi(server, level, ai, village, ground.get(), front);
+            Optional<Site> q = SiteService.quarterForAi(server, level, ai, village, ground.get(), front, town);
             if (q.isPresent()) return q;
         }
         return Optional.empty();

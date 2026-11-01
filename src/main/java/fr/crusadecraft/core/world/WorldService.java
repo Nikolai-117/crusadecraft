@@ -362,7 +362,7 @@ public final class WorldService {
             if (!editing && !r.discoveredBy(player.getUUID())) continue;
             index.put(r.id(), territories.size());
             territories.add(new MapView.Territory(r.id(), true, false, r.place(), r.rank(), r.color(), r.ruler().name(),
-                    r.ruler().female(), r.personality(), r.population(), r.faith(), r.handMade()));
+                    r.ruler().female(), r.personality(), r.population(), r.faith(), r.handMade(), r.style().ordinal()));
         }
         // Chaque province sous la bannière de celui qui la tient : une conquête change la carte.
         for (AiRealm r : world.realms()) {
@@ -371,8 +371,10 @@ public final class WorldService {
                 if (!p.dimension().equals(dim)) continue;
                 Integer i = index.get(p.holder() == null ? r.id() : p.holder());
                 if (i == null) continue;
+                int town = fr.crusadecraft.core.build.SiteService.townOf(player.server, p.id())
+                        .map(fr.crusadecraft.core.build.SiteService::percent).orElse(-1);
                 seats.add(new MapView.Seat(i, p.name(), p.seat().getX(), p.seat().getZ(), p.capital() && p.holder() == null, p.dejureKingdom(),
-                        p.anchor() != AiProvince.Anchor.LAND, true, p.id(), index.get(r.id())));
+                        p.anchor() != AiProvince.Anchor.LAND, true, p.id(), index.get(r.id()), null, town));
             }
         }
         // Les constructions (P14) des royaumes de cette carte, et les postes de garde MineColonies des joueurs.
@@ -381,7 +383,7 @@ public final class WorldService {
             if (i == null || !site.dimension().equals(dim)) continue;
             seats.add(new MapView.Seat(i, site.name(), site.anchor().getX(), site.anchor().getZ(), false, nearestDejure(world, site.anchor().getX(),
                     site.anchor().getZ()), false, false, -1, -1, new MapView.SiteInfo(site.id(), site.kind().ordinal(), site.radius(),
-                    fr.crusadecraft.core.build.SiteService.percent(site), site.kind().garrison())));
+                    fr.crusadecraft.core.build.SiteService.percent(site), site.kind().garrison(), site.town() != null)));
         }
         for (Realm r : data.realms()) {
             Integer i = index.get(r.id());

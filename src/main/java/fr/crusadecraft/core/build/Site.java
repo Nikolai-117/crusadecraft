@@ -37,6 +37,8 @@ public final class Site {
     private final long createdDay;
     /** Posée par un royaume de l'ordinateur de lui-même (P22) : chaque bloc remplacé est noté, pour pouvoir tout défaire. */
     private boolean auto;
+    /** P34 : une ville bâtie d'après les plans des packs de style, au lieu du plan dessiné par le code. */
+    private fr.crusadecraft.core.build.plan.TownPlan town;
 
     public Site(UUID id, SiteKind kind, String name, UUID owner, ResourceLocation dimension, BlockPos anchor, Direction facing,
                 int color, boolean instant, long createdDay) {
@@ -75,10 +77,17 @@ public final class Site {
     public void setProgress(int progress) { this.progress = progress; }
     public void setBuilt(boolean built) { this.built = built; }
     public void setProvince(int province) { this.province = province; }
+    public fr.crusadecraft.core.build.plan.TownPlan town() { return town; }
+    public void setTown(fr.crusadecraft.core.build.plan.TownPlan town) { this.town = town; }
+
+    /** Le côté de son emprise : celui de son genre, ou celui de sa ville quand elle est bâtie d'après les plans. */
+    public int extent() {
+        return town != null ? town.extent() : kind.size();
+    }
 
     /** Le territoire qu'elle étend : seulement une fois bâtie (un chantier ne tient encore rien). */
     public int radius() {
-        return built ? kind.radius() : 0;
+        return built ? Math.max(kind.radius(), town == null ? 0 : town.extent() / 2 + 32) : 0;
     }
 
     public double distanceSqr(double x, double z) {
@@ -103,6 +112,7 @@ public final class Site {
         t.putLong("created", createdDay);
         if (community != null) t.putUUID("community", community);
         if (auto) t.putBoolean("auto", true);
+        if (town != null) t.put("town", town.save());
         return t;
     }
 
@@ -117,6 +127,7 @@ public final class Site {
         s.province = t.contains("province") ? t.getInt("province") : -1;
         if (t.hasUUID("community")) s.community = t.getUUID("community");
         s.auto = t.getBoolean("auto");
+        if (t.contains("town")) s.town = fr.crusadecraft.core.build.plan.TownPlan.load(t.getCompound("town"));
         return s;
     }
 }
