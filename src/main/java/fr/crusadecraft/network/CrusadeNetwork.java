@@ -33,7 +33,7 @@ import net.minecraftforge.network.simple.SimpleChannel;
  * (distance, droits, état) avant d'agir.
  */
 public final class CrusadeNetwork {
-    private static final String VERSION = "21";
+    private static final String VERSION = "22";
 
     public static final SimpleChannel CHANNEL = NetworkRegistry.newSimpleChannel(
             ResourceLocation.tryParse(CrusadeCraft.MOD_ID + ":main"),
@@ -226,6 +226,15 @@ public final class CrusadeNetwork {
         CHANNEL.messageBuilder(fr.crusadecraft.network.packet.PlanPackets.Entries.class, nextId++, NetworkDirection.PLAY_TO_CLIENT)
                 .encoder(fr.crusadecraft.network.packet.PlanPackets.Entries::encode).decoder(fr.crusadecraft.network.packet.PlanPackets.Entries::decode)
                 .consumerMainThread(fr.crusadecraft.network.packet.PlanPackets.Entries::handle).add();
+        CHANNEL.messageBuilder(fr.crusadecraft.network.packet.PlanPackets.DetailRequest.class, nextId++, NetworkDirection.PLAY_TO_SERVER)
+                .encoder(fr.crusadecraft.network.packet.PlanPackets.DetailRequest::encode).decoder(fr.crusadecraft.network.packet.PlanPackets.DetailRequest::decode)
+                .consumerMainThread(fr.crusadecraft.network.packet.PlanPackets.DetailRequest::handle).add();
+        CHANNEL.messageBuilder(fr.crusadecraft.network.packet.PlanPackets.Detail.class, nextId++, NetworkDirection.PLAY_TO_CLIENT)
+                .encoder(fr.crusadecraft.network.packet.PlanPackets.Detail::encode).decoder(fr.crusadecraft.network.packet.PlanPackets.Detail::decode)
+                .consumerMainThread(fr.crusadecraft.network.packet.PlanPackets.Detail::handle).add();
+        CHANNEL.messageBuilder(fr.crusadecraft.network.packet.PlanPackets.Progress.class, nextId++, NetworkDirection.PLAY_TO_CLIENT)
+                .encoder(fr.crusadecraft.network.packet.PlanPackets.Progress::encode).decoder(fr.crusadecraft.network.packet.PlanPackets.Progress::decode)
+                .consumerMainThread(fr.crusadecraft.network.packet.PlanPackets.Progress::handle).add();
         CHANNEL.messageBuilder(fr.crusadecraft.network.packet.PlanPackets.Choose.class, nextId++, NetworkDirection.PLAY_TO_SERVER)
                 .encoder(fr.crusadecraft.network.packet.PlanPackets.Choose::encode).decoder(fr.crusadecraft.network.packet.PlanPackets.Choose::decode)
                 .consumerMainThread(fr.crusadecraft.network.packet.PlanPackets.Choose::handle).add();

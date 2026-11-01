@@ -63,6 +63,7 @@ minecraft {
             property 'crusadecraft.worldshots.v3', (project.findProperty('shots_v3') == 'true').toString()
             // -Pshots_v4=true : une ville de chaque style (P34), le catalogue et l'aperçu du plan d'architecte.
             property 'crusadecraft.worldshots.v4', (project.findProperty('shots_v4') == 'true').toString()
+            property 'crusadecraft.worldshots.v4quick', (project.findProperty('shots_quick') == 'true').toString()
         }
 
         server {

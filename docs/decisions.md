@@ -927,3 +927,14 @@ Demandé par Romain (5 octobre) : « que ça fonctionne par chunk directement »
 - Vérifié : 198 tests unitaires, 76 GameTests ; dans le jeu de développement, une ville de chaque style (Medieval Oak,
   Pagoda, Shogun, Nile, Byzantine — chargé sans souci en 1.20.1 —, Nordic Spruce), le catalogue et le cadre d'aperçu.
 
+**P34.1 (1er novembre 2026) — HUD du plan d'architecte, catalogue refait, version 3.3.1**
+
+- Demandé après essai sur son serveur : « un beau HUD avec des infos », un catalogue « fluide et joli ».
+- HUD (overlay au-dessus de la barre d'objets) : plan, pack, taille, côté de l'entrée, bloc visé et distance, gestes,
+  barre d'avancement envoyée par le serveur pendant la pose ; fondu à l'apparition.
+- Catalogue en trois colonnes, défilement doux, clavier ; panneau de détails avec aperçu vu du ciel calculé par le
+  serveur (couleurs de carte du dessus de chaque colonne ; pour une ville entière, son plan par rôle de bâtiment, rues
+  et enceinte, avec un tirage qu'on peut refaire — la graine voyage dans la référence choisie).
+- Les habitants d'une ville arrivent sur la case de rue la plus proche du centre (place, forum, avenue), plus dans
+  l'hôtel de ville. Canal réseau en version 22 : client et serveur doivent avoir la même version.
+

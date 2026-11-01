@@ -89,6 +89,60 @@ public final class PlanPackets {
         }
     }
 
+    /** Demander ce qu'on sait d'un plan (taille, aperçu vu du ciel), pour le panneau du catalogue. */
+    public record DetailRequest(String ref) {
+        public static void encode(DetailRequest p, FriendlyByteBuf buf) { buf.writeUtf(p.ref, REF_MAX); }
+
+        public static DetailRequest decode(FriendlyByteBuf buf) { return new DetailRequest(buf.readUtf(REF_MAX)); }
+
+        public static void handle(DetailRequest p, Supplier<NetworkEvent.Context> ctx) {
+            ServerPlayer player = ctx.get().getSender();
+            if (player == null) return;
+            PlanTool.detail(player, p.ref).ifPresent(d -> CrusadeNetwork.toPlayer(player, new Detail(d)));
+        }
+    }
+
+    /** Ce qu'on sait d'un plan. */
+    public record Detail(PlanTool.Detail detail) {
+        public static void encode(Detail p, FriendlyByteBuf buf) {
+            PlanTool.Detail d = p.detail;
+            buf.writeUtf(d.ref(), REF_MAX);
+            buf.writeUtf(d.name(), REF_MAX);
+            buf.writeVarInt(d.sizeX());
+            buf.writeVarInt(d.sizeY());
+            buf.writeVarInt(d.sizeZ());
+            buf.writeVarInt(d.pieces());
+            buf.writeVarInt(d.huts());
+            buf.writeBoolean(d.walled());
+            buf.writeVarInt(d.gridW());
+            buf.writeVarInt(d.gridH());
+            buf.writeVarIntArray(d.colors());
+        }
+
+        public static Detail decode(FriendlyByteBuf buf) {
+            return new Detail(new PlanTool.Detail(buf.readUtf(REF_MAX), buf.readUtf(REF_MAX), buf.readVarInt(), buf.readVarInt(), buf.readVarInt(),
+                    buf.readVarInt(), buf.readVarInt(), buf.readBoolean(), buf.readVarInt(), buf.readVarInt(), buf.readVarIntArray(PlanTool.PREVIEW * PlanTool.PREVIEW * 4)));
+        }
+
+        public static void handle(Detail p, Supplier<NetworkEvent.Context> ctx) {
+            DistExecutor.unsafeRunWhenOn(Dist.CLIENT, () -> () -> ClientPackets.planDetail(p.detail));
+        }
+    }
+
+    /** L'avancement d'une pose de l'outil, pour la barre du HUD. */
+    public record Progress(String name, int percent) {
+        public static void encode(Progress p, FriendlyByteBuf buf) {
+            buf.writeUtf(p.name, REF_MAX);
+            buf.writeVarInt(p.percent);
+        }
+
+        public static Progress decode(FriendlyByteBuf buf) { return new Progress(buf.readUtf(REF_MAX), buf.readVarInt()); }
+
+        public static void handle(Progress p, Supplier<NetworkEvent.Context> ctx) {
+            DistExecutor.unsafeRunWhenOn(Dist.CLIENT, () -> () -> fr.crusadecraft.client.hud.PlanHud.progress(p.name, p.percent));
+        }
+    }
+
     /** Choisir le plan que posera l'outil tenu. */
     public record Choose(String ref) {
         public static void encode(Choose p, FriendlyByteBuf buf) { buf.writeUtf(p.ref, REF_MAX); }

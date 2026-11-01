@@ -451,6 +451,28 @@ public final class SiteService {
     }
 
     /** La construction est achevée : son royaume est prévenu ; un village accueille ses habitants (avec Comes Alive). */
+    /**
+     * Où les habitants d'une construction arrivent : pour une ville d'après les plans, la case de rue la plus proche du
+     * centre (la place, le forum, l'avenue), pas l'intérieur de l'hôtel de ville ; sinon devant la construction.
+     */
+    static BlockPos gathering(Site site) {
+        fr.crusadecraft.core.build.plan.TownPlan town = site.town();
+        if (town == null || town.streets().length == 0 || town.streetY().length != town.streets().length) return site.anchor().above();
+        long best = town.streets()[0];
+        int bestY = town.streetY()[0];
+        long bestD = Long.MAX_VALUE;
+        for (int i = 0; i < town.streets().length; i++) {
+            long key = town.streets()[i];
+            long x = (int) (key >> 32), z = (int) key;
+            if (x * x + z * z < bestD) {
+                bestD = x * x + z * z;
+                best = key;
+                bestY = town.streetY()[i];
+            }
+        }
+        return site.anchor().offset((int) (best >> 32), bestY + 1, (int) best);
+    }
+
     private static void onBuilt(MinecraftServer server, ServerLevel level, Site site) {
         CrusadeCraft.LOGGER.info("CrusadeCraft : {} achevé en {}", site.kind(), site.anchor());
         data(server).realm(site.owner()).ifPresent(r -> {
@@ -464,7 +486,7 @@ public final class SiteService {
         }
         if (site.community() != null) {
             var state = data(server).lineage();
-            state.community(site.community()).ifPresent(c -> LineageService.spawnPeople(level, state, state.residents(c.id()), site.anchor().above()));
+            state.community(site.community()).ifPresent(c -> LineageService.spawnPeople(level, state, state.residents(c.id()), gathering(site)));
         }
     }
 
@@ -626,7 +648,7 @@ public final class SiteService {
             ServerLevel level = server.getLevel(ResourceKey.create(Registries.DIMENSION, site.dimension()));
             if (level == null) return;
             var state = data(server).lineage();
-            state.community(site.community()).ifPresent(c -> LineageService.spawnPeople(level, state, state.residents(c.id()), site.anchor().above()));
+            state.community(site.community()).ifPresent(c -> LineageService.spawnPeople(level, state, state.residents(c.id()), gathering(site)));
         });
     }
 

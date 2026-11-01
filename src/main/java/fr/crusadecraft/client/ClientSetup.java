@@ -18,6 +18,13 @@ public final class ClientSetup {
                 fr.crusadecraft.client.map.WarMapRenderer::new);
     }
 
+    /** P34.1 : le HUD du plan d'architecte, au-dessus de la barre d'objets. */
+    @SubscribeEvent
+    public static void onOverlays(net.minecraftforge.client.event.RegisterGuiOverlaysEvent event) {
+        event.registerAbove(net.minecraftforge.client.gui.overlay.VanillaGuiOverlay.HOTBAR.id(), "plan_architecte",
+                fr.crusadecraft.client.hud.PlanHud::render);
+    }
+
     @SubscribeEvent
     public static void onKeys(RegisterKeyMappingsEvent event) {
         event.register(KeyBindings.REALM_MENU);

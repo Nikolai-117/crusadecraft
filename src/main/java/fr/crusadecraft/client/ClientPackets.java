@@ -124,6 +124,10 @@ public final class ClientPackets {
         Minecraft.getInstance().setScreen(new fr.crusadecraft.client.screen.PlanCatalogScreen(sources, folder));
     }
 
+    public static void planDetail(fr.crusadecraft.core.build.plan.PlanTool.Detail detail) {
+        if (Minecraft.getInstance().screen instanceof fr.crusadecraft.client.screen.PlanCatalogScreen screen) screen.showDetail(detail);
+    }
+
     public static void planEntries(String source, java.util.List<fr.crusadecraft.core.build.plan.PlanLibrary.Entry> entries) {
         if (Minecraft.getInstance().screen instanceof fr.crusadecraft.client.screen.PlanCatalogScreen screen) screen.showEntries(source, entries);
     }

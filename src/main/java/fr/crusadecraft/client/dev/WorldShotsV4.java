@@ -14,6 +14,7 @@ import fr.crusadecraft.core.world.AiRealm;
 import fr.crusadecraft.core.world.WorldEditService;
 import fr.crusadecraft.network.CrusadeNetwork;
 import fr.crusadecraft.network.packet.PlanPackets;
+import fr.crusadecraft.item.PlanItem;
 import fr.crusadecraft.registry.ModItems;
 import net.minecraft.client.Minecraft;
 import net.minecraft.core.BlockPos;
@@ -96,7 +97,9 @@ final class WorldShotsV4 {
             origin = p.blockPosition();
             for (NationStyle s : NationStyle.values()) CrusadeCraft.LOGGER.info("WorldShots v4 : style {} → pack {}", s, PlanLibrary.packFor(s).orElse("aucun"));
         }, mc -> mc.setScreen(null), 20, null));
-        for (NationStyle style : NationStyle.values()) {
+        // -Pshots_quick=true : une seule ville (pour regarder l'outil et le catalogue sans attendre les six).
+        boolean quick = Boolean.getBoolean("crusadecraft.worldshots.v4quick");
+        for (NationStyle style : quick ? new NationStyle[]{NationStyle.EUROPEENNE} : NationStyle.values()) {
             out.add(new Step("ville_" + style.name().toLowerCase(), server -> buildTown(server, style), null, 60, null));
             out.add(new Step("haut_" + style.name().toLowerCase(), server -> overlook(server, style, 95, 70f), null, 260,
                     "v4_ville_" + style.name().toLowerCase()));
@@ -114,6 +117,10 @@ final class WorldShotsV4 {
             String ref = PlanLibrary.entries(pack).stream().map(PlanLibrary.Entry::ref).filter(r -> r.contains("townhall")).findFirst().orElse("");
             CrusadeCraft.LOGGER.info("WorldShots v4 : outil — {}", PlanTool.choose(player(server), ref).message().getString());
         }, mc -> mc.setScreen(null), 60, "v4_apercu"));
+        out.add(new Step("outil_pose", server -> {
+            ServerPlayer p = player(server);
+            PlanItem.aim(p).ifPresent(hit -> PlanTool.paste(p, p.getMainHandItem(), hit.getBlockPos()));
+        }, null, 3, "v4_pose"));
         out.add(new Step("fin", null, mc -> mc.setScreen(null), 10, null));
         return out;
     }

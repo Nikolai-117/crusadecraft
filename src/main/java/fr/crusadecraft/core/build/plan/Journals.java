@@ -183,6 +183,11 @@ public final class Journals extends SavedData {
             job.progress = r[0];
             budget -= Math.max(1, r[1]);
             index.setDirty();
+            ServerPlayer owner = job.player == null ? null : server.getPlayerList().getPlayer(job.player);
+            if (owner != null && (server.getTickCount() % 5 == 0 || job.progress >= plan.size())) {
+                fr.crusadecraft.network.CrusadeNetwork.toPlayer(owner, new fr.crusadecraft.network.packet.PlanPackets.Progress(job.name,
+                        plan.isEmpty() ? 100 : Math.min(100, job.progress * 100 / plan.size())));
+            }
             if (job.progress >= plan.size()) {
                 index.jobs.remove(job);
                 PLACEMENTS.remove(job.id);

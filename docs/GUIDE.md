@@ -1,4 +1,4 @@
-# CrusadeCraft 3.3.0 — installer et tester
+# CrusadeCraft 3.3.1 — installer et tester
 
 ## 1. Ce qu'il faut
 
@@ -17,7 +17,7 @@ Optionnels, déjà présents chez toi, donc activés automatiquement :
 
 ## 2. Installer
 
-1. Le fichier du mod est `E:\crusadecraft\build\libs\crusadecraft-3.3.0.jar`.
+1. Le fichier du mod est `E:\crusadecraft\build\libs\crusadecraft-3.3.1.jar`.
 2. Mets-le dans le dossier des mods de l'instance : `D:\MultiMC\instances\1.20.1\.minecraft\mods\`.
    Dans MultiMC, tu peux aussi faire clic droit sur l'instance → *Modifier* → *Mods* → *Ajouter un fichier*.
    **Retire l'ancien** (`crusadecraft-1.8.0.jar`, ou une version plus vieille) : deux versions du mod ensemble
@@ -239,6 +239,11 @@ données du mod (fichier `crusadecraft.dat` du monde) restent sur place, sans ef
     au niveau du bloc),
     accroupi pour tourner. Un cadre doré montre où il tombera, un liseré rouge marque l'entrée.
     `/crusade plan annuler` défait la dernière pose.
+    Tant que tu tiens l'outil, un **HUD** en haut à gauche dit le plan choisi, sa taille, le côté de l'entrée, le bloc
+    visé et sa distance, les gestes, et la barre d'avancement pendant une pose. Dans le **catalogue**, un clic choisit
+    un plan et montre à droite sa taille et un **aperçu vu du ciel** (pour une ville entière : son plan, avec sa légende,
+    et « Autre tirage » pour une autre variante) ; double-clic ou « Prendre ce plan » pour le prendre, flèches et Entrée
+    au clavier.
     Une **ville entière** posée à l'outil devient une ville du monde : sur la carte, avec ses habitants. Posée sur les
     terres d'un royaume, elle le rejoint ; sur une terre libre, elle **fonde une nation** de son style, dont elle est
     la capitale. On la défait comme les autres (« Défaire la ville » dans l'éditeur). Pour composer ta propre ville,
