@@ -125,6 +125,14 @@ final class McaCompat {
                 .map(n -> new McaBridge.TreeEntry(n.getName(), valid(n.father()), valid(n.mother()), valid(n.partner()), n.isDeceased()));
     }
 
+    /** L'éditeur limité : apparence et vêtements seulement, le nom, l'âge et la famille restent ceux du registre. */
+    static boolean openAppearance(net.minecraft.server.level.ServerPlayer player, Entity entity) {
+        if (!(entity instanceof VillagerEntityMCA)) return false;
+        forge.net.mca.cobalt.network.NetworkHandler.sendToPlayer(new forge.net.mca.network.s2c.OpenGuiRequest(
+                forge.net.mca.network.s2c.OpenGuiRequest.Type.LIMITED_VILLAGER_EDITOR, entity), player);
+        return true;
+    }
+
     static void rename(Entity entity, String fullName) {
         if (entity instanceof VillagerEntityMCA v) v.setName(fullName);
         if (entity.level() instanceof ServerLevel level) {

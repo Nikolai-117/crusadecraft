@@ -1,0 +1,8 @@
+{
+  "moment": "fete",
+  "traits": ["AVARE"],
+  "lines": [
+    {"key": "crusadecraft.replique.fete.avare.1"},
+    {"key": "crusadecraft.replique.fete.avare.2"}
+  ]
+}

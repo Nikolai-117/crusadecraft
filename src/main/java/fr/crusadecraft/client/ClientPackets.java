@@ -148,7 +148,13 @@ public final class ClientPackets {
         if (mc.screen instanceof fr.crusadecraft.client.screen.LineageScreen screen) screen.refresh(view);
         else if (mc.screen instanceof fr.crusadecraft.client.screen.LineageForm form) form.parent().refresh(view);
         else if (mc.screen instanceof fr.crusadecraft.client.screen.PersonForm form) form.parent().refresh(view);
+        else if (mc.screen instanceof fr.crusadecraft.client.screen.TreeScreen tree) tree.refresh(view);
         else if (open) mc.setScreen(new fr.crusadecraft.client.screen.LineageScreen(view));
+    }
+
+    /** L'arbre de Comes Alive (P26), ouvert sur une personne du registre. */
+    public static void mcaTree(java.util.UUID person) {
+        fr.crusadecraft.compat.mca.McaBridge.openTreeScreen(person);
     }
 
     public static void lineageResult(boolean success, net.minecraft.network.chat.Component message) {
@@ -156,6 +162,7 @@ public final class ClientPackets {
         if (mc.screen instanceof fr.crusadecraft.client.screen.LineageScreen screen) screen.showStatus(success, message);
         else if (mc.screen instanceof fr.crusadecraft.client.screen.LineageForm form) form.parent().showStatus(success, message);
         else if (mc.screen instanceof fr.crusadecraft.client.screen.PersonForm form) form.parent().showStatus(success, message);
+        else if (mc.screen instanceof fr.crusadecraft.client.screen.TreeScreen tree) tree.showStatus(success, message);
         else if (mc.player != null) mc.player.displayClientMessage(message, true);
     }
 

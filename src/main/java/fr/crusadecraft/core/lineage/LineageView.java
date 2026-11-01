@@ -28,20 +28,40 @@ public record LineageView(boolean canEdit, boolean mca, List<HouseLine> houses, 
      *
      * @param rows ses personnes, déjà rangées (par génération pour une maison, par foyer pour une communauté)
      */
-    public record Selection(boolean house, UUID id, String title, Component realm, CommunityKind kind, List<Row> rows) {}
+    public record Selection(boolean house, UUID id, String title, Component realm, CommunityKind kind, List<Row> rows, List<String> citizens) {
+        public Selection(boolean house, UUID id, String title, Component realm, CommunityKind kind, List<Row> rows) {
+            this(house, id, title, realm, kind, rows, List.of());
+        }
+    }
 
     /**
      * Une personne.
      *
      * @param group  génération (maison, à partir de 0) ; pour une communauté, l'indice de son foyer
      * @param spouse le nom de son conjoint, ou vide
+     * @param father son père s'il est au registre (P26, pour l'arbre), sinon {@code null} ; de même pour {@code mother}
+     *               et {@code spouseId}
      */
     public record Row(UUID id, String name, boolean female, int age, boolean alive, Role role, int group, String spouse,
-                      boolean inWorld, boolean member, int traitMask, String bio) {
+                      boolean inWorld, boolean member, int traitMask, String bio, UUID father, UUID mother, UUID spouseId) {
         public Row(UUID id, String name, boolean female, int age, boolean alive, Role role, int group, String spouse,
                    boolean inWorld, boolean member) {
             this(id, name, female, age, alive, role, group, spouse, inWorld, member, 0, "");
         }
+
+        public Row(UUID id, String name, boolean female, int age, boolean alive, Role role, int group, String spouse,
+                   boolean inWorld, boolean member, int traitMask, String bio) {
+            this(id, name, female, age, alive, role, group, spouse, inWorld, member, traitMask, bio, null, null, null);
+        }
+    }
+
+    private static void writeNullable(FriendlyByteBuf buf, UUID id) {
+        buf.writeBoolean(id != null);
+        if (id != null) buf.writeUUID(id);
+    }
+
+    private static UUID readNullable(FriendlyByteBuf buf) {
+        return buf.readBoolean() ? buf.readUUID() : null;
     }
 
     public void write(FriendlyByteBuf buf) {
@@ -91,7 +111,12 @@ public record LineageView(boolean canEdit, boolean mca, List<HouseLine> houses, 
                 buf.writeBoolean(r.member());
                 buf.writeInt(r.traitMask());
                 buf.writeUtf(r.bio());
+                writeNullable(buf, r.father());
+                writeNullable(buf, r.mother());
+                writeNullable(buf, r.spouseId());
             }
+            buf.writeVarInt(selection.citizens().size());
+            for (String c : selection.citizens()) buf.writeUtf(c);
         }
     }
 
@@ -121,9 +146,13 @@ public record LineageView(boolean canEdit, boolean mca, List<HouseLine> houses, 
             List<Row> rows = new ArrayList<>(n);
             for (int i = 0; i < n; i++) {
                 rows.add(new Row(buf.readUUID(), buf.readUtf(), buf.readBoolean(), buf.readVarInt(), buf.readBoolean(),
-                        buf.readEnum(Role.class), buf.readVarInt(), buf.readUtf(), buf.readBoolean(), buf.readBoolean(), buf.readInt(), buf.readUtf()));
+                        buf.readEnum(Role.class), buf.readVarInt(), buf.readUtf(), buf.readBoolean(), buf.readBoolean(), buf.readInt(), buf.readUtf(),
+                        readNullable(buf), readNullable(buf), readNullable(buf)));
             }
-            selection = new Selection(house, id, title, realm, kind, rows);
+            n = buf.readVarInt();
+            List<String> citizens = new ArrayList<>(n);
+            for (int i = 0; i < n; i++) citizens.add(buf.readUtf());
+            selection = new Selection(house, id, title, realm, kind, rows, citizens);
         }
         return new LineageView(canEdit, mca, houses, communities, realms, selection);
     }

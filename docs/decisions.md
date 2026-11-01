@@ -736,3 +736,31 @@ Demandé par Romain (5 octobre) : « que ça fonctionne par chunk directement »
 
 - Le GameTest des constructions de l'ordinateur (P22) prépare désormais sa propre parcelle d'herbe plate : le relief du
   monde de test change à chaque partie, et le test échouait au hasard selon le terrain tiré.
+
+**P26 (1er novembre 2026) — la cour au complet, version 2.2.0**
+
+- **Fêtes et deuils** : bouton « Banquet » dans l'écran de la Maison (60 pièces par rang, prestige, opinion des
+  conseillers, des maires et de trois voisins invités, une fois par semaine au plus, jamais en guerre ni en deuil).
+  Pendant une demi-journée, les gens du registre incarnés se rassemblent à la cour. À la mort d'un chef de maison, du
+  souverain, de son conjoint ou de son héritier, trois jours de deuil ; le premier, les funérailles rassemblent tout
+  le monde. État dans `CourtState`, champs facultatifs : pas de nouvelle version des données.
+- **Répliques par datapack** (`crusadecraft_repliques`) : selon le moment, le rôle et les traits ; dites dans le chat
+  aux joueurs à moins de 12 blocs, une par personne toutes les 45 secondes au plus. Le mod en fournit une vingtaine,
+  en clés de traduction.
+- **Comes Alive** : « Apparence » ouvre son éditeur **limité** (visage, cheveux, vêtements ; le nom, l'âge et la
+  famille restent ceux du registre), seulement si le villageois est chargé à moins de 48 blocs — son écran cherche
+  l'entité chez le client. « Arbre Comes Alive » inscrit la maison dans son arbre puis ouvre son écran, qui demande
+  lui-même la famille au serveur : il marche aussi pour ceux qui ne sont jamais apparus.
+- **Arbre illustré** pour chaque maison du registre (disposition en logique pure, testée), glisser et zoomer.
+- **Les deux généalogies** (maison des citoyens MineColonies de P4, registre de P13) **ne sont pas fondues** : la
+  fusion toucherait aux sauvegardes pour un gain mince. Elles se montrent l'une l'autre : le registre liste les
+  citoyens de la maison du souverain, l'écran Maison ouvre le registre sur la maison du royaume.
+- **Héritage** : une ville confiée passe à l'héritier du gouverneur, aux mêmes conditions. Les personnes du registre
+  ne possèdent ni or ni objets : il n'y a rien d'autre à hériter, et le joueur ne meurt pas de vieillesse.
+- **Successions de l'ordinateur** : partage sous la loi égalitaire (trois villes au moins, le cadet emporte la moitié
+  des autres villes, d'un seul tenant, et la moitié du trésor) ; crise une fois sur quatre sous les lois élective et
+  d'ancienneté (un tiers des villes, guerre de revendication sur la capitale). Les numéros des villes ne changent pas :
+  lieux, revendications et fiches suivent. Les royaumes posés à la main sont épargnés par défaut. Une limite : si un
+  royaume a des frontières peintes à la main, elles restent à l'ancien royaume.
+- Canal réseau en version 17.
+

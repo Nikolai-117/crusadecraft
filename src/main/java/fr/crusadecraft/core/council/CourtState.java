@@ -38,6 +38,12 @@ public final class CourtState {
     /** Cible d'une tâche (royaume, province), sous forme de texte. */
     private final Map<Post, String> taskTargets = new EnumMap<>(Post.class);
     private int claimProgress;
+    /** Le banquet en cours (P26) : jusqu'à ce tick du monde, la cour festoie. */
+    private long feastUntilTick = -1;
+    /** Le deuil en cours (P26) : jusqu'à ce jour, et pour qui. */
+    private long mourningUntilDay = NEVER;
+    private java.util.UUID mourned;
+    private String mournedName = "";
 
     public boolean hasTable() { return tablePos != null; }
     public ResourceLocation tableDimension() { return tableDimension; }
@@ -82,6 +88,23 @@ public final class CourtState {
     public void setTaskTarget(Post post, String target) {
         if (target == null) taskTargets.remove(post);
         else taskTargets.put(post, target);
+    }
+
+    public long feastUntilTick() { return feastUntilTick; }
+    public void setFeastUntilTick(long tick) { this.feastUntilTick = tick; }
+    public boolean feasting(long gameTime) { return gameTime < feastUntilTick; }
+
+    public long mourningUntilDay() { return mourningUntilDay; }
+    public java.util.UUID mourned() { return mourned; }
+    public String mournedName() { return mournedName; }
+    public boolean mourning(long today) { return mourningUntilDay != NEVER && today < mourningUntilDay; }
+
+    /** Un deuil commence : il remplace le précédent, et interrompt un banquet. */
+    public void mourn(java.util.UUID person, String name, long untilDay) {
+        this.mourned = person;
+        this.mournedName = name == null ? "" : name;
+        this.mourningUntilDay = untilDay;
+        this.feastUntilTick = -1;
     }
 
     public int claimProgress() { return claimProgress; }
@@ -130,6 +153,12 @@ public final class CourtState {
         for (Map.Entry<Post, String> e : taskTargets.entrySet()) targets.putString(e.getKey().name(), e.getValue());
         t.put("targets", targets);
         t.putInt("claimProgress", claimProgress);
+        if (feastUntilTick >= 0) t.putLong("feastUntil", feastUntilTick);
+        if (mourningUntilDay != NEVER) {
+            t.putLong("mourningUntil", mourningUntilDay);
+            if (mourned != null) t.putUUID("mourned", mourned);
+            t.putString("mournedName", mournedName);
+        }
         return t;
     }
 
@@ -168,6 +197,12 @@ public final class CourtState {
             if (post != null) s.taskTargets.put(post, targets.getString(key));
         }
         s.claimProgress = t.getInt("claimProgress");
+        s.feastUntilTick = t.contains("feastUntil") ? t.getLong("feastUntil") : -1;
+        if (t.contains("mourningUntil")) {
+            s.mourningUntilDay = t.getLong("mourningUntil");
+            s.mourned = t.hasUUID("mourned") ? t.getUUID("mourned") : null;
+            s.mournedName = t.getString("mournedName");
+        }
         return s;
     }
 }

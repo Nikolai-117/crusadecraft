@@ -93,6 +93,13 @@ public final class CrusadeConfig {
         public final ForgeConfigSpec.BooleanValue lifeCycle;
         public final ForgeConfigSpec.IntValue daysPerYear;
         public final ForgeConfigSpec.BooleanValue lineageDeaths;
+        public final ForgeConfigSpec.BooleanValue partitions;
+        public final ForgeConfigSpec.BooleanValue crises;
+        public final ForgeConfigSpec.IntValue crisisChance;
+        public final ForgeConfigSpec.BooleanValue handMadeSuccessions;
+        public final ForgeConfigSpec.IntValue mourningDays;
+        public final ForgeConfigSpec.IntValue feastDays;
+        public final ForgeConfigSpec.BooleanValue repliques;
         public final ForgeConfigSpec.BooleanValue civActive;
         public final ForgeConfigSpec.IntValue civDays;
         public final ForgeConfigSpec.IntValue civChance;
@@ -331,6 +338,10 @@ public final class CrusadeConfig {
             b.comment("Les gens du registre qui vivent dans le monde (P20).").push("pnj");
             routines = b.comment("Leur journée : à la cour le jour, chez eux le soir, réfugiés à la cour quand leur royaume est en guerre.")
                     .define("routines", true);
+            repliques = b.comment("Ils disent de temps en temps une réplique (banquet, deuil, guerre, cour) aux joueurs tout proches.",
+                    "Les répliques se changent par datapack : data/<espace>/crusadecraft_repliques/*.json.").define("repliques", true);
+            feastDays = b.comment("Jours du monde entre deux banquets d'un même royaume.").defineInRange("joursEntreBanquets", 7, 1, 365);
+            mourningDays = b.comment("Jours de deuil à la mort d'un chef de maison du royaume (0 : pas de deuil).").defineInRange("joursDeDeuil", 3, 0, 60);
             b.pop();
 
             b.comment("Le cycle de vie (P21) : chacun vieillit et peut mourir ; les héritiers prennent la suite. Le joueur ne vieillit pas.")
@@ -339,6 +350,14 @@ public final class CrusadeConfig {
             daysPerYear = b.comment("Combien de jours du monde font une année (un jour du monde dure 20 minutes).").defineInRange("joursParAn", 20, 1, 3650);
             lineageDeaths = b.comment("Les gens du registre des lignées vieillissent et meurent aussi (sinon : seulement les souverains de l'ordinateur et leur conseil).")
                     .define("mortsDuRegistre", true);
+            partitions = b.comment("Sous la loi égalitaire, un royaume de l'ordinateur d'au moins trois villes se partage entre deux héritiers.")
+                    .define("partages", true);
+            crises = b.comment("Une succession peut tourner à la crise : un prétendant prend une part du royaume et lui déclare la guerre.")
+                    .define("crises", true);
+            crisisChance = b.comment("Chances, en pour cent, qu'une succession élective ou d'ancienneté tourne à la crise.")
+                    .defineInRange("chanceCrise", 25, 0, 100);
+            handMadeSuccessions = b.comment("Partages et crises touchent aussi les royaumes posés à la main dans l'éditeur (coupé : vos royaumes restent entiers).")
+                    .define("royaumesFaitsMain", false);
             b.pop();
 
             b.comment("Les civilisations autonomes (P22) : les royaumes de l'ordinateur bâtissent d'eux-mêmes tours, camps et forts sur leurs terres.",

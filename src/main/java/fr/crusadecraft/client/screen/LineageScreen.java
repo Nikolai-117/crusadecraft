@@ -40,6 +40,8 @@ public class LineageScreen extends Screen {
     /** Suppression armée (un second clic confirme). */
     private UUID armed;
     private long armedUntil;
+    /** La largeur du bouton de l'arbre illustré (P26), en haut du panneau d'une maison. */
+    private int treeButtonW;
 
     public LineageScreen(LineageView view) {
         super(Component.translatable("crusadecraft.lineage.title"));
@@ -117,6 +119,15 @@ public class LineageScreen extends Screen {
 
         // Les actions sur la maison ou la communauté ouverte, en grille sous la liste de gauche.
         LineageView.Selection sel = view.selection();
+        treeButtonW = 0;
+        if (sel != null && sel.house() && !sel.rows().isEmpty()) {
+            Component label = Component.translatable("crusadecraft.tree.open");
+            treeButtonW = font.width(label) + 12;
+            Button tree = Button.builder(label, b -> minecraft.setScreen(new TreeScreen(this, view)))
+                    .bounds(rightX + rightW - treeButtonW, top + 28, treeButtonW, 15).build();
+            tree.setTooltip(Tooltip.create(Component.translatable("crusadecraft.tree.open.tip")));
+            addRenderableWidget(tree);
+        }
         listBottomY = top + h - (view.canEdit() ? 28 : 8);
         if (sel != null && view.canEdit()) {
             List<Button> group = new ArrayList<>();
@@ -243,7 +254,7 @@ public class LineageScreen extends Screen {
         return null;
     }
 
-    private static String firstName(String full) {
+    static String firstName(String full) {
         int space = full.indexOf(' ');
         return space > 0 ? full.substring(0, space) : full;
     }
@@ -327,12 +338,13 @@ public class LineageScreen extends Screen {
             if (!view.canEdit()) Ui.wrapped(g, font, Component.translatable("crusadecraft.lineage.readonly"), x, y + 30, rightW, Ui.TEXT_MUTED);
             return;
         }
-        Ui.scaled(g, font, Component.literal(sel.title()), x, y, 1.15f, Ui.TEXT_TITLE, false);
+        int headRoom = rightW - (treeButtonW > 0 ? treeButtonW + 4 : 0);
+        Ui.scaled(g, font, Component.literal(font.plainSubstrByWidth(sel.title(), Math.round(headRoom / 1.15f))), x, y, 1.15f, Ui.TEXT_TITLE, false);
         long living = sel.rows().stream().filter(LineageView.Row::alive).count();
         Component sub = sel.house()
                 ? Component.translatable("crusadecraft.lineage.sub.house", sel.realm(), living, sel.rows().size())
                 : Component.translatable("crusadecraft.lineage.sub.community", Component.translatable(sel.kind().key()), sel.realm(), sel.rows().size());
-        Ui.text(g, font, Component.literal(font.plainSubstrByWidth(sub.getString(), rightW)), x, y + 12, Ui.TEXT_MUTED);
+        Ui.text(g, font, Component.literal(font.plainSubstrByWidth(sub.getString(), headRoom)), x, y + 12, Ui.TEXT_MUTED);
 
         int y0 = rowsTop, y1 = rowsBottom;
         if (y1 - y0 < ROW_H) return;
@@ -400,6 +412,11 @@ public class LineageScreen extends Screen {
                 out.add(new Line(header, null));
             }
             out.add(new Line(null, r));
+        }
+        // P26 : les citoyens MineColonies de la maison du souverain, pour que les deux généalogies se voient.
+        if (!sel.citizens().isEmpty()) {
+            out.add(new Line(Component.translatable("crusadecraft.lineage.citizens", sel.citizens().size()), null));
+            for (String c : sel.citizens()) out.add(new Line(Component.literal("  · " + c).withStyle(net.minecraft.ChatFormatting.GRAY), null));
         }
         return out;
     }

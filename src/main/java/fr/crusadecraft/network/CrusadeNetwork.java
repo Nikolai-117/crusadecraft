@@ -33,7 +33,7 @@ import net.minecraftforge.network.simple.SimpleChannel;
  * (distance, droits, état) avant d'agir.
  */
 public final class CrusadeNetwork {
-    private static final String VERSION = "16";
+    private static final String VERSION = "17";
 
     public static final SimpleChannel CHANNEL = NetworkRegistry.newSimpleChannel(
             ResourceLocation.tryParse(CrusadeCraft.MOD_ID + ":main"),
@@ -208,6 +208,9 @@ public final class CrusadeNetwork {
         CHANNEL.messageBuilder(LineagePackets.Action.class, nextId++, NetworkDirection.PLAY_TO_SERVER)
                 .encoder(LineagePackets.Action::encode).decoder(LineagePackets.Action::decode)
                 .consumerMainThread(LineagePackets.Action::handle).add();
+        CHANNEL.messageBuilder(LineagePackets.OpenMcaTree.class, nextId++, NetworkDirection.PLAY_TO_CLIENT)
+                .encoder(LineagePackets.OpenMcaTree::encode).decoder(LineagePackets.OpenMcaTree::decode)
+                .consumerMainThread(LineagePackets.OpenMcaTree::handle).add();
         // P17 : les terres pour les cartes du client (Xaero).
         CHANNEL.messageBuilder(fr.crusadecraft.network.packet.TerritorySyncPacket.class, nextId++, NetworkDirection.PLAY_TO_CLIENT)
                 .encoder(fr.crusadecraft.network.packet.TerritorySyncPacket::encode).decoder(fr.crusadecraft.network.packet.TerritorySyncPacket::decode)

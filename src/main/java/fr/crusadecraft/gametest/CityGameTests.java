@@ -35,7 +35,8 @@ public final class CityGameTests {
         TestWorld w = TestWorld.realm(h, "Valbrume");
         var server = h.getLevel().getServer();
         var data = CrusadeSavedData.get(server);
-        Person governor = null, stranger = null;
+        Person governor = null, stranger = null, son = null;
+        fr.crusadecraft.core.lineage.House heirHouse = null;
         ColonyRef second = null;
         try {
             // Une seconde colonie au souverain, loin de la première : il s'y tient et la rattache. Ses chunks sont
@@ -84,6 +85,24 @@ public final class CityGameTests {
             w.check(CityService.sweep(server, w.realm) && w.realm.cityTerms(second).isEmpty(), "une ville reste à un mort");
             governor.setAlive(true);
             w.check(CityService.entrust(w.ruler, second, governor.id(), 50, 50).success(), "on ne peut pas reconfier la ville");
+
+            // P26 : un gouverneur qui laisse un fils au royaume lui laisse la ville, aux mêmes conditions.
+            heirHouse = new fr.crusadecraft.core.lineage.House(UUID.randomUUID(), "Clairval", 0x335577);
+            heirHouse.setRealm(w.realm.id());
+            data.lineage().add(heirHouse);
+            governor.setHouse(heirHouse.id());
+            heirHouse.setHead(governor.id());
+            son = new Person(UUID.randomUUID(), "Thibaut", false, 20);
+            son.setHouse(heirHouse.id());
+            son.setRealm(w.realm.id());
+            son.setFather(governor.id());
+            data.lineage().add(son);
+            governor.setAlive(false);
+            final UUID sonId = son.id();
+            w.check(CityService.sweep(server, w.realm) && w.realm.cityTerms(made).map(t -> t.governor().equals(sonId)).orElse(false),
+                    "la ville ne passe pas au fils du gouverneur");
+            w.check(w.realm.cityTerms(made).get().taxShare() == 50, "l'héritier ne garde pas les conditions de son père");
+            governor.setAlive(true);
             w.check(CityService.recall(w.ruler, second).success() && w.realm.cityTerms(second).isEmpty(), "la ville n'est pas reprise");
             w.check(key(CityService.recall(w.ruler, second).message()).equals("crusadecraft.city.direct.already"), "reprendre deux fois réussit");
             h.succeed();
@@ -95,6 +114,8 @@ public final class CityGameTests {
             }
             if (governor != null) data.lineage().remove(governor.id());
             if (stranger != null) data.lineage().remove(stranger.id());
+            if (son != null) data.lineage().remove(son.id());
+            if (heirHouse != null) data.lineage().removeHouse(heirHouse.id());
             w.cleanup();
         }
     }

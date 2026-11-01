@@ -1,0 +1,5 @@
+{
+  "crusadecraft.codex.fetes": "Feasts, mourning and successions",
+  "crusadecraft.codex.fetes.p0": "In your $(l)House$() screen, the $(l)Feast$() button gathers the court: it costs gold, brings prestige, and councillors, mayors and invited neighbours remember it. For half a day, the people of the register who live in the world gather at court, and sometimes speak to nearby players.$(br2)When a house head, the ruler, their spouse or their heir dies, the court goes into $(l)mourning$() for a few days: no feast, and on the first day everyone attends the funeral.",
+  "crusadecraft.codex.fetes.p1": "An entrusted city passes to its governor's $(l)heir$(), on the same terms, if they can hold it.$(br2)Among the computer's realms, the equal law $(l)divides$() a realm of at least three cities between two heirs; the elective and seniority laws may turn into a $(l)crisis$(): a pretender takes part of the realm and wages war on it. Realms you placed by hand stay whole.$(br2)The register has an $(l)Illustrated tree$() for each house."
+}

@@ -1,0 +1,8 @@
+{
+  "moment": "guerre",
+  "traits": ["BRAVE"],
+  "lines": [
+    {"key": "crusadecraft.replique.guerre.brave.1"},
+    {"key": "crusadecraft.replique.guerre.brave.2"}
+  ]
+}

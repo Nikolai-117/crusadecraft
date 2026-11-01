@@ -1,0 +1,16 @@
+{
+  "name": "crusadecraft.codex.fetes",
+  "icon": "minecraft:cake",
+  "category": "crusadecraft:cour",
+  "sortnum": 22,
+  "pages": [
+    {
+      "type": "patchouli:text",
+      "text": "crusadecraft.codex.fetes.p0"
+    },
+    {
+      "type": "patchouli:text",
+      "text": "crusadecraft.codex.fetes.p1"
+    }
+  ]
+}

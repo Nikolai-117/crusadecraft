@@ -69,6 +69,19 @@ public final class LineagePackets {
         }
     }
 
+    /** Ouvre l'arbre de Comes Alive sur cette personne (P26) : l'écran est celui de Comes Alive, côté client. */
+    public record OpenMcaTree(UUID person) {
+        public static void encode(OpenMcaTree p, FriendlyByteBuf buf) {
+            buf.writeUUID(p.person);
+        }
+
+        public static OpenMcaTree decode(FriendlyByteBuf buf) { return new OpenMcaTree(buf.readUUID()); }
+
+        public static void handle(OpenMcaTree p, Supplier<NetworkEvent.Context> ctx) {
+            DistExecutor.unsafeRunWhenOn(Dist.CLIENT, () -> () -> ClientPackets.mcaTree(p.person));
+        }
+    }
+
     // ------------------------------------------------------------------ client → serveur
 
     /**
@@ -102,7 +115,11 @@ public final class LineagePackets {
      */
     public record Action(Op op, UUID target, String text, int a, int b, UUID realm, UUID shown) {
         public enum Op {
-            NEW_HOUSE, NEW_COMMUNITY, ADD_CHILD, MARRY, RENAME, ROLE, TOGGLE_ALIVE, REMOVE, GROW, SPAWN, SYNC_TREE, ADOPT, EDIT
+            NEW_HOUSE, NEW_COMMUNITY, ADD_CHILD, MARRY, RENAME, ROLE, TOGGLE_ALIVE, REMOVE, GROW, SPAWN, SYNC_TREE, ADOPT, EDIT,
+            /** P26 : l'éditeur d'apparence de Comes Alive, sur le villageois qui incarne la personne. */
+            APPEARANCE,
+            /** P26 : l'arbre généalogique de Comes Alive, ouvert sur la personne. */
+            MCA_TREE
         }
 
         public static Action of(Op op, UUID target, UUID shown) {
@@ -149,6 +166,8 @@ public final class LineagePackets {
                 case SYNC_TREE -> LineageService.syncTree(player, p.target);
                 case ADOPT -> LineageService.adoptNearby(player, p.target);
                 case EDIT -> LineageService.editPerson(player, p.target, p.text, p.a, p.b);
+                case APPEARANCE -> LineageService.appearance(player, p.target);
+                case MCA_TREE -> LineageService.mcaTree(player, p.target);
             };
             // Une maison ou une communauté qu'on vient de créer s'ouvre aussitôt.
             if (out.success() && p.op == Op.NEW_HOUSE) shown = last(state.houses());

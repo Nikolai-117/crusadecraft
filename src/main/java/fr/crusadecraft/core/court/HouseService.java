@@ -275,6 +275,7 @@ public final class HouseService {
             matches.add(new HouseView.Match(ai.id(), ai.place(), ai.rank(), ai.color(), ai.house(), ai.faith(), v.accepted(),
                     v.blockedKey() == null ? "" : v.blockedKey(), v.total()));
         }
-        return new HouseView(realm.dynasty().members().size(), HouseState.MAX_ADOPTED, realm.prestige(), ADOPT_PRESTIGE, members, candidates, matches);
+        return new HouseView(realm.dynasty().members().size(), HouseState.MAX_ADOPTED, realm.prestige(), ADOPT_PRESTIGE, members, candidates, matches,
+                FeastService.view(server, realm));
     }
 }

@@ -88,6 +88,27 @@ public final class McaBridge {
         }
     }
 
+    /** Ouvre au joueur l'éditeur d'apparence de Comes Alive sur ce villageois (il doit être chargé chez le joueur). */
+    public static boolean openAppearance(net.minecraft.server.level.ServerPlayer player, Entity entity) {
+        if (!isReady()) return false;
+        try {
+            return McaCompat.openAppearance(player, entity);
+        } catch (RuntimeException | LinkageError e) {
+            fail(e);
+            return false;
+        }
+    }
+
+    /** Côté client : ouvre l'écran de l'arbre de Comes Alive sur cet identifiant. */
+    public static void openTreeScreen(UUID id) {
+        if (!isReady()) return;
+        try {
+            McaClient.openTree(id);
+        } catch (RuntimeException | LinkageError e) {
+            fail(e);
+        }
+    }
+
     /** Renomme le villageois qui incarne une personne (et son nom dans l'arbre). */
     public static void rename(Entity entity, String fullName) {
         if (!isReady()) return;

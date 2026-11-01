@@ -1,0 +1,8 @@
+{
+  "moment": "fete",
+  "traits": ["GENEREUX"],
+  "lines": [
+    {"key": "crusadecraft.replique.fete.genereux.1"},
+    {"key": "crusadecraft.replique.fete.genereux.2"}
+  ]
+}

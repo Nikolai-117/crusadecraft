@@ -10,7 +10,18 @@ import java.util.List;
 import java.util.UUID;
 
 /** La maison telle que l'écran la montre : membres, citoyens qu'on peut y accueillir, partis possibles chez les IA. */
-public record HouseView(int size, int max, int prestige, int adoptCost, List<Member> members, List<Candidate> candidates, List<Match> matches) {
+public record HouseView(int size, int max, int prestige, int adoptCost, List<Member> members, List<Candidate> candidates, List<Match> matches,
+                        Court court) {
+
+    public HouseView(int size, int max, int prestige, int adoptCost, List<Member> members, List<Candidate> candidates, List<Match> matches) {
+        this(size, max, prestige, adoptCost, members, candidates, matches, null);
+    }
+
+    /**
+     * La vie de la cour (P26) : le banquet (son prix, ce qui l'empêche, les jours d'attente, s'il bat son plein) et le
+     * deuil en cours (pour qui, combien de jours encore). {@code realm} : le royaume, pour ouvrir son registre.
+     */
+    public record Court(long feastCost, String problem, long cooldown, boolean feasting, String mourning, long mourningDays, java.util.UUID realm) {}
 
     /** Un membre : son conjoint (de sa colonie, ou dynastique), ses enfants, s'il peut encore épouser. */
     public record Member(CitizenRef ref, String name, boolean female, boolean child, boolean heir, String spouse, int children,
@@ -57,6 +68,16 @@ public record HouseView(int size, int max, int prestige, int adoptCost, List<Mem
             buf.writeUtf(m.blocked());
             buf.writeInt(m.score());
         }
+        buf.writeBoolean(court != null);
+        if (court != null) {
+            buf.writeVarLong(court.feastCost());
+            buf.writeUtf(court.problem());
+            buf.writeVarLong(court.cooldown());
+            buf.writeBoolean(court.feasting());
+            buf.writeUtf(court.mourning());
+            buf.writeVarLong(court.mourningDays());
+            buf.writeUUID(court.realm());
+        }
     }
 
     public static HouseView read(FriendlyByteBuf buf) {
@@ -76,6 +97,8 @@ public record HouseView(int size, int max, int prestige, int adoptCost, List<Mem
             matches.add(new Match(buf.readUUID(), buf.readUtf(), buf.readEnum(TitleRank.class), buf.readInt(), buf.readUtf(),
                     buf.readEnum(AiFaith.class), buf.readBoolean(), buf.readUtf(), buf.readInt()));
         }
-        return new HouseView(size, max, prestige, cost, members, candidates, matches);
+        Court court = buf.readBoolean() ? new Court(buf.readVarLong(), buf.readUtf(), buf.readVarLong(), buf.readBoolean(), buf.readUtf(),
+                buf.readVarLong(), buf.readUUID()) : null;
+        return new HouseView(size, max, prestige, cost, members, candidates, matches, court);
     }
 }

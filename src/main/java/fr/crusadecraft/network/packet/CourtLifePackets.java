@@ -96,7 +96,7 @@ public final class CourtLifePackets {
 
     /** Dans la maison : ouvrir, accueillir un citoyen, désigner l'héritier, demander un mariage. */
     public record HouseAction(Kind kind, CitizenRef citizen, UUID realm) {
-        public enum Kind { REFRESH, ADOPT, HEIR, PROPOSE }
+        public enum Kind { REFRESH, ADOPT, HEIR, PROPOSE, FEAST }
 
         public static HouseAction of(Kind kind) {
             return new HouseAction(kind, null, null);
@@ -123,6 +123,7 @@ public final class CourtLifePackets {
                 case ADOPT -> p.citizen == null ? null : HouseService.adopt(player, p.citizen);
                 case HEIR -> p.citizen == null ? null : HouseService.designateHeir(player, p.citizen);
                 case PROPOSE -> p.citizen == null || p.realm == null ? null : HouseService.propose(player, p.citizen, p.realm);
+                case FEAST -> fr.crusadecraft.core.court.FeastService.hold(player);
                 case REFRESH -> null;
             };
             if (out != null) CourtPackets.reply(player, out);

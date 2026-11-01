@@ -47,6 +47,11 @@ public class HouseScreen extends Screen {
         return (w - 28) / 2;
     }
 
+    /** La hauteur de la liste des membres : la bande de la vie de la cour (P26) prend le bas de la colonne. */
+    private int listH() {
+        return h - 56 - (view.court() != null ? 20 : 0);
+    }
+
     @Override
     protected void init() {
         w = Math.min(460, width - 10);
@@ -56,13 +61,25 @@ public class HouseScreen extends Screen {
         int cw = colW(), rx = left + 20 + cw;
         addRenderableWidget(Button.builder(Component.translatable("gui.done"), b -> onClose()).bounds(left + w - 88, top + h - 22, 80, 16).build());
         // Le registre des lignées (P13) : les maisons et les communautés du monde, au-delà de la vôtre.
+        // Ouvert sur la maison du royaume quand on la connaît : les deux généalogies se rejoignent là (P26).
+        java.util.UUID realmId = view.court() == null ? null : view.court().realm();
         Button lineages = Button.builder(Component.translatable("crusadecraft.lineage.open"), b -> {
             if (minecraft != null && minecraft.getConnection() != null) {
-                fr.crusadecraft.network.CrusadeNetwork.toServer(new fr.crusadecraft.network.packet.LineagePackets.Request(null, null));
+                fr.crusadecraft.network.CrusadeNetwork.toServer(new fr.crusadecraft.network.packet.LineagePackets.Request(null, realmId));
             }
         }).bounds(left + w / 2 - 60, top + h - 22, 120, 16).build();
         lineages.setTooltip(net.minecraft.client.gui.components.Tooltip.create(Component.translatable("crusadecraft.lineage.open.tip")));
         addRenderableWidget(lineages);
+        if (view.court() != null) {
+            HouseView.Court court = view.court();
+            Component label = Component.translatable("crusadecraft.feast.button", court.feastCost());
+            Button feast = Button.builder(label, b -> send(CourtLifePackets.HouseAction.of(CourtLifePackets.HouseAction.Kind.FEAST)))
+                    .bounds(left + 11, top + 28 + listH() + 2, Math.min(colW() / 2 + 10, font.width(label) + 12), 15).build();
+            feast.active = court.problem().isEmpty();
+            feast.setTooltip(Tooltip.create(court.problem().isEmpty() ? Component.translatable("crusadecraft.feast.tip")
+                    : Component.translatable(court.problem(), court.cooldown())));
+            addRenderableWidget(feast);
+        }
         HouseView.Member m = selectedMember();
         Button heir = Button.builder(Component.translatable("crusadecraft.house.make_heir"), b -> {
             HouseView.Member s = selectedMember();
@@ -129,13 +146,14 @@ public class HouseScreen extends Screen {
         Ui.text(g, font, meta, left + w - 10 - font.width(meta), top + 10, Ui.TEXT_MUTED);
         int cw = colW(), lx = left + 8, rx = left + 20 + cw, y = top + 28, ch = h - 56;
         Ui.inset(g, lx, y, cw + 4, ch);
+        if (view.court() != null) renderCourt(g, lx, y + listH() + 2, cw);
         Ui.inset(g, rx - 2, y + 20, cw + 4, ch - 20);
 
         // Les membres de la maison.
         if (view.members().isEmpty()) Ui.wrapped(g, font, Component.translatable("crusadecraft.house.empty"), lx + 5, y + 6, cw - 6, Ui.TEXT_MUTED);
         int my = y + 3;
         for (int i = 0; i < view.members().size(); i++) {
-            if (my + ROW > y + ch) break;
+            if (my + ROW > y + listH()) break;
             HouseView.Member m = view.members().get(i);
             boolean sel = i == selected;
             boolean hover = Ui.inside(mouseX, mouseY, lx + 2, my, cw, ROW - 1);
@@ -184,11 +202,35 @@ public class HouseScreen extends Screen {
         super.render(g, mouseX, mouseY, partialTick);
     }
 
+    /** À côté du bouton du banquet : le deuil en cours, le banquet qui bat son plein, ou l'attente avant le prochain. */
+    private void renderCourt(GuiGraphics g, int lx, int y, int cw) {
+        HouseView.Court court = view.court();
+        int bw = Math.min(cw / 2 + 10, font.width(Component.translatable("crusadecraft.feast.button", court.feastCost())) + 12);
+        Component state;
+        int color;
+        if (!court.mourning().isEmpty()) {
+            state = Component.translatable("crusadecraft.feast.state.mourning", court.mourning(), court.mourningDays());
+            color = Ui.TEXT_MUTED;
+        } else if (court.feasting()) {
+            state = Component.translatable("crusadecraft.feast.state.feasting");
+            color = Ui.TEXT_TITLE;
+        } else if (court.cooldown() > 0) {
+            state = Component.translatable("crusadecraft.feast.state.cooldown", court.cooldown());
+            color = Ui.TEXT_MUTED;
+        } else {
+            return;
+        }
+        int room = cw - bw - 4;
+        if (room < 20) return;
+        Ui.scaled(g, font, Component.literal(font.plainSubstrByWidth(state.getString(), Math.round(room / 0.75f))), lx + 6 + bw, y + 4, 0.75f, color, false);
+    }
+
     @Override
     public boolean mouseClicked(double mouseX, double mouseY, int button) {
         int cw = colW(), lx = left + 8, y = top + 28;
         int my = y + 3;
         for (int i = 0; i < view.members().size(); i++) {
+            if (my + ROW > y + listH()) break;
             if (Ui.inside(mouseX, mouseY, lx + 2, my, cw, ROW - 1)) {
                 selected = i;
                 rebuildWidgets();

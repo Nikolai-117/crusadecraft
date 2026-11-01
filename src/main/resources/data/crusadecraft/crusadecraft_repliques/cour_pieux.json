@@ -1,0 +1,8 @@
+{
+  "moment": "cour",
+  "traits": ["PIEUX"],
+  "lines": [
+    {"key": "crusadecraft.replique.cour.pieux.1"},
+    {"key": "crusadecraft.replique.cour.pieux.2"}
+  ]
+}

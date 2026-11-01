@@ -14,6 +14,11 @@ import java.util.UUID;
  * @param levyShare part des levées pour la couronne, en pour cent
  */
 public record CityTerms(UUID governor, int taxShare, int levyShare) {
+    /** Les mêmes conditions, pour un autre gouverneur (son héritier). */
+    public CityTerms withGovernor(UUID next) {
+        return new CityTerms(next, taxShare, levyShare);
+    }
+
     public CityTerms {
         taxShare = Math.max(0, Math.min(100, taxShare));
         levyShare = Math.max(0, Math.min(100, levyShare));

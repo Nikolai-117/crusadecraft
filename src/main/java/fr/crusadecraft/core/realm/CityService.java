@@ -45,6 +45,11 @@ public final class CityService {
         return out;
     }
 
+    /** L'héritier d'un gouverneur mort, s'il peut gouverner pour ce royaume. */
+    static Optional<Person> inheritor(MinecraftServer server, Realm realm, Person dead) {
+        return fr.crusadecraft.core.lineage.LifeService.heirOf(server, dead).filter(h -> isCandidate(server, realm, h.id()));
+    }
+
     private static boolean isCandidate(MinecraftServer server, Realm realm, UUID person) {
         for (Person p : candidates(server, realm)) if (p.id().equals(person)) return true;
         return false;
@@ -59,8 +64,13 @@ public final class CityService {
         boolean changed = false;
         for (Map.Entry<ColonyRef, CityTerms> e : new ArrayList<>(realm.cities().entrySet())) {
             Optional<Person> governor = lineage.person(e.getValue().governor());
-            if (governor.isEmpty() || !governor.get().alive() || !realm.holds(e.getKey())) {
+            if (!realm.holds(e.getKey()) || governor.isEmpty()) {
                 realm.setCityTerms(e.getKey(), null);
+                changed = true;
+            } else if (!governor.get().alive()) {
+                // P26 : la ville passe à l'héritier du gouverneur s'il peut la tenir, aux mêmes conditions ; sinon elle revient.
+                Optional<Person> heir = inheritor(server, realm, governor.get());
+                realm.setCityTerms(e.getKey(), heir.map(h -> e.getValue().withGovernor(h.id())).orElse(null));
                 changed = true;
             }
         }

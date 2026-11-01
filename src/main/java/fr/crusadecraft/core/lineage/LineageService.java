@@ -125,7 +125,22 @@ public final class LineageService {
         for (Map.Entry<Integer, List<Person>> e : state.generations(h.id()).entrySet()) {
             for (Person p : e.getValue()) rows.add(row(state, p, e.getKey(), h.id().equals(p.house()), h.id()));
         }
-        return new LineageView.Selection(true, h.id(), h.name(), realmName(server, h.realm()), null, rows);
+        return new LineageView.Selection(true, h.id(), h.name(), realmName(server, h.realm()), null, rows, citizens(server, h));
+    }
+
+    /**
+     * Les citoyens MineColonies entrés dans la maison du souverain (la maison de P4), quand cette maison du registre est
+     * celle d'un royaume de joueur : les deux généalogies se montrent l'une l'autre, sans se fondre.
+     */
+    private static List<String> citizens(MinecraftServer server, House h) {
+        if (h.realm() == null) return List.of();
+        Optional<Realm> realm = data(server).realm(h.realm());
+        if (realm.isEmpty()) return List.of();
+        List<String> out = new ArrayList<>();
+        for (fr.crusadecraft.core.character.CitizenRef ref : realm.get().dynasty().members()) {
+            out.add(fr.crusadecraft.core.character.CharacterService.nameOf(server, ref));
+        }
+        return out;
     }
 
     private static LineageView.Selection communitySelection(MinecraftServer server, LineageState state, Community c) {
@@ -161,7 +176,11 @@ public final class LineageService {
     private static LineageView.Row row(LineageState state, Person p, int group, boolean member, UUID house) {
         String spouse = state.person(p.spouse()).map(Person::name).orElse("");
         return new LineageView.Row(p.id(), state.fullName(p), p.female(), p.age(), p.alive(), p.role(), group, spouse, p.inWorld(), member,
-                p.traitMask(), p.bio());
+                p.traitMask(), p.bio(), known(state, p.father()), known(state, p.mother()), known(state, p.spouse()));
+    }
+
+    private static UUID known(LineageState state, UUID id) {
+        return id != null && state.person(id).isPresent() ? id : null;
     }
 
     // ------------------------------------------------------------------ créer
@@ -445,6 +464,42 @@ public final class LineageService {
         List<Person> people = people(state, target);
         if (people.isEmpty()) return Outcome.no("crusadecraft.lineage.unknown");
         if (!McaBridge.syncTree(player.serverLevel(), state, people)) return Outcome.no("crusadecraft.lineage.no_mca");
+        return Outcome.ok(Component.translatable("crusadecraft.lineage.tree.done", people.size()));
+    }
+
+    /** Assez près pour que le villageois soit chargé chez le joueur et que l'éditeur de Comes Alive le trouve. */
+    public static final int APPEARANCE_RANGE = 48;
+
+    /** L'éditeur d'apparence de Comes Alive (P26), sur le villageois qui incarne cette personne, s'il est tout près. */
+    public static Outcome appearance(ServerPlayer player, UUID target) {
+        if (!WorldEditService.canEdit(player)) return denied();
+        if (!McaBridge.isReady()) return Outcome.no("crusadecraft.lineage.no_mca");
+        LineageState state = state(player.server);
+        Optional<Person> person = state.person(target);
+        if (person.isEmpty()) return Outcome.no("crusadecraft.lineage.unknown");
+        String name = state.fullName(person.get());
+        Entity e = player.serverLevel().getEntity(target);
+        if (e == null || !e.isAlive() || e.distanceToSqr(player) > (double) APPEARANCE_RANGE * APPEARANCE_RANGE) {
+            return Outcome.no("crusadecraft.person.appearance.far", name);
+        }
+        if (!McaBridge.openAppearance(player, e)) return Outcome.no("crusadecraft.lineage.no_mca");
+        return Outcome.ok(Component.translatable("crusadecraft.person.appearance.opened", name));
+    }
+
+    /**
+     * L'arbre de Comes Alive (P26), ouvert sur cette personne : sa maison y est d'abord inscrite (avec les conjoints
+     * venus d'ailleurs), pour que l'arbre la montre entière même si personne n'est apparu dans le monde.
+     */
+    public static Outcome mcaTree(ServerPlayer player, UUID target) {
+        if (!McaBridge.isReady()) return Outcome.no("crusadecraft.lineage.no_mca");
+        LineageState state = state(player.server);
+        Optional<Person> person = state.person(target);
+        if (person.isEmpty()) return Outcome.no("crusadecraft.lineage.unknown");
+        UUID realm = state.house(person.get().house()).map(House::realm).orElse(person.get().realm());
+        if (!visible(player, realm)) return Outcome.no("crusadecraft.lineage.unknown");
+        List<Person> people = person.get().house() != null ? people(state, person.get().house()) : List.of(person.get());
+        if (!McaBridge.syncTree(player.serverLevel(), state, people)) return Outcome.no("crusadecraft.lineage.no_mca");
+        fr.crusadecraft.network.CrusadeNetwork.toPlayer(player, new fr.crusadecraft.network.packet.LineagePackets.OpenMcaTree(target));
         return Outcome.ok(Component.translatable("crusadecraft.lineage.tree.done", people.size()));
     }
 

@@ -51,6 +51,7 @@ public final class ServerEvents {
     @SubscribeEvent
     public static void onReloadListeners(net.minecraftforge.event.AddReloadListenerEvent event) {
         event.addListener(new fr.crusadecraft.core.event.EventLoader());
+        event.addListener(new fr.crusadecraft.core.lineage.Repliques());
     }
 
     @SubscribeEvent
@@ -93,6 +94,7 @@ public final class ServerEvents {
         WarFieldService.onServerStopped();
         fr.crusadecraft.core.war.ArmyService.onServerStopped();
         fr.crusadecraft.core.court.TournamentService.onServerStopped();
+        fr.crusadecraft.core.lineage.RoutineService.onServerStopped();
         fr.crusadecraft.core.world.terrain.TerrainService.onServerStopped();
     }
 

@@ -83,6 +83,14 @@ public final class LifeService {
         return living.stream().sorted(eldest).findFirst();
     }
 
+    /** L'héritier d'une personne morte, selon la loi de sa maison : ses enfants d'abord, puis le doyen. */
+    public static Optional<Person> heirOf(MinecraftServer server, Person dead) {
+        CrusadeSavedData data = CrusadeSavedData.get(server);
+        Optional<House> house = data.lineage().house(dead.house());
+        if (house.isEmpty()) return Optional.empty();
+        return heir(data.lineage().members(house.get().id()), dead, lawOf(data, house.get()));
+    }
+
     /** La loi de succession d'une maison : celle de son royaume s'il est à un joueur, la primogéniture sinon. */
     static Succession lawOf(CrusadeSavedData data, House house) {
         if (house == null || house.realm() == null) return Succession.PRIMOGENITURE;
@@ -148,7 +156,8 @@ public final class LifeService {
             p.setInWorld(null, null);
         }
         Optional<House> house = state.house(p.house());
-        if (house.isPresent() && p.id().equals(house.get().head())) {
+        boolean wasHead = house.isPresent() && p.id().equals(house.get().head());
+        if (wasHead) {
             heir(state.members(house.get().id()), p, lawOf(data, house.get())).ifPresent(h -> {
                 house.get().setHead(h.id());
                 if (p.role() == Role.SOUVERAIN) h.setRole(Role.SOUVERAIN);
@@ -156,15 +165,23 @@ public final class LifeService {
         }
         UUID realmId = house.map(House::realm).orElse(p.realm());
         if (realmId != null) {
-            data.realm(realmId).ifPresent(r -> fr.crusadecraft.core.intrigue.Chronicle.record(server, r, "crusadecraft.chronicle.death",
-                    Component.literal(state.fullName(p)), Component.literal(String.valueOf(p.age()))));
+            data.realm(realmId).ifPresent(r -> {
+                fr.crusadecraft.core.intrigue.Chronicle.record(server, r, "crusadecraft.chronicle.death",
+                        Component.literal(state.fullName(p)), Component.literal(String.valueOf(p.age())));
+                if (mourned(wasHead, p.role())) fr.crusadecraft.core.court.FeastService.mourn(server, r, p.id(), state.fullName(p));
+            });
         }
         data.setDirty();
     }
 
+    /** On porte le deuil d'un chef de maison, du souverain, de son conjoint et de son héritier ; pas de chacun. */
+    public static boolean mourned(boolean wasHead, Role role) {
+        return wasHead || role == Role.SOUVERAIN || role == Role.CONSORT || role == Role.HERITIER;
+    }
+
     /** Le souverain d'un royaume IA meurt : son successeur monte sur le trône, et le monde l'apprend. */
     static void succeed(MinecraftServer server, AiRealm realm, AiCharacter dead, long day, Random random) {
-        Succession law = Succession.values()[Math.floorMod(realm.id().hashCode(), Succession.values().length)];
+        Succession law = lawOf(realm);
         AiCharacter next;
         Optional<Map.Entry<Post, AiCharacter>> councillor = realm.council().entrySet().stream()
                 .filter(e -> e.getValue().age() >= ADULT)
@@ -182,5 +199,11 @@ public final class LifeService {
         CrusadeCraft.LOGGER.info("CrusadeCraft : {} meurt ; {} lui succède à la tête de {}", dead.name(), next.name(), realm.place());
         AiBrain.publish(server, WorldNews.of(day, "crusadecraft.news.succession", List.of(realm.id()), Component.literal(dead.name()),
                 Component.literal(next.name()), AiNames.realm(realm.rank(), realm.place())), true);
+        fr.crusadecraft.core.ai.PartitionService.afterSuccession(server, realm, law, dead, day, random);
+    }
+
+    /** La loi de succession d'un royaume de l'ordinateur : tirée de son identifiant, elle ne change pas. */
+    public static Succession lawOf(AiRealm realm) {
+        return Succession.values()[Math.floorMod(realm.id().hashCode(), Succession.values().length)];
     }
 }

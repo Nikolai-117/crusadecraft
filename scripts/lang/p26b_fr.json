@@ -1,0 +1,5 @@
+{
+  "crusadecraft.codex.fetes": "Fêtes, deuils et successions",
+  "crusadecraft.codex.fetes.p0": "Dans l'écran de ta $(l)Maison$(), le bouton $(l)Banquet$() réunit la cour : il coûte de l'or, rapporte du prestige, et conseillers, maires et voisins invités s'en souviennent. Pendant une demi-journée, les gens du registre qui vivent dans le monde se rassemblent à la cour, et parlent parfois aux joueurs tout proches.$(br2)Quand meurt un chef de maison, le souverain, son conjoint ou son héritier, la cour prend le $(l)deuil$() quelques jours : pas de banquet, et le premier jour tout le monde se rend aux funérailles.",
+  "crusadecraft.codex.fetes.p1": "Une ville confiée passe à l'$(l)héritier$() de son gouverneur, aux mêmes conditions, s'il peut la tenir.$(br2)Chez l'ordinateur, la loi égalitaire $(l)partage$() un royaume d'au moins trois villes entre deux héritiers ; les lois élective et d'ancienneté peuvent tourner à la $(l)crise$() : un prétendant prend une part du royaume et lui fait la guerre. Les royaumes que tu as posés à la main restent entiers.$(br2)Le registre a un $(l)Arbre illustré$() pour chaque maison."
+}

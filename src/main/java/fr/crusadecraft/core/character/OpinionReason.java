@@ -50,7 +50,10 @@ public enum OpinionReason {
     HERITIER(20, 60, true),
     MARIAGE(15, 60, true),
     TOURNOI_VICTOIRE(20, 30, true),
-    TOURNOI(5, 20, true);
+    TOURNOI(5, 20, true),
+    // P26 : la vie de la cour
+    FESTIN(10, 15, true),
+    DEUIL_PARTAGE(5, 20, true);
 
     private final int value;
     private final int durationDays;

@@ -1,4 +1,4 @@
-# CrusadeCraft 2.1.0 — installer et tester
+# CrusadeCraft 2.2.0 — installer et tester
 
 ## 1. Ce qu'il faut
 
@@ -17,7 +17,7 @@ Optionnels, déjà présents chez toi, donc activés automatiquement :
 
 ## 2. Installer
 
-1. Le fichier du mod est `E:\crusadecraft\build\libs\crusadecraft-2.1.0.jar`.
+1. Le fichier du mod est `E:\crusadecraft\build\libs\crusadecraft-2.2.0.jar`.
 2. Mets-le dans le dossier des mods de l'instance : `D:\MultiMC\instances\1.20.1\.minecraft\mods\`.
    Dans MultiMC, tu peux aussi faire clic droit sur l'instance → *Modifier* → *Mods* → *Ajouter un fichier*.
    **Retire l'ancien** (`crusadecraft-1.8.0.jar`, ou une version plus vieille) : deux versions du mod ensemble
@@ -239,6 +239,21 @@ données du mod (fichier `crusadecraft.dat` du monde) restent sur place, sans ef
     le jour (le centre de ta capitale), **chez eux** le soir. Quand ton royaume est **en guerre**, ils se réfugient à la
     cour, jour et nuit. Ils gardent leur propre intelligence : parfois, elle l'emporte.
 
+### Fêtes, deuils et arbre de famille
+63b. Dans l'écran de ta **Maison**, le bouton **Banquet** (son prix est écrit dessus) réunit la cour : du prestige,
+    conseillers, maires et trois voisins invités contents. Pendant une demi-journée, les gens du registre qui vivent
+    dans le monde se rassemblent à la cour (notes de musique au-dessus d'eux) et disent parfois une réplique dans le
+    chat aux joueurs tout proches. Pas de banquet en guerre, ni en deuil, ni deux fois dans la semaine (réglable).
+63c. À la mort d'un chef de maison, du souverain, de son conjoint ou de son héritier, la cour porte le **deuil** trois
+    jours (réglable) ; le premier jour, tout le monde va aux funérailles.
+63d. Dans le registre, une maison ouverte a le bouton **Arbre illustré** : toute la famille, génération par
+    génération, qu'on fait glisser et qu'on zoome. Clique une personne : **Fiche**, **Apparence** (l'éditeur de
+    Comes Alive, si son villageois est à moins de 48 blocs) et **Arbre Comes Alive**.
+63e. La maison de ton royaume montre aussi, en bas, les **citoyens MineColonies** que tu as fait entrer dans ta
+    maison (écran Maison) : les deux généalogies se voient l'une l'autre.
+63f. Les répliques se changent par datapack : `data/<nom>/crusadecraft_repliques/*.json`, avec `moment` (`fete`,
+    `deuil`, `guerre`, `cour`), au choix `roles` et `traits`, et `lines` (du texte, ou `{"key": "..."}`).
+
 ### Le temps qui passe
 65. Toutes les **20 journées** du monde (réglable), chacun vieillit d'un an : les gens du registre, les souverains de
     l'ordinateur et leur conseil. Avant 50 ans, on meurt rarement ; ensuite, la vieillesse gagne ; personne ne passe
@@ -246,6 +261,12 @@ données du mod (fichier `crusadecraft.dat` du monde) restent sur place, sans ef
 66. Quand le chef d'une maison meurt, l'héritier prend sa place selon la nouvelle loi **Succession** (menu royal,
     onglet Lois) : **primogéniture** (l'aîné des enfants, les fils d'abord), **égalitaire** (l'aîné, fille ou fils),
     **ancienneté** (le doyen de la maison) ou **élective** (l'adulte qui a le plus de traits).
+67b. Une ville confiée passe à l'**héritier** de son gouverneur mort, aux mêmes conditions, s'il est encore de ta
+    maison ou de ton royaume ; sinon elle revient en direct.
+67c. Chez l'ordinateur, sous la loi égalitaire, un royaume d'au moins trois villes **se partage** : le cadet emporte les
+    villes les plus lointaines et fonde une branche de la même maison. Sous les lois élective et d'ancienneté, une
+    succession sur quatre tourne à la **crise** : un prétendant prend un tiers du royaume et lui déclare la guerre.
+    Les royaumes que tu as posés à la main restent entiers (réglage `vie.royaumesFaitsMain`).
 67. Quand un souverain de l'ordinateur meurt, son successeur monte sur le trône et la nouvelle passe dans les
     chroniques du monde. Pour garder tes personnages du registre en vie : `mortsDuRegistre = false` (section `vie`).
 
@@ -292,8 +313,8 @@ sections principales :
 - `carteWeb` (Dynmap : fréquence, langue des fiches, royaumes IA, lieux, trésor, conseil, opacité, carte de guerre,
   routes de commerce ; Xaero) ;
 - `villes` (limite de domaine par rang, impôts perdus au-delà, parts de la couronne proposées pour un gouverneur) ;
-- `pnj` (la journée des gens de la cour) ;
-- `vie` (années, jours par an, morts du registre) ;
+- `pnj` (la journée des gens de la cour, répliques, jours entre deux banquets, jours de deuil) ;
+- `vie` (années, jours par an, morts du registre, partages et crises des royaumes de l'ordinateur) ;
 - `civilisations` (coupé par défaut : constructions de l'ordinateur, fréquence, chance, nombre, zone permise) ;
 - `diplomatie` ;
 - `guerre` (sièges, raids, anti-grief, rang Hostile entre joueurs, troupes Hundred Years War, hommes par soldat et

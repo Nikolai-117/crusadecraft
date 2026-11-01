@@ -1,0 +1,8 @@
+{
+  "moment": "deuil",
+  "traits": ["COMPATISSANT"],
+  "lines": [
+    {"key": "crusadecraft.replique.deuil.compatissant.1"},
+    {"key": "crusadecraft.replique.deuil.compatissant.2"}
+  ]
+}
