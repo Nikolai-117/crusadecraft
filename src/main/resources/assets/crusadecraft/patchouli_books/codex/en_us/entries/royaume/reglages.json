@@ -1,0 +1,12 @@
+{
+  "name": "crusadecraft.codex.reglages",
+  "icon": "minecraft:comparator",
+  "category": "crusadecraft:royaume",
+  "sortnum": 30,
+  "pages": [
+    {
+      "type": "patchouli:text",
+      "text": "crusadecraft.codex.reglages.p0"
+    }
+  ]
+}

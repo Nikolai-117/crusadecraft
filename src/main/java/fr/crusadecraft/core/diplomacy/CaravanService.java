@@ -200,7 +200,8 @@ public final class CaravanService {
         for (int i = 0; i < 2; i++) {
             TraderLlama llama = EntityType.TRADER_LLAMA.create(level);
             if (llama == null) continue;
-            llama.moveTo(pos.getX() + 0.5 + (i == 0 ? 2 : -2), pos.getY(), pos.getZ() + 0.5, 0, 0);
+            int lx = pos.getX() + (i == 0 ? 2 : -2);
+            llama.moveTo(lx + 0.5, level.getHeight(Heightmap.Types.MOTION_BLOCKING_NO_LEAVES, lx, pos.getZ()), pos.getZ() + 0.5, 0, 0);
             llama.finalizeSpawn(level, level.getCurrentDifficultyAt(pos), MobSpawnType.EVENT, null, null);
             llama.setPersistenceRequired();
             llama.addTag(TAG);
@@ -272,6 +273,15 @@ public final class CaravanService {
         double t = c == null ? 0 : c.t;
         boolean raided = c != null && RealmService.currentDay(server) < c.raidedUntil;
         return Optional.of(new Pawn(r.a(), r.b(), (int) Math.round(x(r, t)), (int) Math.round(z(r, t)), raided, c != null && c.trader != null));
+    }
+
+    /** Banc d'essai : où en est la caravane, en clair, pour comprendre un échec. */
+    public static String describeForTests(ServerLevel level, UUID a, UUID b) {
+        Caravan c = CARAVANS.get(key(a, b));
+        if (c == null) return "aucune caravane";
+        Entity e = c.trader == null ? null : level.getEntity(c.trader);
+        return "t=" + String.format(java.util.Locale.ROOT, "%.3f", c.t) + " sens=" + c.dir + " marchand=" + c.trader + " visible=" + (e != null)
+                + " bêtes=" + c.units.size() + " pillée=" + c.raidedUntil;
     }
 
     /** Banc d'essai : place la caravane de cette route à ce point de sa route. */

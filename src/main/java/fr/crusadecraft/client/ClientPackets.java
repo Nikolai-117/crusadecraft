@@ -152,6 +152,19 @@ public final class ClientPackets {
         else if (open) mc.setScreen(new fr.crusadecraft.client.screen.LineageScreen(view));
     }
 
+    /** Les réglages du monde (P30) : rafraîchit l'écran ouvert, ou l'ouvre. */
+    public static void settings(fr.crusadecraft.config.SettingsService.View view, boolean open) {
+        Minecraft mc = Minecraft.getInstance();
+        if (mc.screen instanceof fr.crusadecraft.client.screen.SettingsScreen screen) screen.refresh(view);
+        else if (open) mc.setScreen(new fr.crusadecraft.client.screen.SettingsScreen(view));
+    }
+
+    public static void settingsResult(boolean success, net.minecraft.network.chat.Component message) {
+        Minecraft mc = Minecraft.getInstance();
+        if (mc.screen instanceof fr.crusadecraft.client.screen.SettingsScreen screen) screen.showStatus(success, message);
+        else if (mc.player != null) mc.player.displayClientMessage(message, true);
+    }
+
     /** L'arbre de Comes Alive (P26), ouvert sur une personne du registre. */
     public static void mcaTree(java.util.UUID person) {
         fr.crusadecraft.compat.mca.McaBridge.openTreeScreen(person);

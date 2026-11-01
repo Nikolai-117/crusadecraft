@@ -47,12 +47,15 @@ public final class HostGameTests {
         var data = CrusadeSavedData.get(server);
         AiRealm ai = null;
         IronGolem levy = null;
+        int[] forced = null;
         try {
             data.world().clear();
             data.world().markGenerated(RealmService.currentDay(server));
             WorldEditService.grantForTests(w.ruler.getUUID(), true);
             int cx = w.center.getX() + 320, cz = w.center.getZ();
-            for (int dx = -3; dx <= 3; dx++) for (int dz = -3; dz <= 3; dz++) h.getLevel().getChunk((cx >> 4) + dx, (cz >> 4) + dz);
+            // Des chunks forcés : les soldats qui y paraissent doivent être visibles tout de suite.
+            for (int dx = -3; dx <= 3; dx++) for (int dz = -3; dz <= 3; dz++) h.getLevel().setChunkForced((cx >> 4) + dx, (cz >> 4) + dz, true);
+            forced = new int[]{cx >> 4, cz >> 4};
             ai = WorldEditService.addRealm(server, h.getLevel(), "Rochegarde", "Godefroy", TitleRank.DUCHE, 0x2E7D32, AiFaith.FIDELE,
                     AiPersonality.EXPANSIONNISTE, cx, cz);
             ai.discover(w.ruler.getUUID(), 0);
@@ -81,7 +84,7 @@ public final class HostGameTests {
             h.getLevel().addFreshEntity(levy);
             HostService.tick(server);
             List<Entity> ost = new ArrayList<>();
-            for (Entity e : h.getLevel().getAllEntities()) if (e.getTags().contains(HostService.TAG) && e.isAlive()) ost.add(e);
+            for (Entity e : h.getLevel().getAllEntities()) if (e != null && e.getTags().contains(HostService.TAG) && e.isAlive()) ost.add(e);
             w.check(!ost.isEmpty(), "l'ost ne paraît pas devant l'armée du joueur");
             War.Host engaged = war.hosts().get(ai.id());
             HostService.tick(server);
@@ -104,7 +107,12 @@ public final class HostGameTests {
             h.succeed();
         } finally {
             if (levy != null) levy.discard();
-            for (Entity e : h.getLevel().getAllEntities()) if (e.getTags().contains(HostService.TAG)) e.discard();
+            List<Entity> gone = new ArrayList<>();
+            for (Entity e : h.getLevel().getAllEntities()) if (e != null && e.getTags().contains(HostService.TAG)) gone.add(e);
+            gone.forEach(Entity::discard);
+            if (forced != null) {
+                for (int dx = -3; dx <= 3; dx++) for (int dz = -3; dz <= 3; dz++) h.getLevel().setChunkForced(forced[0] + dx, forced[1] + dz, false);
+            }
             if (ai != null) WorldEditService.removeRealm(server, ai.id());
             WorldEditService.grantForTests(w.ruler.getUUID(), false);
             data.world().clear();

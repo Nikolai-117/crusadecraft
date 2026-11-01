@@ -33,7 +33,7 @@ import net.minecraftforge.network.simple.SimpleChannel;
  * (distance, droits, état) avant d'agir.
  */
 public final class CrusadeNetwork {
-    private static final String VERSION = "17";
+    private static final String VERSION = "18";
 
     public static final SimpleChannel CHANNEL = NetworkRegistry.newSimpleChannel(
             ResourceLocation.tryParse(CrusadeCraft.MOD_ID + ":main"),
@@ -208,6 +208,15 @@ public final class CrusadeNetwork {
         CHANNEL.messageBuilder(LineagePackets.Action.class, nextId++, NetworkDirection.PLAY_TO_SERVER)
                 .encoder(LineagePackets.Action::encode).decoder(LineagePackets.Action::decode)
                 .consumerMainThread(LineagePackets.Action::handle).add();
+        CHANNEL.messageBuilder(fr.crusadecraft.network.packet.SettingsPackets.Open.class, nextId++, NetworkDirection.PLAY_TO_CLIENT)
+                .encoder(fr.crusadecraft.network.packet.SettingsPackets.Open::encode).decoder(fr.crusadecraft.network.packet.SettingsPackets.Open::decode)
+                .consumerMainThread(fr.crusadecraft.network.packet.SettingsPackets.Open::handle).add();
+        CHANNEL.messageBuilder(fr.crusadecraft.network.packet.SettingsPackets.Result.class, nextId++, NetworkDirection.PLAY_TO_CLIENT)
+                .encoder(fr.crusadecraft.network.packet.SettingsPackets.Result::encode).decoder(fr.crusadecraft.network.packet.SettingsPackets.Result::decode)
+                .consumerMainThread(fr.crusadecraft.network.packet.SettingsPackets.Result::handle).add();
+        CHANNEL.messageBuilder(fr.crusadecraft.network.packet.SettingsPackets.Request.class, nextId++, NetworkDirection.PLAY_TO_SERVER)
+                .encoder(fr.crusadecraft.network.packet.SettingsPackets.Request::encode).decoder(fr.crusadecraft.network.packet.SettingsPackets.Request::decode)
+                .consumerMainThread(fr.crusadecraft.network.packet.SettingsPackets.Request::handle).add();
         CHANNEL.messageBuilder(LineagePackets.OpenMcaTree.class, nextId++, NetworkDirection.PLAY_TO_CLIENT)
                 .encoder(LineagePackets.OpenMcaTree::encode).decoder(LineagePackets.OpenMcaTree::decode)
                 .consumerMainThread(LineagePackets.OpenMcaTree::handle).add();

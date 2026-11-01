@@ -110,6 +110,11 @@ public final class CrusadeCommand {
                                             return 0;
                                         }))))
                 // Ce que coûte chaque système sur le serveur (P24).
+                // L'écran des réglages du monde (P30) ; il dit lui-même s'il est réservé.
+                .then(Commands.literal("reglages").executes(ctx -> {
+                    fr.crusadecraft.network.packet.SettingsPackets.send(ctx.getSource().getPlayerOrException(), true);
+                    return 1;
+                }))
                 .then(Commands.literal("perf").requires(src -> src.hasPermission(2))
                         .executes(ctx -> {
                             var lines = fr.crusadecraft.core.Perf.report();

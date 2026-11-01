@@ -820,3 +820,17 @@ Demandé par Romain (5 octobre) : « que ça fonctionne par chunk directement »
   argent, or valent 1, 9, 81 au Coffre du Trésor quand le mod est là ; le butin d'une caravane tombe en ces pièces.
   On ne dépend pas du mod : sans lui, rien ne change, et le butin tombe en or.
 
+**P30 (1er novembre 2026) — l'écran de réglages, version 3.0.0**
+
+- **Tous les réglages en jeu** : l'écran lit le fichier tel que Forge le décrit (sections, commentaires, bornes) ; rien
+  n'est recopié à la main, un réglage ajouté plus tard y paraîtra de lui-même. Oui/non, nombres et choix se modifient ;
+  les listes se lisent seulement (les saisir dans une case serait trop fragile).
+- **Réservé** aux opérateurs et au propriétaire d'un monde solo, même sans les commandes. Le serveur revérifie chaque
+  valeur contre les bornes du réglage, l'enregistre dans le fichier du monde, et elle s'applique aussitôt.
+- Bouton ⚙ dans l'en-tête de l'onglet Royaume, et `/crusade reglages`. Canal réseau en version 18.
+- **Version 3.0.0** : la fin de tout ce qui restait de la feuille de route 2.0 (P26 à P30).
+- **Bancs d'essai fiabilisés** : les tests des ostes et des caravanes forcent leurs chunks (une entité qui paraît dans
+  un chunk chargé sans billet n'est pas encore visible), leurs nettoyages ne suppriment plus d'entités en parcourant la
+  liste (elle rendait parfois un trou, et un nettoyage interrompu laissait un royaume qui faisait échouer les tests
+  suivants), et les refus de l'ordinateur de bâtir disent leur raison (`CivService.refusal`). La lecture du paysage
+  d'une capitale se replie sans erreur si le générateur refuse la question (une ligne au journal).

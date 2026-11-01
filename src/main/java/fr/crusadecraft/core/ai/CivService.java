@@ -121,24 +121,30 @@ public final class CivService {
      * sol naturel et à peu près plat (trois blocs d'écart au plus), sans rien de bâti par-dessus.
      */
     static Optional<BlockPos> suitable(MinecraftServer server, ServerLevel level, AiRealm ai, SiteKind kind, int x, int z, int radius) {
-        if (!inZone(x, z, radius)) return Optional.empty();
+        if (refusal(server, level, ai, kind, x, z, radius) != null) return Optional.empty();
+        return Optional.of(level.getHeightmapPos(Heightmap.Types.MOTION_BLOCKING_NO_LEAVES, new BlockPos(x, 0, z)).below());
+    }
+
+    /** Pourquoi cet endroit ne convient pas, en clair ({@code null} s'il convient) : pour {@link #suitable} et les bancs d'essai. */
+    public static String refusal(MinecraftServer server, ServerLevel level, AiRealm ai, SiteKind kind, int x, int z, int radius) {
+        if (!inZone(x, z, radius)) return "hors de la zone permise";
         int half = Math.max(2, kind.size() / 2);
         int[][] probes = {{0, 0}, {-half, -half}, {half, -half}, {-half, half}, {half, half}, {0, -half}, {0, half}, {-half, 0}, {half, 0}};
         int min = Integer.MAX_VALUE, max = Integer.MIN_VALUE;
         for (int[] d : probes) {
             BlockPos column = new BlockPos(x + d[0], 0, z + d[1]);
-            if (!level.hasChunkAt(column)) return Optional.empty();
-            if (MineColoniesBridge.colonyAt(level, column).isPresent()) return Optional.empty();
-            boolean own = Territory.ownerAt(server, level.dimension().location(), column.getX() + 0.5, column.getZ() + 0.5)
-                    .map(ai.id()::equals).orElse(false);
-            if (!own) return Optional.empty();
+            String at = " en " + column.getX() + "," + column.getZ();
+            if (!level.hasChunkAt(column)) return "chunk non chargé" + at;
+            if (MineColoniesBridge.colonyAt(level, column).isPresent()) return "dans une colonie" + at;
+            Optional<java.util.UUID> owner = Territory.ownerAt(server, level.dimension().location(), column.getX() + 0.5, column.getZ() + 0.5);
+            if (!owner.map(ai.id()::equals).orElse(false)) return "terre de " + owner.map(Object::toString).orElse("personne") + at;
             BlockPos top = level.getHeightmapPos(Heightmap.Types.MOTION_BLOCKING_NO_LEAVES, column);
             BlockState ground = level.getBlockState(top.below());
-            if (!naturalGround(ground)) return Optional.empty();
+            if (!naturalGround(ground)) return "sol " + ground.getBlock().getDescriptionId() + at + " (y " + top.getY() + ")";
             min = Math.min(min, top.getY());
             max = Math.max(max, top.getY());
         }
-        if (max - min > 3) return Optional.empty();
-        return Optional.of(level.getHeightmapPos(Heightmap.Types.MOTION_BLOCKING_NO_LEAVES, new BlockPos(x, 0, z)).below());
+        if (max - min > 3) return "pas assez plat (" + min + " à " + max + ")";
+        return null;
     }
 }

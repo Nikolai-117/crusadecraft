@@ -1,4 +1,4 @@
-# CrusadeCraft 2.5.0 — installer et tester
+# CrusadeCraft 3.0.0 — installer et tester
 
 ## 1. Ce qu'il faut
 
@@ -17,7 +17,7 @@ Optionnels, déjà présents chez toi, donc activés automatiquement :
 
 ## 2. Installer
 
-1. Le fichier du mod est `E:\crusadecraft\build\libs\crusadecraft-2.5.0.jar`.
+1. Le fichier du mod est `E:\crusadecraft\build\libs\crusadecraft-3.0.0.jar`.
 2. Mets-le dans le dossier des mods de l'instance : `D:\MultiMC\instances\1.20.1\.minecraft\mods\`.
    Dans MultiMC, tu peux aussi faire clic droit sur l'instance → *Modifier* → *Mods* → *Ajouter un fichier*.
    **Retire l'ancien** (`crusadecraft-1.8.0.jar`, ou une version plus vieille) : deux versions du mod ensemble
@@ -334,8 +334,12 @@ données du mod (fichier `crusadecraft.dat` du monde) restent sur place, sans ef
 
 ## 4. Réglages
 
-Tout se règle dans `saves/<ton monde>/serverconfig/crusadecraft-server.toml`, à modifier monde fermé. Les
-sections principales :
+Tout se règle **en jeu** : menu royal, onglet Royaume, bouton **⚙** (ou `/crusade reglages`). Les sections à gauche,
+leurs réglages à droite : oui/non d'un clic, nombres avec − et + (Maj : par dix) ou saisis puis ✔, choix qu'on fait
+défiler. Survole un nom pour son explication. Réservé aux opérateurs et au propriétaire d'un monde solo ; chaque
+changement est vérifié, enregistré et pris en compte aussitôt. Les listes (valeurs de l'or, limites par rang…) se
+modifient encore dans le fichier `saves/<ton monde>/serverconfig/crusadecraft-server.toml`, monde fermé. Les sections
+principales :
 
 - `fondation`, `personnages` et `conseil` ;
 - `economie` et `lois` ;
@@ -376,6 +380,7 @@ Chaque système peut être coupé.
 | `/crusade armee marcher <x> <z>`, `formation <nom>` | Envoyer l'armée, changer sa formation (pour le souverain) |
 | `/crusade civ`, `/crusade civ annuler` | Les constructions de l'ordinateur : combien, et tout défaire |
 | `/crusade perf`, `/crusade perf reset` | Le temps pris par chaque partie du mod |
+| `/crusade reglages` | L'écran des réglages du monde (opérateurs, propriétaire d'un monde solo) |
 | `/crusade reconcilier` | Revérifie l'état des royaumes |
 | `/crusade monde info` | Le monde IA |
 | `/crusade monde generer` | Régénère les royaumes IA autour de toi |

@@ -173,6 +173,12 @@ public class RealmScreen extends Screen {
             }).bounds(lieux.getX() - 2 - 52, top + 34, 52, 16).build();
             cities.setTooltip(Tooltip.create(Component.translatable("crusadecraft.city.open.tip")));
             addRenderableWidget(cities);
+            // P30 : les réglages du monde (réservés aux opérateurs et au propriétaire d'un monde solo).
+            Button settings = Button.builder(Component.literal("⚙"), b -> {
+                if (minecraft != null && minecraft.getConnection() != null) CrusadeNetwork.toServer(new fr.crusadecraft.network.packet.SettingsPackets.Request("", ""));
+            }).bounds(cities.getX() - 2 - 16, top + 34, 16, 16).build();
+            settings.setTooltip(Tooltip.create(Component.translatable("crusadecraft.settings.open.tip")));
+            addRenderableWidget(settings);
         }
         if (tab == Tab.CONSEIL) {
             Button intrigues = Button.builder(Component.translatable("crusadecraft.intrigue.open"), b -> {

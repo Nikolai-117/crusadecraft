@@ -62,7 +62,11 @@ public final class VillageGameTests {
             }
 
             Optional<Site> found = VillageService.foundAt(server, ai, level, px, pz, 0);
-            w.check(found.isPresent(), "le royaume ne fonde pas de village sur une parcelle plate de ses terres");
+            if (found.isEmpty()) {
+                String why = fr.crusadecraft.core.ai.CivService.refusal(server, level, ai, SiteKind.VILLAGE, px, pz, 0);
+                w.check(false, "le royaume ne fonde pas de village sur une parcelle plate de ses terres : "
+                        + (why == null ? "chantier refusé (place prise ou ville impossible)" : why) + " ; royaume " + ai.id());
+            }
             Site village = found.get();
             w.check(village.auto() && village.kind() == SiteKind.VILLAGE && village.province() >= 0, "le village n'est pas un chantier de l'ordinateur");
             AiProvince city = ai.provinces().stream().filter(p -> p.id() == village.province()).findFirst().orElse(null);
