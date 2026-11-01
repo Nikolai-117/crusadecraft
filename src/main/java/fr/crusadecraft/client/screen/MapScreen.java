@@ -1237,16 +1237,28 @@ public class MapScreen extends Screen {
             }
             int mx = (x0 + x1) / 2, my = (y0 + y1) / 2;
             g.fill(mx - 3, my - 3, mx + 3, my + 3, INK);
-            g.fill(mx - 2, my - 2, mx + 2, my + 2, 0xFFE7BD55);
+            g.fill(mx - 2, my - 2, mx + 2, my + 2, r.raided() ? 0xFF8A7346 : 0xFFE7BD55);
+            if (r.caravan() && !r.raided()) {
+                // La caravane (P29) : un chariot brun sur deux roues.
+                int cx = screenX(r.cx()), cy = screenY(r.cz());
+                g.fill(cx - 4, cy - 3, cx + 4, cy + 1, INK);
+                g.fill(cx - 3, cy - 2, cx + 3, cy, 0xFF9C6B3C);
+                g.fill(cx - 3, cy + 1, cx - 1, cy + 3, INK);
+                g.fill(cx + 1, cy + 1, cx + 3, cy + 3, INK);
+            }
         }
     }
 
     private List<Component> tradeTooltip(double mouseX, double mouseY) {
         for (MapView.TradeLine r : view.routes()) {
             if (segmentDistance(mouseX, mouseY, screenX(r.x0()), screenY(r.z0()), screenX(r.x1()), screenY(r.z1())) > 4) continue;
-            return List.of(Component.translatable("crusadecraft.trade.route").withStyle(ChatFormatting.GOLD),
-                    r.a().copy().append(" ↔ ").append(r.b()).withStyle(ChatFormatting.WHITE),
-                    Component.translatable("crusadecraft.trade.income.short", r.income()).withStyle(ChatFormatting.GRAY));
+            List<Component> tip = new ArrayList<>();
+            tip.add(Component.translatable("crusadecraft.trade.route").withStyle(ChatFormatting.GOLD));
+            tip.add(r.a().copy().append(" ↔ ").append(r.b()).withStyle(ChatFormatting.WHITE));
+            if (!r.goods().getString().isEmpty()) tip.add(r.goods().copy().withStyle(ChatFormatting.YELLOW));
+            tip.add(r.raided() ? Component.translatable("crusadecraft.trade.raided").withStyle(ChatFormatting.RED)
+                    : Component.translatable("crusadecraft.trade.income.short", r.income()).withStyle(ChatFormatting.GRAY));
+            return tip;
         }
         return List.of();
     }

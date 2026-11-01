@@ -26,11 +26,14 @@ public final class TradeService {
     public static final int BLOCKS_PER_COIN = 400;
     /** Au plus tant de pièces de plus, quelle que soit la distance. */
     public static final int MAX_BONUS = 10;
+    /** P29 : des marchandises différentes de part et d'autre rapportent tant de pièces de plus par jour. */
+    public static final int GOODS_BONUS = 3;
 
     private TradeService() {}
 
     /** Une route de commerce : ses deux royaumes, ses deux capitales, sa longueur et ce qu'elle rapporte par jour à chacun. */
-    public record Route(UUID a, UUID b, ResourceLocation dim, int x0, int z0, int x1, int z1, int distance, long income) {}
+    public record Route(UUID a, UUID b, ResourceLocation dim, int x0, int z0, int x1, int z1, int distance, long income, Good goodA, Good goodB,
+                        boolean raided) {}
 
     /** Ce que la distance ajoute au revenu d'une route, en pièces par jour. */
     public static long distanceBonus(int distance) {
@@ -40,6 +43,39 @@ public final class TradeService {
     /** Ce qu'un traité de commerce rapporte par jour : la part de base, plus la distance. */
     public static long income(long base, int distance) {
         return base + distanceBonus(distance);
+    }
+
+    /** Avec les marchandises (P29) : on gagne à échanger ce qu'on n'a pas. */
+    public static long income(long base, int distance, Good a, Good b) {
+        return income(base, distance) + (a != null && b != null && a != b ? GOODS_BONUS : 0);
+    }
+
+    /** La marchandise de chaque royaume, d'après le biome de sa capitale (gardée tant que la capitale ne bouge pas). */
+    private static final java.util.Map<UUID, java.util.Map.Entry<BlockPos, Good>> GOODS = new java.util.HashMap<>();
+
+    public static void onServerStopped() {
+        GOODS.clear();
+    }
+
+    /** La marchandise d'un royaume, ou {@code null} s'il n'a pas de capitale. */
+    public static Good good(MinecraftServer server, UUID realm) {
+        Optional<Seat> s = seat(CrusadeSavedData.get(server), realm);
+        if (s.isEmpty()) return null;
+        var cached = GOODS.get(realm);
+        if (cached != null && cached.getKey().equals(s.get().pos())) return cached.getValue();
+        net.minecraft.server.level.ServerLevel level = server.getLevel(net.minecraft.resources.ResourceKey.create(
+                net.minecraft.core.registries.Registries.DIMENSION, s.get().dim()));
+        if (level == null) return null;
+        Good g = Good.at(level, s.get().pos());
+        if (g == null) return Good.BLE;
+        GOODS.put(realm, java.util.Map.entry(s.get().pos(), g));
+        return g;
+    }
+
+    /** Ce que le commerce avec ce royaume rapporte aujourd'hui : rien si la caravane de la route a été pillée. */
+    public static long dailyIncome(MinecraftServer server, UUID me, UUID other, long base) {
+        if (CaravanService.raided(me, other, RealmService.currentDay(server))) return 0;
+        return income(base, distance(server, me, other).orElse(0), good(server, me), good(server, other));
     }
 
     /** Où se tient la cour d'un royaume : le centre de la capitale d'un joueur, le siège de la capitale d'un royaume IA. */
@@ -79,8 +115,10 @@ public final class TradeService {
             if (sa.isEmpty() || sb.isEmpty() || !sa.get().dim().equals(sb.get().dim())) continue;
             BlockPos pa = sa.get().pos(), pb = sb.get().pos();
             int distance = (int) Math.round(Math.sqrt(pa.distSqr(pb)));
-            long income = income(Math.max(base(data, r.a()), base(data, r.b())), distance);
-            out.add(new Route(r.a(), r.b(), sa.get().dim(), pa.getX(), pa.getZ(), pb.getX(), pb.getZ(), distance, income));
+            Good ga = good(server, r.a()), gb = good(server, r.b());
+            boolean raided = CaravanService.raided(r.a(), r.b(), today);
+            long income = raided ? 0 : income(Math.max(base(data, r.a()), base(data, r.b())), distance, ga, gb);
+            out.add(new Route(r.a(), r.b(), sa.get().dim(), pa.getX(), pa.getZ(), pb.getX(), pb.getZ(), distance, income, ga, gb, raided));
         }
         return out;
     }

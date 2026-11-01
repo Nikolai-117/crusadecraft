@@ -103,7 +103,7 @@ public final class WebMap {
         }
         if (CrusadeConfig.SERVER.webMapPlaces.get()) addPlaces(server, data, lang, points, areas);
         if (CrusadeConfig.SERVER.webMapWar.get()) addWar(server, data, lang, areas, lines, points);
-        if (CrusadeConfig.SERVER.webMapTrade.get()) addTrade(server, data, lang, lines);
+        if (CrusadeConfig.SERVER.webMapTrade.get()) addTrade(server, data, lang, lines, points);
         if (CrusadeConfig.SERVER.webMapArmies.get()) addArmies(server, data, lang, lines, points);
         int hash = 17;
         for (Area a : areas) hash = hash * 31 + a.id().hashCode() * 7 + a.html().hashCode() + java.util.Arrays.hashCode(a.xs()) + java.util.Arrays.hashCode(a.zs());
@@ -312,17 +312,27 @@ public final class WebMap {
     }
 
     /** Les routes de commerce (P25), en trait doré d'une capitale à l'autre, dans leur propre couche. */
-    private static void addTrade(MinecraftServer server, CrusadeSavedData data, String lang, List<Line> lines) {
+    private static void addTrade(MinecraftServer server, CrusadeSavedData data, String lang, List<Line> lines, List<Point> points) {
         for (fr.crusadecraft.core.diplomacy.TradeService.Route r : fr.crusadecraft.core.diplomacy.TradeService.routes(server)) {
             ServerLevel level = level(server, r.dim());
             if (level == null) continue;
             String a = ServerText.render(fr.crusadecraft.core.diplomacy.TradeService.name(data, r.a()), lang);
             String b = ServerText.render(fr.crusadecraft.core.diplomacy.TradeService.name(data, r.b()), lang);
             String title = text(Component.translatable("crusadecraft.trade.route"), lang);
-            String html = "<div class=\"crusade-fiche\"><b>" + esc(title) + "</b><br>" + esc(a) + " ↔ " + esc(b) + "<br><br>"
-                    + esc(text(Component.translatable("crusadecraft.trade.income", r.income(), r.distance()), lang)) + "</div>";
+            String goods = text(WorldService.goods(r), lang);
+            String html = "<div class=\"crusade-fiche\"><b>" + esc(title) + "</b><br>" + esc(a) + " ↔ " + esc(b) + "<br>"
+                    + (goods.isEmpty() ? "" : esc(goods) + "<br>") + "<br>"
+                    + esc(text(r.raided() ? Component.translatable("crusadecraft.trade.raided")
+                    : Component.translatable("crusadecraft.trade.income", r.income(), r.distance()), lang)) + "</div>";
             lines.add(new Line("commerce_" + r.a() + "_" + r.b(), worldName(level), title + " : " + a + " ↔ " + b, html,
-                    new double[]{r.x0() + 0.5, r.x1() + 0.5}, new double[]{r.z0() + 0.5, r.z1() + 0.5}, 0xD4A017, 3));
+                    new double[]{r.x0() + 0.5, r.x1() + 0.5}, new double[]{r.z0() + 0.5, r.z1() + 0.5}, r.raided() ? 0x8A7346 : 0xD4A017, 3));
+            // La caravane (P29), un chariot sur sa route.
+            var caravan = fr.crusadecraft.core.diplomacy.CaravanService.pawn(server, r);
+            if (caravan.isPresent() && !caravan.get().raided()) {
+                String ctitle = text(Component.translatable("crusadecraft.caravan.name", Component.literal(a), Component.literal(b)), lang);
+                points.add(new Point("caravane_" + r.a() + "_" + r.b(), worldName(level), ctitle, html, caravan.get().x() + 0.5, 64,
+                        caravan.get().z() + 0.5, "cart"));
+            }
         }
     }
 

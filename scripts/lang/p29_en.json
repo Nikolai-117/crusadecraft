@@ -1,0 +1,18 @@
+{
+  "crusadecraft.good.ble": "Grain",
+  "crusadecraft.good.bois": "Timber",
+  "crusadecraft.good.fer": "Iron",
+  "crusadecraft.good.sel": "Salt",
+  "crusadecraft.good.poisson": "Fish",
+  "crusadecraft.good.vin": "Wine",
+  "crusadecraft.good.epices": "Spices",
+  "crusadecraft.good.laine": "Wool",
+  "crusadecraft.good.fourrures": "Furs",
+  "crusadecraft.good.pierre": "Stone",
+  "crusadecraft.trade.goods": "%s ⇄ %s",
+  "crusadecraft.trade.raided": "Caravan raided: the route earns nothing for a few days",
+  "crusadecraft.caravan.name": "Caravan %s – %s",
+  "crusadecraft.opinion.brigandage": "Raided one of our caravans",
+  "crusadecraft.news.caravan_raided": "The caravan between %1$s and %2$s was raided by %3$s.",
+  "crusadecraft.codex.commerce.p2": "A $(l)caravan$() travels back and forth on each route: a cart on the map and on Dynmap, a trader and two llamas when you pass by. Each realm sells the $(l)goods$() of its land (grain, timber, iron, salt, fish, wine, spices, wool, furs, stone): two different goods earn 3 more coins a day.$(br2)Killing the trader $(l)raids$() the caravan: its gold falls to the ground (as State Marks coins if you have the mod), the route earns nothing for three days, and both its realms resent you, unless they are at war with you."
+}

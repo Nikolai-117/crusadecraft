@@ -11,6 +11,10 @@
     {
       "type": "patchouli:text",
       "text": "crusadecraft.codex.commerce.p1"
+    },
+    {
+      "type": "patchouli:text",
+      "text": "crusadecraft.codex.commerce.p2"
     }
   ]
 }

@@ -46,7 +46,12 @@ public record MapView(ResourceLocation dimension, int focusX, int focusZ, int pl
     }
 
     /** Une route de commerce (P25) entre deux capitales, ce qu'elle rapporte par jour, et ses deux royaumes. */
-    public record TradeLine(int x0, int z0, int x1, int z1, long income, net.minecraft.network.chat.Component a, net.minecraft.network.chat.Component b) {}
+    public record TradeLine(int x0, int z0, int x1, int z1, long income, net.minecraft.network.chat.Component a, net.minecraft.network.chat.Component b,
+                            net.minecraft.network.chat.Component goods, boolean caravan, int cx, int cz, boolean raided) {
+        public TradeLine(int x0, int z0, int x1, int z1, long income, net.minecraft.network.chat.Component a, net.minecraft.network.chat.Component b) {
+            this(x0, z0, x1, z1, income, a, b, net.minecraft.network.chat.Component.empty(), false, 0, 0, false);
+        }
+    }
 
     public MapView(ResourceLocation dimension, int focusX, int focusZ, int playerX, int playerZ, int territoryRadius,
                    int colonyRadius, List<Territory> territories, List<Seat> seats, List<Dejure> dejure,
@@ -242,6 +247,11 @@ public record MapView(ResourceLocation dimension, int focusX, int focusZ, int pl
             buf.writeVarLong(r.income());
             buf.writeComponent(r.a());
             buf.writeComponent(r.b());
+            buf.writeComponent(r.goods());
+            buf.writeBoolean(r.caravan());
+            buf.writeInt(r.cx());
+            buf.writeInt(r.cz());
+            buf.writeBoolean(r.raided());
         }
         buf.writeVarInt(armies.size());
         for (ArmyPawn a : armies) {
@@ -397,7 +407,8 @@ public record MapView(ResourceLocation dimension, int focusX, int focusZ, int pl
         n = buf.readVarInt();
         List<TradeLine> routes = new ArrayList<>(n);
         for (int i = 0; i < n; i++) {
-            routes.add(new TradeLine(buf.readInt(), buf.readInt(), buf.readInt(), buf.readInt(), buf.readVarLong(), buf.readComponent(), buf.readComponent()));
+            routes.add(new TradeLine(buf.readInt(), buf.readInt(), buf.readInt(), buf.readInt(), buf.readVarLong(), buf.readComponent(), buf.readComponent(),
+                    buf.readComponent(), buf.readBoolean(), buf.readInt(), buf.readInt(), buf.readBoolean()));
         }
         n = buf.readVarInt();
         List<ArmyPawn> armies = new ArrayList<>(n);

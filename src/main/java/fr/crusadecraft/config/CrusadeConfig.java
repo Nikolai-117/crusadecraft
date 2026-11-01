@@ -65,6 +65,10 @@ public final class CrusadeConfig {
         public final ForgeConfigSpec.IntValue debtLimit;
         public final ForgeConfigSpec.IntValue debtPrestigeLoss;
         public final ForgeConfigSpec.ConfigValue<java.util.List<? extends String>> goldValues;
+        public final ForgeConfigSpec.ConfigValue<java.util.List<? extends String>> stateMarks;
+        public final ForgeConfigSpec.BooleanValue caravans;
+        public final ForgeConfigSpec.IntValue caravanSpeed;
+        public final ForgeConfigSpec.IntValue caravanRaidDays;
         public final ForgeConfigSpec.BooleanValue allowWithdraw;
         public final ForgeConfigSpec.IntValue rewardGold;
         public final ForgeConfigSpec.BooleanValue taxHappiness;
@@ -244,6 +248,9 @@ public final class CrusadeConfig {
             debtPrestigeLoss = b.comment("Prestige perdu chaque jour passé dans le rouge.").defineInRange("prestigePerduParJourDeDette", 2, 0, 1000);
             goldValues = b.comment("Valeur de l'or physique au Coffre du Trésor : \"objet=valeur\".")
                     .defineList("valeursOr", fr.crusadecraft.core.treasury.GoldValues.DEFAULTS, o -> o instanceof String);
+            stateMarks = b.comment("Les pièces de State Marks (P29), quand le mod est là : elles valent de l'or au Coffre du Trésor,",
+                    "et c'est en elles que tombe le butin d'une caravane pillée. \"objet=valeur\".")
+                    .defineList("marquesEtat", fr.crusadecraft.core.treasury.GoldValues.STATE_MARKS, o -> o instanceof String);
             allowWithdraw = b.comment("Le souverain peut retirer de l'or physique du trésor.").define("retraitsAutorises", true);
             taxHappiness = b.comment("La loi de fiscalité agit sur le bonheur MineColonies (modificateur « Impôts », jamais enregistré chez MineColonies).")
                     .define("bonheurImpots", true);
@@ -381,6 +388,12 @@ public final class CrusadeConfig {
             civQuarterDays = b.comment("Jours entre deux quartiers d'un village (de hameau en bourg, de bourg en ville : trois quartiers au plus).")
                     .defineInRange("joursEntreQuartiers", 8, 1, 3650);
             civMaxVillages = b.comment("Villages au plus qu'un royaume fonde de lui-même.").defineInRange("villagesMax", 2, 0, 16);
+            b.pop();
+
+            b.comment("Le commerce (P29) : caravanes sur les routes, marchandises des royaumes.").push("commerce");
+            caravans = b.comment("Une caravane va et vient sur chaque route de commerce, et paraît près des joueurs.").define("caravanes", true);
+            caravanSpeed = b.comment("Blocs parcourus par une caravane toutes les cinq secondes.").defineInRange("vitesseCaravanes", 4, 1, 200);
+            caravanRaidDays = b.comment("Jours sans revenu pour une route dont la caravane a été pillée.").defineInRange("joursPillage", 3, 0, 365);
             b.pop();
 
             b.comment("Diplomatie, titres et vassalité").push("diplomatie");

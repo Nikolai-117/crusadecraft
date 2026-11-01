@@ -55,7 +55,9 @@ public enum OpinionReason {
     FESTIN(10, 15, true),
     DEUIL_PARTAGE(5, 20, true),
     // P28 : un village fondé trop près de ses terres
-    DISPUTE(-15, 30, true);
+    DISPUTE(-15, 30, true),
+    // P29 : une caravane pillée en temps de paix
+    BRIGANDAGE(-25, 30, true);
 
     private final int value;
     private final int durationDays;

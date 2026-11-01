@@ -440,10 +440,18 @@ public final class WorldService {
             if (!r.dim().equals(dim)) continue;
             boolean own = r.a().equals(mine) || r.b().equals(mine);
             if (!own && !(known(data, r.a(), player) && known(data, r.b(), player))) continue;
+            var caravan = fr.crusadecraft.core.diplomacy.CaravanService.pawn(player.server, r);
             out.add(new MapView.TradeLine(r.x0(), r.z0(), r.x1(), r.z1(), r.income(), fr.crusadecraft.core.diplomacy.TradeService.name(data, r.a()),
-                    fr.crusadecraft.core.diplomacy.TradeService.name(data, r.b())));
+                    fr.crusadecraft.core.diplomacy.TradeService.name(data, r.b()), goods(r), caravan.isPresent(),
+                    caravan.map(c -> c.x()).orElse(0), caravan.map(c -> c.z()).orElse(0), r.raided()));
         }
         return out;
+    }
+
+    /** Les marchandises d'une route (P29) : « Blé ⇄ Fer ». */
+    public static Component goods(fr.crusadecraft.core.diplomacy.TradeService.Route r) {
+        if (r.goodA() == null || r.goodB() == null) return Component.empty();
+        return Component.translatable("crusadecraft.trade.goods", Component.translatable(r.goodA().key()), Component.translatable(r.goodB().key()));
     }
 
     private static boolean known(CrusadeSavedData data, UUID realm, ServerPlayer player) {

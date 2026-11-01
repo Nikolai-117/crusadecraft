@@ -1,0 +1,18 @@
+{
+  "crusadecraft.good.ble": "Blé",
+  "crusadecraft.good.bois": "Bois",
+  "crusadecraft.good.fer": "Fer",
+  "crusadecraft.good.sel": "Sel",
+  "crusadecraft.good.poisson": "Poisson",
+  "crusadecraft.good.vin": "Vin",
+  "crusadecraft.good.epices": "Épices",
+  "crusadecraft.good.laine": "Laine",
+  "crusadecraft.good.fourrures": "Fourrures",
+  "crusadecraft.good.pierre": "Pierre",
+  "crusadecraft.trade.goods": "%s ⇄ %s",
+  "crusadecraft.trade.raided": "Caravane pillée : la route ne rapporte rien pour quelques jours",
+  "crusadecraft.caravan.name": "Caravane %s – %s",
+  "crusadecraft.opinion.brigandage": "A pillé une de nos caravanes",
+  "crusadecraft.news.caravan_raided": "La caravane entre %1$s et %2$s a été pillée par %3$s.",
+  "crusadecraft.codex.commerce.p2": "Sur chaque route va et vient une $(l)caravane$() : un chariot sur la carte et sur Dynmap, un marchand et deux lamas quand tu passes à côté. Chaque royaume vend la $(l)marchandise$() de son pays (blé, bois, fer, sel, poisson, vin, épices, laine, fourrures, pierre) : deux marchandises différentes rapportent 3 pièces de plus par jour.$(br2)Tuer le marchand $(l)pille$() la caravane : son or tombe au sol (en pièces State Marks si tu as le mod), la route ne rapporte plus rien trois jours, et ses deux royaumes t'en veulent, sauf s'ils sont en guerre avec toi."
+}

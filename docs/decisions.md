@@ -803,3 +803,20 @@ Demandé par Romain (5 octobre) : « que ça fonctionne par chunk directement »
 - Toujours coupé par défaut (`civilisations.actif`).
 - **Pas fait** : villages sur terrain accidenté (il faut une parcelle plate), villages fondés loin de tout camp.
 
+**P29 (1er novembre 2026) — caravanes, marchandises, State Marks, version 2.5.0**
+
+- **Marchandises** : une par royaume, d'après le biome de sa capitale, lu au générateur (rien n'est chargé) : l'eau
+  donne le poisson, puis les badlands la pierre, le relief le fer, la jungle les épices, le sec le sel, le froid les
+  fourrures, la savane la laine, la forêt le bois, le chaud le vin, le blé à défaut. Deux marchandises différentes sur
+  une route : +3 pièces par jour. Pas de stocks ni de marché : ce serait un second jeu dans le jeu.
+- **Caravanes** : une par route, qui va et vient à 4 blocs toutes les 5 secondes (réglable). Un chariot sur la carte du
+  mod et sur Dynmap (couche « Routes commerciales »). À moins de 64 blocs d'un joueur, elle paraît : un marchand
+  ambulant à son nom et deux lamas de marchand en laisse, qui suivent la route par étapes de 24 blocs ; plus de joueur
+  à 112 blocs, elle redevient un chariot.
+- **Pillage** : tuer le marchand fait tomber cinq jours de revenu de la route en pièces, coupe la route 3 jours, et
+  les deux royaumes de la route en veulent au royaume du pillard (−25, 30 jours) sauf s'il est en guerre avec eux.
+  L'état des caravanes n'est pas enregistré : un redémarrage les remet à leur première capitale et oublie un pillage.
+- **State Marks** (mod « Holy Guac! State Marks! », identifiant `stans_funtime_rapey`, présent chez Romain) : bronze,
+  argent, or valent 1, 9, 81 au Coffre du Trésor quand le mod est là ; le butin d'une caravane tombe en ces pièces.
+  On ne dépend pas du mod : sans lui, rien ne change, et le butin tombe en or.
+

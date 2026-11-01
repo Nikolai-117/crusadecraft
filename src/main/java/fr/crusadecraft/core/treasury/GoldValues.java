@@ -5,6 +5,7 @@ import net.minecraft.resources.ResourceLocation;
 import java.util.ArrayList;
 import java.util.Comparator;
 import java.util.List;
+import java.util.Map;
 
 /**
  * Ce que vaut l'or physique au Coffre du Trésor : {@code "minecraft:gold_ingot=9"}. L'unité est la pièce
@@ -16,6 +17,11 @@ public final class GoldValues {
 
     public static final List<String> DEFAULTS = List.of(
             "minecraft:gold_nugget=1", "minecraft:gold_ingot=9", "minecraft:gold_block=81");
+
+    /** Le mod des pièces State Marks (P29) : bronze, argent, or. */
+    public static final String STATE_MARKS_MOD = "stans_funtime_rapey";
+    public static final List<String> STATE_MARKS = List.of(STATE_MARKS_MOD + ":bronze_state_mark=1", STATE_MARKS_MOD + ":silver_state_mark=9",
+            STATE_MARKS_MOD + ":gold_state_mark=81");
 
     private final List<Denomination> denominations;
 
@@ -43,6 +49,33 @@ public final class GoldValues {
     }
 
     public List<Denomination> denominations() { return denominations; }
+
+    /** Ces valeurs, et celles-ci en plus (sans doublon). */
+    public GoldValues with(List<? extends String> more) {
+        List<String> lines = new ArrayList<>();
+        for (Denomination d : denominations) lines.add(d.item() + "=" + d.value());
+        lines.addAll(more);
+        return parse(lines);
+    }
+
+    /**
+     * De quoi payer {@code amount} pièces en objets, les plus précieux d'abord, parmi ceux de {@code preferred} s'ils
+     * suffisent. Renvoie {objet, nombre} ; logique pure.
+     */
+    public List<Map.Entry<ResourceLocation, Integer>> change(long amount, java.util.function.Predicate<ResourceLocation> preferred) {
+        List<Denomination> pool = new ArrayList<>();
+        for (Denomination d : denominations) if (preferred.test(d.item())) pool.add(d);
+        if (pool.isEmpty() || pool.stream().noneMatch(d -> d.value() == 1)) pool = new ArrayList<>(denominations);
+        List<Map.Entry<ResourceLocation, Integer>> out = new ArrayList<>();
+        long left = amount;
+        for (Denomination d : pool) {
+            long n = left / d.value();
+            if (n <= 0) continue;
+            out.add(Map.entry(d.item(), (int) Math.min(Integer.MAX_VALUE, n)));
+            left -= n * d.value();
+        }
+        return out;
+    }
 
     /** Valeur d'un objet, 0 s'il n'est pas de l'or reconnu. */
     public int valueOf(ResourceLocation item) {

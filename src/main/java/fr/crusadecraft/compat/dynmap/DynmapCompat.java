@@ -134,7 +134,7 @@ final class DynmapCompat {
         for (WebMap.Point p : model.points()) {
             MarkerIcon icon = api.getMarkerIcon(p.icon());
             if (icon == null) icon = api.getMarkerIcon(MarkerIcon.DEFAULT);
-            MarkerSet target = p.id().startsWith("guerre_") ? war : p.id().startsWith("armee_") ? armies : places;
+            MarkerSet target = p.id().startsWith("guerre_") ? war : p.id().startsWith("armee_") ? armies : p.id().startsWith("caravane_") ? trade : places;
             Marker m = oldPoints.get(p.id());
             if (m != null && m.getMarkerSet() != target) {
                 m.deleteMarker();

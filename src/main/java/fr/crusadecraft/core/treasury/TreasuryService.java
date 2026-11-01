@@ -96,7 +96,28 @@ public final class TreasuryService {
     }
 
     public static GoldValues goldValues() {
-        return GoldValues.parse(CrusadeConfig.SERVER.goldValues.get());
+        GoldValues values = GoldValues.parse(CrusadeConfig.SERVER.goldValues.get());
+        // P29 : les pièces State Marks valent de l'or, quand le mod est là.
+        if (net.minecraftforge.fml.ModList.get() != null && net.minecraftforge.fml.ModList.get().isLoaded(GoldValues.STATE_MARKS_MOD)) {
+            values = values.with(CrusadeConfig.SERVER.stateMarks.get());
+        }
+        return values;
+    }
+
+    /** De quoi payer tant de pièces en objets : en State Marks s'il y en a, en or sinon. */
+    public static List<ItemStack> coins(long amount) {
+        List<ItemStack> out = new java.util.ArrayList<>();
+        for (java.util.Map.Entry<ResourceLocation, Integer> e : goldValues().change(amount, id -> id.getNamespace().equals(GoldValues.STATE_MARKS_MOD))) {
+            Item item = net.minecraftforge.registries.ForgeRegistries.ITEMS.getValue(e.getKey());
+            if (item == null || item == net.minecraft.world.item.Items.AIR) continue;
+            int left = e.getValue();
+            while (left > 0) {
+                int n = Math.min(left, item.getMaxStackSize());
+                out.add(new ItemStack(item, n));
+                left -= n;
+            }
+        }
+        return out;
     }
 
     /** Les impôts sont-ils perçus ? Non si la configuration les coupe, ou si War 'N Taxes s'en charge déjà. */

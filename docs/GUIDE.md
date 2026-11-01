@@ -1,4 +1,4 @@
-# CrusadeCraft 2.4.0 — installer et tester
+# CrusadeCraft 2.5.0 — installer et tester
 
 ## 1. Ce qu'il faut
 
@@ -17,7 +17,7 @@ Optionnels, déjà présents chez toi, donc activés automatiquement :
 
 ## 2. Installer
 
-1. Le fichier du mod est `E:\crusadecraft\build\libs\crusadecraft-2.4.0.jar`.
+1. Le fichier du mod est `E:\crusadecraft\build\libs\crusadecraft-2.5.0.jar`.
 2. Mets-le dans le dossier des mods de l'instance : `D:\MultiMC\instances\1.20.1\.minecraft\mods\`.
    Dans MultiMC, tu peux aussi faire clic droit sur l'instance → *Modifier* → *Mods* → *Ajouter un fichier*.
    **Retire l'ancien** (`crusadecraft-1.8.0.jar`, ou une version plus vieille) : deux versions du mod ensemble
@@ -316,6 +316,18 @@ données du mod (fichier `crusadecraft.dat` du monde) restent sur place, sans ef
     au plus). Une route lointaine vaut donc davantage. Les traités de commerce entre royaumes de l'ordinateur ont aussi
     leur route.
 
+76b. Chaque royaume vend la **marchandise** de son pays, lue dans le biome de sa capitale (blé, bois, fer, sel, poisson,
+    vin, épices, laine, fourrures, pierre). Deux marchandises différentes sur une route : **3 pièces de plus par jour**.
+    Survole une route sur la carte pour voir « Blé ⇄ Fer ».
+76c. Sur chaque route va et vient une **caravane** : un petit chariot sur la carte et sur Dynmap. Approche-toi à moins
+    de 64 blocs de l'endroit où elle passe : elle paraît, un marchand ambulant à son nom et deux lamas, qui suivent la
+    route.
+76d. Tuer le marchand **pille** la caravane : son or tombe au sol (en pièces **State Marks** si tu as le mod, en or
+    sinon), la route ne rapporte plus rien pendant 3 jours (réglable), et les deux royaumes de la route t'en veulent —
+    sauf s'ils sont en guerre avec toi. Piller l'ennemi en temps de guerre est donc permis, et coûte cher à sa route.
+76e. Avec le mod State Marks, ses pièces de bronze, d'argent et d'or valent 1, 9 et 81 pièces au **Coffre du Trésor**
+    (comme pépite, lingot et bloc d'or) : on peut les déposer et les retirer (réglage `economie.marquesEtat`).
+
 ### Si le jeu rame
 77. `/crusade perf` (opérateur) dit combien de temps chaque partie du mod prend à chaque tick du serveur, et
     `/crusade perf reset` remet les mesures à zéro. Un tick dure 50 ms : le total du mod doit rester bien en dessous.
@@ -336,6 +348,7 @@ sections principales :
 - `villes` (limite de domaine par rang, impôts perdus au-delà, parts de la couronne proposées pour un gouverneur) ;
 - `pnj` (la journée des gens de la cour, répliques, jours entre deux banquets, jours de deuil) ;
 - `vie` (années, jours par an, morts du registre, partages et crises des royaumes de l'ordinateur) ;
+- `commerce` (caravanes, leur vitesse, jours sans revenu après un pillage) ;
 - `civilisations` (coupé par défaut : constructions de l'ordinateur, fréquence, chance, nombre, zone permise, jours
   avant un village, jours entre deux quartiers, villages au plus) ;
 - `diplomatie` ;
@@ -389,5 +402,7 @@ Pour accélérer le temps pendant un test : `/time add 24000` fait passer un jou
 - Les gens de la cour ont un but de marche, pas une laisse : l'intelligence de Minecraft Comes Alive peut l'emporter.
 - Les royaumes de l'ordinateur bâtissent sur plans (tours, camps, forts, villages et quartiers), pas de façon libre :
   il leur faut une parcelle à peu près plate de leurs terres.
-- Le commerce suit les traités : pas encore de caravanes qui marchent, ni de marchandises une à une.
+- Les caravanes ne marchent dans le monde que près d'un joueur ; loin de tout, elles avancent sur la carte. Après un
+  redémarrage, elles repartent de leur première capitale, et un pillage en cours est oublié.
+- Une marchandise par royaume, pas de stocks ni de marché : le commerce reste une affaire de revenus.
 - Usage personnel : ce mod n'est pas fait pour être redistribué.
