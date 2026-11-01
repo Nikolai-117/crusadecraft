@@ -1,4 +1,4 @@
-# CrusadeCraft 3.1.0 — installer et tester
+# CrusadeCraft 3.2.0 — installer et tester
 
 ## 1. Ce qu'il faut
 
@@ -17,7 +17,7 @@ Optionnels, déjà présents chez toi, donc activés automatiquement :
 
 ## 2. Installer
 
-1. Le fichier du mod est `E:\crusadecraft\build\libs\crusadecraft-3.1.0.jar`.
+1. Le fichier du mod est `E:\crusadecraft\build\libs\crusadecraft-3.2.0.jar`.
 2. Mets-le dans le dossier des mods de l'instance : `D:\MultiMC\instances\1.20.1\.minecraft\mods\`.
    Dans MultiMC, tu peux aussi faire clic droit sur l'instance → *Modifier* → *Mods* → *Ajouter un fichier*.
    **Retire l'ancien** (`crusadecraft-1.8.0.jar`, ou une version plus vieille) : deux versions du mod ensemble
@@ -199,6 +199,16 @@ données du mod (fichier `crusadecraft.dat` du monde) restent sur place, sans ef
     l'écran des Villes (la colonie MineColonies change de nom aussi), et l'écran des **Lieux** pour tout le reste
     (les royaumes et villes de l'ordinateur, si tu as l'éditeur). Par commande : `/crusade renommer royaume <nom>`,
     `/crusade renommer ville <nom>` en se tenant dans la ville.
+
+### Zones dessinées d'avance et fusions
+53e. Dans l'éditeur de la carte (créatif), crée un royaume et **peins sa zone** avant que personne n'y vive. Pose ensuite
+    ton **Trône** dans cette zone : ce royaume dessiné devient **le tien**, avec ses terres peintes et ses villes (le
+    nom et la couleur restent ceux que tu choisis à la fondation).
+53f. Une **nouvelle colonie** que tu fondes dans la zone de ton royaume (peinte ou revendiquée) s'y rattache d'elle-même
+    dans les vingt secondes (réglage `territoire.coloniesRejoignentZone`).
+53g. **Fusionner** : dans l'éditeur, choisis une ville d'un royaume de l'ordinateur, règle « Fusionner dans » sur le
+    royaume qui l'absorbe (de l'ordinateur ou de joueur), puis OK deux fois : ses villes, ses terres peintes et son
+    trésor passent à l'autre.
 
 ### La carte de guerre
 50. Ouvre la carte du royaume (touche **virgule**) et clique sur **⚔ Guerre**, en bas à droite. Une barre d'outils

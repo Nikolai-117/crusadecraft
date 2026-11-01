@@ -163,6 +163,8 @@ public class MapScreen extends Screen {
     // Carte de guerre
     private boolean war = lastWar;
     private WarTool warTool = WarTool.OFFENSIVE;
+    /** Le royaume visé par une fusion dans l'éditeur (P33). */
+    private int mergeTarget = -1;
     /** Ce que le pinceau vient de peindre, en attendant la réponse du serveur : chunk → rang de zone, ou −1 effacé. */
     private final Long2IntOpenHashMap warOverlay = new Long2IntOpenHashMap();
     private List<WarLayer> warLayers;
@@ -424,7 +426,9 @@ public class MapScreen extends Screen {
     private int panelHeight() {
         int i = selectedIndex();
         if (i < 0) return Math.min(108, mapH - 8);
-        return Math.min(panelRealmTop(view.seats().get(i)) + 14 + 3 * 16 + 4, mapH - 8);
+        MapView.Seat s = view.seats().get(i);
+        boolean ai = s.territory() >= 0 && s.territory() < view.territories().size() && view.territories().get(s.territory()).ai();
+        return Math.min(panelRealmTop(s) + 14 + (ai ? 4 : 3) * 16 + 4, mapH - 8);
     }
 
     /** Où commence la partie « royaume » du panneau, relativement à son bord haut. */
@@ -558,6 +562,30 @@ public class MapScreen extends Screen {
                 rebuildWidgets();
             }).bounds(px, y, bw, 15).build());
             y += 16;
+            // P33 : fusionner ce royaume dans un autre (choisi en faisant défiler), confirmé d'un second clic.
+            if (mergeTarget < 0 || mergeTarget >= view.territories().size() || view.territories().get(mergeTarget).id().equals(owner.id())) {
+                mergeTarget = defaultMergeTarget(owner.id());
+            }
+            if (mergeTarget >= 0) {
+                Component into = Component.translatable("crusadecraft.zone.merge.into", shortName(mergeTarget));
+                addRenderableWidget(Button.builder(Component.literal(font.plainSubstrByWidth(into.getString(), bw - 40)), b -> {
+                    int n = view.territories().size();
+                    for (int i = 0; i < n; i++) {
+                        mergeTarget = (mergeTarget + (hasShiftDown() ? n - 1 : 1)) % n;
+                        if (!view.territories().get(mergeTarget).id().equals(owner.id())) break;
+                    }
+                    rebuildWidgets();
+                }).bounds(px, y, bw - 32, 15).tooltip(Tooltip.create(Component.translatable("crusadecraft.zone.merge.tip"))).build());
+                final int target = mergeTarget;
+                addRenderableWidget(Button.builder(armedLabel(5, "crusadecraft.zone.merge.ok"), b -> {
+                    if (confirm(5)) {
+                        CrusadeNetwork.toServer(new MapEditPackets.MergeRealm(owner.id(), view.territories().get(target).id()));
+                        selected = null;
+                    }
+                    rebuildWidgets();
+                }).bounds(px + bw - 30, y, 30, 15).build());
+            }
+            y += 16;
             Button lineage = Button.builder(Component.translatable("crusadecraft.lineage.of_realm"),
                     b -> CrusadeNetwork.toServer(new fr.crusadecraft.network.packet.LineagePackets.Request(null, owner.id()))).bounds(px, y, bw / 2 - 1, 15).build();
             lineage.setTooltip(Tooltip.create(Component.translatable("crusadecraft.lineage.of_realm.tip")));
@@ -583,6 +611,12 @@ public class MapScreen extends Screen {
         armed = what;
         armedUntil = Util.getMillis() + 4000;
         return false;
+    }
+
+    /** Le royaume visé par une fusion : le premier qui n'est pas celui qu'on fusionne. */
+    private int defaultMergeTarget(UUID self) {
+        for (int i = 0; i < view.territories().size(); i++) if (!view.territories().get(i).id().equals(self)) return i;
+        return -1;
     }
 
     private int defaultTerritory() {

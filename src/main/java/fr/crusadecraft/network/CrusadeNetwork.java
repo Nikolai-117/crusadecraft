@@ -33,7 +33,7 @@ import net.minecraftforge.network.simple.SimpleChannel;
  * (distance, droits, état) avant d'agir.
  */
 public final class CrusadeNetwork {
-    private static final String VERSION = "19";
+    private static final String VERSION = "20";
 
     public static final SimpleChannel CHANNEL = NetworkRegistry.newSimpleChannel(
             ResourceLocation.tryParse(CrusadeCraft.MOD_ID + ":main"),
@@ -217,6 +217,9 @@ public final class CrusadeNetwork {
         CHANNEL.messageBuilder(fr.crusadecraft.network.packet.SettingsPackets.Request.class, nextId++, NetworkDirection.PLAY_TO_SERVER)
                 .encoder(fr.crusadecraft.network.packet.SettingsPackets.Request::encode).decoder(fr.crusadecraft.network.packet.SettingsPackets.Request::decode)
                 .consumerMainThread(fr.crusadecraft.network.packet.SettingsPackets.Request::handle).add();
+        CHANNEL.messageBuilder(MapEditPackets.MergeRealm.class, nextId++, NetworkDirection.PLAY_TO_SERVER)
+                .encoder(MapEditPackets.MergeRealm::encode).decoder(MapEditPackets.MergeRealm::decode)
+                .consumerMainThread(MapEditPackets.MergeRealm::handle).add();
         CHANNEL.messageBuilder(fr.crusadecraft.network.packet.NamePackets.Rename.class, nextId++, NetworkDirection.PLAY_TO_SERVER)
                 .encoder(fr.crusadecraft.network.packet.NamePackets.Rename::encode).decoder(fr.crusadecraft.network.packet.NamePackets.Rename::decode)
                 .consumerMainThread(fr.crusadecraft.network.packet.NamePackets.Rename::handle).add();

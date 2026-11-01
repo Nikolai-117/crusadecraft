@@ -150,6 +150,7 @@ public final class ServerEvents {
         if (t % 20 == 11) perf("armees", () -> fr.crusadecraft.core.war.ArmyService.tick(server));
         if (t % 100 == 37) perf("ostes_ia", () -> fr.crusadecraft.core.war.HostService.tick(server));
         if (t % 100 == 63) perf("caravanes", () -> fr.crusadecraft.core.diplomacy.CaravanService.tick(server));
+        if (t % 400 == 151) perf("zones", () -> fr.crusadecraft.core.world.ZoneService.autoAttach(server));
         perf("dynmap", () -> fr.crusadecraft.compat.dynmap.DynmapBridge.tick(server, t));
         // Les terres des cartes du client (Xaero) : toutes les cinq secondes, seulement si elles ont changé.
         if (t % 100 == 60) perf("xaero", () -> fr.crusadecraft.core.world.TerritorySync.tick(server));

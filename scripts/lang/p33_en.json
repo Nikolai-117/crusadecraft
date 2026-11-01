@@ -1,0 +1,13 @@
+{
+  "crusadecraft.zone.adopted": "Your Throne stands in the zone of %s: this drawn realm is now yours, with its lands and cities.",
+  "crusadecraft.chronicle.adopted": "The realm takes over the lands and cities of %s.",
+  "crusadecraft.zone.merge.same": "A realm cannot merge with itself.",
+  "crusadecraft.zone.merge.done": "%s passes under %s.",
+  "crusadecraft.news.merge": "%1$s merges into %2$s.",
+  "crusadecraft.zone.merge.into": "Merge into: %s",
+  "crusadecraft.zone.merge.tip": "Pick the realm that absorbs this one (click, or Shift+click to go back), then OK twice: its cities, painted lands and treasury pass to the other.",
+  "crusadecraft.zone.merge.ok": "OK",
+  "crusadecraft.codex.zones": "Drawn zones and merges",
+  "crusadecraft.codex.zones.p0": "In the map editor, create a realm and paint its zone before anyone lives there. Then place your $(l)Throne$() in that zone: the drawn realm becomes $(l)yours$(), with its painted lands and its cities.$(br2)A new colony you found inside your realm's zone (painted or claimed) $(l)joins it on its own$().",
+  "crusadecraft.codex.zones.p1": "$(l)Merge$(): in the editor, pick a city of a computer realm, then \"Merge into\" and OK twice. Its cities, painted lands and treasury pass to the chosen realm, computer or player."
+}

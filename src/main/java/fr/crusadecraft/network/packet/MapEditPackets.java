@@ -104,6 +104,20 @@ public final class MapEditPackets {
         }
     }
 
+    /** P33 : un royaume de l'ordinateur passe sous un autre (fusion). */
+    public record MergeRealm(UUID from, UUID into) {
+        public static void encode(MergeRealm p, FriendlyByteBuf buf) {
+            buf.writeUUID(p.from);
+            buf.writeUUID(p.into);
+        }
+
+        public static MergeRealm decode(FriendlyByteBuf buf) { return new MergeRealm(buf.readUUID(), buf.readUUID()); }
+
+        public static void handle(MergeRealm p, Supplier<NetworkEvent.Context> ctx) {
+            run(ctx, pl -> fr.crusadecraft.core.world.ZoneService.merge(pl, p.from, p.into));
+        }
+    }
+
     public record CreateCity(UUID owner, String name, int size, int x, int z) {
         public static void encode(CreateCity p, FriendlyByteBuf buf) {
             buf.writeUUID(p.owner);

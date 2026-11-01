@@ -94,6 +94,9 @@ public final class RealmService {
                 currentDay(player.server));
         realm.setPrestige(CrusadeConfig.SERVER.startingPrestige.get());
         CrusadeSavedData.get(player.server).add(realm);
+        // P33 : un Trône posé dans la zone d'un royaume dessiné d'avance en fait le royaume du joueur.
+        fr.crusadecraft.core.world.ZoneService.adoptAtFounding(player.server, realm).ifPresent(drawn -> player.sendSystemMessage(
+                Component.translatable("crusadecraft.zone.adopted", fr.crusadecraft.core.world.AiNames.realm(drawn.rank(), drawn.place()))));
         fr.crusadecraft.core.intrigue.Chronicle.record(player.server, realm, "crusadecraft.chronicle.founded", Component.literal(player.getGameProfile().getName()),
                 Component.literal(name), Component.literal(fr.crusadecraft.compat.minecolonies.MineColoniesBridge.info(check.colony()).name()));
         CrusadeCraft.LOGGER.info("CrusadeCraft : {} fonde le royaume « {} » (capitale {})",

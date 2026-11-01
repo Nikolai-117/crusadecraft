@@ -115,6 +115,7 @@ public final class CrusadeConfig {
         public final ForgeConfigSpec.IntValue civQuarterDays;
         public final ForgeConfigSpec.IntValue civMaxVillages;
         public final ForgeConfigSpec.IntValue claimCommandRadius;
+        public final ForgeConfigSpec.BooleanValue coloniesJoinZone;
         public final ForgeConfigSpec.EnumValue<fr.crusadecraft.core.world.EntryTitles.Mode> entryMessages;
         public final ForgeConfigSpec.BooleanValue protection;
         public final ForgeConfigSpec.BooleanValue protectAiLand;
@@ -300,6 +301,8 @@ public final class CrusadeConfig {
             claimCaps = b.comment("Chunks qu'un royaume peut revendiquer à la main, selon son rang : baronnie, comté, duché, royaume, empire.",
                             "Les terres autour de ses villes et de ses constructions ne comptent pas.")
                     .defineList("plafondChunks", java.util.List.of(64, 160, 400, 1000, 2500), o -> o instanceof Integer i && i >= 0);
+            coloniesJoinZone = b.comment("Une colonie que le souverain fonde dans la zone de son royaume (terres peintes ou revendiquées) s'y rattache d'elle-même (P33).")
+                    .define("coloniesRejoignentZone", true);
             claimCommandRadius = b.comment("Rayon maximal de « /crusade claim <rayon> », en chunks (1 : un carré de 3 × 3).")
                     .defineInRange("rayonMaxClaim", 3, 0, 10);
             entryMessages = b.comment("À l'entrée sur des terres : un titre en grand, une ligne au-dessus de la barre d'objets, ou rien.")

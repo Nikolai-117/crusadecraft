@@ -871,3 +871,19 @@ Demandé par Romain (5 octobre) : « que ça fonctionne par chunk directement »
   la source au lieu de refuser. Les royaumes et villes de l'ordinateur restent réservés à l'éditeur de la carte.
 - Canal réseau en version 19. Vérifié dans le jeu de développement et sur la page Dynmap.
 
+**P33 (1er novembre 2026) — zones dessinées d'avance et fusions, version 3.2.0**
+
+- Demandé : « créer des royaumes, des zones préfaites, pour ensuite y mettre des colonies IA ou son propre royaume »,
+  et des fusions comme les nations de Towny ou Factions sur Dynmap.
+- **Reprendre un royaume dessiné** : à la fondation, si la capitale tombe dans les cases peintes d'un royaume posé à
+  la main, le nouveau royaume du joueur en reprend les terres peintes et les villes (tenues par lui, comme des villes
+  prises) ; le royaume dessiné reste sans terre, à l'écart, pour ne rien perdre de ses fiches. Le nom et la couleur
+  restent ceux de l'écran de fondation.
+- **Fusion** dans l'éditeur : un royaume de l'ordinateur passe sous un autre. Vers l'ordinateur, ses villes
+  déménagent (mêmes numéros) et il disparaît ; vers un joueur, ses villes lui sont tenues et il reste sans terre.
+  Trésor transféré, cases peintes repeintes, nouvelle dans le monde.
+- **Colonies qui rejoignent leur zone** : toutes les vingt secondes, une colonie MineColonies dont le souverain est
+  propriétaire, à personne encore, et dont le centre est sur les terres de son royaume (peintes ou revendiquées),
+  s'y rattache. Réglable.
+- Canal réseau en version 20.
+

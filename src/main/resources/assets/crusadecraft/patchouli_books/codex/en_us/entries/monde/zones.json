@@ -1,0 +1,16 @@
+{
+  "name": "crusadecraft.codex.zones",
+  "icon": "minecraft:map",
+  "category": "crusadecraft:monde",
+  "sortnum": 7,
+  "pages": [
+    {
+      "type": "patchouli:text",
+      "text": "crusadecraft.codex.zones.p0"
+    },
+    {
+      "type": "patchouli:text",
+      "text": "crusadecraft.codex.zones.p1"
+    }
+  ]
+}

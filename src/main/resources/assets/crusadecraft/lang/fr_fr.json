@@ -2249,5 +2249,16 @@
   "crusadecraft.name.city.tip": "Renommer la ville : la colonie MineColonies change de nom, et la carte suit.",
   "crusadecraft.codex.carte_fantasy": "La carte fantasy",
   "crusadecraft.codex.carte_fantasy.p0": "Sur Dynmap, chaque royaume a son $(l)nom écrit en grand$() au cœur de ses terres, et chaque ville son icône : un $(l)sceau doré$() pour une capitale, un point cerclé pour une ville, un point pour un village, une tour pour une place forte. Les noms des villes restent affichés ; ceux des villages et des petits lieux paraissent en zoomant.$(br2)Tout ce que tu poses ou peins (bâton de bornage, éditeur de la carte) paraît au rafraîchissement suivant.",
-  "crusadecraft.codex.carte_fantasy.p1": "$(l)Renommer$() : le bouton $(l)✎$() du menu royal pour ton royaume, celui de l'écran des Villes pour une ville (la colonie MineColonies change de nom aussi), ou l'écran des Lieux pour tout le reste. Par commande : $(l)/crusade renommer royaume <nom>$() et $(l)/crusade renommer ville <nom>$() (dans la ville)."
+  "crusadecraft.codex.carte_fantasy.p1": "$(l)Renommer$() : le bouton $(l)✎$() du menu royal pour ton royaume, celui de l'écran des Villes pour une ville (la colonie MineColonies change de nom aussi), ou l'écran des Lieux pour tout le reste. Par commande : $(l)/crusade renommer royaume <nom>$() et $(l)/crusade renommer ville <nom>$() (dans la ville).",
+  "crusadecraft.zone.adopted": "Ton Trône est posé dans la zone de %s : ce royaume dessiné est désormais le tien, avec ses terres et ses villes.",
+  "crusadecraft.chronicle.adopted": "Le royaume reprend les terres et les villes de %s.",
+  "crusadecraft.zone.merge.same": "Un royaume ne peut pas fusionner avec lui-même.",
+  "crusadecraft.zone.merge.done": "%s passe sous %s.",
+  "crusadecraft.news.merge": "%1$s se fond dans %2$s.",
+  "crusadecraft.zone.merge.into": "Fusionner dans : %s",
+  "crusadecraft.zone.merge.tip": "Choisir le royaume qui absorbe celui-ci (clic, ou Maj+clic pour revenir), puis OK deux fois : ses villes, ses terres peintes et son trésor passent à l'autre.",
+  "crusadecraft.zone.merge.ok": "OK",
+  "crusadecraft.codex.zones": "Zones dessinées et fusions",
+  "crusadecraft.codex.zones.p0": "Dans l'éditeur de la carte, crée un royaume et peins sa zone avant que personne n'y vive. Pose ensuite ton $(l)Trône$() dans cette zone : ce royaume dessiné devient $(l)le tien$(), avec ses terres peintes et ses villes.$(br2)Une nouvelle colonie que tu fondes dans la zone de ton royaume (peinte ou revendiquée) s'y $(l)rattache d'elle-même$().",
+  "crusadecraft.codex.zones.p1": "$(l)Fusionner$() : dans l'éditeur, choisis une ville d'un royaume de l'ordinateur, puis « Fusionner dans » et OK deux fois. Ses villes, ses terres peintes et son trésor passent au royaume choisi, de l'ordinateur ou de joueur."
 }

@@ -205,6 +205,20 @@ public final class MineColoniesBridge {
         }
     }
 
+    /** Les colonies d'un propriétaire dans ce monde, avec leur centre (P33 : celles qui rejoignent sa zone). */
+    public static java.util.Map<ColonyRef, BlockPos> coloniesOf(Level level, UUID owner) {
+        java.util.Map<ColonyRef, BlockPos> out = new java.util.LinkedHashMap<>();
+        if (broken || owner == null) return out;
+        try {
+            for (IColony c : IMinecoloniesAPI.getInstance().getColonyManager().getColonies(level)) {
+                if (owner.equals(c.getPermissions().getOwner())) out.put(refOf(c), c.getCenter());
+            }
+        } catch (LinkageError e) {
+            breakBridge(e);
+        }
+        return out;
+    }
+
     /** Centre (x, z) de chaque colonie d'une dimension : les sièges des royaumes IA s'en tiennent à l'écart. */
     public static List<int[]> colonyCenters(Level level) {
         List<int[]> out = new ArrayList<>();
