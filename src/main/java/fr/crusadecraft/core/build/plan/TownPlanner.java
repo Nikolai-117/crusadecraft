@@ -84,54 +84,42 @@ public final class TownPlanner {
         Set<String> used = new HashSet<>();
         List<TownLayout.Box> boxes = new ArrayList<>();
         List<String> refs = new ArrayList<>();
-        TownLayout.Box plaza = null;
-        String plazaRef = null;
         List<TownSize.Role> program = new ArrayList<>(size.program());
+        List<TownSize.Role> roles = new ArrayList<>();
         if (size.hasCenter()) {
             Optional<Plan> hall = pick(pack.get(), entries, TownSize.Role.TOWNHALL, size.level(), random, used);
             if (hall.isEmpty()) return Optional.empty();
             boxes.add(box(hall.get()));
             refs.add(hall.get().ref().encode());
-            if (program.remove(TownSize.Role.PLAZA)) {
-                Optional<Plan> p = pick(pack.get(), entries, TownSize.Role.PLAZA, size.level(), random, used);
-                if (p.isPresent()) {
-                    plaza = box(p.get());
-                    plazaRef = p.get().ref().encode();
-                }
-            }
+            roles.add(TownSize.Role.TOWNHALL);
         }
-        List<TownLayout.Box> others = new ArrayList<>();
-        List<String> otherRefs = new ArrayList<>();
         for (TownSize.Role role : program) {
-            Optional<Plan> p = pick(pack.get(), entries, role, size.level() - (role == TownSize.Role.HOUSE ? random.nextInt(2) : 0), random, used);
+            int level = size.level() - (role == TownSize.Role.HOUSE ? random.nextInt(2) : 0);
+            Optional<Plan> p = pick(pack.get(), entries, role, level, random, used);
             if (p.isEmpty()) continue;
-            others.add(box(p.get()));
-            otherRefs.add(p.get().ref().encode());
+            boxes.add(box(p.get()));
+            refs.add(p.get().ref().encode());
+            roles.add(role);
         }
-        if (boxes.isEmpty()) {
-            if (others.isEmpty()) return Optional.empty();
-            boxes.add(others.remove(0));
-            refs.add(otherRefs.remove(0));
-        }
-        List<TownLayout.Spot> spots = TownLayout.arrange(boxes.get(0), plaza, others, seed);
-        List<TownLayout.Box> all = new ArrayList<>(boxes);
-        List<String> allRefs = new ArrayList<>(refs);
-        if (plaza != null) {
-            all.add(plaza);
-            allRefs.add(plazaRef);
-        }
-        all.addAll(others);
-        allRefs.addAll(otherRefs);
+        if (boxes.isEmpty()) return Optional.empty();
+        TownLayout.Pattern pattern = size.hasCenter() ? style.pattern() : TownLayout.Pattern.RUE;
+        TownLayout.Layout layout = TownLayout.plan(pattern, boxes, roles, style.walled(size), seed);
         List<TownPlan.Piece> pieces = new ArrayList<>();
-        for (int i = 0; i < all.size(); i++) {
-            TownLayout.Spot s = spots.get(i);
-            if (s != null) pieces.add(new TownPlan.Piece(allRefs.get(i), s.x(), s.z(), s.rotation().ordinal(), 0));
+        for (int i = 0; i < boxes.size(); i++) {
+            TownLayout.Spot s = layout.spots().get(i);
+            if (s != null) pieces.add(new TownPlan.Piece(refs.get(i), s.x(), s.z(), s.rotation().ordinal(), 0));
         }
-        List<int[]> cells = TownLayout.streets(all, spots);
-        long[] streets = new long[cells.size()];
-        for (int i = 0; i < streets.length; i++) streets[i] = ((long) cells.get(i)[0] << 32) | (cells.get(i)[1] & 0xFFFFFFFFL);
-        CrusadeCraft.LOGGER.info("CrusadeCraft : ville {} ({}) dressée avec {} bâtiments du pack {}", size, style, pieces.size(), pack.get());
-        return Optional.of(new TownPlan(style.name(), size, pieces, streets, TownLayout.extent(all, spots)));
+        TownPlan town = new TownPlan(style.name(), size, pieces, pack(layout.streets()), layout.extent());
+        town.setWalls(pack(layout.walls()));
+        CrusadeCraft.LOGGER.info("CrusadeCraft : ville {} ({}, plan {}) dressée avec {} bâtiments sur {} du pack {}", size, style, pattern,
+                pieces.size(), boxes.size(), pack.get());
+        return Optional.of(town);
+    }
+
+    private static long[] pack(List<int[]> cells) {
+        long[] out = new long[cells.size()];
+        for (int i = 0; i < out.length; i++) out[i] = ((long) cells.get(i)[0] << 32) | (cells.get(i)[1] & 0xFFFFFFFFL);
+        return out;
     }
 
     static TownLayout.Box box(Plan p) {
@@ -206,7 +194,13 @@ public final class TownPlanner {
             int x = (int) (streets[i] >> 32), z = (int) streets[i];
             ys[i] = surface(level, anchor.getX() + x, anchor.getZ() + z) - anchor.getY();
         }
-        town.setSurvey(ys);
+        long[] walls = town.walls();
+        int[] wy = new int[walls.length];
+        for (int i = 0; i < walls.length; i++) {
+            int x = (int) (walls[i] >> 32), z = (int) walls[i];
+            wy[i] = surface(level, anchor.getX() + x, anchor.getZ() + z) - anchor.getY();
+        }
+        town.setSurvey(ys, wy);
     }
 
     /**
@@ -227,7 +221,9 @@ public final class TownPlanner {
                 out.add(new Blueprints.Placement(piece.dx() + xz[0], p.y() + piece.dy(), piece.dz() + xz[1], p.state().rotate(rot), p.foundation(), p.tag()));
             }
         }
-        BlockState street = NationStyle.byName(town.style(), NationStyle.EUROPEENNE).street();
+        NationStyle style = NationStyle.byName(town.style(), NationStyle.EUROPEENNE);
+        walls(town, style, out);
+        BlockState street = style.street();
         long[] streets = town.streets();
         int[] ys = town.streetY();
         for (int i = 0; i < streets.length && i < ys.length; i++) {
@@ -237,6 +233,27 @@ public final class TownPlanner {
             out.add(new Blueprints.Placement(x, ys[i] + 2, z, Blocks.AIR.defaultBlockState(), false));
         }
         return out;
+    }
+
+    /**
+     * L'enceinte : sur chaque case, une colonne de la matière du style posée sur le sol (le terrain comblé dessous),
+     * un créneau sur une case sur deux pour les murs de pierre, une levée enherbée pour le rempart viking.
+     */
+    static void walls(TownPlan town, NationStyle style, List<Blueprints.Placement> out) {
+        long[] walls = town.walls();
+        int[] ys = town.wallY();
+        BlockState wall = style.wall();
+        int h = style.wallHeight();
+        boolean earth = style == NationStyle.NORDIQUE;
+        for (int i = 0; i < walls.length && i < ys.length; i++) {
+            int x = (int) (walls[i] >> 32), z = (int) walls[i];
+            out.add(new Blueprints.Placement(x, ys[i], z, wall, true));
+            for (int y = 1; y <= h; y++) {
+                BlockState st = earth && y == h ? Blocks.GRASS_BLOCK.defaultBlockState() : wall;
+                out.add(new Blueprints.Placement(x, ys[i] + y, z, st, false));
+            }
+            if (!earth && Math.floorMod(x + z, 2) == 0) out.add(new Blueprints.Placement(x, ys[i] + h + 1, z, wall, false));
+        }
     }
 
     /** Pour les journaux : les plans d'une ville, en clair. */

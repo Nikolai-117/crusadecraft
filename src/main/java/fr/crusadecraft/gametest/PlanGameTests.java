@@ -251,20 +251,25 @@ public final class PlanGameTests {
             var out = SiteService.buildTown(w.ruler, city.id());
             w.check(out.success(), "ville refusée : " + out.message().getString());
             Site site = SiteService.townOf(server, city.id()).orElseThrow();
+            // Des sondes sur toute l'emprise, du sous-sol au toit : ce qui change, puis ce qui revient.
             List<BlockPos> probes = new ArrayList<>();
             List<BlockState> before = new ArrayList<>();
-            for (int dx = -12; dx <= 12; dx += 6) {
-                for (int dz = -12; dz <= 12; dz += 6) {
-                    BlockPos p = ground(level, seat.getX() + dx, seat.getZ() + dz).above(2);
-                    probes.add(p);
-                    before.add(level.getBlockState(p));
+            int half = Math.min(60, site.town().extent() / 2);
+            for (int dx = -half; dx <= half; dx += 3) {
+                for (int dz = -half; dz <= half; dz += 3) {
+                    BlockPos g = ground(level, seat.getX() + dx, seat.getZ() + dz);
+                    for (int dy = -1; dy <= 7; dy += 2) {
+                        probes.add(g.above(dy));
+                        before.add(level.getBlockState(g.above(dy)));
+                    }
                 }
             }
             for (int i = 0; i < 400 && !site.built(); i++) SiteService.advanceForTests(level, site, 20_000);
             w.check(site.built(), "la ville n'est pas achevée");
             int changed = 0;
             for (int i = 0; i < probes.size(); i++) if (!level.getBlockState(probes.get(i)).equals(before.get(i))) changed++;
-            w.check(changed >= 3, "la ville n'a presque rien changé autour de son siège (" + changed + ")");
+            w.check(changed >= 30, "la ville n'a presque rien changé sur son emprise (" + changed + " sondes sur " + probes.size() + ")");
+            w.check(Journals.journal(server, site.id(), level.dimension().location()).size() > 1000, "le journal de la ville est presque vide");
             w.check(site.community() != null && !data.lineage().residents(site.community()).isEmpty(), "la ville n'a pas d'habitants au registre");
             w.check(SiteService.buildTown(w.ruler, city.id()).success() == false, "une ville se bâtit deux fois");
 
@@ -330,6 +335,33 @@ public final class PlanGameTests {
                 w.check(level.getBlockState(probes.get(i)).equals(before.get(i)), "le terrain n'est pas revenu en " + probes.get(i).toShortString());
             }
             w.check(!PlanTool.undoLast(w.ruler).success(), "une pose se défait deux fois");
+
+            // Une ville entière posée à l'outil sur une terre libre : une nation nouvelle, sur la carte, qui se défait.
+            var data = CrusadeSavedData.get(server);
+            data.world().clear();
+            data.world().markGenerated(RealmService.currentDay(server));
+            String townRef = PlanTool.townRef(NationStyle.EUROPEENNE, TownSize.HAMEAU);
+            w.check(PlanTool.towns().stream().anyMatch(e -> e.ref().equals(townRef)), "pas de hameau européen au catalogue");
+            w.check(PlanTool.choose(w.ruler, townRef).success(), "le hameau n'est pas choisi");
+            BlockPos townAt = ground(level, w.center.getX() + 3600, w.center.getZ() - 3600);
+            PlanTool.paste(w.ruler, w.ruler.getMainHandItem(), townAt);
+            Site townSite = data.world().sites().stream().filter(s -> s.town() != null).findFirst().orElse(null);
+            w.check(townSite != null, "la ville posée n'est pas une ville du monde");
+            AiRealm nation = data.world().realm(townSite.owner()).orElse(null);
+            w.check(nation != null && nation.style() == NationStyle.EUROPEENNE, "la ville posée sur une terre libre ne fonde pas de nation de son style");
+            w.check(nation.provinces().stream().anyMatch(p -> p.id() == townSite.province()), "la ville posée n'est pas sur la carte");
+            for (int i = 0; i < 400; i++) Journals.tick(server);
+            int journal = Journals.journal(server, townSite.id(), level.dimension().location()).size();
+            w.check(journal > 500, "la ville posée n'a presque rien bâti (" + journal + ")");
+            w.check(SiteService.undoTown(w.ruler, townSite.id()).success(), "la ville posée ne se défait pas");
+            for (int i = 0; i < 2000 && Journals.undoing(server, townSite.id()); i++) Journals.tick(server);
+            w.check(!Journals.undoing(server, townSite.id()), "la ville posée ne finit pas de se défaire");
+            for (var person : new ArrayList<>(data.lineage().persons())) {
+                var e = level.getEntity(person.id());
+                if (e != null) e.discard();
+            }
+            data.lineage().clear();
+            data.world().clear();
             h.succeed();
         } finally {
             WorldEditService.grantForTests(w.ruler.getUUID(), false);

@@ -560,6 +560,76 @@ public final class SiteService {
         return Outcome.ok(Component.translatable("crusadecraft.town.undone", site.get().name()));
     }
 
+    /** Couleurs des nations fondées au plan d'architecte : des teintes d'armoiries, tirées du nom. */
+    private static final int[] TOOL_COLORS = {0x8C2A2A, 0x2A4C8C, 0x2E7D32, 0x7B2D8B, 0xB07A1E, 0x1E7B7B, 0x5B3F8C, 0x8C5A2A};
+
+    /**
+     * P34 : une ville entière posée au plan d'architecte devient une ville du monde. Elle appartient au royaume sur les
+     * terres duquel on la pose ; sur une terre libre, elle fonde une nation de son style dont elle est la capitale. Sa
+     * construction porte l'identifiant de la pose : « Défaire la ville » rend le terrain comme pour les autres.
+     */
+    public static Component registerToolTown(ServerPlayer player, UUID id, BlockPos ground, fr.crusadecraft.core.build.plan.NationStyle style,
+                                             fr.crusadecraft.core.build.plan.TownSize size, fr.crusadecraft.core.build.plan.TownPlan town) {
+        MinecraftServer server = player.server;
+        ServerLevel level = player.serverLevel();
+        CrusadeSavedData data = data(server);
+        long today = RealmService.currentDay(server);
+        String name = new LineageGenerator(ground.asLong() ^ today).placeName();
+        WorldEditService.CitySize citySize = switch (size) {
+            case HAMEAU, QUARTIER -> WorldEditService.CitySize.HAMEAU;
+            case BOURG -> WorldEditService.CitySize.BOURG;
+            default -> WorldEditService.CitySize.VILLE;
+        };
+        Optional<UUID> land = Territory.ownerAt(server, level.dimension().location(), ground.getX() + 0.5, ground.getZ() + 0.5);
+        Optional<AiProvince> city = land.flatMap(o -> WorldEditService.addCity(server, level, o, name, citySize, ground.getX(), ground.getZ()));
+        UUID owner;
+        int color;
+        boolean founded = false;
+        if (city.isPresent()) {
+            owner = land.get();
+            color = data.world().realm(owner).map(AiRealm::color).orElseGet(() -> data.realm(owner).map(Realm::color).orElse(0x7B2D8B));
+        } else {
+            fr.crusadecraft.core.realm.TitleRank rank = switch (size) {
+                case CAPITALE -> fr.crusadecraft.core.realm.TitleRank.ROYAUME;
+                case VILLE -> fr.crusadecraft.core.realm.TitleRank.DUCHE;
+                case BOURG -> fr.crusadecraft.core.realm.TitleRank.COMTE;
+                default -> fr.crusadecraft.core.realm.TitleRank.BARONNIE;
+            };
+            color = TOOL_COLORS[Math.floorMod(name.hashCode(), TOOL_COLORS.length)];
+            AiRealm realm = WorldEditService.addRealm(server, level, name, "", rank, color, fr.crusadecraft.core.world.AiFaith.FIDELE,
+                    fr.crusadecraft.core.world.AiPersonality.OPPORTUNISTE, ground.getX(), ground.getZ());
+            realm.setStyle(style);
+            realm.discover(player.getUUID(), today);
+            owner = realm.id();
+            city = Optional.ofNullable(realm.capital());
+            founded = true;
+        }
+        if (city.isEmpty()) return Component.translatable("crusadecraft.plan.town.no_city");
+        Site site = new Site(id, SiteKind.VILLAGE, city.get().name(), owner, level.dimension().location(), ground, Direction.SOUTH, color, true, today);
+        site.setProvince(city.get().id());
+        site.setTown(town);
+        site.setBuilt(true);
+        Community c = new LineageGenerator(ground.asLong() * 31 + today).community(data.lineage(), city.get().name(), CommunityKind.VILLAGE, owner,
+                size.families());
+        site.setCommunity(c.id());
+        data.world().add(site);
+        data.setDirty();
+        CrusadeCraft.LOGGER.info("CrusadeCraft : ville {} posée au plan d'architecte en {} ({})", city.get().name(), ground, founded ? "nouvelle nation" : owner);
+        return founded ? Component.translatable("crusadecraft.plan.town.founded", city.get().name(), Component.translatable(style.key()))
+                : Component.translatable("crusadecraft.plan.town.joined", city.get().name(), fr.crusadecraft.core.diplomacy.DiplomacyService.name(server, owner));
+    }
+
+    /** Une pose du plan d'architecte s'achève : si c'est une ville du monde, ses habitants arrivent. */
+    public static void onPasted(MinecraftServer server, UUID id) {
+        data(server).world().site(id).ifPresent(site -> {
+            if (site.community() == null) return;
+            ServerLevel level = server.getLevel(ResourceKey.create(Registries.DIMENSION, site.dimension()));
+            if (level == null) return;
+            var state = data(server).lineage();
+            state.community(site.community()).ifPresent(c -> LineageService.spawnPeople(level, state, state.residents(c.id()), site.anchor().above()));
+        });
+    }
+
     /** Les habitants d'une construction et leur communauté quittent le registre (et le monde). */
     private static void forgetPeople(MinecraftServer server, Site site) {
         if (site.community() == null) return;

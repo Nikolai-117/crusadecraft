@@ -2299,9 +2299,9 @@
   "crusadecraft.plan.folder": "Tes fichiers .nbt et .schem : %s",
   "crusadecraft.plan.town_name": "Ville de style %s — %s",
   "crusadecraft.plan.tooltip.size": "%s × %s × %s blocs",
-  "crusadecraft.plan.tooltip.none": "Aucun plan choisi : clic droit dans le vide pour ouvrir le catalogue.",
-  "crusadecraft.plan.tooltip.1": "Clic droit dans le vide : le catalogue",
-  "crusadecraft.plan.tooltip.2": "Clic droit sur un bloc : poser, le sol au niveau du bloc",
+  "crusadecraft.plan.tooltip.none": "Aucun plan choisi : clic droit pour ouvrir le catalogue.",
+  "crusadecraft.plan.tooltip.1": "Clic droit vers le ciel : le catalogue",
+  "crusadecraft.plan.tooltip.2": "Clic droit sur un bloc, même au loin : poser là",
   "crusadecraft.plan.tooltip.3": "Accroupi + clic droit : tourner d'un quart de tour",
   "crusadecraft.plan.denied": "Le plan d'architecte est réservé au mode créatif et à l'éditeur de la carte.",
   "crusadecraft.plan.not_held": "Prends le plan d'architecte en main.",
@@ -2314,7 +2314,10 @@
   "crusadecraft.plan.undone": "Ta dernière pose se défait, bloc par bloc.",
   "crusadecraft.plan.nothing_to_undo": "Rien à défaire.",
   "crusadecraft.codex.plans": "Villes bâties et plan d'architecte",
-  "crusadecraft.codex.plans.p0": "Chaque royaume de l'ordinateur a un $(l)style$() : européen, chinois, japonais, égyptien, romain ou nordique. Ses bâtiments viennent des packs de MineColonies et de Byzantine installés, lus pendant le jeu.$(br2)Dans l'éditeur de la carte : « Style » sur le royaume, puis « $(l)Bâtir la ville$() » sur une de ses villes.",
+  "crusadecraft.codex.plans.p0": "Chaque royaume de l'ordinateur a un $(l)style$(), et ses villes suivent l'urbanisme de leur civilisation : forum et damier romains, palais tourné au sud et ruelles chinoises, avenue Suzaku japonaise, axe processionnel égyptien, forteresse ronde viking, place du marché européenne.$(br2)Dans l'éditeur de la carte : « Style » sur le royaume, puis « $(l)Bâtir la ville$() ».",
   "crusadecraft.codex.plans.p1": "La ville s'élève d'un coup : hôtel de ville, place, maisons, taverne, fermes… selon sa population, avec ses rues et ses habitants. « $(l)Défaire la ville$() » rend le terrain bloc par bloc.$(br2)Réglage $(l)villesIA$() : les villes de l'ordinateur prennent corps quand on s'en approche (coupé par défaut).",
-  "crusadecraft.codex.plans.p2": "Le $(l)plan d'architecte$() (créatif) : clic droit dans le vide pour le catalogue (villes entières, packs de style, tes fichiers .nbt et .schem), clic droit sur un bloc pour poser, accroupi pour tourner.$(br2)$(l)/crusade plan annuler$() défait la dernière pose."
+  "crusadecraft.codex.plans.p2": "Le $(l)plan d'architecte$() (créatif) : clic droit vers le ciel pour le catalogue (villes entières, packs de style, tes fichiers .nbt et .schem), clic droit sur un bloc, même au loin, pour poser, accroupi pour tourner. Une ville entière posée devient une ville du monde (une nation nouvelle sur une terre libre).$(br2)$(l)/crusade plan annuler$() défait la dernière pose.",
+  "crusadecraft.plan.town.founded": "%s est fondée : une nouvelle nation de style %s, dont elle est la capitale. Elle est sur la carte, et ses habitants arrivent quand la pose s'achève.",
+  "crusadecraft.plan.town.joined": "%s rejoint %s : elle est sur la carte, et ses habitants arrivent quand la pose s'achève.",
+  "crusadecraft.plan.town.no_city": "La ville est posée, mais elle n'a pas pu être inscrite sur la carte."
 }

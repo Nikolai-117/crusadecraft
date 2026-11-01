@@ -85,37 +85,86 @@ class PlanLogicTest {
         assertFalse(TownSize.QUARTIER.hasCenter());
     }
 
+    /** Une ville de taille « ville » : hôtel de ville, place, huit maisons, taverne, deux fermes, marché, temple, caserne, tour. */
+    private static List<TownSize.Role> roles() {
+        List<TownSize.Role> roles = new ArrayList<>();
+        roles.add(TownSize.Role.TOWNHALL);
+        roles.addAll(TownSize.VILLE.program());
+        return roles;
+    }
+
+    private static List<TownLayout.Box> boxes(List<TownSize.Role> roles) {
+        List<TownLayout.Box> out = new ArrayList<>();
+        for (int i = 0; i < roles.size(); i++) {
+            out.add(switch (roles.get(i)) {
+                case TOWNHALL -> new TownLayout.Box(27, 21);
+                case PLAZA -> new TownLayout.Box(9, 9);
+                case CHURCH, BARRACKS -> new TownLayout.Box(19, 25);
+                default -> new TownLayout.Box(9 + i % 4 * 3, 9 + i % 3 * 4);
+            });
+        }
+        return out;
+    }
+
     @Test
-    void lesBatimentsNeSeChevauchentPas() {
-        TownLayout.Box hall = new TownLayout.Box(27, 21), plaza = new TownLayout.Box(9, 9);
-        List<TownLayout.Box> others = new ArrayList<>();
-        for (int i = 0; i < 12; i++) others.add(new TownLayout.Box(11 + i % 4 * 3, 9 + i % 3 * 4));
-        List<TownLayout.Spot> spots = TownLayout.arrange(hall, plaza, others, 7);
-        List<TownLayout.Box> all = new ArrayList<>();
-        all.add(hall);
-        all.add(plaza);
-        all.addAll(others);
-        assertEquals(all.size(), spots.size());
-        for (int i = 0; i < all.size(); i++) {
-            assertNotNull(spots.get(i), "bâtiment " + i + " sans place");
-            TownLayout.Rect a = TownLayout.rect(all.get(i), spots.get(i));
-            for (int j = i + 1; j < all.size(); j++) {
-                TownLayout.Rect b = TownLayout.rect(all.get(j), spots.get(j));
-                assertFalse(a.overlaps(b, TownLayout.STREET - 1), "bâtiments " + i + " et " + j + " trop proches");
+    void chaquePlanHistoriqueTientDebout() {
+        List<TownSize.Role> roles = roles();
+        List<TownLayout.Box> all = boxes(roles);
+        for (TownLayout.Pattern pattern : TownLayout.Pattern.values()) {
+            boolean walled = pattern != TownLayout.Pattern.JOBO && pattern != TownLayout.Pattern.RUE;
+            TownLayout.Layout layout = TownLayout.plan(pattern, all, roles, walled, 7);
+            List<TownLayout.Spot> spots = layout.spots();
+            assertEquals(all.size(), spots.size());
+            List<TownLayout.Rect> rects = new ArrayList<>();
+            for (int i = 0; i < all.size(); i++) {
+                assertNotNull(spots.get(i), pattern + " : bâtiment " + i + " (" + roles.get(i) + ") sans place");
+                rects.add(TownLayout.rect(all.get(i), spots.get(i)));
+            }
+            for (int i = 0; i < rects.size(); i++) {
+                for (int j = i + 1; j < rects.size(); j++) {
+                    assertFalse(rects.get(i).overlaps(rects.get(j), 0), pattern + " : bâtiments " + i + " et " + j + " se chevauchent");
+                }
+            }
+            int half = layout.extent() / 2;
+            for (int[] c : layout.streets()) {
+                for (TownLayout.Rect r : rects) assertFalse(r.contains(c[0], c[1]), pattern + " : rue sous un bâtiment");
+                assertTrue(Math.abs(c[0]) <= half && Math.abs(c[1]) <= half, pattern + " : rue hors de l'emprise");
+            }
+            for (int[] c : layout.walls()) for (TownLayout.Rect r : rects) assertFalse(r.contains(c[0], c[1]), pattern + " : mur sous un bâtiment");
+            assertEquals(walled, !layout.walls().isEmpty(), pattern + " : enceinte");
+            // Les portes : l'enceinte s'ouvre là où les grandes rues la traversent.
+            if (walled && pattern != TownLayout.Pattern.TRELLEBORG) {
+                for (int[] c : layout.walls()) assertFalse(c[0] == 0 || c[1] == 0, pattern + " : pas de porte sur un axe");
             }
         }
-        // Chaque bâtiment autour tourne son entrée vers le centre.
-        for (int i = 2; i < all.size(); i++) {
-            TownLayout.Spot s = spots.get(i);
-            int[] f = PlanBuilder.turn(0, 1, s.rotation());
-            assertTrue(f[0] * -s.x() + f[1] * -s.z() > 0, "bâtiment " + i + " tourne le dos au centre");
+    }
+
+    @Test
+    void lesPlansSuiventLesTextes() {
+        List<TownSize.Role> roles = roles();
+        List<TownLayout.Box> all = boxes(roles);
+        int church = roles.indexOf(TownSize.Role.CHURCH), market = roles.indexOf(TownSize.Role.MARKET);
+        // Kaogong ji : le palais regarde le sud, le marché est derrière lui, le temple des ancêtres à l'est.
+        TownLayout.Layout k = TownLayout.plan(TownLayout.Pattern.KAOGONG, all, roles, true, 7);
+        assertEquals(Rotation.NONE, k.spots().get(0).rotation());
+        assertTrue(k.spots().get(market).z() < k.spots().get(0).z(), "le marché n'est pas derrière le palais");
+        assertTrue(k.spots().get(church).x() > 0, "le temple des ancêtres n'est pas à l'est");
+        for (int i = 0; i < roles.size(); i++) {
+            if (roles.get(i) == TownSize.Role.HOUSE) assertEquals(Rotation.NONE, k.spots().get(i).rotation(), "une maison ne regarde pas le sud");
         }
-        // Les rues ne passent sous aucun bâtiment, et la ville tient dans son emprise.
-        int extent = TownLayout.extent(all, spots);
-        for (int[] c : TownLayout.streets(all, spots)) {
-            for (int i = 0; i < all.size(); i++) assertFalse(TownLayout.rect(all.get(i), spots.get(i)).contains(c[0], c[1]), "rue sous un bâtiment");
-            assertTrue(Math.abs(c[0]) <= extent / 2 + 2 && Math.abs(c[1]) <= extent / 2 + 2, "rue hors de l'emprise");
-        }
+        // Heian-kyō : le palais au nord, sans muraille.
+        TownLayout.Layout j = TownLayout.plan(TownLayout.Pattern.JOBO, all, roles, false, 7);
+        for (int i = 1; i < roles.size(); i++) assertTrue(j.spots().get(i).z() > j.spots().get(0).z(), "un bâtiment est au nord du palais");
+        // Castrum : le forum au croisement, la basilique au nord, le temple au sud.
+        TownLayout.Layout c = TownLayout.plan(TownLayout.Pattern.CASTRUM, all, roles, true, 7);
+        int plaza = roles.indexOf(TownSize.Role.PLAZA);
+        assertEquals(0, c.spots().get(plaza).x());
+        assertEquals(0, c.spots().get(plaza).z());
+        assertTrue(c.spots().get(0).z() < 0 && c.spots().get(church).z() > 0, "basilique et temple mal placés");
+        // Kahun : le palais à l'ouest regarde l'est, le temple au bout de l'axe à l'est.
+        TownLayout.Layout e = TownLayout.plan(TownLayout.Pattern.KAHUN, all, roles, true, 7);
+        assertEquals(Rotation.COUNTERCLOCKWISE_90, e.spots().get(0).rotation());
+        assertTrue(e.spots().get(church).x() > e.spots().get(0).x(), "le temple n'est pas à l'est du palais");
     }
 
     @Test

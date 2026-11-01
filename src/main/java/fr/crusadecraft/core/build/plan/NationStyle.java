@@ -42,6 +42,44 @@ public enum NationStyle {
         };
     }
 
+    /** Le plan de ses villes, d'après l'urbanisme attesté de la civilisation (voir {@link TownLayout}). */
+    public TownLayout.Pattern pattern() {
+        return switch (this) {
+            case EUROPEENNE -> TownLayout.Pattern.MARCHE;
+            case CHINOISE -> TownLayout.Pattern.KAOGONG;
+            case JAPONAISE -> TownLayout.Pattern.JOBO;
+            case EGYPTIENNE -> TownLayout.Pattern.KAHUN;
+            case ROMAINE -> TownLayout.Pattern.CASTRUM;
+            case NORDIQUE -> TownLayout.Pattern.TRELLEBORG;
+        };
+    }
+
+    /**
+     * Une enceinte autour de ses villes de cette taille ? Jamais autour d'un hameau ; jamais à la japonaise
+     * (Heian-kyō n'avait pas de muraille continue) ; le bourg médiéval ne s'entoure de murs qu'une fois ville.
+     */
+    public boolean walled(TownSize size) {
+        if (size == TownSize.HAMEAU || size == TownSize.QUARTIER || this == JAPONAISE) return false;
+        if (this == EUROPEENNE) return size == TownSize.VILLE || size == TownSize.CAPITALE;
+        return true;
+    }
+
+    /** La matière de l'enceinte : pierre, briques grises, briques crues du Nil, levée de terre viking. */
+    public BlockState wall() {
+        return switch (this) {
+            case EUROPEENNE -> Blocks.COBBLESTONE.defaultBlockState();
+            case CHINOISE -> Blocks.DEEPSLATE_BRICKS.defaultBlockState();
+            case EGYPTIENNE -> Blocks.MUD_BRICKS.defaultBlockState();
+            case NORDIQUE -> Blocks.DIRT.defaultBlockState();
+            default -> Blocks.STONE_BRICKS.defaultBlockState();
+        };
+    }
+
+    /** Hauteur de l'enceinte : la levée de terre est basse, les murs de pierre ont des créneaux en plus. */
+    public int wallHeight() {
+        return this == NORDIQUE ? 3 : this == EGYPTIENNE ? 4 : 5;
+    }
+
     public String key() {
         return "crusadecraft.style." + name().toLowerCase(Locale.ROOT);
     }

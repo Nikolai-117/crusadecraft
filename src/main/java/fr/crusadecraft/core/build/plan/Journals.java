@@ -188,6 +188,7 @@ public final class Journals extends SavedData {
                 PLACEMENTS.remove(job.id);
                 ServerPlayer p = job.player == null ? null : server.getPlayerList().getPlayer(job.player);
                 if (p != null) p.sendSystemMessage(Component.translatable("crusadecraft.plan.done", job.name));
+                if (job.town != null) fr.crusadecraft.core.build.SiteService.onPasted(server, job.id);
                 CrusadeCraft.LOGGER.info("CrusadeCraft : plan {} posé en {} ({} étapes)", job.name, job.anchor, plan.size());
             }
         }

@@ -30,9 +30,12 @@ public final class PlanPreview {
         Minecraft mc = Minecraft.getInstance();
         if (mc.player == null || mc.level == null) return;
         ItemStack tool = PlanItem.held(mc.player).orElse(ItemStack.EMPTY);
-        if (tool.isEmpty() || !(mc.hitResult instanceof BlockHitResult hit) || hit.getType() != HitResult.Type.BLOCK) return;
+        if (tool.isEmpty()) return;
         Optional<PlanItem.Choice> c = PlanItem.choice(tool);
         if (c.isEmpty() || c.get().sizeX() <= 0) return;
+        Optional<BlockHitResult> aimed = PlanItem.aim(mc.player);
+        if (aimed.isEmpty()) return;
+        BlockHitResult hit = aimed.get();
         PlanItem.Choice choice = c.get();
         BlockPos ground = hit.getBlockPos();
         int[] box = bounds(choice.sizeX(), choice.sizeZ(), choice.rotation());

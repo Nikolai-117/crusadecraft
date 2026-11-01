@@ -43,6 +43,9 @@ public final class TownPlan {
     private final List<Piece> pieces;
     private final long[] streets;
     private int[] streetY;
+    /** L'enceinte, cases (x, z) relatives au centre, et la hauteur du sol sous chacune. */
+    private long[] walls = new long[0];
+    private int[] wallY = new int[0];
     private final int extent;
     private boolean surveyed;
     private int total;
@@ -61,14 +64,18 @@ public final class TownPlan {
     public List<Piece> pieces() { return pieces; }
     public long[] streets() { return streets; }
     public int[] streetY() { return streetY; }
+    public long[] walls() { return walls; }
+    public int[] wallY() { return wallY; }
+    public void setWalls(long[] walls) { this.walls = walls; }
     public int extent() { return extent; }
     public boolean surveyed() { return surveyed; }
     /** Étapes du chantier, connues une fois le plan dressé (0 avant). */
     public int total() { return total; }
     public void setTotal(int total) { this.total = total; }
 
-    void setSurvey(int[] streetY) {
+    void setSurvey(int[] streetY, int[] wallY) {
         this.streetY = streetY;
+        this.wallY = wallY;
         this.surveyed = true;
     }
 
@@ -89,6 +96,8 @@ public final class TownPlan {
         t.put("pieces", p);
         t.putLongArray("streets", streets);
         t.putIntArray("streetY", streetY);
+        t.putLongArray("walls", walls);
+        t.putIntArray("wallY", wallY);
         t.putInt("extent", extent);
         t.putBoolean("surveyed", surveyed);
         t.putInt("total", total);
@@ -110,6 +119,8 @@ public final class TownPlan {
         }
         TownPlan plan = new TownPlan(t.getString("style"), size, pieces, t.getLongArray("streets"), t.getInt("extent"));
         plan.streetY = t.getIntArray("streetY");
+        plan.walls = t.getLongArray("walls");
+        plan.wallY = t.getIntArray("wallY");
         plan.surveyed = t.getBoolean("surveyed");
         plan.total = t.getInt("total");
         return plan;

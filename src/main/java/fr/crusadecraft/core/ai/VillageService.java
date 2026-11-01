@@ -132,9 +132,12 @@ public final class VillageService {
         // P34 : avec un pack de son style, le hameau est bâti d'après ses plans (hôtel de ville, maisons, ferme).
         Optional<fr.crusadecraft.core.build.plan.TownPlan> town = fr.crusadecraft.core.build.plan.TownPlanner.plan(ai.style(),
                 fr.crusadecraft.core.build.plan.TownSize.HAMEAU, ((long) x << 32) ^ z ^ ai.id().getMostSignificantBits());
-        Optional<BlockPos> ground = town.isPresent()
-                ? CivService.suitableTown(server, level, ai, town.get().extent(), x, z, radius)
-                : CivService.suitable(server, level, ai, SiteKind.VILLAGE, x, z, radius);
+        Optional<BlockPos> ground = town.isPresent() ? CivService.suitableTown(server, level, ai, town.get().extent(), x, z, radius) : Optional.empty();
+        // Une ville du style trop large pour la place : le hameau dessiné par le mod, comme avant.
+        if (ground.isEmpty()) {
+            town = Optional.empty();
+            ground = CivService.suitable(server, level, ai, SiteKind.VILLAGE, x, z, radius);
+        }
         if (ground.isEmpty()) return Optional.empty();
         Optional<Site> site = SiteService.foundVillageForAi(server, level, ai, ground.get(), Direction.SOUTH, town.orElse(null));
         site.ifPresent(s -> dispute(server, ai, level, s));

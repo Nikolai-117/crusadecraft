@@ -13,7 +13,11 @@ import net.minecraft.world.item.Item;
 import net.minecraft.world.item.ItemStack;
 import net.minecraft.world.item.TooltipFlag;
 import net.minecraft.world.item.context.UseOnContext;
+import net.minecraft.world.level.ClipContext;
 import net.minecraft.world.level.Level;
+import net.minecraft.world.phys.BlockHitResult;
+import net.minecraft.world.phys.HitResult;
+import net.minecraft.world.phys.Vec3;
 import net.minecraftforge.api.distmarker.Dist;
 import net.minecraftforge.fml.DistExecutor;
 
@@ -21,15 +25,17 @@ import java.util.List;
 import java.util.Optional;
 
 /**
- * Le plan d'architecte (P34) : l'outil de construction créatif. Clic droit dans le vide, le catalogue (les packs de
- * style, les fichiers du joueur, des villes entières) ; clic droit sur un bloc, le plan choisi s'y pose d'un coup,
- * son sol au niveau du bloc ; accroupi, il tourne d'un quart de tour. Chaque pose se défait
+ * Le plan d'architecte (P34) : l'outil de construction créatif. Clic droit vers le ciel, le catalogue (les packs de
+ * style, les fichiers du joueur, des villes entières) ; clic droit sur un bloc, même à {@link #REACH} blocs, le plan
+ * choisi s'y pose d'un coup, son sol au niveau du bloc ; accroupi, il tourne d'un quart de tour. Chaque pose se défait
  * ({@code /crusade plan annuler}). Réservé au créatif et à l'éditeur de la carte.
  *
  * <p>Tout ce qu'il faut à l'aperçu tient dans l'objet : le nom, l'emprise et la rotation du plan choisi.
  */
 public class PlanItem extends Item {
     private static final String TAG = "crusadecraft_plan";
+    /** L'outil vise loin : on pose un bâtiment de trente blocs à distance, pas à bout de bras. */
+    public static final double REACH = 96;
 
     public PlanItem(Properties properties) {
         super(properties);
@@ -71,6 +77,14 @@ public class PlanItem extends Item {
         t.putInt("rot", Math.floorMod(t.getInt("rot") + 1, 4));
     }
 
+    /** Le bloc visé jusqu'à {@link #REACH} blocs (fluides ignorés), ou rien si l'on vise le ciel. */
+    public static Optional<BlockHitResult> aim(Player player) {
+        Vec3 eye = player.getEyePosition();
+        Vec3 end = eye.add(player.getViewVector(1.0f).scale(REACH));
+        BlockHitResult hit = player.level().clip(new ClipContext(eye, end, ClipContext.Block.OUTLINE, ClipContext.Fluid.NONE, player));
+        return hit.getType() == HitResult.Type.BLOCK ? Optional.of(hit) : Optional.empty();
+    }
+
     /** L'outil tenu par ce joueur, en main principale d'abord. */
     public static Optional<ItemStack> held(Player player) {
         for (InteractionHand hand : InteractionHand.values()) {
@@ -94,8 +108,12 @@ public class PlanItem extends Item {
     @Override
     public InteractionResultHolder<ItemStack> use(Level level, Player player, InteractionHand hand) {
         ItemStack stack = player.getItemInHand(hand);
+        Optional<BlockHitResult> far = aim(player);
         if (player.isShiftKeyDown()) {
             if (player instanceof ServerPlayer sp) PlanTool.rotate(sp, stack);
+        } else if (far.isPresent() && choice(stack).isPresent()) {
+            // Un bloc visé au loin : on pose là.
+            if (player instanceof ServerPlayer sp) PlanTool.paste(sp, stack, far.get().getBlockPos());
         } else if (level.isClientSide()) {
             DistExecutor.unsafeRunWhenOn(Dist.CLIENT, () -> fr.crusadecraft.client.ClientPackets::requestPlanCatalog);
         }

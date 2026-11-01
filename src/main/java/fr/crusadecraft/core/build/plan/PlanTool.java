@@ -11,6 +11,7 @@ import net.minecraft.world.item.ItemStack;
 import java.util.ArrayList;
 import java.util.List;
 import java.util.Optional;
+import java.util.UUID;
 
 /**
  * Le plan d'architecte côté serveur (P34) : le catalogue, le choix d'un plan, la rotation, la pose. Tout est
@@ -115,7 +116,12 @@ public final class PlanTool {
                 player.displayClientMessage(Component.translatable("crusadecraft.town.no_pack"), true);
                 return;
             }
-            Journals.paste(player, ground, choice.rotation(), null, town.get(), choice.name());
+            UUID id = Journals.paste(player, ground, choice.rotation(), null, town.get(), choice.name());
+            player.sendSystemMessage(Component.translatable("crusadecraft.plan.pasting", choice.name()));
+            // La ville posée est une ville du monde : sur la carte, à un royaume, avec ses habitants.
+            player.sendSystemMessage(fr.crusadecraft.core.build.SiteService.registerToolTown(player, id, ground,
+                    NationStyle.byOrdinal(choice.style()), TownSize.byOrdinal(choice.size()), town.get()));
+            return;
         } else {
             if (PlanRef.decode(choice.ref()).flatMap(r -> PlanLibrary.load(r, true)).isEmpty()) {
                 player.displayClientMessage(Component.translatable("crusadecraft.plan.unreadable"), true);

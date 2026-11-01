@@ -887,3 +887,43 @@ Demandé par Romain (5 octobre) : « que ça fonctionne par chunk directement »
   s'y rattache. Réglable.
 - Canal réseau en version 20.
 
+**P34 (1er novembre 2026) — villes réelles selon leur civilisation, plan d'architecte, version 3.3.0**
+
+- Demandé : « faire ville IA réelle et outil de construction créatif », avec les deux mods de base (MineColonies et
+  Byzantine) pour des nations chinoise, japonaise, égyptienne fantasy et européenne ; puis « s'inspirer de sources
+  officielles et de sites spécialisés » pour l'urbanisme de chaque civilisation.
+- **Aucun plan copié** : les packs sont lus au moment du jeu par l'API de Structurize (`StructurePacks`), y compris
+  ceux de Byzantine et les scans du joueur. Les fichiers `.nbt` et `.schem` (Sponge 1 à 3) sont lus dans
+  `crusadecraft/plans/`, `schematics/` et `config/worldedit/schematics/` ; un chemin qui sort du dossier est refusé.
+- **Traduction des plans** : les blocs de substitution de Structurize deviennent terrain laissé, terre, eau ou le bloc
+  porté ; les cabanes MineColonies deviennent des tonneaux dans une ville de l'ordinateur (elle n'a pas de colonie), mais
+  restent des cabanes posées à l'outil ; les données d'entité sont gardées (textures Domum Ornamentum, coffres). Sous le
+  sol, le vide d'un plan n'est creusé qu'entre des murs. L'entrée d'un plan est déduite de ses portes.
+- **Urbanisme** (`TownLayout`), d'après :
+  - Rome : cardo nord-sud et decumanus est-ouest se croisant près du forum, insulae en damier, castrum rectangulaire
+    (Britannica, *Western architecture* ; article « Decumanus ») ;
+  - Chine : Kaogong ji — ville carrée, palais au centre tourné au sud, temple des ancêtres à gauche (est), autel à
+    droite, cour devant, marché derrière (dossier UNESCO de l'axe central de Pékin, 2024) ;
+  - Japon : Heian-kyō d'après Chang'an — palais au nord du centre, Suzaku-ōji vers le sud, grille jōbō, pas de muraille
+    continue, temples de l'Est et de l'Ouest près de Rashōmon, marchés de l'Est et de l'Ouest ;
+  - Égypte : Kahun (El-Lahun) — ville planifiée, rues en grille alignées sur les points cardinaux, maisons en rangées,
+    enceinte, temple et résidence du maire (Petrie ; N. Moeller, Oriental Institute) ; axe processionnel des temples ;
+  - Scandinavie : Trelleborg — rempart circulaire, quatre portes aux points cardinaux, deux rues en croix, seize maisons
+    par carrés de quatre dans les quartiers, basse-cour extérieure au sud-est ;
+  - Europe médiévale : place du marché au carrefour des routes, église près du marché, parcelles en lanière le long de
+    la grand-rue (études des burgage plots d'Édimbourg, de Hungerford, de Blandford).
+  Adaptations assumées : la halle de Trelleborg (qui n'en avait pas au carrefour) occupe seule un quartier ; l'autel du
+  sol chinois n'a pas de bâtiment propre dans les packs ; l'ordre des enceintes suit la taille de la ville.
+- **Journal** : chaque bloc remplacé (et le contenu des coffres) est noté dans un fichier à part, compact ; « Défaire la
+  ville », `/crusade civ annuler` et `/crusade plan annuler` rendent le terrain bloc par bloc.
+- Les villes de l'ordinateur qui prennent corps à l'approche sont **coupées par défaut** (cela change le monde) ; jamais
+  là où des joueurs ont passé plus de vingt minutes, ni à moins de 160 blocs d'une colonie.
+- Byzantine est ajouté en développement depuis `libs/local` (jamais redistribué). Canal réseau en version 21.
+- **Poser ses propres villes en créatif** (demandé en cours de phase) : une ville entière posée au plan d'architecte
+  devient une ville du monde — elle rejoint le royaume dont elle est sur les terres, ou fonde sur une terre libre une
+  nation de son style dont elle est la capitale ; sa construction porte l'identifiant de la pose, si bien que
+  « Défaire la ville » la retire comme les autres. L'outil vise à 96 blocs (pose et cadre d'aperçu) : un bâtiment de
+  trente blocs ne se pose pas à bout de bras.
+- Vérifié : 198 tests unitaires, 76 GameTests ; dans le jeu de développement, une ville de chaque style (Medieval Oak,
+  Pagoda, Shogun, Nile, Byzantine — chargé sans souci en 1.20.1 —, Nordic Spruce), le catalogue et le cadre d'aperçu.
+

@@ -2299,9 +2299,9 @@
   "crusadecraft.plan.folder": "Your .nbt and .schem files: %s",
   "crusadecraft.plan.town_name": "%s-style city — %s",
   "crusadecraft.plan.tooltip.size": "%s × %s × %s blocks",
-  "crusadecraft.plan.tooltip.none": "No plan chosen: right-click in the air to open the catalogue.",
-  "crusadecraft.plan.tooltip.1": "Right-click in the air: the catalogue",
-  "crusadecraft.plan.tooltip.2": "Right-click a block: place, ground level with the block",
+  "crusadecraft.plan.tooltip.none": "No plan chosen: right-click to open the catalogue.",
+  "crusadecraft.plan.tooltip.1": "Right-click at the sky: the catalogue",
+  "crusadecraft.plan.tooltip.2": "Right-click a block, even far away: place it there",
   "crusadecraft.plan.tooltip.3": "Sneak + right-click: turn a quarter",
   "crusadecraft.plan.denied": "The Architect's Plan is for creative mode and map editors only.",
   "crusadecraft.plan.not_held": "Hold the Architect's Plan.",
@@ -2314,7 +2314,10 @@
   "crusadecraft.plan.undone": "Your last placement is being undone, block by block.",
   "crusadecraft.plan.nothing_to_undo": "Nothing to undo.",
   "crusadecraft.codex.plans": "Built cities and the Architect's Plan",
-  "crusadecraft.codex.plans.p0": "Each computer realm has a $(l)style$(): European, Chinese, Japanese, Egyptian, Roman or Nordic. Its buildings come from the installed MineColonies and Byzantine packs, read during play.$(br2)In the map editor: \"Style\" on the realm, then \"$(l)Build the city$()\" on one of its cities.",
+  "crusadecraft.codex.plans.p0": "Each computer realm has a $(l)style$(), and its cities follow the urban planning of their civilisation: Roman forum and grid, Chinese south-facing palace and lanes, Japanese Suzaku avenue, Egyptian processional axis, Viking ring fortress, European market square.$(br2)In the map editor: \"Style\" on the realm, then \"$(l)Build the city$()\".",
   "crusadecraft.codex.plans.p1": "The city rises at once: town hall, square, houses, tavern, farms… according to its population, with its streets and inhabitants. \"$(l)Undo the city$()\" gives the land back block by block.$(br2)Setting $(l)villesIA$(): computer cities take shape when you come near (off by default).",
-  "crusadecraft.codex.plans.p2": "The $(l)Architect's Plan$() (creative): right-click in the air for the catalogue (whole cities, style packs, your .nbt and .schem files), right-click a block to place, sneak to turn.$(br2)$(l)/crusade plan annuler$() undoes the last placement."
+  "crusadecraft.codex.plans.p2": "The $(l)Architect's Plan$() (creative): right-click at the sky for the catalogue (whole cities, style packs, your .nbt and .schem files), right-click a block, even far away, to place, sneak to turn. A whole city placed becomes a city of the world (a new nation on free land).$(br2)$(l)/crusade plan annuler$() undoes the last placement.",
+  "crusadecraft.plan.town.founded": "%s is founded: a new nation in the %s style, with this city as its capital. It is on the map, and its people arrive once the placement is done.",
+  "crusadecraft.plan.town.joined": "%s joins %s: it is on the map, and its people arrive once the placement is done.",
+  "crusadecraft.plan.town.no_city": "The city is placed, but it could not be put on the map."
 }

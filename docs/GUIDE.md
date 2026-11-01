@@ -1,4 +1,4 @@
-# CrusadeCraft 3.2.0 — installer et tester
+# CrusadeCraft 3.3.0 — installer et tester
 
 ## 1. Ce qu'il faut
 
@@ -17,7 +17,7 @@ Optionnels, déjà présents chez toi, donc activés automatiquement :
 
 ## 2. Installer
 
-1. Le fichier du mod est `E:\crusadecraft\build\libs\crusadecraft-3.2.0.jar`.
+1. Le fichier du mod est `E:\crusadecraft\build\libs\crusadecraft-3.3.0.jar`.
 2. Mets-le dans le dossier des mods de l'instance : `D:\MultiMC\instances\1.20.1\.minecraft\mods\`.
    Dans MultiMC, tu peux aussi faire clic droit sur l'instance → *Modifier* → *Mods* → *Ajouter un fichier*.
    **Retire l'ancien** (`crusadecraft-1.8.0.jar`, ou une version plus vieille) : deux versions du mod ensemble
@@ -209,6 +209,43 @@ données du mod (fichier `crusadecraft.dat` du monde) restent sur place, sans ef
 53g. **Fusionner** : dans l'éditeur, choisis une ville d'un royaume de l'ordinateur, règle « Fusionner dans » sur le
     royaume qui l'absorbe (de l'ordinateur ou de joueur), puis OK deux fois : ses villes, ses terres peintes et son
     trésor passent à l'autre.
+
+### Des villes bâties pour de vrai, selon leur civilisation
+53h. Chaque royaume de l'ordinateur a un **style** : européen, chinois, japonais, égyptien, romain ou nordique. Dans
+    l'éditeur de la carte, choisis une ville, puis **Style** dans la partie royaume (clic : suivant, Maj+clic : retour).
+    Les bâtiments viennent des packs installés, lus pendant le jeu : MineColonies (Medieval Oak, Pagoda, Desert Oasis,
+    Nordic Spruce…) et Byzantine (romain, Nil, Shogun).
+53i. **Bâtir la ville** (deux clics) : la ville s'élève d'un coup, à la taille de sa population (hameau, bourg, ville,
+    capitale), avec ses rues, son enceinte quand sa civilisation en bâtissait, et ses habitants. Le plan suit
+    l'urbanisme de chaque civilisation :
+    - **romaine** : cardo et decumanus qui se croisent au forum, basilique au nord, temple au sud, îlots en damier,
+      enceinte carrée à quatre portes ;
+    - **chinoise** : palais au centre tourné au sud, cour devant, marché derrière, temple des ancêtres à l'est, avenue
+      axiale, ruelles où chaque maison regarde le sud, muraille carrée (Kaogong ji, axe de Pékin) ;
+    - **japonaise** : palais au nord, avenue Suzaku jusqu'à la porte du sud, grille de rues, temple de l'Est, marché de
+      l'Ouest, sans muraille (Heian-kyō) ;
+    - **égyptienne** : enceinte de briques crues, axe processionnel du palais (à l'ouest) au temple (à l'est), rangées
+      de maisons (Kahun) ;
+    - **nordique** : rempart circulaire de terre, quatre portes, deux rues en croix, quatre maisons en carré autour d'une
+      cour dans chaque quartier, basse-cour au sud-est (Trelleborg) ;
+    - **européenne** : place du marché au carrefour, hôtel de ville et église sur la place, maisons le long de la
+      grand-rue, murs une fois devenue ville.
+53j. **Défaire la ville** : sur la construction de la ville (« Village de … » sur la carte), deux clics. Le terrain revient
+    bloc par bloc, coffres compris ; la ville reste sur la carte.
+53k. Réglage **villesIA → batirEnApprochant** (coupé par défaut) : une ville de l'ordinateur prend corps quand tu t'en
+    approches. Jamais là où des joueurs ont longtemps vécu, ni près d'une colonie. `/crusade civ annuler` les défait.
+53l. **Plan d'architecte** (créatif ou éditeur, dans l'onglet du mod) : clic droit vers le ciel pour le catalogue (villes
+    entières, chaque pack de style, tes fichiers), clic droit sur un bloc, même à 96 blocs, pour poser (le sol du plan
+    au niveau du bloc),
+    accroupi pour tourner. Un cadre doré montre où il tombera, un liseré rouge marque l'entrée.
+    `/crusade plan annuler` défait la dernière pose.
+    Une **ville entière** posée à l'outil devient une ville du monde : sur la carte, avec ses habitants. Posée sur les
+    terres d'un royaume, elle le rejoint ; sur une terre libre, elle **fonde une nation** de son style, dont elle est
+    la capitale. On la défait comme les autres (« Défaire la ville » dans l'éditeur). Pour composer ta propre ville,
+    pose les bâtiments un à un depuis les packs : chaque pose se défait.
+53m. **Tes propres plans** : dépose tes `.nbt` (bloc de structure) et `.schem` (WorldEdit) dans
+    `crusadecraft/plans/` du dossier du jeu (`/crusade plan dossier` donne le chemin). Tes packs Structurize (scans du
+    dossier `blueprints/`) apparaissent d'eux-mêmes dans le catalogue.
 
 ### La carte de guerre
 50. Ouvre la carte du royaume (touche **virgule**) et clique sur **⚔ Guerre**, en bas à droite. Une barre d'outils
@@ -404,6 +441,8 @@ Chaque système peut être coupé.
 | `/crusade civ`, `/crusade civ annuler` | Les constructions de l'ordinateur : combien, et tout défaire |
 | `/crusade perf`, `/crusade perf reset` | Le temps pris par chaque partie du mod |
 | `/crusade reglages` | L'écran des réglages du monde (opérateurs, propriétaire d'un monde solo) |
+| `/crusade plan annuler` | Défaire la dernière pose du plan d'architecte |
+| `/crusade plan dossier` | Le dossier où déposer ses fichiers .nbt et .schem |
 | `/crusade renommer royaume <nom>`, `renommer ville <nom>` | Renommer son royaume, ou la ville où l'on se tient |
 | `/crusade reconcilier` | Revérifie l'état des royaumes |
 | `/crusade monde info` | Le monde IA |
