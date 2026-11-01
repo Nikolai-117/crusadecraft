@@ -22,7 +22,22 @@ import java.util.UUID;
  */
 public record MapView(ResourceLocation dimension, int focusX, int focusZ, int playerX, int playerZ, int territoryRadius,
                       int colonyRadius, List<Territory> territories, List<Seat> seats, List<Dejure> dejure,
-                      boolean canEdit, boolean editing, Borders borders, List<Place> places, War war, List<TradeLine> routes) {
+                      boolean canEdit, boolean editing, Borders borders, List<Place> places, War war, List<TradeLine> routes,
+                      List<ArmyPawn> armies) {
+
+    public MapView(ResourceLocation dimension, int focusX, int focusZ, int playerX, int playerZ, int territoryRadius,
+                   int colonyRadius, List<Territory> territories, List<Seat> seats, List<Dejure> dejure,
+                   boolean canEdit, boolean editing, Borders borders, List<Place> places, War war, List<TradeLine> routes) {
+        this(dimension, focusX, focusZ, playerX, playerZ, territoryRadius, colonyRadius, territories, seats, dejure, canEdit, editing, borders, places, war,
+                routes, List.of());
+    }
+
+    /**
+     * Le pion d'une armée sur la carte (P27) : la tienne quand elle est rassemblée, les ostes de l'ordinateur en
+     * campagne. {@code soldiers} : soldats dans le monde (0 si ce n'est qu'un pion) ; {@code target} : où elle va.
+     */
+    public record ArmyPawn(int x, int z, int men, int soldiers, int color, net.minecraft.network.chat.Component name, boolean mine, boolean beaten,
+                           boolean hasTarget, int targetX, int targetZ) {}
 
     public MapView(ResourceLocation dimension, int focusX, int focusZ, int playerX, int playerZ, int territoryRadius,
                    int colonyRadius, List<Territory> territories, List<Seat> seats, List<Dejure> dejure,
@@ -228,6 +243,20 @@ public record MapView(ResourceLocation dimension, int focusX, int focusZ, int pl
             buf.writeComponent(r.a());
             buf.writeComponent(r.b());
         }
+        buf.writeVarInt(armies.size());
+        for (ArmyPawn a : armies) {
+            buf.writeInt(a.x());
+            buf.writeInt(a.z());
+            buf.writeVarInt(a.men());
+            buf.writeVarInt(a.soldiers());
+            buf.writeInt(a.color());
+            buf.writeComponent(a.name());
+            buf.writeBoolean(a.mine());
+            buf.writeBoolean(a.beaten());
+            buf.writeBoolean(a.hasTarget());
+            buf.writeInt(a.targetX());
+            buf.writeInt(a.targetZ());
+        }
     }
 
     private static void writeWar(FriendlyByteBuf buf, War war) {
@@ -370,7 +399,13 @@ public record MapView(ResourceLocation dimension, int focusX, int focusZ, int pl
         for (int i = 0; i < n; i++) {
             routes.add(new TradeLine(buf.readInt(), buf.readInt(), buf.readInt(), buf.readInt(), buf.readVarLong(), buf.readComponent(), buf.readComponent()));
         }
+        n = buf.readVarInt();
+        List<ArmyPawn> armies = new ArrayList<>(n);
+        for (int i = 0; i < n; i++) {
+            armies.add(new ArmyPawn(buf.readInt(), buf.readInt(), buf.readVarInt(), buf.readVarInt(), buf.readInt(), buf.readComponent(), buf.readBoolean(),
+                    buf.readBoolean(), buf.readBoolean(), buf.readInt(), buf.readInt()));
+        }
         return new MapView(dim, fx, fz, px, pz, radius, colonyRadius, territories, seats, dejure, canEdit, editing, new Borders(keys, owners), places,
-                war, routes);
+                war, routes, armies);
     }
 }

@@ -805,6 +805,11 @@ public final class WarService {
                 .ifPresent(c -> c.members().forEach(m -> coalition.add(name(server, m).getString())));
         return new WarView(men(me), maxMen(me), me.armyRaised(), (int) Math.ceil(men(me) / 10.0), me.gold(), me.prestige(),
                 seal.isEmpty(), seal.map(Component::getString).orElse(""), lines, targets, me.threat(),
-                CrusadeConfig.SERVER.coalitionThreshold.get(), coalition);
+                CrusadeConfig.SERVER.coalitionThreshold.get(), coalition, army(server, me));
+    }
+
+    private static WarView.Army army(MinecraftServer server, Realm me) {
+        ArmyService.Status s = ArmyService.status(server, me.id());
+        return new WarView.Army(s.soldiers(), s.order(), s.formation());
     }
 }

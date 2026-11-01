@@ -15,7 +15,16 @@ import java.util.UUID;
  * motifs ouverts contre chacun. Tout est calculé par le serveur.
  */
 public record WarView(int men, int maxMen, boolean raised, int upkeep, long gold, int prestige, boolean sealOk, String sealProblem,
-                      List<WarLine> wars, List<Target> targets, int threat, int threatThreshold, List<String> coalition) {
+                      List<WarLine> wars, List<Target> targets, int threat, int threatThreshold, List<String> coalition, Army army) {
+
+    public WarView(int men, int maxMen, boolean raised, int upkeep, long gold, int prestige, boolean sealOk, String sealProblem,
+                   List<WarLine> wars, List<Target> targets, int threat, int threatThreshold, List<String> coalition) {
+        this(men, maxMen, raised, upkeep, gold, prestige, sealOk, sealProblem, wars, targets, threat, threatThreshold, coalition,
+                new Army(0, ArmyService.Order.HOLD, Formation.MASSE));
+    }
+
+    /** L'armée en chair et en os (P27) : soldats présents dans le monde, ordre en cours, formation. */
+    public record Army(int soldiers, ArmyService.Order order, Formation formation) {}
 
     /** Un royaume nommé : nom complet (joueur) ou nom de lieu (IA, à composer avec le rang). */
     public record Party(UUID id, boolean ai, String label, TitleRank rank, int color) {
@@ -65,6 +74,9 @@ public record WarView(int men, int maxMen, boolean raised, int upkeep, long gold
         buf.writeVarInt(threat);
         buf.writeVarInt(threatThreshold);
         strings(buf, coalition);
+        buf.writeVarInt(army.soldiers());
+        buf.writeEnum(army.order());
+        buf.writeEnum(army.formation());
         buf.writeVarInt(wars.size());
         for (WarLine w : wars) {
             buf.writeUUID(w.id());
@@ -142,6 +154,7 @@ public record WarView(int men, int maxMen, boolean raised, int upkeep, long gold
         String problem = buf.readUtf();
         int threat = buf.readVarInt(), threshold = buf.readVarInt();
         List<String> coalition = strings(buf);
+        Army army = new Army(buf.readVarInt(), buf.readEnum(ArmyService.Order.class), buf.readEnum(Formation.class));
         int n = buf.readVarInt();
         List<WarLine> wars = new ArrayList<>(n);
         for (int i = 0; i < n; i++) {
@@ -195,6 +208,6 @@ public record WarView(int men, int maxMen, boolean raised, int upkeep, long gold
             }
             targets.add(new Target(p, status, strength, prob.isEmpty() ? null : prob, cbs));
         }
-        return new WarView(men, max, raised, upkeep, gold, prestige, seal, problem, wars, targets, threat, threshold, coalition);
+        return new WarView(men, max, raised, upkeep, gold, prestige, seal, problem, wars, targets, threat, threshold, coalition, army);
     }
 }

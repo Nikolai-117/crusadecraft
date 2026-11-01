@@ -764,3 +764,24 @@ Demandé par Romain (5 octobre) : « que ça fonctionne par chunk directement »
   royaume a des frontières peintes à la main, elles restent à l'ancien royaume.
 - Canal réseau en version 17.
 
+**P27 (1er novembre 2026) — les armées, version 2.3.0**
+
+- **Ordres** : l'écran de guerre a ses boutons (rassembler, suivre, tenir, formation, démobiliser) ; la carte, en mode
+  Guerre, a l'outil « Marcher » ; `/crusade armee marcher <x> <z>` et `formation <nom>` par commande.
+- **Formations** en logique pure (masse, ligne sur deux rangs, colonne par deux, carré), orientées vers la marche ou le
+  regard du souverain ; les soldats sont rangés par identifiant pour garder leur place d'une seconde à l'autre.
+- **Marche par étapes** de 28 blocs : la navigation de Minecraft ne trouve pas de chemin plus long. Un soldat dans un
+  chunk non chargé s'arrête ; rien n'est simulé hors de la vue (ce serait un second moteur de déplacement à tenir).
+- **Ostes de l'ordinateur** : en guerre, l'attaquant et le défenseur IA lèvent chacun un ost (enregistré dans la
+  guerre, champ facultatif). Il part de la capitale à 6 blocs toutes les 5 secondes (réglable), vers la province
+  réclamée ou la capitale ennemie ; le défenseur marche à la rencontre de l'ost adverse s'il approche à moins de
+  1 500 blocs de sa capitale, sinon il la garde. **Bataille** quand l'armée rassemblée d'un joueur ennemi passe à
+  moins de 48 blocs : l'ost paraît (un soldat pour dix hommes de sa force, plafonné comme celle du joueur) ; s'il
+  tombe en entier, +15 au score pour l'autre camp et +10 de fatigue au sien, et il se reforme chez lui trois jours
+  plus tard. Les raids sur les colonies restent ce qu'ils étaient.
+- **Pions** sur la carte du mod (armée du joueur rassemblée, ostes des royaumes connus) et couche Dynmap « Armées »
+  (`carteWeb.armees`).
+- **Pas fait** : marche simulée hors des chunks chargés, alliés de l'ordinateur qui lèvent aussi leur ost (seuls
+  l'attaquant et le défenseur principaux en ont un), choix des cibles des soldats d'ost (ce sont des monstres :
+  ils attaquent tout joueur proche).
+

@@ -63,7 +63,9 @@ public class MapScreen extends Screen {
     /** Les outils de la carte de guerre : trois pinceaux de zone, la gomme, la flèche, le repère, et retirer. */
     enum WarTool {
         OFFENSIVE("offensive", 0, "■"), DEFENSE("defense", 1, "■"), OBJECTIVE("objective", 2, "■"), ERASE("erase", -1, "✗"),
-        ARROW("arrow", -2, "➜"), PIN("pin", -3, "⚑"), REMOVE("remove", -4, "✂");
+        ARROW("arrow", -2, "➜"), PIN("pin", -3, "⚑"), REMOVE("remove", -4, "✂"),
+        /** P27 : un clic envoie ton armée rassemblée là. */
+        MARCH("march", -5, "⚔");
 
         final String key;
         /** Le rang de la zone peinte, −1 pour la gomme ; en dessous, un outil qui ne peint pas. */
@@ -668,6 +670,7 @@ public class MapScreen extends Screen {
         if (!editing()) renderTrade(g);
         renderPlaces(g);
         renderSeats(g);
+        if (!editing()) renderArmies(g);
         if (warMode()) renderWarMarks(g);
         renderPlayer(g);
         if (editing() || warMode()) renderBrush(g, mouseX, mouseY);
@@ -702,6 +705,7 @@ public class MapScreen extends Screen {
         }
         if (Ui.inside(mouseX, mouseY, mapX, mapY, mapW, mapH) && !dragging && !painting && !arrowing && !overPanel(mouseX, mouseY)) {
             List<Component> tip = warMode() ? warTooltip(mouseX, mouseY) : List.of();
+            if (tip.isEmpty() && !editing()) tip = armyTooltip(mouseX, mouseY);
             if (tip.isEmpty() && !editing()) tip = tradeTooltip(mouseX, mouseY);
             if (tip.isEmpty()) tip = tooltip(rasterOwner(mouseX, mouseY));
             if (!tip.isEmpty()) g.renderComponentTooltip(font, tip, mouseX, mouseY);
@@ -1053,6 +1057,10 @@ public class MapScreen extends Screen {
             minecraft.setScreen(new WarPinForm(this, x, z, lastPinKind));
             return;
         }
+        if (warMode() && warTool == WarTool.MARCH) {
+            CrusadeNetwork.toServer(WarMapPackets.Edit.march(x, z));
+            return;
+        }
         if (warMode() && warTool == WarTool.REMOVE) {
             UUID target = ownMarkNear(mouseX, mouseY);
             if (target != null) CrusadeNetwork.toServer(WarMapPackets.Edit.remove(target));
@@ -1164,6 +1172,53 @@ public class MapScreen extends Screen {
             CrusadeNetwork.toServer(new MapEditPackets.Paint(owner, neutral, part));
         }
         stroke.clear();
+    }
+
+    // ------------------------------------------------------------------ armées (P27)
+
+    /**
+     * Les pions des armées : un écu à la couleur du royaume (bordé d'or pour la tienne), le nombre d'hommes dessous,
+     * et un trait jusqu'à son but de marche ; barré de rouge quand l'ost est défait et se reforme.
+     */
+    private void renderArmies(GuiGraphics g) {
+        for (MapView.ArmyPawn a : view.armies()) {
+            int x = screenX(a.x()), y = screenY(a.z());
+            if (a.hasTarget() && !a.beaten()) {
+                int tx = screenX(a.targetX()), ty = screenY(a.targetZ());
+                double len = Math.hypot(tx - x, ty - y), angle = Math.atan2(ty - y, tx - x);
+                int color = a.mine() ? 0xE0E7BD55 : 0xE0C0392B;
+                for (double d = 6; d < len; d += 7) bar(g, (int) Math.round(x + Math.cos(angle) * d), (int) Math.round(y + Math.sin(angle) * d), angle,
+                        (int) Math.min(4, len - d), 1, color);
+                if (len > 6) g.fill(tx - 2, ty - 2, tx + 2, ty + 2, color);
+            }
+            if (x < mapX - 8 || x > mapX + mapW + 8 || y < mapY - 8 || y > mapY + mapH + 8) continue;
+            int border = a.mine() ? 0xFFE7BD55 : INK;
+            g.fill(x - 5, y - 6, x + 5, y + 4, border);
+            g.fill(x - 4, y - 5, x + 4, y + 3, 0xFF000000 | a.color());
+            g.fill(x - 2, y + 3, x + 2, y + 6, border);
+            if (a.soldiers() > 0) g.fill(x - 1, y - 2, x + 1, y, 0xFFFFFFFF);
+            if (a.beaten()) {
+                for (int i = -4; i <= 4; i++) g.fill(x + i, y - 1 + i / 2, x + i + 1, y + i / 2, 0xFFE0796E);
+            }
+            String men = a.men() >= 1000 ? (a.men() / 100) / 10.0 + "k" : String.valueOf(a.men());
+            Ui.scaled(g, font, Component.literal(men), x - Math.round(font.width(men) * 0.6f / 2), y + 7, 0.6f, a.mine() ? 0xFFF3D88C : 0xFFEDE3CC, false);
+        }
+    }
+
+    private List<Component> armyTooltip(double mouseX, double mouseY) {
+        for (MapView.ArmyPawn a : view.armies()) {
+            int x = screenX(a.x()), y = screenY(a.z());
+            if (Math.abs(mouseX - x) > 6 || Math.abs(mouseY - y) > 7) continue;
+            List<Component> tip = new ArrayList<>();
+            tip.add(Component.translatable(a.mine() ? "crusadecraft.army.pawn.mine" : "crusadecraft.army.pawn.host", a.name()).withStyle(ChatFormatting.GOLD));
+            tip.add(Component.translatable("crusadecraft.army.pawn.men", a.men()).withStyle(ChatFormatting.WHITE));
+            if (a.mine()) tip.add(Component.translatable("crusadecraft.army.pawn.soldiers", a.soldiers()).withStyle(ChatFormatting.GRAY));
+            else if (a.soldiers() > 0) tip.add(Component.translatable("crusadecraft.army.pawn.battle").withStyle(ChatFormatting.RED));
+            if (a.beaten()) tip.add(Component.translatable("crusadecraft.army.pawn.beaten").withStyle(ChatFormatting.RED));
+            else if (a.hasTarget()) tip.add(Component.translatable("crusadecraft.army.pawn.target", a.targetX(), a.targetZ()).withStyle(ChatFormatting.GRAY));
+            return tip;
+        }
+        return List.of();
     }
 
     // ------------------------------------------------------------------ commerce (P25)

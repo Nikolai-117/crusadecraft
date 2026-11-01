@@ -1,4 +1,4 @@
-# CrusadeCraft 2.2.0 — installer et tester
+# CrusadeCraft 2.3.0 — installer et tester
 
 ## 1. Ce qu'il faut
 
@@ -17,7 +17,7 @@ Optionnels, déjà présents chez toi, donc activés automatiquement :
 
 ## 2. Installer
 
-1. Le fichier du mod est `E:\crusadecraft\build\libs\crusadecraft-2.2.0.jar`.
+1. Le fichier du mod est `E:\crusadecraft\build\libs\crusadecraft-2.3.0.jar`.
 2. Mets-le dans le dossier des mods de l'instance : `D:\MultiMC\instances\1.20.1\.minecraft\mods\`.
    Dans MultiMC, tu peux aussi faire clic droit sur l'instance → *Modifier* → *Mods* → *Ajouter un fichier*.
    **Retire l'ancien** (`crusadecraft-1.8.0.jar`, ou une version plus vieille) : deux versions du mod ensemble
@@ -286,6 +286,18 @@ données du mod (fichier `crusadecraft.dat` du monde) restent sur place, sans ef
 72. `/crusade armee suivre` : ils te suivent. `/crusade armee tenir` : ils gardent l'endroit où tu es.
     `/crusade armee demobiliser` : les survivants rentrent chez eux.
 73. **Les pertes sont réelles** : un soldat tué, ce sont dix hommes de moins dans ton armée.
+73b. Tout se fait aussi depuis l'**écran de guerre** (Table de guerre), une fois l'armée levée : **Rassembler**,
+    **Suivre**, **Tenir**, **Formation** (en masse, en ligne sur deux rangs, en colonne par deux, en carré) et
+    **Démobiliser**. Par commande : `/crusade armee formation ligne`, `/crusade armee marcher <x> <z>`.
+73c. Sur la carte du royaume, mode **⚔ Guerre**, l'outil **Marcher** : clique, et ton armée rassemblée y va dans sa
+    formation. Les longues marches se font par étapes ; un soldat dans un chunk qui n'est pas chargé s'arrête.
+73d. Ton armée rassemblée a son **pion** sur la carte (écu bordé d'or, son nombre d'hommes, un trait doré jusqu'à son
+    but). En guerre, chaque royaume de l'ordinateur lève un **ost** : un pion à sa couleur qui part de sa capitale et
+    marche — l'attaquant vers ce qu'il réclame, le défenseur à la rencontre de l'ost adverse. Sur Dynmap, couche
+    **Armées**.
+73e. Quand ton armée rassemblée arrive à moins de 48 blocs d'un ost ennemi, il **paraît en vrais soldats** et la
+    bataille se livre. Tous tombés : l'ost est défait (gros bonus au score de la guerre, fatigue pour l'ennemi) et se
+    reforme chez lui trois jours plus tard. Si ton armée s'éloigne, l'ost redevient un pion.
 
 ### Le commerce
 75. Un **traité de commerce** (proposé ou accepté au Colombier) trace une **route** entre ta capitale et celle de
@@ -311,14 +323,14 @@ sections principales :
   rayon de `/crusade claim`, titres à l'entrée) ;
 - `protection` (protection des terres, terres des IA, vassaux, alliés, opérateurs) ;
 - `carteWeb` (Dynmap : fréquence, langue des fiches, royaumes IA, lieux, trésor, conseil, opacité, carte de guerre,
-  routes de commerce ; Xaero) ;
+  routes de commerce, armées ; Xaero) ;
 - `villes` (limite de domaine par rang, impôts perdus au-delà, parts de la couronne proposées pour un gouverneur) ;
 - `pnj` (la journée des gens de la cour, répliques, jours entre deux banquets, jours de deuil) ;
 - `vie` (années, jours par an, morts du registre, partages et crises des royaumes de l'ordinateur) ;
 - `civilisations` (coupé par défaut : constructions de l'ordinateur, fréquence, chance, nombre, zone permise) ;
 - `diplomatie` ;
 - `guerre` (sièges, raids, anti-grief, rang Hostile entre joueurs, troupes Hundred Years War, hommes par soldat et
-  soldats au plus pour l'armée en chair et en os) ;
+  soldats au plus pour l'armée en chair et en os, ostes de l'ordinateur et leur vitesse) ;
 - `ia` (fréquence des décisions, guerres entre IA et contre toi, répit après la fondation, coalitions) ;
 - `intrigues` (événements, factions, complots, révoltes) ;
 - `cour` (recherche exigée pour la Lice) ;
@@ -338,6 +350,7 @@ Chaque système peut être coupé.
 | `/crusade ici` | Où tu te tiens : place proche, région, royaume et suzerains (pour tous) |
 | `/crusade claim`, `unclaim`, `map`, `info` | Le territoire (pour tous, voir plus haut) |
 | `/crusade armee rassembler`, `suivre`, `tenir`, `demobiliser` | L'armée en chair et en os (pour le souverain) |
+| `/crusade armee marcher <x> <z>`, `formation <nom>` | Envoyer l'armée, changer sa formation (pour le souverain) |
 | `/crusade civ`, `/crusade civ annuler` | Les constructions de l'ordinateur : combien, et tout défaire |
 | `/crusade perf`, `/crusade perf reset` | Le temps pris par chaque partie du mod |
 | `/crusade reconcilier` | Revérifie l'état des royaumes |
@@ -350,8 +363,10 @@ Pour accélérer le temps pendant un test : `/time add 24000` fait passer un jou
 
 ## 6. Limites connues
 
-- Les armées de l'ordinateur ne marchent pas en vrai sur le monde : elles restent des chiffres. Ta propre armée,
-  elle, se rassemble en vrais soldats, mais reçoit ses ordres par commande (pas encore depuis la carte).
+- Les ostes de l'ordinateur marchent sur la carte, pas dans le monde : ils ne paraissent en vrais soldats que face à
+  ton armée rassemblée. Leurs soldats sont des pillards (ou les bandits de Hundred Years War) : ils s'en prennent à
+  tous les joueurs proches, pas seulement à l'ennemi.
+- Les soldats ne marchent que dans les chunks chargés : loin de toi, ils s'arrêtent et reprennent quand tu reviens.
 - Les soldats rassemblés oublient leur ordre au redémarrage du serveur : ils tiennent alors leur place.
 - Xaero n'a pas d'API publique pour colorer des terres : CrusadeCraft passe par une petite greffe. Si une future
   version de Xaero la casse, la couche disparaît simplement (le jeu ne plante pas).

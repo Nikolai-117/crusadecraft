@@ -89,7 +89,26 @@ public final class CrusadeCommand {
                         .then(Commands.literal("tenir").executes(ctx -> say(ctx, fr.crusadecraft.core.war.ArmyService.order(
                                 ctx.getSource().getPlayerOrException(), fr.crusadecraft.core.war.ArmyService.Order.HOLD))))
                         .then(Commands.literal("demobiliser").executes(ctx -> say(ctx,
-                                fr.crusadecraft.core.war.ArmyService.dismiss(ctx.getSource().getPlayerOrException())))))
+                                fr.crusadecraft.core.war.ArmyService.dismiss(ctx.getSource().getPlayerOrException()))))
+                        // P27 : marcher vers un point, en formation.
+                        .then(Commands.literal("marcher")
+                                .then(Commands.argument("x", IntegerArgumentType.integer())
+                                        .then(Commands.argument("z", IntegerArgumentType.integer())
+                                                .executes(ctx -> say(ctx, fr.crusadecraft.core.war.ArmyService.march(ctx.getSource().getPlayerOrException(),
+                                                        IntegerArgumentType.getInteger(ctx, "x"), IntegerArgumentType.getInteger(ctx, "z")))))))
+                        .then(Commands.literal("formation")
+                                .then(Commands.argument("nom", StringArgumentType.word())
+                                        .suggests((ctx, b) -> SharedSuggestionProvider.suggest(java.util.Arrays.stream(fr.crusadecraft.core.war.Formation.values())
+                                                .map(f -> f.name().toLowerCase(java.util.Locale.ROOT)), b))
+                                        .executes(ctx -> {
+                                            String name = StringArgumentType.getString(ctx, "nom").toUpperCase(java.util.Locale.ROOT);
+                                            for (fr.crusadecraft.core.war.Formation f : fr.crusadecraft.core.war.Formation.values()) {
+                                                if (f.name().equals(name)) return say(ctx, fr.crusadecraft.core.war.ArmyService.formation(
+                                                        ctx.getSource().getPlayerOrException(), f));
+                                            }
+                                            ctx.getSource().sendFailure(Component.translatable("crusadecraft.army.formation.unknown"));
+                                            return 0;
+                                        }))))
                 // Ce que coûte chaque système sur le serveur (P24).
                 .then(Commands.literal("perf").requires(src -> src.hasPermission(2))
                         .executes(ctx -> {

@@ -134,6 +134,52 @@ public final class War {
         while (events.size() > EVENTS_KEPT) events.remove(events.size() - 1);
     }
 
+    /**
+     * L'ost d'un royaume de l'ordinateur en campagne (P27) : où il est, combien de soldats il a perdus en bataille, et
+     * jusqu'à quel jour il se reforme s'il a été défait (0 : il marche).
+     */
+    public record Host(net.minecraft.resources.ResourceLocation dimension, double x, double z, int lost, long beatenUntil) {
+        public Host(net.minecraft.resources.ResourceLocation dimension, double x, double z, int lost) {
+            this(dimension, x, z, lost, 0);
+        }
+
+        public boolean beaten(long today) {
+            return beatenUntil > 0 && today < beatenUntil;
+        }
+
+        public Host at(double nx, double nz) {
+            return new Host(dimension, nx, nz, lost, beatenUntil);
+        }
+
+        public Host withLoss() {
+            return new Host(dimension, x, z, lost + 1, beatenUntil);
+        }
+
+        public Host beatenUntil(long day) {
+            return new Host(dimension, x, z, lost, day);
+        }
+
+        CompoundTag save() {
+            CompoundTag t = new CompoundTag();
+            t.putString("dim", dimension.toString());
+            t.putDouble("x", x);
+            t.putDouble("z", z);
+            t.putInt("lost", lost);
+            if (beatenUntil > 0) t.putLong("beaten", beatenUntil);
+            return t;
+        }
+
+        static Host load(CompoundTag t) {
+            net.minecraft.resources.ResourceLocation dim = net.minecraft.resources.ResourceLocation.tryParse(t.getString("dim"));
+            return dim == null ? null : new Host(dim, t.getDouble("x"), t.getDouble("z"), t.getInt("lost"), t.getLong("beaten"));
+        }
+    }
+
+    /** Les ostes des royaumes de l'ordinateur dans cette guerre (P27), par royaume. Absents des sauvegardes d'avant. */
+    private final java.util.Map<UUID, Host> hosts = new java.util.LinkedHashMap<>();
+
+    public java.util.Map<UUID, Host> hosts() { return hosts; }
+
     public CompoundTag save() {
         CompoundTag t = new CompoundTag();
         t.putUUID("id", id);
@@ -161,6 +207,11 @@ public final class War {
         for (java.util.Map.Entry<String, String> e : savedRanks.entrySet()) ranks.putString(e.getKey(), e.getValue());
         t.put("ranks", ranks);
         t.putBoolean("crusade", crusade);
+        if (!hosts.isEmpty()) {
+            CompoundTag h = new CompoundTag();
+            for (java.util.Map.Entry<UUID, Host> e : hosts.entrySet()) h.put(e.getKey().toString(), e.getValue().save());
+            t.put("hosts", h);
+        }
         return t;
     }
 
@@ -200,6 +251,15 @@ public final class War {
         CompoundTag ranks = t.getCompound("ranks");
         for (String k : ranks.getAllKeys()) w.savedRanks.put(k, ranks.getString(k));
         w.crusade = t.getBoolean("crusade");
+        CompoundTag h = t.getCompound("hosts");
+        for (String k : h.getAllKeys()) {
+            try {
+                Host host = Host.load(h.getCompound(k));
+                if (host != null) w.hosts.put(UUID.fromString(k), host);
+            } catch (IllegalArgumentException ignored) {
+                // identifiant illisible
+            }
+        }
         return w;
     }
 }

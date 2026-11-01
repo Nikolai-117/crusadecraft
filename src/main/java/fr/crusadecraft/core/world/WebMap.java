@@ -104,6 +104,7 @@ public final class WebMap {
         if (CrusadeConfig.SERVER.webMapPlaces.get()) addPlaces(server, data, lang, points, areas);
         if (CrusadeConfig.SERVER.webMapWar.get()) addWar(server, data, lang, areas, lines, points);
         if (CrusadeConfig.SERVER.webMapTrade.get()) addTrade(server, data, lang, lines);
+        if (CrusadeConfig.SERVER.webMapArmies.get()) addArmies(server, data, lang, lines, points);
         int hash = 17;
         for (Area a : areas) hash = hash * 31 + a.id().hashCode() * 7 + a.html().hashCode() + java.util.Arrays.hashCode(a.xs()) + java.util.Arrays.hashCode(a.zs());
         for (Line l : lines) hash = hash * 31 + l.id().hashCode() + java.util.Arrays.hashCode(l.xs()) + java.util.Arrays.hashCode(l.zs());
@@ -322,6 +323,40 @@ public final class WebMap {
                     + esc(text(Component.translatable("crusadecraft.trade.income", r.income(), r.distance()), lang)) + "</div>";
             lines.add(new Line("commerce_" + r.a() + "_" + r.b(), worldName(level), title + " : " + a + " ↔ " + b, html,
                     new double[]{r.x0() + 0.5, r.x1() + 0.5}, new double[]{r.z0() + 0.5, r.z1() + 0.5}, 0xD4A017, 3));
+        }
+    }
+
+    /**
+     * Les armées (P27) : un drapeau pirate pour chaque ost de l'ordinateur en campagne, un drapeau vert pour l'armée
+     * rassemblée d'un joueur, et un trait jusqu'à son but de marche. Dans leur propre couche.
+     */
+    private static void addArmies(MinecraftServer server, CrusadeSavedData data, String lang, List<Line> lines, List<Point> points) {
+        for (fr.crusadecraft.core.war.HostService.Pawn h : fr.crusadecraft.core.war.HostService.pawns(server)) {
+            ServerLevel level = level(server, h.dimension());
+            if (level == null) continue;
+            String who = ServerText.render(fr.crusadecraft.core.diplomacy.TradeService.name(data, h.realm()), lang);
+            String title = text(Component.translatable("crusadecraft.army.pawn.host", who), lang);
+            StringBuilder html = new StringBuilder("<div class=\"crusade-fiche\"><b>").append(esc(title)).append("</b><br>")
+                    .append(esc(text(Component.translatable("crusadecraft.army.pawn.men", h.men()), lang)));
+            if (h.beaten()) html.append("<br>").append(esc(text(Component.translatable("crusadecraft.army.pawn.beaten"), lang)));
+            else if (h.hasTarget()) html.append("<br>").append(esc(text(Component.translatable("crusadecraft.army.pawn.target", h.targetX(), h.targetZ()), lang)));
+            html.append("</div>");
+            String id = "armee_" + h.war() + "_" + h.realm();
+            points.add(new Point(id, worldName(level), title, html.toString(), h.x() + 0.5, 64, h.z() + 0.5, h.beaten() ? "skull" : "pirateflag"));
+            if (h.hasTarget() && !h.beaten()) {
+                lines.add(new Line(id + "_marche", worldName(level), title, html.toString(), new double[]{h.x() + 0.5, h.targetX() + 0.5},
+                        new double[]{h.z() + 0.5, h.targetZ() + 0.5}, 0xC0392B, 2));
+            }
+        }
+        for (Realm r : data.realms()) {
+            for (ServerLevel level : server.getAllLevels()) {
+                Optional<double[]> pos = fr.crusadecraft.core.war.ArmyService.position(level, r.id());
+                if (pos.isEmpty()) continue;
+                String title = text(Component.translatable("crusadecraft.army.pawn.mine", r.name()), lang);
+                String html = "<div class=\"crusade-fiche\"><b>" + esc(title) + "</b><br>"
+                        + esc(text(Component.translatable("crusadecraft.army.pawn.soldiers", (int) pos.get()[2]), lang)) + "</div>";
+                points.add(new Point("armee_" + r.id() + "_" + worldName(level), worldName(level), title, html, pos.get()[0], 64, pos.get()[1], "greenflag"));
+            }
         }
     }
 

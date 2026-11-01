@@ -400,7 +400,35 @@ public final class WorldService {
         return new MapView(dim, focusX, focusZ, player.getBlockX(), player.getBlockZ(), CrusadeConfig.SERVER.territoryRadius.get(),
                 CrusadeConfig.SERVER.colonyRadius.get(), territories, seats, dejure, canEdit, editing, borders(world, dim, index),
                 fr.crusadecraft.core.place.PlaceService.mapPlaces(server, dim),
-                editing ? MapView.War.NONE : fr.crusadecraft.core.war.WarMapService.view(player, dim), editing ? List.of() : tradeLines(player, dim));
+                editing ? MapView.War.NONE : fr.crusadecraft.core.war.WarMapService.view(player, dim), editing ? List.of() : tradeLines(player, dim),
+                editing ? List.of() : armyPawns(player, dim));
+    }
+
+    /**
+     * Les armées de cette dimension (P27) : la tienne quand elle est rassemblée (avec son but de marche), et les ostes
+     * en campagne des royaumes de l'ordinateur que tu connais.
+     */
+    static List<MapView.ArmyPawn> armyPawns(ServerPlayer player, ResourceLocation dim) {
+        CrusadeSavedData data = CrusadeSavedData.get(player.server);
+        List<MapView.ArmyPawn> out = new ArrayList<>();
+        Optional<Realm> mine = RealmService.realmOf(player.server, player.getUUID());
+        ServerLevel level = player.server.getLevel(net.minecraft.resources.ResourceKey.create(net.minecraft.core.registries.Registries.DIMENSION, dim));
+        if (mine.isPresent() && level != null) {
+            fr.crusadecraft.core.war.ArmyService.position(level, mine.get().id()).ifPresent(p -> {
+                fr.crusadecraft.core.war.ArmyService.Status s = fr.crusadecraft.core.war.ArmyService.status(player.server, mine.get().id());
+                boolean marching = s.order() == fr.crusadecraft.core.war.ArmyService.Order.MARCH && s.post() != null;
+                out.add(new MapView.ArmyPawn((int) p[0], (int) p[1], fr.crusadecraft.core.war.WarService.men(mine.get()), (int) p[2],
+                        mine.get().color(), Component.literal(mine.get().name()), true, false, marching,
+                        marching ? s.post().getX() : 0, marching ? s.post().getZ() : 0));
+            });
+        }
+        for (fr.crusadecraft.core.war.HostService.Pawn h : fr.crusadecraft.core.war.HostService.pawns(player.server)) {
+            if (!h.dimension().equals(dim) || !known(data, h.realm(), player)) continue;
+            int color = data.world().realm(h.realm()).map(AiRealm::color).orElse(0x888888);
+            out.add(new MapView.ArmyPawn(h.x(), h.z(), h.men(), h.inWorld() ? 1 : 0, color,
+                    fr.crusadecraft.core.diplomacy.TradeService.name(data, h.realm()), false, h.beaten(), h.hasTarget(), h.targetX(), h.targetZ()));
+        }
+        return out;
     }
 
     /** Les routes de commerce (P25) de cette dimension que ce joueur connaît : les siennes, et celles entre royaumes connus. */

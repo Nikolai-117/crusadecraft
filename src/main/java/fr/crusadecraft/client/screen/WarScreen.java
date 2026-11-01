@@ -1,6 +1,7 @@
 package fr.crusadecraft.client.screen;
 
 import fr.crusadecraft.core.diplomacy.DiploStatus;
+import fr.crusadecraft.core.war.ArmyService;
 import fr.crusadecraft.core.war.CasusBelli;
 import fr.crusadecraft.core.war.War;
 import fr.crusadecraft.core.war.WarRules;
@@ -168,6 +169,7 @@ public class WarScreen extends Screen {
         army.setTooltip(Tooltip.create(Component.translatable(view.raised() ? "crusadecraft.war.army.disband.tip" : "crusadecraft.war.army.raise.tip",
                 (int) Math.ceil(view.men() / 10.0))));
         addRenderableWidget(army);
+        if (view.raised()) initArmyOrders(lx + 4, ay + 41, LIST_W - 8);
 
         int rx = left + 186, rw = w - 196;
         WarView.WarLine war = selectedWar();
@@ -179,8 +181,40 @@ public class WarScreen extends Screen {
         if (t != null) initTarget(t, rx, rw);
     }
 
+    /** L'encart de l'armée : deux rangées d'ordres de plus quand elle est levée (P27). */
+    private int armyH() {
+        return view.raised() ? 76 : 42;
+    }
+
     private int armyY() {
-        return top + h - 22 - 4 - 42;
+        return top + h - 22 - 4 - armyH();
+    }
+
+    /** Les ordres à l'armée en chair et en os (P27) : rassembler, suivre, tenir ; formation, démobiliser. */
+    private void initArmyOrders(int x, int y, int width) {
+        WarView.Army a = view.army();
+        int third = (width - 4) / 3;
+        Component musterLabel = a.soldiers() > 0 ? Component.translatable("crusadecraft.war.army.muster.n", a.soldiers())
+                : Component.translatable("crusadecraft.war.army.muster");
+        addRenderableWidget(order(musterLabel, WarPackets.WarAction.Kind.MUSTER, -1, "crusadecraft.war.army.muster.tip", x, y, third, true));
+        addRenderableWidget(order(Component.translatable("crusadecraft.war.army.follow"), WarPackets.WarAction.Kind.FOLLOW, -1,
+                "crusadecraft.war.army.follow.tip", x + third + 2, y, third, a.soldiers() > 0 && a.order() != ArmyService.Order.FOLLOW));
+        addRenderableWidget(order(Component.translatable("crusadecraft.war.army.hold"), WarPackets.WarAction.Kind.HOLD, -1,
+                "crusadecraft.war.army.hold.tip", x + 2 * (third + 2), y, width - 2 * (third + 2), a.soldiers() > 0));
+        int fw = (width - 2) * 3 / 5;
+        Component formation = Component.translatable("crusadecraft.war.army.formation", Component.translatable(a.formation().key()));
+        addRenderableWidget(order(formation, WarPackets.WarAction.Kind.FORMATION, a.formation().next().ordinal(),
+                "crusadecraft.war.army.formation.tip", x, y + 16, fw, a.soldiers() > 0));
+        addRenderableWidget(order(Component.translatable("crusadecraft.war.army.dismiss"), WarPackets.WarAction.Kind.DISMISS, -1,
+                "crusadecraft.war.army.dismiss.tip", x + fw + 2, y + 16, width - fw - 2, a.soldiers() > 0));
+    }
+
+    private Button order(Component label, WarPackets.WarAction.Kind kind, int arg, String tip, int x, int y, int width, boolean active) {
+        Button b = Button.builder(Component.literal(font.plainSubstrByWidth(label.getString(), width - 6)),
+                btn -> send(new WarPackets.WarAction(kind, null, null, arg, null))).bounds(x, y, width, 15).build();
+        b.setTooltip(Tooltip.create(Component.translatable(tip)));
+        b.active = active;
+        return b;
     }
 
     private void initPeace(WarView.WarLine war, int rx, int rw) {
@@ -388,7 +422,7 @@ public class WarScreen extends Screen {
 
     private void renderArmy(GuiGraphics g, int mouseX, int mouseY) {
         int ax = left + 8, ay = armyY();
-        Ui.inset(g, ax, ay, LIST_W, 42);
+        Ui.inset(g, ax, ay, LIST_W, armyH());
         Component men = Component.translatable("crusadecraft.war.army.men", view.men(), view.maxMen());
         Ui.text(g, font, men, ax + 5, ay + 4, Ui.TEXT);
         Component state = view.raised() ? Component.translatable("crusadecraft.war.army.state.raised", view.upkeep())

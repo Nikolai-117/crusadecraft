@@ -21,7 +21,13 @@ public final class WarMapPackets {
      * chunks peints ; {@code x0..z1} : la flèche, ou le repère en (x0, z0) ; {@code target} : ce qu'on retire.
      */
     public record Edit(Op op, int kind, long[] cells, int x0, int z0, int x1, int z1, String note, UUID target) {
-        public enum Op { PAINT, ARROW, PIN, REMOVE, CLEAR }
+        public enum Op { PAINT, ARROW, PIN, REMOVE, CLEAR,
+            /** P27 : l'armée en chair et en os marche vers (x0, z0). */
+            MARCH }
+
+        public static Edit march(int x, int z) {
+            return new Edit(Op.MARCH, 0, new long[0], x, z, 0, 0, "", null);
+        }
 
         public static Edit paint(int kind, long[] cells) {
             return new Edit(Op.PAINT, kind, cells, 0, 0, 0, 0, "", null);
@@ -72,6 +78,7 @@ public final class WarMapPackets {
                 case PIN -> WarMapService.pin(player, p.x0, p.z0, marks[Math.floorMod(p.kind, marks.length)], p.note);
                 case REMOVE -> p.target == null ? Outcome.no("crusadecraft.warmap.nothing") : WarMapService.remove(player, p.target);
                 case CLEAR -> WarMapService.clear(player);
+                case MARCH -> fr.crusadecraft.core.war.ArmyService.march(player, p.x0, p.z0);
             };
             CrusadeNetwork.toPlayer(player, new MapEditPackets.Result(out.success(), out.message()));
             CrusadeNetwork.toPlayer(player, new WorldPackets.MapData(WorldService.mapView(player, false), false));

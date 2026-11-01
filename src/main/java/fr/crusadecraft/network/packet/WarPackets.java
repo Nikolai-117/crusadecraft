@@ -55,7 +55,9 @@ public final class WarPackets {
 
     /** Un ordre donné à la Table de guerre. */
     public record WarAction(Kind kind, UUID target, CasusBelli cb, int province, WarRules.Peace peace) {
-        public enum Kind { REFRESH, DECLARE, RAISE, DISBAND, PEACE }
+        public enum Kind { REFRESH, DECLARE, RAISE, DISBAND, PEACE,
+            /** P27 : l'armée en chair et en os, depuis l'écran de guerre (la formation voyage dans {@code province}). */
+            MUSTER, FOLLOW, HOLD, DISMISS, FORMATION }
 
         public static WarAction of(Kind kind) {
             return new WarAction(kind, null, null, -1, null);
@@ -88,6 +90,11 @@ public final class WarPackets {
                 case RAISE -> WarService.raise(player, true);
                 case DISBAND -> WarService.raise(player, false);
                 case PEACE -> p.peace == null ? null : WarService.proposePeace(player, p.target, p.peace);
+                case MUSTER -> fr.crusadecraft.core.war.ArmyService.muster(player);
+                case FOLLOW -> fr.crusadecraft.core.war.ArmyService.order(player, fr.crusadecraft.core.war.ArmyService.Order.FOLLOW);
+                case HOLD -> fr.crusadecraft.core.war.ArmyService.order(player, fr.crusadecraft.core.war.ArmyService.Order.HOLD);
+                case DISMISS -> fr.crusadecraft.core.war.ArmyService.dismiss(player);
+                case FORMATION -> fr.crusadecraft.core.war.ArmyService.formation(player, fr.crusadecraft.core.war.Formation.byOrdinal(p.province));
                 case REFRESH -> null;
             };
             if (out != null) CourtPackets.reply(player, out);

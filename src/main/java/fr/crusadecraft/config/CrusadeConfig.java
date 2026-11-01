@@ -101,6 +101,8 @@ public final class CrusadeConfig {
         public final ForgeConfigSpec.IntValue feastDays;
         public final ForgeConfigSpec.BooleanValue repliques;
         public final ForgeConfigSpec.BooleanValue civActive;
+        public final ForgeConfigSpec.BooleanValue aiHosts;
+        public final ForgeConfigSpec.IntValue hostSpeed;
         public final ForgeConfigSpec.IntValue civDays;
         public final ForgeConfigSpec.IntValue civChance;
         public final ForgeConfigSpec.IntValue civMaxPerRealm;
@@ -121,6 +123,7 @@ public final class CrusadeConfig {
         public final ForgeConfigSpec.BooleanValue webMapCouncil;
         public final ForgeConfigSpec.BooleanValue webMapWar;
         public final ForgeConfigSpec.BooleanValue webMapTrade;
+        public final ForgeConfigSpec.BooleanValue webMapArmies;
         public final ForgeConfigSpec.DoubleValue webMapOpacity;
         public final ForgeConfigSpec.BooleanValue clientTerritory;
         public final ForgeConfigSpec.IntValue discoveryRadius;
@@ -318,6 +321,8 @@ public final class CrusadeConfig {
                     "Attention : la page web est la même pour tous, les plans de chaque royaume y sont donc visibles de tous.")
                     .define("guerre", true);
             webMapTrade = b.comment("Montrer les routes de commerce (P25) dans leur propre couche.").define("commerce", true);
+            webMapArmies = b.comment("Montrer les armées (P27) dans leur propre couche : ostes de l'ordinateur en campagne, armées rassemblées des joueurs.")
+                    .define("armees", true);
             webMapOpacity = b.comment("Opacité de la couleur des terres (0 : transparentes, 1 : pleines).").defineInRange("opacite", 0.35, 0.0, 1.0);
             clientTerritory = b.comment("Envoyer aux joueurs les terres des royaumes qu'ils connaissent, pour Xaero's World Map et Minimap.")
                     .define("xaero", true);
@@ -395,6 +400,10 @@ public final class CrusadeConfig {
                     .defineInRange("hommesParSoldat", 10, 1, 1000);
             armyCap = b.comment("Soldats au plus rassemblés en même temps par un royaume (le reste de l'armée reste un chiffre).")
                     .defineInRange("soldatsMax", 24, 1, 200);
+            aiHosts = b.comment("Ostes de l'ordinateur (P27) : en guerre, chaque royaume de l'ordinateur lève un ost qui marche sur la carte,",
+                    "et paraît en vrais soldats quand votre armée rassemblée arrive à sa hauteur.").define("ostesIA", true);
+            hostSpeed = b.comment("Blocs parcourus par un ost toutes les cinq secondes (6 : un peu plus de 70 blocs par minute).")
+                    .defineInRange("vitesseOstes", 6, 1, 200);
             captureSeconds = b.comment("Secondes à tenir la bannière, sans garnison autour, pour prendre la province.")
                     .defineInRange("secondesCapture", 10, 3, 600);
             raids = b.comment("Les ennemis lancent des raids sur vos colonies (vos gardes MineColonies les repoussent).").define("raids", true);

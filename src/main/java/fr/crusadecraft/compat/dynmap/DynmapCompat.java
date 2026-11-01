@@ -27,7 +27,8 @@ import java.util.Set;
  * qu'aucun royaume disparu ne traîne sur la carte.
  */
 final class DynmapCompat {
-    static final String REALMS = "crusadecraft.royaumes", PLACES = "crusadecraft.lieux", WAR = "crusadecraft.guerre", TRADE = "crusadecraft.commerce";
+    static final String REALMS = "crusadecraft.royaumes", PLACES = "crusadecraft.lieux", WAR = "crusadecraft.guerre", TRADE = "crusadecraft.commerce",
+            ARMIES = "crusadecraft.armees";
     private static volatile MarkerAPI markers;
     private static int lastHash;
 
@@ -82,7 +83,8 @@ final class DynmapCompat {
         MarkerSet places = set(api, PLACES, "Lieux", 20);
         MarkerSet war = set(api, WAR, "Carte de guerre", 30);
         MarkerSet trade = set(api, TRADE, "Routes commerciales", 25);
-        MarkerSet[] all = {realms, places, war, trade};
+        MarkerSet armies = set(api, ARMIES, "Armées", 35);
+        MarkerSet[] all = {realms, places, war, trade, armies};
         Map<String, AreaMarker> oldAreas = new HashMap<>();
         for (MarkerSet s : all) for (AreaMarker a : s.getAreaMarkers()) oldAreas.put(a.getMarkerID(), a);
         Set<String> keepAreas = new HashSet<>();
@@ -110,7 +112,7 @@ final class DynmapCompat {
         for (WebMap.Line l : model.lines()) {
             double[] ys = new double[l.xs().length];
             java.util.Arrays.fill(ys, 64);
-            MarkerSet target = l.id().startsWith("guerre_") ? war : l.id().startsWith("commerce_") ? trade : realms;
+            MarkerSet target = l.id().startsWith("guerre_") ? war : l.id().startsWith("commerce_") ? trade : l.id().startsWith("armee_") ? armies : realms;
             PolyLineMarker m = oldLines.get(l.id());
             if (m == null || !l.world().equals(m.getWorld()) || m.getMarkerSet() != target) {
                 if (m != null) m.deleteMarker();
@@ -132,7 +134,7 @@ final class DynmapCompat {
         for (WebMap.Point p : model.points()) {
             MarkerIcon icon = api.getMarkerIcon(p.icon());
             if (icon == null) icon = api.getMarkerIcon(MarkerIcon.DEFAULT);
-            MarkerSet target = p.id().startsWith("guerre_") ? war : places;
+            MarkerSet target = p.id().startsWith("guerre_") ? war : p.id().startsWith("armee_") ? armies : places;
             Marker m = oldPoints.get(p.id());
             if (m != null && m.getMarkerSet() != target) {
                 m.deleteMarker();
