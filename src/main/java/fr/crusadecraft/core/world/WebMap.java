@@ -46,8 +46,140 @@ public final class WebMap {
     /** Un trait de frontière. */
     public record Line(String id, String world, String label, String html, double[] xs, double[] zs, int color, int weight) {}
 
-    /** Un repère. */
-    public record Point(String id, String world, String label, String html, double x, double y, double z, String icon) {}
+    /**
+     * Un repère. {@code styled} : son nom mis en forme (HTML) pour la carte fantasy (P32), toujours affiché, ou
+     * {@code null} ; {@code minZoom} : le zoom à partir duquel il paraît (−1 : toujours).
+     */
+    public record Point(String id, String world, String label, String html, double x, double y, double z, String icon, String styled, int minZoom) {
+        public Point(String id, String world, String label, String html, double x, double y, double z, String icon) {
+            this(id, world, label, html, x, y, z, icon, null, -1);
+        }
+    }
+
+    // ------------------------------------------------------------------ carte fantasy (P32)
+
+    /** Les icônes de la carte fantasy (dessinées par {@code DynmapIcons}). */
+    public static final String ICON_EMPTY = "crusadecraft_vide", ICON_CAPITAL = "crusadecraft_capitale", ICON_CITY = "crusadecraft_ville",
+            ICON_VILLAGE = "crusadecraft_village", ICON_FORT = "crusadecraft_fort", ICON_HOLY = "crusadecraft_saint", ICON_RUIN = "crusadecraft_ruine";
+
+    /**
+     * Le cadre posé par Dynmap autour des étiquettes est retiré pour les nôtres : on ne voit que l'encre sur la carte.
+     * (Le sélecteur {@code :has} est compris des navigateurs d'aujourd'hui ; ailleurs le nom garde son cadre, rien de plus.)
+     */
+    static final String LABEL_STYLE = "<style>.markerName:has(.cc-nom){background:none!important;border:0!important;box-shadow:none!important;"
+            + "padding:0!important}</style>";
+    private static final String HALO = "text-shadow:0 0 2px #f3e7c9,0 0 3px #f3e7c9,0 0 6px #f3e7c9;";
+
+    /** La taille du nom d'un royaume, selon l'étendue de sa terre : de 14 à 26 pixels. Logique pure. */
+    static int realmFontSize(int chunks) {
+        return (int) Math.max(14, Math.min(26, Math.round(12 + Math.sqrt(Math.max(0, chunks)) * 0.7)));
+    }
+
+    /**
+     * Le zoom à partir duquel le nom d'un royaume paraît, comme sur une carte qu'on approche : les grands de loin, les
+     * petits en se rapprochant (−1 : toujours). Logique pure.
+     */
+    static int realmMinZoom(int chunks) {
+        return chunks >= 400 ? -1 : chunks >= 120 ? 1 : 2;
+    }
+
+    /**
+     * Le nom d'un royaume à la manière des cartes anciennes : capitales espacées, à l'encre teintée de sa couleur,
+     * centré sur le point, avec son titre en petit au-dessus quand il en a un (« DUCHÉ » au-dessus de « ROCHEGARDE »).
+     */
+    static String realmLabel(String title, String name, int chunks, int color) {
+        int size = realmFontSize(chunks);
+        int ink = mix(color & 0xFFFFFF, 0x2B1D0E, 0.55);
+        StringBuilder h = new StringBuilder(LABEL_STYLE);
+        h.append("<div class=\"cc-nom\" style=\"transform:translate(-50%,-50%);text-align:center;white-space:nowrap;pointer-events:none;")
+                .append("font-family:'Cinzel','Trajan Pro',Georgia,'Times New Roman',serif;font-weight:600;text-transform:uppercase;color:#")
+                .append(String.format("%06X", ink)).append(';').append(HALO).append("\">");
+        if (title != null && !title.isBlank()) {
+            h.append("<div style=\"font-size:").append(Math.max(10, size / 2)).append("px;letter-spacing:.3em;opacity:.85\">").append(esc(title)).append("</div>");
+        }
+        h.append("<div style=\"font-size:").append(size).append("px;letter-spacing:.22em\">").append(esc(name)).append("</div></div>");
+        return h.toString();
+    }
+
+    /** Le genre d'un lieu sur la carte fantasy : il décide de l'icône, de la taille du nom, et du zoom où il paraît. */
+    enum Tier {
+        CAPITAL(ICON_CAPITAL, 15, 2), CITY(ICON_CITY, 13, 3), VILLAGE(ICON_VILLAGE, 11, 4), FORT(ICON_FORT, 11, 4), HOLY(ICON_HOLY, 11, 4),
+        RUIN(ICON_RUIN, 11, 4), REGION(ICON_EMPTY, 14, 1);
+
+        final String icon;
+        final int size, minZoom;
+
+        Tier(String icon, int size, int minZoom) {
+            this.icon = icon;
+            this.size = size;
+            this.minZoom = minZoom;
+        }
+    }
+
+    /** Le nom d'un lieu : encre brune et halo de parchemin ; en petites capitales pour une capitale, en italique espacé pour une région. */
+    static String placeLabel(String name, Tier tier) {
+        StringBuilder h = new StringBuilder(LABEL_STYLE);
+        h.append("<span class=\"cc-nom\" style=\"font-family:Georgia,'Times New Roman',serif;color:#2B1D0E;").append(HALO)
+                .append("font-size:").append(tier.size).append("px;");
+        switch (tier) {
+            case CAPITAL -> h.append("font-weight:bold;font-variant:small-caps;letter-spacing:.05em;");
+            case CITY -> h.append("font-weight:bold;");
+            case REGION -> h.append("font-style:italic;letter-spacing:.35em;text-transform:uppercase;color:#5A4632;");
+            default -> h.append("font-style:italic;");
+        }
+        return h.append("\">").append(esc(name)).append("</span>").toString();
+    }
+
+    /** Mélange deux couleurs : {@code k} de la première. */
+    static int mix(int a, int b, double k) {
+        int r = (int) Math.round(((a >> 16) & 0xFF) * k + ((b >> 16) & 0xFF) * (1 - k));
+        int g = (int) Math.round(((a >> 8) & 0xFF) * k + ((b >> 8) & 0xFF) * (1 - k));
+        int bl = (int) Math.round((a & 0xFF) * k + (b & 0xFF) * (1 - k));
+        return (r << 16) | (g << 8) | bl;
+    }
+
+    /** Les chunks des villes de ce monde et leurs voisins : le nom d'un royaume s'écrit à côté, pas dessus. */
+    static LongSet settlements(CrusadeSavedData data, ServerLevel level) {
+        it.unimi.dsi.fastutil.longs.LongOpenHashSet out = new it.unimi.dsi.fastutil.longs.LongOpenHashSet();
+        ResourceLocation dim = level.dimension().location();
+        java.util.function.BiConsumer<Integer, Integer> around = (x, z) -> {
+            int cx = TerritoryMap.cellOf(x), cz = TerritoryMap.cellOf(z);
+            for (int dx = -2; dx <= 2; dx++) for (int dz = -1; dz <= 1; dz++) out.add(TerritoryMap.key(cx + dx, cz + dz));
+        };
+        for (AiRealm r : data.world().realms()) for (AiProvince p : r.provinces()) if (p.dimension().equals(dim)) around.accept(p.seat().getX(), p.seat().getZ());
+        for (Realm r : data.realms()) {
+            for (fr.crusadecraft.core.ColonyRef c : r.allColonies()) {
+                if (!c.dimension().equals(dim)) continue;
+                fr.crusadecraft.compat.minecolonies.MineColoniesBridge.center(c).ifPresent(p -> around.accept(p.getX(), p.getZ()));
+            }
+        }
+        return out;
+    }
+
+    /** Le genre d'un lieu, et s'il est une capitale (la colonie capitale d'un joueur, la capitale d'un royaume IA). */
+    static Tier tier(CrusadeSavedData data, Lieu l) {
+        return switch (l.kind()) {
+            case VILLE -> capital(data, l) ? Tier.CAPITAL : Tier.CITY;
+            case VILLAGE -> Tier.VILLAGE;
+            case AVANT_POSTE, FORT -> Tier.FORT;
+            case LIEU_SAINT -> Tier.HOLY;
+            case RUINE -> Tier.RUIN;
+            case REGION -> Tier.REGION;
+            default -> Tier.CITY;
+        };
+    }
+
+    private static boolean capital(CrusadeSavedData data, Lieu l) {
+        if (l.ref() == null) return false;
+        if (l.ref().type() == Lieu.RefType.COLONY) {
+            fr.crusadecraft.core.ColonyRef ref = new fr.crusadecraft.core.ColonyRef(l.ref().dim(), l.ref().index());
+            return data.realmHolding(ref).map(r -> r.capital().equals(ref)).orElse(false);
+        }
+        if (l.ref().type() == Lieu.RefType.AI_PROVINCE) {
+            for (AiRealm r : data.world().realms()) for (AiProvince p : r.provinces()) if (p.id() == l.ref().index()) return p.capital();
+        }
+        return false;
+    }
 
     /** Tout ce qu'il faut dessiner ; {@code hash} change dès que quelque chose change. */
     public record Model(List<Area> areas, List<Line> lines, List<Point> points, int hash) {}
@@ -71,12 +203,14 @@ public final class WebMap {
         String lang = CrusadeConfig.SERVER.webMapLanguage.get();
         boolean showAi = CrusadeConfig.SERVER.webMapAiRealms.get();
         double opacity = CrusadeConfig.SERVER.webMapOpacity.get();
+        boolean names = CrusadeConfig.SERVER.webMapNames.get();
         List<Area> areas = new ArrayList<>();
         List<Line> lines = new ArrayList<>();
         List<Point> points = new ArrayList<>();
         for (ServerLevel level : server.getAllLevels()) {
             String world = worldName(level);
             Territory.Snapshot snap = Territory.snapshot(server, level.dimension().location());
+            LongSet settlements = names ? settlements(data, level) : null;
             for (Map.Entry<UUID, LongSet> e : snap.chunksByOwner().entrySet()) {
                 UUID owner = e.getKey();
                 Optional<AiRealm> ai = data.world().realm(owner);
@@ -94,6 +228,15 @@ public final class WebMap {
                     areas.add(new Area(base + "_" + i++, world, name, html, new double[]{x0, x1, x1, x0}, new double[]{z0, z0, z1, z1},
                             color, opacity, color, 0));
                 }
+                // P32 : le nom du royaume, en grand, au cœur de sa plus grande terre.
+                if (names) {
+                    int[] at = WebMapGeometry.labelPoint(e.getValue(), settlements);
+                    if (at != null && at[2] >= 2) {
+                        String big = ai.map(AiRealm::place).orElse(name);
+                        points.add(new Point("nom_" + owner + "_" + world, world, name, html, at[0] + 0.5, 64, at[1] + 0.5, ICON_EMPTY,
+                                realmLabel(null, big, at[2], color), realmMinZoom(e.getValue().size())));
+                    }
+                }
                 int j = 0;
                 int border = darker(color);
                 for (WebMapGeometry.Segment s : WebMapGeometry.border(e.getValue())) {
@@ -108,7 +251,8 @@ public final class WebMap {
         int hash = 17;
         for (Area a : areas) hash = hash * 31 + a.id().hashCode() * 7 + a.html().hashCode() + java.util.Arrays.hashCode(a.xs()) + java.util.Arrays.hashCode(a.zs());
         for (Line l : lines) hash = hash * 31 + l.id().hashCode() + java.util.Arrays.hashCode(l.xs()) + java.util.Arrays.hashCode(l.zs());
-        for (Point p : points) hash = hash * 31 + p.id().hashCode() + p.html().hashCode() + Double.hashCode(p.x() + p.z());
+        for (Point p : points) hash = hash * 31 + p.id().hashCode() + p.html().hashCode() + Double.hashCode(p.x() + p.z())
+                + (p.styled() == null ? 0 : p.styled().hashCode());
         return new Model(areas, lines, points, hash);
     }
 
@@ -206,7 +350,14 @@ public final class WebMap {
                 int color = res.color(l) & 0xFFFFFF;
                 areas.add(new Area(id, world, name, h.toString(), c[0], c[1], color, 0.12, color, 2));
             }
-            points.add(new Point(id, world, name, h.toString(), l.anchor().getX() + 0.5, l.anchor().getY(), l.anchor().getZ() + 0.5, icon(l.kind())));
+            if (CrusadeConfig.SERVER.webMapNames.get()) {
+                // P32 : icône à l'ancienne et nom toujours affiché.
+                Tier tier = tier(data, l);
+                points.add(new Point(id, world, name, h.toString(), l.anchor().getX() + 0.5, l.anchor().getY(), l.anchor().getZ() + 0.5, tier.icon,
+                        placeLabel(name, tier), tier.minZoom));
+            } else {
+                points.add(new Point(id, world, name, h.toString(), l.anchor().getX() + 0.5, l.anchor().getY(), l.anchor().getZ() + 0.5, icon(l.kind())));
+            }
         }
     }
 

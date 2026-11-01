@@ -546,7 +546,14 @@ public final class PlaceService {
             return Result.no("crusadecraft.mapedit.denied");
         }
         if (l.ref() != null) {
-            if (l.ref().type() != Lieu.RefType.SITE) return Result.no("crusadecraft.lieu.rename_elsewhere");
+            // P32 : un royaume, une ville ou une colonie se renomment à leur source ; le lieu suit.
+            if (l.ref().type() != Lieu.RefType.SITE) {
+                Outcome out = fr.crusadecraft.core.realm.NameService.renameSource(player, l.ref(), name);
+                if (!out.success()) return new Result(out, null);
+                l.setName(name);
+                data(player.server).setDirty();
+                return new Result(out, id);
+            }
             Optional<Site> site = data(player.server).world().site(l.ref().uuid());
             if (site.isEmpty()) return Result.no("crusadecraft.lieu.unknown");
             site.get().setName(name);

@@ -73,6 +73,13 @@ public class CitiesScreen extends Screen {
         for (int i = 0; i < visible && scroll + i < view.rows().size(); i++) {
             CityView.Row r = view.rows().get(scroll + i);
             int y = listTop + i * ROW + 2;
+            // P32 : renommer la ville (la colonie MineColonies change de nom).
+            Button rename = Button.builder(Component.literal("✎"), b -> minecraft.setScreen(new NameForm(this,
+                    Component.translatable("crusadecraft.name.city.title"), r.name(), name -> CrusadeNetwork.toServer(
+                            new fr.crusadecraft.network.packet.NamePackets.Rename(fr.crusadecraft.network.packet.NamePackets.Rename.Kind.CITY, r.colony(), name)))))
+                    .bounds(bx - 2 - 16, y, 16, 16).build();
+            rename.setTooltip(Tooltip.create(Component.translatable("crusadecraft.name.city.tip")));
+            addRenderableWidget(rename);
             Button governor = Button.builder(Component.literal(font.plainSubstrByWidth(governorLabel(r).getString(), gw - 8)),
                     b -> cycleGovernor(r)).bounds(bx, y, gw, 16).build();
             Button tax = Button.builder(Component.translatable("crusadecraft.city.tax", r.taxShare()), b -> share(r, true)).bounds(bx + gw + 2, y, sw, 16).build();
@@ -142,7 +149,7 @@ public class CitiesScreen extends Screen {
         Ui.separator(g, left + 8, listTop - 2, w - 16, Ui.GOLD_DARK);
 
         int gw = Math.min(130, w / 3), sw = shareWidth();
-        int nameW = w - 16 - gw - 2 * (sw + 2) - 8;
+        int nameW = w - 16 - gw - 2 * (sw + 2) - 26;
         if (view.rows().isEmpty()) Ui.text(g, font, Component.translatable("crusadecraft.city.empty"), left + 10, listTop + 6, Ui.TEXT_MUTED);
         Component tip = null;
         for (int i = 0; i < visible && scroll + i < view.rows().size(); i++) {

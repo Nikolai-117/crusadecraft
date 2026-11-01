@@ -1,0 +1,15 @@
+{
+  "crusadecraft.name.invalid": "This name won't do: 1 to %s characters, no formatting codes.",
+  "crusadecraft.name.realm.done": "The realm is now called %s.",
+  "crusadecraft.name.city.done": "The city is now called %s.",
+  "crusadecraft.name.colony.missing": "This colony cannot be found.",
+  "crusadecraft.name.colony.none": "Stand in one of your colonies to rename it.",
+  "crusadecraft.name.validate": "Confirm",
+  "crusadecraft.name.realm.title": "New name of the realm",
+  "crusadecraft.name.realm.tip": "Rename the realm: the new name appears everywhere, on the mod's map as on Dynmap.",
+  "crusadecraft.name.city.title": "New name of the city",
+  "crusadecraft.name.city.tip": "Rename the city: the MineColonies colony is renamed, and the map follows.",
+  "crusadecraft.codex.carte_fantasy": "The fantasy map",
+  "crusadecraft.codex.carte_fantasy.p0": "On Dynmap, each realm has its $(l)name written large$() at the heart of its lands, and each city its icon: a $(l)golden seal$() for a capital, a ringed dot for a city, a dot for a village, a tower for a stronghold. City names stay shown; those of villages and small places appear as you zoom in.$(br2)Whatever you place or paint (boundary staff, map editor) appears at the next refresh.",
+  "crusadecraft.codex.carte_fantasy.p1": "$(l)Renaming$(): the $(l)✎$() button of the royal menu for your realm, the one in the Cities screen for a city (the MineColonies colony is renamed too), or the Places screen for everything else. By command: $(l)/crusade renommer royaume <name>$() and $(l)/crusade renommer ville <name>$() (inside the city)."
+}

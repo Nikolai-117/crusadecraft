@@ -110,6 +110,14 @@ public final class CrusadeCommand {
                                             return 0;
                                         }))))
                 // Ce que coûte chaque système sur le serveur (P24).
+                // Renommer son royaume, ou la ville où l'on se tient (P32).
+                .then(Commands.literal("renommer")
+                        .then(Commands.literal("royaume").then(Commands.argument("nom", StringArgumentType.greedyString())
+                                .executes(ctx -> say(ctx, fr.crusadecraft.core.realm.NameService.renameRealm(ctx.getSource().getPlayerOrException(),
+                                        StringArgumentType.getString(ctx, "nom"))))))
+                        .then(Commands.literal("ville").then(Commands.argument("nom", StringArgumentType.greedyString())
+                                .executes(ctx -> say(ctx, fr.crusadecraft.core.realm.NameService.renameColonyHere(ctx.getSource().getPlayerOrException(),
+                                        StringArgumentType.getString(ctx, "nom")))))))
                 // L'écran des réglages du monde (P30) ; il dit lui-même s'il est réservé.
                 .then(Commands.literal("reglages").executes(ctx -> {
                     fr.crusadecraft.network.packet.SettingsPackets.send(ctx.getSource().getPlayerOrException(), true);

@@ -851,3 +851,23 @@ Demandé par Romain (5 octobre) : « que ça fonctionne par chunk directement »
 - Un envoi au serveur sans connexion (écran de titre, banc d'essai) est simplement perdu au lieu de planter.
 - Un texte d'une ligne trop long rétrécit jusqu'aux deux tiers avant d'être coupé (`Ui.fitted`).
 
+**P32 (1er novembre 2026) — la carte fantasy et les noms, version 3.1.0**
+
+- Demandé d'après une capture de Dynmap : le nom du royaume (Levànzia) et ses villes (Khalyos) écrits sur la carte,
+  avec une icône, « comme une vraie carte fantasy ».
+- **Noms des royaumes** : une couche Dynmap « Noms des royaumes », un repère sans icône au cœur de la plus grande
+  terre d'un seul tenant (le chunk le plus loin des bords, en évitant les villes et leurs abords), le nom en
+  capitales espacées, à l'encre teintée de la couleur du royaume, avec un halo de parchemin. La taille suit
+  l'étendue (14 à 26 pixels) ; les petits royaumes ne paraissent qu'en zoomant (un nom ne grandit pas avec le zoom :
+  de loin, tout se chevaucherait).
+- **Villes et lieux** : icônes dessinées par le mod (sceau doré, point cerclé, point, tour, croix, ruine), noms
+  toujours affichés à partir d'un zoom qui dépend du genre (capitales, puis villes, puis villages et petits lieux).
+- **Le cadre de Dynmap** : Dynmap filtre le style des étiquettes (il garde police, couleur, halo, et retire classes,
+  feuilles de style et transformations). Le seul moyen de retirer son cadre sombre est sa feuille `override.css`,
+  livrée en commentaire dans sa page : le mod l'écrit (en complétant un fichier existant entre deux marqueurs) et
+  rend la ligne active, à chaque démarrage, puisque Dynmap réécrit sa page quand il change de version. Coupable.
+- **Renommer** depuis le jeu : royaume (✎ du menu royal, ou commande), ville (✎ de l'écran des Villes : la colonie
+  MineColonies est renommée par son API, comme depuis l'Hôtel de ville), et l'écran des Lieux renvoie désormais à
+  la source au lieu de refuser. Les royaumes et villes de l'ordinateur restent réservés à l'éditeur de la carte.
+- Canal réseau en version 19. Vérifié dans le jeu de développement et sur la page Dynmap.
+

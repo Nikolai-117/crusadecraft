@@ -121,6 +121,21 @@ public final class MineColoniesBridge {
         }
     }
 
+    /** Renomme la colonie (P32), comme le ferait l'Hôtel de ville. {@code false} si elle n'existe pas. */
+    public static boolean rename(ColonyRef ref, String name) {
+        if (broken) return false;
+        try {
+            IColony c = colony(ref);
+            if (c == null) return false;
+            c.setName(name);
+            c.markDirty();
+            return true;
+        } catch (LinkageError e) {
+            breakBridge(e);
+            return false;
+        }
+    }
+
     public static boolean isOwner(ColonyRef ref, UUID player) {
         return owner(ref).map(player::equals).orElse(false);
     }

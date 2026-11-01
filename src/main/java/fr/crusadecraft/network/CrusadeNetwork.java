@@ -33,7 +33,7 @@ import net.minecraftforge.network.simple.SimpleChannel;
  * (distance, droits, état) avant d'agir.
  */
 public final class CrusadeNetwork {
-    private static final String VERSION = "18";
+    private static final String VERSION = "19";
 
     public static final SimpleChannel CHANNEL = NetworkRegistry.newSimpleChannel(
             ResourceLocation.tryParse(CrusadeCraft.MOD_ID + ":main"),
@@ -217,6 +217,9 @@ public final class CrusadeNetwork {
         CHANNEL.messageBuilder(fr.crusadecraft.network.packet.SettingsPackets.Request.class, nextId++, NetworkDirection.PLAY_TO_SERVER)
                 .encoder(fr.crusadecraft.network.packet.SettingsPackets.Request::encode).decoder(fr.crusadecraft.network.packet.SettingsPackets.Request::decode)
                 .consumerMainThread(fr.crusadecraft.network.packet.SettingsPackets.Request::handle).add();
+        CHANNEL.messageBuilder(fr.crusadecraft.network.packet.NamePackets.Rename.class, nextId++, NetworkDirection.PLAY_TO_SERVER)
+                .encoder(fr.crusadecraft.network.packet.NamePackets.Rename::encode).decoder(fr.crusadecraft.network.packet.NamePackets.Rename::decode)
+                .consumerMainThread(fr.crusadecraft.network.packet.NamePackets.Rename::handle).add();
         CHANNEL.messageBuilder(LineagePackets.OpenMcaTree.class, nextId++, NetworkDirection.PLAY_TO_CLIENT)
                 .encoder(LineagePackets.OpenMcaTree::encode).decoder(LineagePackets.OpenMcaTree::decode)
                 .consumerMainThread(LineagePackets.OpenMcaTree::handle).add();

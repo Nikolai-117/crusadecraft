@@ -20,7 +20,7 @@ import java.util.function.Supplier;
 public final class CityPackets {
     private CityPackets() {}
 
-    private static void send(ServerPlayer player, boolean open, Outcome out) {
+    static void send(ServerPlayer player, boolean open, Outcome out) {
         CityService.view(player).ifPresentOrElse(
                 v -> CrusadeNetwork.toPlayer(player, new Open(v, open, out == null ? null : out.message(), out != null && out.success())),
                 () -> player.displayClientMessage(Component.translatable("crusadecraft.realm.none"), true));

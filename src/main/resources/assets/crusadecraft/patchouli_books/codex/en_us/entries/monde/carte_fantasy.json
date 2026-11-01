@@ -1,0 +1,16 @@
+{
+  "name": "crusadecraft.codex.carte_fantasy",
+  "icon": "minecraft:filled_map",
+  "category": "crusadecraft:monde",
+  "sortnum": 6,
+  "pages": [
+    {
+      "type": "patchouli:text",
+      "text": "crusadecraft.codex.carte_fantasy.p0"
+    },
+    {
+      "type": "patchouli:text",
+      "text": "crusadecraft.codex.carte_fantasy.p1"
+    }
+  ]
+}

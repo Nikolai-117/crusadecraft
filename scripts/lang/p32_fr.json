@@ -1,0 +1,15 @@
+{
+  "crusadecraft.name.invalid": "Ce nom ne va pas : de 1 à %s caractères, sans codes de mise en forme.",
+  "crusadecraft.name.realm.done": "Le royaume s'appelle désormais %s.",
+  "crusadecraft.name.city.done": "La ville s'appelle désormais %s.",
+  "crusadecraft.name.colony.missing": "Cette colonie est introuvable.",
+  "crusadecraft.name.colony.none": "Tiens-toi dans une de tes colonies pour la renommer.",
+  "crusadecraft.name.validate": "Valider",
+  "crusadecraft.name.realm.title": "Nouveau nom du royaume",
+  "crusadecraft.name.realm.tip": "Renommer le royaume : le nouveau nom paraît partout, sur la carte du mod comme sur Dynmap.",
+  "crusadecraft.name.city.title": "Nouveau nom de la ville",
+  "crusadecraft.name.city.tip": "Renommer la ville : la colonie MineColonies change de nom, et la carte suit.",
+  "crusadecraft.codex.carte_fantasy": "La carte fantasy",
+  "crusadecraft.codex.carte_fantasy.p0": "Sur Dynmap, chaque royaume a son $(l)nom écrit en grand$() au cœur de ses terres, et chaque ville son icône : un $(l)sceau doré$() pour une capitale, un point cerclé pour une ville, un point pour un village, une tour pour une place forte. Les noms des villes restent affichés ; ceux des villages et des petits lieux paraissent en zoomant.$(br2)Tout ce que tu poses ou peins (bâton de bornage, éditeur de la carte) paraît au rafraîchissement suivant.",
+  "crusadecraft.codex.carte_fantasy.p1": "$(l)Renommer$() : le bouton $(l)✎$() du menu royal pour ton royaume, celui de l'écran des Villes pour une ville (la colonie MineColonies change de nom aussi), ou l'écran des Lieux pour tout le reste. Par commande : $(l)/crusade renommer royaume <nom>$() et $(l)/crusade renommer ville <nom>$() (dans la ville)."
+}

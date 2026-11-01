@@ -173,6 +173,13 @@ public class RealmScreen extends Screen {
             }).bounds(lieux.getX() - 2 - 52, top + 8, 52, 16).build();
             cities.setTooltip(Tooltip.create(Component.translatable("crusadecraft.city.open.tip")));
             addRenderableWidget(cities);
+            // P32 : renommer le royaume.
+            Button rename = Button.builder(Component.literal("✎"), b -> minecraft.setScreen(new NameForm(this,
+                    Component.translatable("crusadecraft.name.realm.title"), view.name(), name -> CrusadeNetwork.toServer(
+                            new fr.crusadecraft.network.packet.NamePackets.Rename(fr.crusadecraft.network.packet.NamePackets.Rename.Kind.REALM, null, name)))))
+                    .bounds(cities.getX() - 2 - 16, top + 8, 16, 16).build();
+            rename.setTooltip(Tooltip.create(Component.translatable("crusadecraft.name.realm.tip")));
+            addRenderableWidget(rename);
             // P30 : les réglages du monde (réservés aux opérateurs et au propriétaire d'un monde solo).
             Button settings = Button.builder(Component.literal("⚙"), b -> {
                 if (minecraft != null && minecraft.getConnection() != null) CrusadeNetwork.toServer(new fr.crusadecraft.network.packet.SettingsPackets.Request("", ""));
@@ -280,7 +287,7 @@ public class RealmScreen extends Screen {
         Ui.shield(g, font, left + 12, top + 10, 34, 42, view.color(), Ui.initial(view.name()));
         Component rankTitle = Component.translatable(view.rank().titleKey());
         // Le nom tient sur la ligne du titre, à côté des boutons de l'onglet Royaume et du ⚙ : il rétrécit s'il le faut.
-        int titleRoom = left + w - 8 - 18 - (tab == Tab.ROYAUME ? 64 + 2 + 58 + 2 + 52 + 4 : 0) - (left + 56) - 4;
+        int titleRoom = left + w - 8 - 18 - (tab == Tab.ROYAUME ? 64 + 2 + 58 + 2 + 52 + 2 + 16 + 4 : 0) - (left + 56) - 4;
         float k = Math.max(0.8f, Math.min(1.6f, titleRoom / (float) Math.max(1, font.width(view.name()))));
         String name = font.plainSubstrByWidth(view.name(), Math.round(titleRoom / k));
         Ui.scaled(g, font, Component.literal(name), left + 56, top + 12 + Math.round((1.6f - k) * 4), k, Ui.TEXT_TITLE, false);

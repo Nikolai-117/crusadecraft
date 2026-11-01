@@ -1,4 +1,4 @@
-# CrusadeCraft 3.0.1 — installer et tester
+# CrusadeCraft 3.1.0 — installer et tester
 
 ## 1. Ce qu'il faut
 
@@ -17,7 +17,7 @@ Optionnels, déjà présents chez toi, donc activés automatiquement :
 
 ## 2. Installer
 
-1. Le fichier du mod est `E:\crusadecraft\build\libs\crusadecraft-3.0.1.jar`.
+1. Le fichier du mod est `E:\crusadecraft\build\libs\crusadecraft-3.1.0.jar`.
 2. Mets-le dans le dossier des mods de l'instance : `D:\MultiMC\instances\1.20.1\.minecraft\mods\`.
    Dans MultiMC, tu peux aussi faire clic droit sur l'instance → *Modifier* → *Mods* → *Ajouter un fichier*.
    **Retire l'ancien** (`crusadecraft-1.8.0.jar`, ou une version plus vieille) : deux versions du mod ensemble
@@ -186,6 +186,19 @@ données du mod (fichier `crusadecraft.dat` du monde) restent sur place, sans ef
 49. Rien à installer : tes terres et celles des royaumes que tu connais apparaissent sur la carte de Xaero (touche
     **M**) et sur la minimap, chunk par chunk, avec le nom du royaume au survol. Elles suivent l'option « Afficher les
     claims » de Xaero, et ses réglages d'opacité.
+
+### La carte fantasy et les noms
+53b. Sur Dynmap, chaque royaume a son **nom écrit en grand** au cœur de ses terres, à l'encre de sa couleur, et
+    chaque ville son icône : un **sceau doré** pour une capitale, un point cerclé pour une ville, un point pour un
+    village, une tour pour une place forte. De loin, seuls les grands royaumes ; en zoomant, les petits, puis les
+    capitales, les villes et les villages.
+53c. Pour retirer le cadre sombre que Dynmap pose derrière les noms, le mod écrit sa feuille de style dans
+    `dynmap/web/css/override.css` et l'active dans la page de Dynmap (la voie prévue par Dynmap). Un `override.css`
+    à toi est complété, jamais écrasé. Réglage `carteWeb.styleFantasy` pour s'en passer.
+53d. **Renommer** : bouton **✎** à côté des boutons du menu royal pour ton royaume, **✎** devant chaque ville dans
+    l'écran des Villes (la colonie MineColonies change de nom aussi), et l'écran des **Lieux** pour tout le reste
+    (les royaumes et villes de l'ordinateur, si tu as l'éditeur). Par commande : `/crusade renommer royaume <nom>`,
+    `/crusade renommer ville <nom>` en se tenant dans la ville.
 
 ### La carte de guerre
 50. Ouvre la carte du royaume (touche **virgule**) et clique sur **⚔ Guerre**, en bas à droite. Une barre d'outils
@@ -381,6 +394,7 @@ Chaque système peut être coupé.
 | `/crusade civ`, `/crusade civ annuler` | Les constructions de l'ordinateur : combien, et tout défaire |
 | `/crusade perf`, `/crusade perf reset` | Le temps pris par chaque partie du mod |
 | `/crusade reglages` | L'écran des réglages du monde (opérateurs, propriétaire d'un monde solo) |
+| `/crusade renommer royaume <nom>`, `renommer ville <nom>` | Renommer son royaume, ou la ville où l'on se tient |
 | `/crusade reconcilier` | Revérifie l'état des royaumes |
 | `/crusade monde info` | Le monde IA |
 | `/crusade monde generer` | Régénère les royaumes IA autour de toi |

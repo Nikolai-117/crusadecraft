@@ -131,6 +131,8 @@ public final class CrusadeConfig {
         public final ForgeConfigSpec.BooleanValue webMapWar;
         public final ForgeConfigSpec.BooleanValue webMapTrade;
         public final ForgeConfigSpec.BooleanValue webMapArmies;
+        public final ForgeConfigSpec.BooleanValue webMapNames;
+        public final ForgeConfigSpec.BooleanValue webMapFantasyStyle;
         public final ForgeConfigSpec.DoubleValue webMapOpacity;
         public final ForgeConfigSpec.BooleanValue clientTerritory;
         public final ForgeConfigSpec.IntValue discoveryRadius;
@@ -331,6 +333,11 @@ public final class CrusadeConfig {
                     "Attention : la page web est la même pour tous, les plans de chaque royaume y sont donc visibles de tous.")
                     .define("guerre", true);
             webMapTrade = b.comment("Montrer les routes de commerce (P25) dans leur propre couche.").define("commerce", true);
+            webMapNames = b.comment("Carte fantasy (P32) : le nom de chaque royaume écrit en grand sur ses terres, et le nom des villes et des lieux",
+                    "toujours affiché, avec des icônes à l'ancienne (sceau pour une capitale, point cerclé pour une ville…).").define("noms", true);
+            webMapFantasyStyle = b.comment("Poser la feuille de style de la carte fantasy dans le dossier web de Dynmap (css/override.css, activé dans sa page) :",
+                    "sans elle, Dynmap garde son cadre sombre derrière les noms. Un override.css existant est complété, jamais écrasé.")
+                    .define("styleFantasy", true);
             webMapArmies = b.comment("Montrer les armées (P27) dans leur propre couche : ostes de l'ordinateur en campagne, armées rassemblées des joueurs.")
                     .define("armees", true);
             webMapOpacity = b.comment("Opacité de la couleur des terres (0 : transparentes, 1 : pleines).").defineInRange("opacite", 0.35, 0.0, 1.0);

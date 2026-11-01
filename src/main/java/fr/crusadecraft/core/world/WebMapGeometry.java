@@ -101,6 +101,87 @@ public final class WebMapGeometry {
     }
 
     /** Un cercle en polygone (pour une région). */
+    /**
+     * Où écrire le nom d'un royaume (P32) : au cœur de sa plus grande terre d'un seul tenant, sur le chunk le plus
+     * éloigné de ses bords (on mesure, de proche en proche, la distance de chaque chunk au bord). Renvoie le centre de
+     * ce chunk en blocs {x, z}, et le nombre de chunks de cette terre ; {@code null} pour une terre vide.
+     */
+    public static int[] labelPoint(LongSet chunks) {
+        return labelPoint(chunks, null);
+    }
+
+    /**
+     * De même, en évitant si possible les chunks de {@code avoid} (les villes et leurs abords) : le nom du royaume ne
+     * recouvre pas celui de sa capitale. S'il n'y a pas d'autre place, on l'écrit quand même au plus profond.
+     */
+    public static int[] labelPoint(LongSet chunks, LongSet avoid) {
+        if (chunks.isEmpty()) return null;
+        // Les morceaux d'un seul tenant : on garde le plus grand.
+        it.unimi.dsi.fastutil.longs.LongOpenHashSet seen = new it.unimi.dsi.fastutil.longs.LongOpenHashSet();
+        it.unimi.dsi.fastutil.longs.LongArrayList best = null;
+        for (long start : chunks) {
+            if (seen.contains(start)) continue;
+            it.unimi.dsi.fastutil.longs.LongArrayList part = new it.unimi.dsi.fastutil.longs.LongArrayList();
+            java.util.ArrayDeque<Long> queue = new java.util.ArrayDeque<>();
+            queue.add(start);
+            seen.add(start);
+            while (!queue.isEmpty()) {
+                long k = queue.poll();
+                part.add(k);
+                int x = TerritoryMap.cellX(k), z = TerritoryMap.cellZ(k);
+                for (long nb : new long[]{TerritoryMap.key(x + 1, z), TerritoryMap.key(x - 1, z), TerritoryMap.key(x, z + 1), TerritoryMap.key(x, z - 1)}) {
+                    if (chunks.contains(nb) && seen.add(nb)) queue.add(nb);
+                }
+            }
+            if (best == null || part.size() > best.size()) best = part;
+        }
+        // La distance au bord, chunk par chunk, en partant de ceux qui touchent l'extérieur.
+        it.unimi.dsi.fastutil.longs.LongOpenHashSet land = new it.unimi.dsi.fastutil.longs.LongOpenHashSet(best);
+        it.unimi.dsi.fastutil.longs.Long2IntOpenHashMap depth = new it.unimi.dsi.fastutil.longs.Long2IntOpenHashMap();
+        java.util.ArrayDeque<Long> queue = new java.util.ArrayDeque<>();
+        for (long k : best) {
+            int x = TerritoryMap.cellX(k), z = TerritoryMap.cellZ(k);
+            boolean edge = !land.contains(TerritoryMap.key(x + 1, z)) || !land.contains(TerritoryMap.key(x - 1, z))
+                    || !land.contains(TerritoryMap.key(x, z + 1)) || !land.contains(TerritoryMap.key(x, z - 1));
+            if (edge) {
+                depth.put(k, 0);
+                queue.add(k);
+            }
+        }
+        long deepest = best.getLong(0);
+        int deepestDepth = -1;
+        double sx = 0, sz = 0;
+        for (long k : best) {
+            sx += TerritoryMap.cellX(k);
+            sz += TerritoryMap.cellZ(k);
+        }
+        double mx = sx / best.size(), mz = sz / best.size();
+        while (!queue.isEmpty()) {
+            long k = queue.poll();
+            int d = depth.get(k), x = TerritoryMap.cellX(k), z = TerritoryMap.cellZ(k);
+            // À profondeur égale, le plus proche du centre de la terre : le nom ne file pas vers un coin.
+            double off = (x - mx) * (x - mx) + (z - mz) * (z - mz);
+            double bestOff = (TerritoryMap.cellX(deepest) - mx) * (TerritoryMap.cellX(deepest) - mx)
+                    + (TerritoryMap.cellZ(deepest) - mz) * (TerritoryMap.cellZ(deepest) - mz);
+            boolean free = avoid == null || !avoid.contains(k);
+            boolean bestFree = avoid == null || !avoid.contains(deepest) || deepestDepth < 0;
+            boolean better = free && !bestFree ? true : !free && bestFree && deepestDepth >= 0 ? false
+                    : d > deepestDepth || (d == deepestDepth && off < bestOff);
+            if (better) {
+                deepest = k;
+                deepestDepth = d;
+            }
+            for (long nb : new long[]{TerritoryMap.key(x + 1, z), TerritoryMap.key(x - 1, z), TerritoryMap.key(x, z + 1), TerritoryMap.key(x, z - 1)}) {
+                if (land.contains(nb) && !depth.containsKey(nb)) {
+                    depth.put(nb, d + 1);
+                    queue.add(nb);
+                }
+            }
+        }
+        return new int[]{TerritoryMap.cellX(deepest) * TerritoryMap.CELL + TerritoryMap.CELL / 2,
+                TerritoryMap.cellZ(deepest) * TerritoryMap.CELL + TerritoryMap.CELL / 2, best.size()};
+    }
+
     public static double[][] circle(double cx, double cz, double r, int points) {
         double[] xs = new double[points], zs = new double[points];
         for (int i = 0; i < points; i++) {

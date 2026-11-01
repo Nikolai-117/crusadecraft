@@ -28,9 +28,11 @@ import java.util.Set;
  */
 final class DynmapCompat {
     static final String REALMS = "crusadecraft.royaumes", PLACES = "crusadecraft.lieux", WAR = "crusadecraft.guerre", TRADE = "crusadecraft.commerce",
-            ARMIES = "crusadecraft.armees";
+            ARMIES = "crusadecraft.armees", NAMES = "crusadecraft.noms";
     private static volatile MarkerAPI markers;
     private static int lastHash;
+    /** La feuille de style de la carte fantasy, posée une fois par démarrage de Dynmap. */
+    private static boolean styled;
 
     private DynmapCompat() {}
 
@@ -40,6 +42,7 @@ final class DynmapCompat {
             public void apiEnabled(DynmapCommonAPI api) {
                 markers = api.getMarkerAPI();
                 lastHash = 0;
+                styled = false;
                 CrusadeCraft.LOGGER.info("CrusadeCraft : Dynmap prêt, les royaumes seront dessinés sur la carte web");
             }
 
@@ -62,6 +65,10 @@ final class DynmapCompat {
     static boolean update(MinecraftServer server) {
         MarkerAPI api = markers;
         if (api == null) return false;
+        if (!styled) {
+            styled = true;
+            DynmapStyle.install(server);
+        }
         WebMap.Model model = WebMap.build(server);
         if (model.hash() == lastHash) return false;
         lastHash = model.hash();
@@ -84,7 +91,12 @@ final class DynmapCompat {
         MarkerSet war = set(api, WAR, "Carte de guerre", 30);
         MarkerSet trade = set(api, TRADE, "Routes commerciales", 25);
         MarkerSet armies = set(api, ARMIES, "Armées", 35);
-        MarkerSet[] all = {realms, places, war, trade, armies};
+        // P32 : la carte fantasy — les noms des royaumes à part, ceux des lieux toujours affichés.
+        DynmapIcons.ensure(api);
+        MarkerSet names = set(api, NAMES, "Noms des royaumes", 40);
+        names.setLabelShow(true);
+        places.setLabelShow(fr.crusadecraft.config.CrusadeConfig.SERVER.webMapNames.get());
+        MarkerSet[] all = {realms, places, war, trade, armies, names};
         Map<String, AreaMarker> oldAreas = new HashMap<>();
         for (MarkerSet s : all) for (AreaMarker a : s.getAreaMarkers()) oldAreas.put(a.getMarkerID(), a);
         Set<String> keepAreas = new HashSet<>();
@@ -134,20 +146,24 @@ final class DynmapCompat {
         for (WebMap.Point p : model.points()) {
             MarkerIcon icon = api.getMarkerIcon(p.icon());
             if (icon == null) icon = api.getMarkerIcon(MarkerIcon.DEFAULT);
-            MarkerSet target = p.id().startsWith("guerre_") ? war : p.id().startsWith("armee_") ? armies : p.id().startsWith("caravane_") ? trade : places;
+            MarkerSet target = p.id().startsWith("guerre_") ? war : p.id().startsWith("armee_") ? armies : p.id().startsWith("caravane_") ? trade
+                    : p.id().startsWith("nom_") ? names : places;
+            boolean markup = p.styled() != null;
+            String label = markup ? p.styled() : p.label();
             Marker m = oldPoints.get(p.id());
-            if (m != null && m.getMarkerSet() != target) {
+            if (m != null && (m.getMarkerSet() != target || m.isLabelMarkup() != markup)) {
                 m.deleteMarker();
                 m = null;
             }
             if (m == null) {
-                m = target.createMarker(p.id(), p.label(), false, p.world(), p.x(), p.y(), p.z(), icon, false);
+                m = target.createMarker(p.id(), label, markup, p.world(), p.x(), p.y(), p.z(), icon, false);
                 if (m == null) continue;
             } else {
                 m.setLocation(p.world(), p.x(), p.y(), p.z());
                 m.setMarkerIcon(icon);
-                m.setLabel(p.label(), false);
+                m.setLabel(label, markup);
             }
+            m.setMinZoom(p.minZoom());
             m.setDescription(p.html());
             keepPoints.add(p.id());
         }

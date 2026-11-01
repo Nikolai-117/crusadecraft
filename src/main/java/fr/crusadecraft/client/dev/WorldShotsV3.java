@@ -175,6 +175,9 @@ final class WorldShotsV3 {
                 "Aubépine", 1, false)).orElseThrow();
         realm.setGold(5000);
         realm.setPrestige(500);
+        // P32 : les noms du monde de Romain, pour voir la carte fantasy.
+        log("nom du royaume", fr.crusadecraft.core.realm.NameService.renameRealm(p, "Levànzia"));
+        log("nom de la ville", fr.crusadecraft.core.realm.NameService.renameColony(p, realm.capital(), "Khalyos"));
         log("maison", LineageService.createHouse(p, "Aubépine", 2, realm.id(), 3));
         var state = CrusadeSavedData.get(server).lineage();
         house = state.houses().stream().filter(h -> h.name().equals("Aubépine")).map(House::id).findFirst().orElse(null);
