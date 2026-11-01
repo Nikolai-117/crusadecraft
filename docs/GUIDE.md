@@ -1,4 +1,4 @@
-# CrusadeCraft 3.5.0 — installer et tester
+# CrusadeCraft 3.5.1 — installer et tester
 
 ## 1. Ce qu'il faut
 
@@ -17,7 +17,7 @@ Optionnels, déjà présents chez toi, donc activés automatiquement :
 
 ## 2. Installer
 
-1. Le fichier du mod est `E:\crusadecraft\build\libs\crusadecraft-3.5.0.jar`.
+1. Le fichier du mod est `E:\crusadecraft\build\libs\crusadecraft-3.5.1.jar`.
 2. Mets-le dans le dossier des mods de l'instance : `D:\MultiMC\instances\1.20.1\.minecraft\mods\`.
    Dans MultiMC, tu peux aussi faire clic droit sur l'instance → *Modifier* → *Mods* → *Ajouter un fichier*.
    **Retire l'ancien** (`crusadecraft-1.8.0.jar`, ou une version plus vieille) : deux versions du mod ensemble
@@ -234,7 +234,8 @@ données du mod (fichier `crusadecraft.dat` du monde) restent sur place, sans ef
     les niveaux des plans selon la taille, la palissade des bourgs et la grande muraille du thème pour les villes et
     les capitales (vraies pièces des packs, portes sur les grandes rues, tours), tous les bâtiments d'une ville (marché,
     étals, entrepôt, temple, cimetière, caserne, tours), et un remplissage jusqu'aux murs : maisons, ruelles, placettes
-    aux carrefours, mobilier de rue, jardins.
+    aux carrefours, mobilier de rue, jardins. **Tes pièces ★** passent avant les autres (bâtiments, décors, murailles).
+    Le bourg européen a ses rues qui serpentent, et chaque thème ses pavés mêlés.
 53j. **Défaire la ville** : sur la construction de la ville (« Village de … » sur la carte), deux clics. Le terrain revient
     bloc par bloc, coffres compris ; la ville reste sur la carte.
 53k. Réglage **villesIA → batirEnApprochant** (coupé par défaut) : une ville de l'ordinateur prend corps quand tu t'en

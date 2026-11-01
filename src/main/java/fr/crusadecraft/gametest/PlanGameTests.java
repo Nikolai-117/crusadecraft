@@ -247,6 +247,15 @@ public final class PlanGameTests {
                 w.check(!key.startsWith("minecolonies:blockhut") && !key.startsWith("structurize:"), "un bloc de MineColonies reste dans la ville : " + key);
             }
 
+            // P37 : une maison marquée d'une étoile passe avant les autres.
+            String house = PlanLibrary.entries(PlanLibrary.packFor(NationStyle.EUROPEENNE).orElseThrow()).stream().map(PlanLibrary.Entry::ref)
+                    .filter(r -> r.endsWith("fundamentals/residence2.blueprint")).findFirst().orElse(null);
+            w.check(house != null, "pas de résidence de niveau 2 dans le pack");
+            w.check(PlanTool.toggleFavorite(w.ruler, house).success(), "l'étoile ne se pose pas");
+            var withFavorite = TownPlanner.plan(NationStyle.EUROPEENNE, TownSize.HAMEAU, 7).orElseThrow();
+            w.check(withFavorite.pieces().stream().anyMatch(pc -> pc.ref().equals(house)), "la maison favorite n'est pas dans le hameau");
+            PlanTool.toggleFavorite(w.ruler, house);
+
             // L'éditeur la bâtit d'un coup.
             var out = SiteService.buildTown(w.ruler, city.id());
             w.check(out.success(), "ville refusée : " + out.message().getString());

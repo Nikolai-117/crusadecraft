@@ -42,6 +42,28 @@ public enum NationStyle {
         };
     }
 
+    /**
+     * P37 : la matière d'une case de rue, mêlée comme dans une vraie rue (terre battue, gravier et pavés en Europe,
+     * dalles usées à Rome…) ; toujours la même pour une même case.
+     */
+    public BlockState street(int x, int z) {
+        int h = Math.floorMod((x * 73856093) ^ (z * 19349663) ^ (x * z * 83492791), 100);
+        return switch (this) {
+            case EUROPEENNE -> h < 58 ? Blocks.DIRT_PATH.defaultBlockState() : h < 78 ? Blocks.COARSE_DIRT.defaultBlockState()
+                    : h < 90 ? Blocks.GRAVEL.defaultBlockState() : Blocks.COBBLESTONE.defaultBlockState();
+            case CHINOISE -> h < 60 ? Blocks.STONE_BRICKS.defaultBlockState() : h < 75 ? Blocks.CRACKED_STONE_BRICKS.defaultBlockState()
+                    : h < 85 ? Blocks.MOSSY_STONE_BRICKS.defaultBlockState() : Blocks.POLISHED_ANDESITE.defaultBlockState();
+            case JAPONAISE -> h < 70 ? Blocks.GRAVEL.defaultBlockState() : h < 85 ? Blocks.COARSE_DIRT.defaultBlockState()
+                    : Blocks.DIRT_PATH.defaultBlockState();
+            case EGYPTIENNE -> h < 60 ? Blocks.SMOOTH_SANDSTONE.defaultBlockState() : h < 85 ? Blocks.SANDSTONE.defaultBlockState()
+                    : Blocks.CUT_SANDSTONE.defaultBlockState();
+            case ROMAINE -> h < 50 ? Blocks.POLISHED_ANDESITE.defaultBlockState() : h < 70 ? Blocks.ANDESITE.defaultBlockState()
+                    : h < 85 ? Blocks.STONE.defaultBlockState() : Blocks.COBBLESTONE.defaultBlockState();
+            case NORDIQUE -> h < 50 ? Blocks.COARSE_DIRT.defaultBlockState() : h < 80 ? Blocks.DIRT_PATH.defaultBlockState()
+                    : h < 90 ? Blocks.GRAVEL.defaultBlockState() : Blocks.PODZOL.defaultBlockState();
+        };
+    }
+
     /** Le plan de ses villes, d'après l'urbanisme attesté de la civilisation (voir {@link TownLayout}). */
     public TownLayout.Pattern pattern() {
         return switch (this) {

@@ -978,3 +978,17 @@ Demandé par Romain (5 octobre) : « que ça fonctionne par chunk directement »
 - Le port attend : il demande de connaître l'eau autour de la ville au moment du plan.
 - Vérifié : 201 tests unitaires, 77 GameTests, six villes de taille « ville » bâties et regardées dans le jeu.
 
+**P37 (1er novembre 2026) — finitions des villes, version 3.5.1**
+
+- **Les favoris d'abord** : les pièces marquées d'une étoile (communes au monde) passent avant les autres quand une
+  ville choisit ses bâtiments et ses décors (modèle, puis niveau s'il est dans la fourchette de la taille), et avant
+  celles de la fiche pour les murailles (segment, angle, porte, tour ; palissade pour un bourg, mur sinon).
+- **Le bourg médiéval serpente** : sa grand-rue et sa rue du sud avancent par tronçons de 22 à 35 blocs, décalés de
+  quelques blocs, reliés par un coude ; les parcelles se remplissent tronçon par tronçon des deux côtés de la place.
+  Les plans romain, chinois, japonais, égyptien et viking restent réguliers : ces villes étaient planifiées.
+- **Pavés mêlés** : chaque case de rue prend une matière du thème, tirée de sa position (terre battue, terre
+  grossière, gravier et pavés en Europe ; briques fendues et moussues en Chine ; grès lisse, taillé et brut en
+  Égypte ; andésite, pierre et pavés à Rome…).
+- Le port reste à faire. Vérifié : 201 tests unitaires, 77 GameTests (dont la maison favorite prise d'abord), le
+  bourg européen regardé dans le jeu.
+

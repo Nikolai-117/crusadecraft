@@ -10,6 +10,8 @@
 - **Toute ville et toute capitale** ont leur marché, leurs étals, leur entrepôt, leur temple, leur cimetière, leur
   caserne, leurs tours, leurs portes et un port quand elles touchent l'eau ; le nombre de maisons suit le nombre
   d'habitants.
+- **Fait** (3.5.0 et 3.5.1) : tout ce qui précède, plus le remplissage jusqu'aux murs, les rues qui serpentent du
+  bourg européen, les pavés mêlés et les favoris pris d'abord. **Reste** : le port (repérer l'eau autour de la ville).
 
 
 Le but : des villes « incroyables », composées seulement de pièces des packs installés, que tu choisis. Cette fiche

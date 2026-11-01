@@ -22,8 +22,23 @@ public final class PlanFavorites extends SavedData {
 
     public PlanFavorites() {}
 
+    /** Les favoris du monde ouvert (pour le plan des villes, qui n'a pas le serveur sous la main). */
+    private static volatile PlanFavorites current;
+
     public static PlanFavorites get(MinecraftServer server) {
-        return server.overworld().getDataStorage().computeIfAbsent(PlanFavorites::load, PlanFavorites::new, NAME);
+        PlanFavorites f = server.overworld().getDataStorage().computeIfAbsent(PlanFavorites::load, PlanFavorites::new, NAME);
+        current = f;
+        return f;
+    }
+
+    /** Les favoris du monde ouvert, vides s'il n'y en a pas. */
+    public static Set<String> current() {
+        PlanFavorites f = current;
+        return f == null ? Set.of() : Set.copyOf(f.refs);
+    }
+
+    public static void onServerStopped() {
+        current = null;
     }
 
     public List<String> all() {

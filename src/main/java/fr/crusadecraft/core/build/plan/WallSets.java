@@ -101,10 +101,37 @@ public final class WallSets {
         if (kind == TownSize.Walls.NONE) return Optional.empty();
         Spec spec = spec(style, kind);
         boolean big = kind == TownSize.Walls.BIG;
-        Part segment = first(spec.segments(), pack, entries, big, true);
+        // P37 : une pièce de muraille marquée d'une étoile, dans le pack du style, passe avant celles de la fiche.
+        Part segment = favorite(pack, big, "segment", true);
+        if (segment == null) segment = first(spec.segments(), pack, entries, big, true);
         if (segment == null) return Optional.empty();
-        return Optional.of(new Kit(segment, first(spec.fillers(), pack, entries, big, true), first(spec.corners(), pack, entries, big, false),
-                first(spec.gates(), pack, entries, big, true), first(spec.towers(), pack, entries, big, false)));
+        Part corner = favorite(pack, big, "angle", false), gate = favorite(pack, big, "porte", true), tower = favorite(pack, big, "tour", false);
+        return Optional.of(new Kit(segment, first(spec.fillers(), pack, entries, big, true),
+                corner != null ? corner : first(spec.corners(), pack, entries, big, false),
+                gate != null ? gate : first(spec.gates(), pack, entries, big, true),
+                tower != null ? tower : first(spec.towers(), pack, entries, big, false)));
+    }
+
+    /** La pièce favorite de ce rôle (segment, angle, porte, tour) dans ce pack : palissade pour un bourg, mur sinon. */
+    private static Part favorite(String pack, boolean big, String role, boolean linear) {
+        for (String r : PlanFavorites.current()) {
+            Optional<PlanRef> ref = PlanRef.decode(r);
+            if (ref.isEmpty() || ref.get().source() != PlanRef.Source.PACK || !ref.get().pack().equals(pack)) continue;
+            String path = ref.get().path();
+            if (PlanKinds.kind(path) != PlanKinds.MURAILLE && !path.contains("dummytower")) continue;
+            boolean palisade = path.toLowerCase(java.util.Locale.ROOT).contains("palis") || path.contains("fence");
+            if (palisade == big) continue;
+            String pr = PlanKinds.role(path);
+            boolean match = switch (role) {
+                case "segment" -> pr.equals("segment") || pr.equals("palissade") || pr.equals("cloture");
+                case "angle" -> pr.equals("angle") || pr.equals("angle_rentrant");
+                default -> pr.equals(role);
+            };
+            if (!match) continue;
+            Optional<Plan> plan = PlanLibrary.load(ref.get(), false);
+            if (plan.isPresent() && !plan.get().placements().isEmpty()) return part(r, plan.get(), linear);
+        }
+        return null;
     }
 
     private static Part first(List<String> bases, String pack, List<String> entries, boolean highest, boolean linear) {

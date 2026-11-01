@@ -356,27 +356,67 @@ public final class TownLayout {
         // L'hôtel de ville sur le côté nord de la place, porte sur la place (une venelle entre les deux).
         p.put(0, byDoor(p.boxes.get(0), Rotation.NONE, 0, -q - 1));
         Rect hall = p.rectOf(0);
-        p.streetX(0, MAIN, -length, -q - 1);
-        p.streetX(0, MAIN, q + 1, length);
-        p.streetZ(0, MAIN, q + 1, length / 2 + q);
+        // P37 : la grand-rue et la rue du sud serpentent par tronçons décalés, comme dans un vrai bourg du Moyen Âge.
+        java.util.Random rnd = new java.util.Random(length * 7919L + p.boxes.size());
+        List<List<Frontage>> eastSegs = new ArrayList<>(), westSegs = new ArrayList<>(), southSegs = new ArrayList<>();
+        winding(p, rnd, true, q + 1, length, 1, eastSegs);
+        winding(p, rnd, true, -q - 1, -length, -1, westSegs);
+        winding(p, rnd, false, q + 1, length / 2 + q, 1, southSegs);
         // L'église et le marché couvert sur la place, à côté de l'hôtel de ville ; la taverne en face.
         fill(p, List.of(new Frontage(true, -q - 1, 0, -1, hall == null ? MAIN + 1 : hall.x1() + 2, q + length / 2),
                 new Frontage(true, -q - 1, 0, -1, hall == null ? -MAIN - 1 : hall.x0() - 2, -q - length / 2)),
                 only(TownSize.Role.CHURCH, TownSize.Role.MARKET, TownSize.Role.STATUE));
         fill(p, List.of(new Frontage(true, q + 1, 0, 1, -MAIN - 1, -q - length / 2), new Frontage(true, q + 1, 0, 1, MAIN + 1, q + length / 2)),
                 only(TownSize.Role.TAVERN, TownSize.Role.CRAFT, TownSize.Role.STALL));
-        // Les parcelles le long de la grand-rue, de la place vers les portes ; puis la rue du sud.
-        List<Frontage> high = List.of(new Frontage(true, 0, MAIN, -1, q + 1, length), new Frontage(true, 0, MAIN, 1, -q - 1, -length),
-                new Frontage(true, 0, MAIN, 1, q + 1, length), new Frontage(true, 0, MAIN, -1, -q - 1, -length));
-        List<Frontage> south = List.of(new Frontage(false, 0, MAIN, 1, q + 1, length / 2 + q), new Frontage(false, 0, MAIN, -1, q + 1, length / 2 + q));
+        // Les parcelles le long de la grand-rue, de la place vers les portes (tronçon après tronçon, des deux côtés de la
+        // place à la fois) ; puis la rue du sud ; les fermes et la garde sur les derniers tronçons, vers la campagne.
+        List<Frontage> high = interleave(eastSegs, westSegs);
+        List<Frontage> south = interleave(southSegs, List.of());
+        List<Frontage> ends = new ArrayList<>();
+        for (List<List<Frontage>> segs : List.of(eastSegs, westSegs, southSegs)) if (!segs.isEmpty()) ends.addAll(segs.get(segs.size() - 1));
         fill(p, high, only(TownSize.Role.HOUSE, TownSize.Role.CRAFT, TownSize.Role.TAVERN));
         fill(p, south, ANY.and(r -> r != TownSize.Role.FARM));
-        // Les fermes et la garde au bout des rues, vers la campagne.
-        List<Frontage> ends = List.of(new Frontage(true, 0, MAIN, -1, length, q + 1), new Frontage(true, 0, MAIN, 1, -length, -q - 1),
-                new Frontage(false, 0, MAIN, 1, length / 2 + q, q + 1));
         fill(p, ends, ANY);
         fill(p, high, ANY);
         fill(p, south, ANY);
+    }
+
+    /**
+     * Une rue qui serpente : des tronçons de 22 à 35 blocs, chacun décalé de quelques blocs de côté par rapport au
+     * précédent, reliés par un coude. Chaque tronçon apporte ses deux rives (rangées dans {@code segs}, de la place vers
+     * le bout). Le premier tronçon part dans l'axe, pour que la place et la porte s'alignent.
+     */
+    private static void winding(Placer p, java.util.Random rnd, boolean alongX, int from, int to, int dir, List<List<Frontage>> segs) {
+        int pos = from, line = 0;
+        boolean first = true;
+        while (dir > 0 ? pos <= to : pos >= to) {
+            int len = 22 + rnd.nextInt(14);
+            int end = dir > 0 ? Math.min(to, pos + len) : Math.max(to, pos - len);
+            int a = Math.min(pos, end), b = Math.max(pos, end);
+            if (alongX) p.streetX(line, MAIN, a, b);
+            else p.streetZ(line, MAIN, a, b);
+            segs.add(List.of(new Frontage(alongX, line, MAIN, -1, pos, end), new Frontage(alongX, line, MAIN, 1, pos, end)));
+            int next = first ? line + (rnd.nextBoolean() ? 3 : -3) : line + rnd.nextInt(9) - 4;
+            if (next != line) {
+                // Le coude : un bout de rue en travers, du tracé d'avant à celui d'après.
+                int lo = Math.min(line, next) - MAIN, hi = Math.max(line, next) + MAIN;
+                if (alongX) p.street(end - MAIN, lo, end + MAIN, hi);
+                else p.street(lo, end - MAIN, hi, end + MAIN);
+            }
+            line = next;
+            first = false;
+            pos = end + dir * (MAIN + 1);
+        }
+    }
+
+    /** Les rives de deux rues, tronçon après tronçon : la ville grandit des deux côtés de la place à la fois. */
+    private static List<Frontage> interleave(List<List<Frontage>> a, List<List<Frontage>> b) {
+        List<Frontage> out = new ArrayList<>();
+        for (int i = 0; i < Math.max(a.size(), b.size()); i++) {
+            if (i < a.size()) out.addAll(a.get(i));
+            if (i < b.size()) out.addAll(b.get(i));
+        }
+        return out;
     }
 
     /** La ville romaine : forum au croisement du cardo et du decumanus, insulae autour. */

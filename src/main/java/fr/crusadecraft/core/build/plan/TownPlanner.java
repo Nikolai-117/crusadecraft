@@ -265,12 +265,24 @@ public final class TownPlanner {
         if (byBase.isEmpty()) return Optional.empty();
         List<String> bases = new ArrayList<>(byBase.keySet());
         Collections.shuffle(bases, random);
-        bases.sort((a, b) -> Boolean.compare(used.contains(a), used.contains(b)));
+        // P37 : les modèles marqués d'une étoile d'abord, puis ceux pas encore pris.
+        Set<String> fav = PlanFavorites.current();
+        Set<String> favBases = new HashSet<>();
+        for (Map.Entry<String, List<String>> e : byBase.entrySet()) {
+            for (String path : e.getValue()) if (fav.contains(new PlanRef(PlanRef.Source.PACK, pack, path).encode())) favBases.add(e.getKey());
+        }
+        bases.sort((a, b) -> {
+            int c = Boolean.compare(!favBases.contains(a), !favBases.contains(b));
+            return c != 0 ? c : Boolean.compare(used.contains(a), used.contains(b));
+        });
         int attempts = 0;
         for (String base : bases) {
             List<String> levels = new ArrayList<>(byBase.get(base));
             int want = Math.max(1, level);
             levels.sort((a, b) -> {
+                // Le niveau marqué d'une étoile d'abord, s'il est dans la fourchette.
+                boolean fa = fav.contains(new PlanRef(PlanRef.Source.PACK, pack, a).encode()), fb = fav.contains(new PlanRef(PlanRef.Source.PACK, pack, b).encode());
+                if (fa != fb) return fa ? -1 : 1;
                 int la = PlanRules.level(PlanRef.label(a)), lb = PlanRules.level(PlanRef.label(b));
                 int c = Integer.compare(Math.abs(la - want), Math.abs(lb - want));
                 return c != 0 ? c : Integer.compare(lb, la);
@@ -353,7 +365,7 @@ public final class TownPlanner {
         int[] ys = town.streetY();
         for (int i = 0; i < streets.length && i < ys.length; i++) {
             int x = (int) (streets[i] >> 32), z = (int) streets[i];
-            out.add(new Blueprints.Placement(x, ys[i], z, street, false));
+            out.add(new Blueprints.Placement(x, ys[i], z, style.street(x, z), false));
             out.add(new Blueprints.Placement(x, ys[i] + 1, z, Blocks.AIR.defaultBlockState(), false));
             out.add(new Blueprints.Placement(x, ys[i] + 2, z, Blocks.AIR.defaultBlockState(), false));
         }

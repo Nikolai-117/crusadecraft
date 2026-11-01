@@ -60,6 +60,7 @@ public final class ServerEvents {
         MineColoniesEvents.assumeReadyIfSilent();
         RealmService.reconcileAll(event.getServer());
         fr.crusadecraft.core.build.plan.PlanLibrary.ensureFolder();
+        fr.crusadecraft.core.build.plan.PlanFavorites.get(event.getServer());
     }
 
     /** Un joueur part : on lui renverra le centre de ses cartes papier à son retour. */
@@ -89,6 +90,7 @@ public final class ServerEvents {
         fr.crusadecraft.core.build.SiteService.onServerStopped();
         fr.crusadecraft.core.build.plan.PlanLibrary.onServerStopped();
         fr.crusadecraft.core.build.plan.Journals.onServerStopped();
+        fr.crusadecraft.core.build.plan.PlanFavorites.onServerStopped();
         fr.crusadecraft.core.world.PaperMapService.onServerStopped();
         fr.crusadecraft.core.world.EntryTitles.onServerStopped();
         fr.crusadecraft.compat.dynmap.DynmapBridge.onServerStopped();
