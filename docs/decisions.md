@@ -785,3 +785,21 @@ Demandé par Romain (5 octobre) : « que ça fonctionne par chunk directement »
   l'attaquant et le défenseur principaux en ont un), choix des cibles des soldats d'ost (ce sont des monstres :
   ils attaquent tout joueur proche).
 
+**P28 (1er novembre 2026) — les villages de l'ordinateur, version 2.4.0**
+
+- Un camp bâti de lui-même depuis 10 jours fait fonder un **village** à 40–80 blocs (plan « village » de P14 : quatre
+  maisons, un puits) : une ville « hameau » sur la carte, une communauté de deux familles au registre, qui
+  apparaissent avec Comes Alive une fois le village achevé. Deux villages au plus par royaume.
+- **Croissance par quartiers** (nouvelle construction, deux maisons et une rue) contre le village, tous les 8 jours, un
+  à la fois, trois au plus : +12 habitants et +5 de développement à la ville, une famille de plus au registre.
+  Un quartier ne se pose que sur une parcelle plate des terres du royaume, à quatre blocs de hauteur du village.
+  Hameau, bourg (un quartier), ville (trois).
+- **Disputes** : fonder à moins de 200 blocs des terres d'un autre royaume (huit points regardés) baisse l'opinion des
+  deux côtés (−15, oubliée en 30 jours) et fait une nouvelle. Pas de guerre automatique pour autant : l'IA décide de
+  ses guerres comme avant, avec cette opinion en plus.
+- Les places fortes comptent à part : un royaume peut avoir ses quatre places fortes **et** ses deux villages.
+- **Annuler** défait aussi ce qui n'est pas des blocs : la ville sur la carte (et les fiches et revendications qui la
+  visaient), la communauté et ses personnes, et les villageois qui les incarnaient s'ils sont chargés.
+- Toujours coupé par défaut (`civilisations.actif`).
+- **Pas fait** : villages sur terrain accidenté (il faut une parcelle plate), villages fondés loin de tout camp.
+

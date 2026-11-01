@@ -72,7 +72,7 @@ public enum LieuKind {
         return switch (kind) {
             case TOUR, CAMP, AVANT_POSTE -> AVANT_POSTE;
             case FORT -> FORT;
-            case BORNE, DONJON, VILLAGE -> null;
+            case BORNE, DONJON, VILLAGE, QUARTIER -> null;
         };
     }
 

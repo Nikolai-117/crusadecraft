@@ -153,6 +153,7 @@ public final class Blueprints {
             case FORT -> fort(p, dye);
             case DONJON -> keep(p, dye);
             case VILLAGE -> village(p, dye);
+            case QUARTIER -> quarter(p, dye);
         }
         return p.all();
     }
@@ -383,6 +384,19 @@ public final class Blueprints {
         p.set(2, 1, 4, LOG);
         p.set(2, 2, 4, LOG);
         p.finish(2, 3, 4, Banners.standing(dye, Direction.SOUTH));
+    }
+
+    /** Un quartier (P28) : deux maisons côte à côte qui ouvrent sur une rue, et une lanterne au bout. */
+    private static void quarter(Plan p, DyeColor dye) {
+        p.clear(-6, 1, -6, 6, 3, 6);
+        for (int x = -5; x <= 5; x++) p.set(x, 0, 4, PATH);
+        for (int z = 5; z <= 6; z++) p.set(0, 0, z, PATH);
+        house(p, -3, 0, Direction.SOUTH, dye);
+        house(p, 3, 0, Direction.SOUTH, dye);
+        p.box(-6, 1, 5, -6, 2, 5, FENCE);
+        p.finish(-6, 3, 5, LANTERN);
+        p.box(6, 1, 5, 6, 2, 5, FENCE);
+        p.finish(6, 3, 5, LANTERN);
     }
 
     // ------------------------------------------------------------------ rotation

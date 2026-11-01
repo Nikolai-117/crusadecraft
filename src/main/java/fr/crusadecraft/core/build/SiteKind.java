@@ -19,7 +19,9 @@ public enum SiteKind {
     AVANT_POSTE(96, 5, 300, 15, true),
     FORT(144, 10, 900, 25, true),
     DONJON(160, 12, 1500, 11, false),
-    VILLAGE(110, 0, 600, 25, false);
+    VILLAGE(110, 0, 600, 25, false),
+    /** P28 : deux maisons de plus contre un village, qui le font grandir. */
+    QUARTIER(48, 0, 300, 13, false);
 
     private final int radius, garrison, cost, size;
     private final boolean survival;

@@ -11,6 +11,10 @@
     {
       "type": "patchouli:text",
       "text": "crusadecraft.codex.civ.p1"
+    },
+    {
+      "type": "patchouli:text",
+      "text": "crusadecraft.codex.civ.p2"
     }
   ]
 }

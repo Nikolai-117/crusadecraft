@@ -139,6 +139,8 @@ public final class CrusadeCommand {
                             long auto = CrusadeSavedData.get(server).world().sites().stream().filter(fr.crusadecraft.core.build.Site::auto).count();
                             boolean on = fr.crusadecraft.config.CrusadeConfig.SERVER.civActive.get();
                             ctx.getSource().sendSuccess(() -> Component.translatable(on ? "crusadecraft.civ.info.on" : "crusadecraft.civ.info.off", auto), false);
+                            // P28 : chaque village de l'ordinateur, son rang et ses quartiers.
+                            for (Component line : fr.crusadecraft.core.ai.VillageService.report(server)) ctx.getSource().sendSuccess(() -> line, false);
                             return (int) auto;
                         })
                         .then(Commands.literal("annuler").executes(ctx -> {

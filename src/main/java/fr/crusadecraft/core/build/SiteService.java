@@ -309,14 +309,94 @@ public final class SiteService {
             data.world().removeSite(s.id());
             PLANS.remove(s.id());
             data.wars().damage().release(s.id());
+            // P28 : un village de l'ordinateur emporte sa ville et ses habitants.
+            if (s.kind() == SiteKind.VILLAGE) forgetSettlement(server, s);
         }
         data.setDirty();
         return auto.size();
     }
 
-    /** Banc d'essai : fait avancer un chantier tout de suite (sans attendre les ticks). */
+    /**
+     * Ce qu'un village de l'ordinateur avait ajouté au monde, hors des blocs : sa ville sur la carte, sa communauté au
+     * registre, et les villageois qui les incarnaient.
+     */
+    private static void forgetSettlement(MinecraftServer server, Site village) {
+        CrusadeSavedData data = data(server);
+        if (village.province() >= 0) {
+            for (AiRealm r : data.world().realms()) {
+                if (r.provinces().removeIf(p -> p.id() == village.province())) {
+                    fr.crusadecraft.core.place.PlaceService.forget(server, fr.crusadecraft.core.place.Lieu.Ref.aiProvince(village.province()));
+                    for (Realm human : data.realms()) human.claims().remove(village.province());
+                }
+            }
+        }
+        if (village.community() != null) {
+            var state = data.lineage();
+            for (var p : new java.util.ArrayList<>(state.residents(village.community()))) {
+                if (p.inWorld()) {
+                    ServerLevel level = server.getLevel(ResourceKey.create(Registries.DIMENSION, p.worldDim()));
+                    net.minecraft.world.entity.Entity e = level == null ? null : level.getEntity(p.id());
+                    if (e != null) e.discard();
+                }
+                state.remove(p.id());
+            }
+            state.removeCommunity(village.community());
+        }
+    }
+
+    /** Banc d'essai : fait avancer un chantier tout de suite (sans attendre les ticks) ; achevé, il est inauguré. */
     public static int advanceForTests(ServerLevel level, Site site, int allowed) {
-        return advance(level, site, allowed);
+        boolean was = site.built();
+        int n = advance(level, site, allowed);
+        if (!was && site.built()) onBuilt(level.getServer(), level, site);
+        return n;
+    }
+
+    /**
+     * Un royaume de l'ordinateur fonde un village (P28) : un hameau sur la carte, sa communauté au registre (deux
+     * familles), le chantier noté bloc par bloc. Le terrain est vérifié par celui qui choisit l'endroit.
+     */
+    public static Optional<Site> foundVillageForAi(MinecraftServer server, ServerLevel level, AiRealm owner, BlockPos ground, Direction front) {
+        CrusadeSavedData data = data(server);
+        if (crowded(data, level, SiteKind.VILLAGE, ground)) return Optional.empty();
+        long today = RealmService.currentDay(server);
+        String name = new LineageGenerator(ground.asLong() ^ today).placeName();
+        Optional<AiProvince> city = WorldEditService.addCity(server, level, owner.id(), name, WorldEditService.CitySize.HAMEAU, ground.getX(), ground.getZ());
+        if (city.isEmpty()) return Optional.empty();
+        Site site = new Site(UUID.randomUUID(), SiteKind.VILLAGE, name, owner.id(), level.dimension().location(), ground, front, owner.color(), false, today);
+        site.setAuto(true);
+        site.setProvince(city.get().id());
+        Community c = new LineageGenerator(ground.asLong() * 31 + today).community(data.lineage(), name, CommunityKind.VILLAGE, owner.id(),
+                fr.crusadecraft.core.ai.VillageService.FOUNDING_FAMILIES);
+        site.setCommunity(c.id());
+        data.world().add(site);
+        data.setDirty();
+        CrusadeCraft.LOGGER.info("CrusadeCraft : {} fonde de lui-même le village {} en {}", owner.place(), name, ground);
+        return Optional.of(site);
+    }
+
+    /** Un quartier contre un village de l'ordinateur (P28) : même ville, même communauté. */
+    public static Optional<Site> quarterForAi(MinecraftServer server, ServerLevel level, AiRealm owner, Site village, BlockPos ground, Direction front) {
+        CrusadeSavedData data = data(server);
+        if (crowded(data, level, SiteKind.QUARTIER, ground)) return Optional.empty();
+        Site site = new Site(UUID.randomUUID(), SiteKind.QUARTIER, village.name(), owner.id(), level.dimension().location(), ground, front,
+                owner.color(), false, RealmService.currentDay(server));
+        site.setAuto(true);
+        site.setProvince(village.province());
+        site.setCommunity(village.community());
+        data.world().add(site);
+        data.setDirty();
+        return Optional.of(site);
+    }
+
+    /** Une autre construction à moins de la moitié des deux tailles (et trois blocs) : la place est prise. */
+    private static boolean crowded(CrusadeSavedData data, ServerLevel level, SiteKind kind, BlockPos ground) {
+        for (Site other : data.world().sites()) {
+            if (!other.dimension().equals(level.dimension().location())) continue;
+            double room = (kind.size() + other.kind().size()) / 2.0 + 3;
+            if (Math.abs(other.anchor().getX() - ground.getX()) < room && Math.abs(other.anchor().getZ() - ground.getZ()) < room) return true;
+        }
+        return false;
     }
 
     /** La construction est achevée : son royaume est prévenu ; un village accueille ses habitants (avec Comes Alive). */
@@ -327,6 +407,10 @@ public final class SiteService {
             if (ruler != null) CrusadeNetwork.toPlayer(ruler, ToastPacket.of(ToastPacket.Kind.REALM, Component.translatable("crusadecraft.toast.site.title"),
                     Component.translatable("crusadecraft.toast.site.body", displayName(site))));
         });
+        if (site.kind() == SiteKind.QUARTIER) {
+            fr.crusadecraft.core.ai.VillageService.onQuarterBuilt(server, level, site);
+            return;
+        }
         if (site.community() != null) {
             var state = data(server).lineage();
             state.community(site.community()).ifPresent(c -> LineageService.spawnPeople(level, state, state.residents(c.id()), site.anchor().above()));

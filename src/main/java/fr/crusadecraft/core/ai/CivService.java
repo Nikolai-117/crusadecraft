@@ -66,16 +66,25 @@ public final class CivService {
         for (AiRealm ai : new ArrayList<>(data.world().realms())) {
             if (ai.landless() || data.diplomacy().suzerainOf(ai.id()).isPresent()) continue;
             if (random.nextInt(100) >= CrusadeConfig.SERVER.civChance.get()) continue;
-            if (tryBuild(server, ai, random).isPresent()) opened++;
+            // P28 : faire grandir ou fonder un village passe avant une place forte de plus.
+            if (VillageService.onDay(server, ai, day, random).isPresent() || tryBuild(server, ai, random).isPresent()) opened++;
         }
         return opened;
     }
 
     /** Ce royaume cherche un endroit pour sa prochaine construction, et l'ouvre s'il en trouve un. */
+    /** Les places fortes que ce royaume a posées de lui-même (ses villages et leurs quartiers à part). */
+    static int military(CrusadeSavedData data, AiRealm ai) {
+        int built = 0;
+        for (Site s : data.world().sites()) {
+            if (s.auto() && ai.id().equals(s.owner()) && s.kind() != SiteKind.VILLAGE && s.kind() != SiteKind.QUARTIER) built++;
+        }
+        return built;
+    }
+
     public static Optional<Site> tryBuild(MinecraftServer server, AiRealm ai, Random random) {
         CrusadeSavedData data = CrusadeSavedData.get(server);
-        int built = 0;
-        for (Site s : data.world().sites()) if (s.auto() && ai.id().equals(s.owner())) built++;
+        int built = military(data, ai);
         if (built >= CrusadeConfig.SERVER.civMaxPerRealm.get()) return Optional.empty();
         SiteKind kind = nextKind(built, ai.rank());
         List<AiProvince> provinces = ai.ownProvinces();
@@ -100,8 +109,7 @@ public final class CivService {
 
     /** Bâtir à cet endroit précis, s'il convient (bancs d'essai : un terrain préparé plutôt qu'un hasard du relief). */
     public static Optional<Site> tryBuildAt(MinecraftServer server, AiRealm ai, ServerLevel level, int x, int z) {
-        int built = 0;
-        for (Site s : CrusadeSavedData.get(server).world().sites()) if (s.auto() && ai.id().equals(s.owner())) built++;
+        int built = military(CrusadeSavedData.get(server), ai);
         SiteKind kind = nextKind(built, ai.rank());
         Optional<BlockPos> ground = suitable(server, level, ai, kind, x, z, 0);
         if (ground.isEmpty()) return Optional.empty();

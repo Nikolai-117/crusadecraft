@@ -53,7 +53,9 @@ public enum OpinionReason {
     TOURNOI(5, 20, true),
     // P26 : la vie de la cour
     FESTIN(10, 15, true),
-    DEUIL_PARTAGE(5, 20, true);
+    DEUIL_PARTAGE(5, 20, true),
+    // P28 : un village fondé trop près de ses terres
+    DISPUTE(-15, 30, true);
 
     private final int value;
     private final int durationDays;

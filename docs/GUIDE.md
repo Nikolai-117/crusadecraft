@@ -1,4 +1,4 @@
-# CrusadeCraft 2.3.0 — installer et tester
+# CrusadeCraft 2.4.0 — installer et tester
 
 ## 1. Ce qu'il faut
 
@@ -17,7 +17,7 @@ Optionnels, déjà présents chez toi, donc activés automatiquement :
 
 ## 2. Installer
 
-1. Le fichier du mod est `E:\crusadecraft\build\libs\crusadecraft-2.3.0.jar`.
+1. Le fichier du mod est `E:\crusadecraft\build\libs\crusadecraft-2.4.0.jar`.
 2. Mets-le dans le dossier des mods de l'instance : `D:\MultiMC\instances\1.20.1\.minecraft\mods\`.
    Dans MultiMC, tu peux aussi faire clic droit sur l'instance → *Modifier* → *Mods* → *Ajouter un fichier*.
    **Retire l'ancien** (`crusadecraft-1.8.0.jar`, ou une version plus vieille) : deux versions du mod ensemble
@@ -279,6 +279,15 @@ données du mod (fichier `crusadecraft.dat` du monde) restent sur place, sans ef
 70. Chaque bloc qu'ils remplacent est noté : `/crusade civ annuler` défait tout, et les blocs d'avant reviennent peu
     à peu. `/crusade civ` dit combien ils en ont posé.
 
+70b. **Villages** : un royaume qui a un camp bâti depuis 10 jours fonde un **village** à 40–80 blocs de lui (un hameau
+    de quatre maisons et un puits) : une ville de plus sur la carte, et deux familles au registre des lignées, qui
+    apparaissent dans le monde avec Comes Alive. Tous les 8 jours, le village grandit d'un **quartier** de deux maisons
+    (hameau, bourg, puis ville au troisième) et gagne des habitants. Deux villages au plus par royaume (réglable).
+70c. Fonder un village à moins de 200 blocs des terres d'un autre royaume fait une **dispute** : l'opinion entre eux
+    baisse, et la nouvelle passe dans les nouvelles du monde.
+70d. `/crusade civ` liste chaque village (rang, quartiers, position). `/crusade civ annuler` défait aussi les villes,
+    les quartiers et les habitants qu'ils avaient ajoutés.
+
 ### L'armée en chair et en os
 71. Lève l'armée à la Table de guerre, puis va près d'un **camp militaire** bâti de ton royaume (bâton de bornage ›
     Camp militaire) et tape `/crusade armee rassembler` : tes levées apparaissent en vrais soldats (Hundred Years
@@ -327,7 +336,8 @@ sections principales :
 - `villes` (limite de domaine par rang, impôts perdus au-delà, parts de la couronne proposées pour un gouverneur) ;
 - `pnj` (la journée des gens de la cour, répliques, jours entre deux banquets, jours de deuil) ;
 - `vie` (années, jours par an, morts du registre, partages et crises des royaumes de l'ordinateur) ;
-- `civilisations` (coupé par défaut : constructions de l'ordinateur, fréquence, chance, nombre, zone permise) ;
+- `civilisations` (coupé par défaut : constructions de l'ordinateur, fréquence, chance, nombre, zone permise, jours
+  avant un village, jours entre deux quartiers, villages au plus) ;
 - `diplomatie` ;
 - `guerre` (sièges, raids, anti-grief, rang Hostile entre joueurs, troupes Hundred Years War, hommes par soldat et
   soldats au plus pour l'armée en chair et en os, ostes de l'ordinateur et leur vitesse) ;
@@ -377,7 +387,7 @@ Pour accélérer le temps pendant un test : `/time add 24000` fait passer un jou
 - Sur la carte en terrain, l'inexploré est une **estimation** : ni constructions ni structures, et les biomes des mods
   sont colorés par famille (forêt, désert, neige…), donc approximativement. Le Nether n'a pas de carte en terrain.
 - Les gens de la cour ont un but de marche, pas une laisse : l'intelligence de Minecraft Comes Alive peut l'emporter.
-- Les royaumes de l'ordinateur bâtissent sur plans (tours, camps, forts), pas de façon libre, et ne fondent pas de
-  nouveaux villages d'eux-mêmes.
+- Les royaumes de l'ordinateur bâtissent sur plans (tours, camps, forts, villages et quartiers), pas de façon libre :
+  il leur faut une parcelle à peu près plate de leurs terres.
 - Le commerce suit les traités : pas encore de caravanes qui marchent, ni de marchandises une à une.
 - Usage personnel : ce mod n'est pas fait pour être redistribué.

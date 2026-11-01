@@ -1,0 +1,11 @@
+{
+  "crusadecraft.site.quartier": "Quartier",
+  "crusadecraft.opinion.dispute": "Village fondé sur ses marches",
+  "crusadecraft.news.dispute": "%1$s fonde %2$s aux portes de %3$s : les deux royaumes se disputent ces terres.",
+  "crusadecraft.village.size.hameau": "hameau",
+  "crusadecraft.village.size.bourg": "bourg",
+  "crusadecraft.village.size.ville": "ville",
+  "crusadecraft.village.size.chantier": "en chantier",
+  "crusadecraft.civ.info.village": "· %s (%s) : %s, %s quartier(s), en %s, %s",
+  "crusadecraft.codex.civ.p2": "Un royaume qui a un camp bâti depuis quelques jours $(l)fonde un village$() tout près : un hameau de quatre maisons et un puits, une ville de plus sur la carte, et deux familles au registre (elles apparaissent avec Comes Alive). Le village grandit ensuite par $(l)quartiers$() de deux maisons : bourg, puis ville.$(br2)Fonder près des terres d'un autre royaume fait une $(l)dispute$() : l'opinion baisse des deux côtés. $(l)/crusade civ annuler$() défait aussi villes, quartiers et habitants."
+}

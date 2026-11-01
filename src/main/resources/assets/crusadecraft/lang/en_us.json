@@ -2174,5 +2174,14 @@
   "crusadecraft.warmap.tool.march": "March",
   "crusadecraft.warmap.tool.march.tip": "Click the map: your mustered army marches there, in its formation (in stages, loaded chunks only).",
   "crusadecraft.warmap.hint.march": "Click where your army should march",
-  "crusadecraft.codex.armee.p2": "From the war screen: $(l)Muster$(), $(l)Follow$(), $(l)Hold$(), the $(l)formation$() (massed, line, column, square) and $(l)Dismiss$(). On the map, in $(l)War$() mode, the $(l)March$() tool sends the army where you click.$(br2)At war, each computer realm raises a $(l)host$() that marches on the map and on Dynmap. When your army reaches it, it appears as real soldiers: beating it adds to the war score."
+  "crusadecraft.codex.armee.p2": "From the war screen: $(l)Muster$(), $(l)Follow$(), $(l)Hold$(), the $(l)formation$() (massed, line, column, square) and $(l)Dismiss$(). On the map, in $(l)War$() mode, the $(l)March$() tool sends the army where you click.$(br2)At war, each computer realm raises a $(l)host$() that marches on the map and on Dynmap. When your army reaches it, it appears as real soldiers: beating it adds to the war score.",
+  "crusadecraft.site.quartier": "Quarter",
+  "crusadecraft.opinion.dispute": "Village founded on its marches",
+  "crusadecraft.news.dispute": "%1$s founds %2$s at the gates of %3$s: the two realms dispute these lands.",
+  "crusadecraft.village.size.hameau": "hamlet",
+  "crusadecraft.village.size.bourg": "town",
+  "crusadecraft.village.size.ville": "city",
+  "crusadecraft.village.size.chantier": "under construction",
+  "crusadecraft.civ.info.village": "· %s (%s): %s, %s quarter(s), at %s, %s",
+  "crusadecraft.codex.civ.p2": "A realm that has had a built camp for a few days $(l)founds a village$() nearby: a hamlet of four houses and a well, one more city on the map, and two families in the register (they appear with Comes Alive). The village then grows by $(l)quarters$() of two houses: town, then city.$(br2)Founding near another realm's lands causes a $(l)dispute$(): opinion drops on both sides. $(l)/crusade civ annuler$() also undoes cities, quarters and inhabitants."
 }

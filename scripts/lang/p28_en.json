@@ -1,0 +1,11 @@
+{
+  "crusadecraft.site.quartier": "Quarter",
+  "crusadecraft.opinion.dispute": "Village founded on its marches",
+  "crusadecraft.news.dispute": "%1$s founds %2$s at the gates of %3$s: the two realms dispute these lands.",
+  "crusadecraft.village.size.hameau": "hamlet",
+  "crusadecraft.village.size.bourg": "town",
+  "crusadecraft.village.size.ville": "city",
+  "crusadecraft.village.size.chantier": "under construction",
+  "crusadecraft.civ.info.village": "· %s (%s): %s, %s quarter(s), at %s, %s",
+  "crusadecraft.codex.civ.p2": "A realm that has had a built camp for a few days $(l)founds a village$() nearby: a hamlet of four houses and a well, one more city on the map, and two families in the register (they appear with Comes Alive). The village then grows by $(l)quarters$() of two houses: town, then city.$(br2)Founding near another realm's lands causes a $(l)dispute$(): opinion drops on both sides. $(l)/crusade civ annuler$() also undoes cities, quarters and inhabitants."
+}

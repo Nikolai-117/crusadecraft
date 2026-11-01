@@ -107,6 +107,9 @@ public final class CrusadeConfig {
         public final ForgeConfigSpec.IntValue civChance;
         public final ForgeConfigSpec.IntValue civMaxPerRealm;
         public final ForgeConfigSpec.IntValue civRadius;
+        public final ForgeConfigSpec.IntValue civVillageDays;
+        public final ForgeConfigSpec.IntValue civQuarterDays;
+        public final ForgeConfigSpec.IntValue civMaxVillages;
         public final ForgeConfigSpec.IntValue claimCommandRadius;
         public final ForgeConfigSpec.EnumValue<fr.crusadecraft.core.world.EntryTitles.Mode> entryMessages;
         public final ForgeConfigSpec.BooleanValue protection;
@@ -373,6 +376,11 @@ public final class CrusadeConfig {
             civChance = b.comment("Chances, en pour cent, qu'un royaume se décide ce jour-là.").defineInRange("chance", 50, 0, 100);
             civMaxPerRealm = b.comment("Constructions au plus qu'un royaume pose de lui-même.").defineInRange("maxParRoyaume", 4, 0, 32);
             civRadius = b.comment("Zone permise : à moins de tant de blocs de l'origine du monde (0 : partout).").defineInRange("rayonAutorise", 3000, 0, 100000);
+            civVillageDays = b.comment("Villages (P28) : jours après la pose d'un camp avant qu'un village soit fondé près de lui.")
+                    .defineInRange("joursAvantVillage", 10, 0, 3650);
+            civQuarterDays = b.comment("Jours entre deux quartiers d'un village (de hameau en bourg, de bourg en ville : trois quartiers au plus).")
+                    .defineInRange("joursEntreQuartiers", 8, 1, 3650);
+            civMaxVillages = b.comment("Villages au plus qu'un royaume fonde de lui-même.").defineInRange("villagesMax", 2, 0, 16);
             b.pop();
 
             b.comment("Diplomatie, titres et vassalité").push("diplomatie");
