@@ -49,7 +49,7 @@ public class HouseScreen extends Screen {
 
     /** La hauteur de la liste des membres : la bande de la vie de la cour (P26) prend le bas de la colonne. */
     private int listH() {
-        return h - 56 - (view.court() != null ? 20 : 0);
+        return h - 56 - (view.court() != null ? 30 : 0);
     }
 
     @Override
@@ -74,7 +74,7 @@ public class HouseScreen extends Screen {
             HouseView.Court court = view.court();
             Component label = Component.translatable("crusadecraft.feast.button", court.feastCost());
             Button feast = Button.builder(label, b -> send(CourtLifePackets.HouseAction.of(CourtLifePackets.HouseAction.Kind.FEAST)))
-                    .bounds(left + 11, top + 28 + listH() + 2, Math.min(colW() / 2 + 10, font.width(label) + 12), 15).build();
+                    .bounds(left + 11, top + 28 + listH() + 12, Math.min(colW() - 6, font.width(label) + 12), 15).build();
             feast.active = court.problem().isEmpty();
             feast.setTooltip(Tooltip.create(court.problem().isEmpty() ? Component.translatable("crusadecraft.feast.tip")
                     : Component.translatable(court.problem(), court.cooldown())));
@@ -205,7 +205,6 @@ public class HouseScreen extends Screen {
     /** À côté du bouton du banquet : le deuil en cours, le banquet qui bat son plein, ou l'attente avant le prochain. */
     private void renderCourt(GuiGraphics g, int lx, int y, int cw) {
         HouseView.Court court = view.court();
-        int bw = Math.min(cw / 2 + 10, font.width(Component.translatable("crusadecraft.feast.button", court.feastCost())) + 12);
         Component state;
         int color;
         if (!court.mourning().isEmpty()) {
@@ -220,9 +219,7 @@ public class HouseScreen extends Screen {
         } else {
             return;
         }
-        int room = cw - bw - 4;
-        if (room < 20) return;
-        Ui.scaled(g, font, Component.literal(font.plainSubstrByWidth(state.getString(), Math.round(room / 0.75f))), lx + 6 + bw, y + 4, 0.75f, color, false);
+        Ui.fitted(g, font, state, lx + 6, y + 1, cw - 6, color);
     }
 
     @Override

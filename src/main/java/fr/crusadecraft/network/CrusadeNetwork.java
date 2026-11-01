@@ -295,7 +295,13 @@ public final class CrusadeNetwork {
         CHANNEL.send(PacketDistributor.ALL.noArg(), packet);
     }
 
+    /** Vers le serveur ; sans connexion (écran de titre, banc d'essai visuel), la demande est simplement perdue. */
     public static void toServer(Object packet) {
+        if (net.minecraftforge.fml.loading.FMLEnvironment.dist.isClient() && !connected()) return;
         CHANNEL.sendToServer(packet);
+    }
+
+    private static boolean connected() {
+        return net.minecraft.client.Minecraft.getInstance().getConnection() != null;
     }
 }

@@ -1,0 +1,12 @@
+{
+  "crusadecraft.war.army.present": "%s soldiers %s",
+  "crusadecraft.army.order.follow": "following",
+  "crusadecraft.army.order.hold": "in position",
+  "crusadecraft.army.order.march": "marching",
+  "crusadecraft.army.pawn.mine": "Army: %s",
+  "crusadecraft.army.pawn.host": "Host %s",
+  "crusadecraft.host.soldier": "Soldier of the host %s",
+  "crusadecraft.toast.host.body": "The host %s faces you: %s soldier(s).",
+  "crusadecraft.toast.host_beaten.body": "The host %s is routed.",
+  "crusadecraft.war.log.host_beaten": "Host %s beaten"
+}

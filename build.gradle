@@ -46,6 +46,8 @@ minecraft {
         uiShots {
             parent runs.client
             property 'crusadecraft.uishots', 'true'
+            // -Pshots_only=v3_ : seulement les captures dont le nom contient ce morceau.
+            property 'crusadecraft.uishots.only', (project.findProperty('shots_only') ?: '').toString()
         }
 
         // Banc d'essai en monde réel : monde plat jetable dans run-worldshots, captures, puis fermeture.
@@ -57,6 +59,8 @@ minecraft {
             property 'crusadecraft.worldshots.hold', (project.findProperty('hold') ?: '0').toString()
             // -Pshots_world=normal : un monde ordinaire plutôt que plat (pour voir la carte en terrain).
             property 'crusadecraft.worldshots.normal', (project.findProperty('shots_world') == 'normal').toString()
+            // -Pshots_v3=true : le scénario des phases 26 à 30 (banquet, armée, ost, caravane, village, réglages).
+            property 'crusadecraft.worldshots.v3', (project.findProperty('shots_v3') == 'true').toString()
         }
 
         server {

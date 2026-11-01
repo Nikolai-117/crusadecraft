@@ -157,7 +157,7 @@ public class RealmScreen extends Screen {
                     CrusadeNetwork.toServer(fr.crusadecraft.network.packet.CourtLifePackets.HouseAction.of(
                             fr.crusadecraft.network.packet.CourtLifePackets.HouseAction.Kind.REFRESH));
                 }
-            }).bounds(left + w - 8 - (view.pendingEvents() > 0 ? 124 : 0) - 64, top + 34, 64, 16).build();
+            }).bounds(left + w - 8 - 18 - 64, top + 8, 64, 16).build();
             // Dans l'en-tête, à côté des événements : en bas de l'onglet, il recouvrait les ressources du souverain.
             house.setTooltip(Tooltip.create(Component.translatable("crusadecraft.house.open.tip")));
             addRenderableWidget(house);
@@ -165,18 +165,18 @@ public class RealmScreen extends Screen {
                 if (minecraft != null && minecraft.getConnection() != null) {
                     CrusadeNetwork.toServer(fr.crusadecraft.network.packet.LieuPackets.Request.of(null));
                 }
-            }).bounds(house.getX() - 2 - 58, top + 34, 58, 16).build();
+            }).bounds(house.getX() - 2 - 58, top + 8, 58, 16).build();
             lieux.setTooltip(Tooltip.create(Component.translatable("crusadecraft.lieu.open.tip")));
             addRenderableWidget(lieux);
             Button cities = Button.builder(Component.translatable("crusadecraft.city.open"), b -> {
                 if (minecraft != null && minecraft.getConnection() != null) CrusadeNetwork.toServer(new fr.crusadecraft.network.packet.CityPackets.Request());
-            }).bounds(lieux.getX() - 2 - 52, top + 34, 52, 16).build();
+            }).bounds(lieux.getX() - 2 - 52, top + 8, 52, 16).build();
             cities.setTooltip(Tooltip.create(Component.translatable("crusadecraft.city.open.tip")));
             addRenderableWidget(cities);
             // P30 : les réglages du monde (réservés aux opérateurs et au propriétaire d'un monde solo).
             Button settings = Button.builder(Component.literal("⚙"), b -> {
                 if (minecraft != null && minecraft.getConnection() != null) CrusadeNetwork.toServer(new fr.crusadecraft.network.packet.SettingsPackets.Request("", ""));
-            }).bounds(cities.getX() - 2 - 16, top + 34, 16, 16).build();
+            }).bounds(left + w - 8 - 16, top + 8, 16, 16).build();
             settings.setTooltip(Tooltip.create(Component.translatable("crusadecraft.settings.open.tip")));
             addRenderableWidget(settings);
         }
@@ -279,10 +279,14 @@ public class RealmScreen extends Screen {
     private void renderHeader(GuiGraphics g) {
         Ui.shield(g, font, left + 12, top + 10, 34, 42, view.color(), Ui.initial(view.name()));
         Component rankTitle = Component.translatable(view.rank().titleKey());
-        Ui.scaled(g, font, Component.literal(view.name()), left + 56, top + 12, 1.6f, Ui.TEXT_TITLE, false);
+        // Le nom tient sur la ligne du titre, à côté des boutons de l'onglet Royaume et du ⚙ : il rétrécit s'il le faut.
+        int titleRoom = left + w - 8 - 18 - (tab == Tab.ROYAUME ? 64 + 2 + 58 + 2 + 52 + 4 : 0) - (left + 56) - 4;
+        float k = Math.max(0.8f, Math.min(1.6f, titleRoom / (float) Math.max(1, font.width(view.name()))));
+        String name = font.plainSubstrByWidth(view.name(), Math.round(titleRoom / k));
+        Ui.scaled(g, font, Component.literal(name), left + 56, top + 12 + Math.round((1.6f - k) * 4), k, Ui.TEXT_TITLE, false);
         Component sub = Component.translatable("crusadecraft.realm.header.sub", rankTitle, view.house());
-        // La devise et la ligne du rang s'arrêtent avant les boutons de l'en-tête.
-        int room = left + w - 8 - (view.pendingEvents() > 0 ? 124 : 0) - (tab == Tab.ROYAUME ? 64 + 2 + 58 + 2 + 52 + 4 : 0) - (left + 56) - 4;
+        // La devise et la ligne du rang s'arrêtent avant le bouton des événements.
+        int room = left + w - 8 - (view.pendingEvents() > 0 ? 124 : 0) - (left + 56) - 4;
         Ui.text(g, font, Component.literal(font.plainSubstrByWidth(sub.getString(), room)), left + 56, top + 29, Ui.TEXT);
         if (!view.motto().isEmpty()) {
             Ui.text(g, font, Component.literal(font.plainSubstrByWidth("« " + view.motto() + " »", room)).withStyle(ChatFormatting.ITALIC),

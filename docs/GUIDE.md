@@ -1,4 +1,4 @@
-# CrusadeCraft 3.0.0 — installer et tester
+# CrusadeCraft 3.0.1 — installer et tester
 
 ## 1. Ce qu'il faut
 
@@ -17,7 +17,7 @@ Optionnels, déjà présents chez toi, donc activés automatiquement :
 
 ## 2. Installer
 
-1. Le fichier du mod est `E:\crusadecraft\build\libs\crusadecraft-3.0.0.jar`.
+1. Le fichier du mod est `E:\crusadecraft\build\libs\crusadecraft-3.0.1.jar`.
 2. Mets-le dans le dossier des mods de l'instance : `D:\MultiMC\instances\1.20.1\.minecraft\mods\`.
    Dans MultiMC, tu peux aussi faire clic droit sur l'instance → *Modifier* → *Mods* → *Ajouter un fichier*.
    **Retire l'ancien** (`crusadecraft-1.8.0.jar`, ou une version plus vieille) : deux versions du mod ensemble
@@ -334,7 +334,7 @@ données du mod (fichier `crusadecraft.dat` du monde) restent sur place, sans ef
 
 ## 4. Réglages
 
-Tout se règle **en jeu** : menu royal, onglet Royaume, bouton **⚙** (ou `/crusade reglages`). Les sections à gauche,
+Tout se règle **en jeu** : menu royal, onglet Royaume, bouton **⚙** tout en haut à droite (ou `/crusade reglages`). Les sections à gauche,
 leurs réglages à droite : oui/non d'un clic, nombres avec − et + (Maj : par dix) ou saisis puis ✔, choix qu'on fait
 défiler. Survole un nom pour son explication. Réservé aux opérateurs et au propriétaire d'un monde solo ; chaque
 changement est vérifié, enregistré et pris en compte aussitôt. Les listes (valeurs de l'or, limites par rang…) se

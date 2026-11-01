@@ -834,3 +834,20 @@ Demandé par Romain (5 octobre) : « que ça fonctionne par chunk directement »
   liste (elle rendait parfois un trou, et un nettoyage interrompu laissait un royaume qui faisait échouer les tests
   suivants), et les refus de l'ordinateur de bâtir disent leur raison (`CivService.refusal`). La lecture du paysage
   d'une capitale se replie sans erreur si le générateur refuse la question (une ligne au journal).
+
+**P31 (1er novembre 2026) — finitions vues en jeu, version 3.0.1**
+
+- Romain a demandé de lancer le jeu : tous les écrans du mod (66) ont été repris au banc d'essai visuel, et un
+  scénario en monde réel (`runWorldShots -Pshots_v3=true`) joue les nouveautés de bout en bout : fondation, banquet,
+  arbre, réglages, armée rassemblée au camp puis en ligne, ost ennemi qui paraît et se bat, carte de guerre, caravane,
+  village de l'ordinateur et son quartier. Tout s'est déroulé sans erreur.
+- **Corrigé d'après les captures** : textes qui débordaient (ligne du domaine des villes, aide des traits, état de la
+  cour, ligne de l'armée), boutons tronqués (parts de la couronne, ordres de l'armée), titre de l'arbre sur son mode
+  d'emploi, arbre cadré d'emblée, phrase « L'ost de du Royaume… » (les noms prennent leur préposition), noms des
+  réglages lisibles et accentués (« Trône dans hôtel de ville »), flèche quand une liste continue, et l'en-tête du
+  menu royal : Villes, Lieux, Maison et ⚙ montent sur la ligne du titre, le rang et la devise ne sont plus coupés.
+- Le registre : le bouton qui inscrit une maison dans l'arbre de Comes Alive s'appelle « Vers CA » (« Arbre » se
+  confondait avec l'arbre illustré).
+- Un envoi au serveur sans connexion (écran de titre, banc d'essai) est simplement perdu au lieu de planter.
+- Un texte d'une ligne trop long rétrécit jusqu'aux deux tiers avant d'être coupé (`Ui.fitted`).
+

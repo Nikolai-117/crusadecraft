@@ -344,7 +344,8 @@ public final class WebMap {
         for (fr.crusadecraft.core.war.HostService.Pawn h : fr.crusadecraft.core.war.HostService.pawns(server)) {
             ServerLevel level = level(server, h.dimension());
             if (level == null) continue;
-            String who = ServerText.render(fr.crusadecraft.core.diplomacy.TradeService.name(data, h.realm()), lang);
+            String who = ServerText.render(data.world().realm(h.realm()).<Component>map(a -> AiNames.realmOf(a.rank(), a.place()))
+                    .orElse(fr.crusadecraft.core.diplomacy.TradeService.name(data, h.realm())), lang);
             String title = text(Component.translatable("crusadecraft.army.pawn.host", who), lang);
             StringBuilder html = new StringBuilder("<div class=\"crusade-fiche\"><b>").append(esc(title)).append("</b><br>")
                     .append(esc(text(Component.translatable("crusadecraft.army.pawn.men", h.men()), lang)));

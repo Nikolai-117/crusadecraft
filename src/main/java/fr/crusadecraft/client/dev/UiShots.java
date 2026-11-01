@@ -237,6 +237,14 @@ public final class UiShots {
         list.add(new Shot("notification", TitleScreen::new, () -> Minecraft.getInstance().getToasts().addToast(
                 new CrusadeToast(ToastPacket.Kind.REALM, Component.translatable("crusadecraft.toast.founded.title"),
                         Component.translatable("crusadecraft.toast.founded.body", view.name())))));
+        // Les écrans des phases 19 à 30.
+        for (UiShotsV3.Scene s : UiShotsV3.scenes(map, war, sampleHouse())) list.add(new Shot(s.name(), s.screen(), null));
+        // -Pshots_only=v3_,carte : seulement les captures dont le nom contient l'un de ces morceaux.
+        String only = System.getProperty("crusadecraft.uishots.only", "").trim();
+        if (!only.isEmpty()) {
+            List<String> parts = java.util.Arrays.stream(only.split(",")).map(String::trim).filter(p -> !p.isEmpty()).toList();
+            list.removeIf(shot -> parts.stream().noneMatch(p -> shot.name().contains(p)));
+        }
         return list;
     }
 

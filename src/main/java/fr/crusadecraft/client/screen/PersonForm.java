@@ -108,7 +108,7 @@ public class PersonForm extends Screen {
         Ui.text(g, font, Component.translatable("crusadecraft.person.name"), left + 12, top + 28, Ui.TEXT);
         Ui.text(g, font, Component.translatable("crusadecraft.person.age"), left + fw - 60 - 6 - font.width(Component.translatable("crusadecraft.person.age")),
                 top + 28, Ui.TEXT);
-        Ui.text(g, font, Component.translatable("crusadecraft.person.traits", count(), Person.MAX_TRAITS), left + 12, top + 45, Ui.TEXT_MUTED);
+        Ui.fitted(g, font, Component.translatable("crusadecraft.person.traits", count(), Person.MAX_TRAITS), left + 12, top + 45, fw - 24, Ui.TEXT_MUTED);
         int rows = (Trait.values().length + 4) / 5;
         Ui.text(g, font, Component.translatable("crusadecraft.person.bio"), left + 12, top + 56 + rows * 15 + 3, Ui.TEXT_MUTED);
         super.render(g, mouseX, mouseY, partialTick);

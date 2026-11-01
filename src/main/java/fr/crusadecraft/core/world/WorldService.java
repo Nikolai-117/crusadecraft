@@ -425,8 +425,9 @@ public final class WorldService {
         for (fr.crusadecraft.core.war.HostService.Pawn h : fr.crusadecraft.core.war.HostService.pawns(player.server)) {
             if (!h.dimension().equals(dim) || !known(data, h.realm(), player)) continue;
             int color = data.world().realm(h.realm()).map(AiRealm::color).orElse(0x888888);
-            out.add(new MapView.ArmyPawn(h.x(), h.z(), h.men(), h.inWorld() ? 1 : 0, color,
-                    fr.crusadecraft.core.diplomacy.TradeService.name(data, h.realm()), false, h.beaten(), h.hasTarget(), h.targetX(), h.targetZ()));
+            Component who = data.world().realm(h.realm()).<Component>map(a -> AiNames.realmOf(a.rank(), a.place()))
+                    .orElse(fr.crusadecraft.core.diplomacy.TradeService.name(data, h.realm()));
+            out.add(new MapView.ArmyPawn(h.x(), h.z(), h.men(), h.inWorld() ? 1 : 0, color, who, false, h.beaten(), h.hasTarget(), h.targetX(), h.targetZ()));
         }
         return out;
     }

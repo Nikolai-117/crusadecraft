@@ -21,4 +21,13 @@ class SettingsRulesTest {
         assertNull(SettingsService.parse(SettingsService.Kind.ENUM, "AUTRE", List.of("TITRE", "CHAT")));
         assertNull(SettingsService.parse(SettingsService.Kind.LIST, "a, b", List.of()), "une liste ne se saisit pas");
     }
+
+    @Test
+    void lesNomsSeLisent() {
+        assertEquals("Hommes par soldat", SettingsService.humanize("hommesParSoldat"));
+        assertEquals("Ostes IA", SettingsService.humanize("ostesIA"));
+        assertEquals("Actif", SettingsService.humanize("actif"));
+        assertEquals("Rayon IA perso", SettingsService.humanize("rayonIAPerso"));
+        assertEquals("Trône dans hôtel de ville", SettingsService.humanize("troneDansHotelDeVille"), "les accents reviennent");
+    }
 }

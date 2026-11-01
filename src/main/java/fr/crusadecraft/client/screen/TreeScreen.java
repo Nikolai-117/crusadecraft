@@ -24,7 +24,7 @@ import java.util.UUID;
  * pour ouvrir sa fiche, son apparence ou l'arbre de Comes Alive.
  */
 public class TreeScreen extends Screen {
-    private static final int BOX_W = 92, BOX_H = 26, GAP_X = 10, GAP_Y = 22;
+    private static final int BOX_W = 104, BOX_H = 26, GAP_X = 10, GAP_Y = 22;
 
     private final LineageScreen parent;
     private LineageView view;
@@ -67,6 +67,12 @@ public class TreeScreen extends Screen {
         if (minecraft != null) rebuildWidgets();
     }
 
+    /** Aperçu du banc d'essai visuel : choisir une personne. */
+    public void previewPerson(UUID id) {
+        selected = id;
+        if (minecraft != null) rebuildWidgets();
+    }
+
     public void showStatus(boolean success, Component message) {
         status = message;
         statusOk = success;
@@ -82,12 +88,18 @@ public class TreeScreen extends Screen {
         areaX = left + 8;
         areaY = top + 24;
         areaW = w - 16;
-        areaH = h - 24 - 30;
+        areaH = h - 24 - 42;
         if (!centered) {
-            int cols = 0;
-            for (TreeLayout.Placed p : placed.values()) cols = Math.max(cols, p.column() + 1);
-            panX = Math.max(8, (areaW - (cols * (BOX_W + GAP_X) - GAP_X)) / 2.0);
-            panY = 8;
+            // L'arbre entier dans le cadre au départ : réduit s'il le faut (jusqu'à la moitié), centré.
+            int cols = 0, rowsCount = 0;
+            for (TreeLayout.Placed p : placed.values()) {
+                cols = Math.max(cols, p.column() + 1);
+                rowsCount = Math.max(rowsCount, p.generation() + 1);
+            }
+            double treeW = cols * (BOX_W + GAP_X) - GAP_X, treeH = rowsCount * (BOX_H + GAP_Y) - GAP_Y;
+            zoom = (float) Math.max(0.5, Math.min(1.0, Math.min((areaW - 16) / Math.max(1, treeW), (areaH - 16) / Math.max(1, treeH))));
+            panX = Math.max(8, (areaW - treeW * zoom) / 2.0);
+            panY = Math.max(8, (areaH - treeH * zoom) / 2.0);
             centered = true;
         }
         addRenderableWidget(Button.builder(Component.translatable("gui.back"), b -> onClose()).bounds(left + w - 68, top + h - 24, 60, 16).build());
@@ -133,8 +145,11 @@ public class TreeScreen extends Screen {
         Ui.panel(g, left, top, w, h);
         Component heading = house == null ? title : Component.translatable("crusadecraft.tree.of", house.title());
         Ui.scaled(g, font, heading, left + 10, top + 8, 1.2f, Ui.TEXT_TITLE, false);
+        // Le mode d'emploi à droite du titre s'il y tient ; sinon au pied, à la place des réponses du serveur.
         Component help = Component.translatable("crusadecraft.tree.help");
-        Ui.scaled(g, font, help, left + w - 10 - Math.round(font.width(help) * 0.75f), top + 10, 0.75f, Ui.TEXT_MUTED, false);
+        int helpW = Math.round(font.width(help) * 0.75f), headW = Math.round(font.width(heading) * 1.2f);
+        boolean helpTop = headW + helpW + 30 < w;
+        if (helpTop) Ui.scaled(g, font, help, left + w - 10 - helpW, top + 10, 0.75f, Ui.TEXT_MUTED, false);
         Ui.inset(g, areaX, areaY, areaW, areaH);
         if (placed.isEmpty()) {
             Ui.wrappedCentered(g, font, Component.translatable("crusadecraft.tree.empty"), areaX + areaW / 2, areaY + areaH / 2 - 4, areaW - 20, Ui.TEXT_MUTED);
@@ -150,7 +165,10 @@ public class TreeScreen extends Screen {
             g.disableScissor();
         }
         if (status != null && Util.getMillis() < statusUntil) {
-            Ui.scaled(g, font, status, left + 10, top + h - 36, 0.75f, statusOk ? Ui.GREEN : Ui.RED, false);
+            Ui.scaled(g, font, status, left + 10, top + h - 37, 0.75f, statusOk ? Ui.GREEN : Ui.RED, false);
+        } else if (!helpTop) {
+            Ui.scaled(g, font, Component.literal(font.plainSubstrByWidth(help.getString(), Math.round((w - 20) / 0.75f))), left + 10, top + h - 37, 0.75f,
+                    Ui.TEXT_MUTED, false);
         }
         super.render(g, mouseX, mouseY, partialTick);
     }

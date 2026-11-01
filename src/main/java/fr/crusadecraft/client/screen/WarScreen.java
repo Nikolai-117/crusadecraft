@@ -193,16 +193,17 @@ public class WarScreen extends Screen {
     /** Les ordres à l'armée en chair et en os (P27) : rassembler, suivre, tenir ; formation, démobiliser. */
     private void initArmyOrders(int x, int y, int width) {
         WarView.Army a = view.army();
-        int third = (width - 4) / 3;
-        Component musterLabel = a.soldiers() > 0 ? Component.translatable("crusadecraft.war.army.muster.n", a.soldiers())
-                : Component.translatable("crusadecraft.war.army.muster");
-        addRenderableWidget(order(musterLabel, WarPackets.WarAction.Kind.MUSTER, -1, "crusadecraft.war.army.muster.tip", x, y, third, true));
+        int mw = Math.max((width - 4) / 3, Math.min(width / 2, font.width(Component.translatable("crusadecraft.war.army.muster")) + 10));
+        int rest = (width - mw - 4) / 2;
+        addRenderableWidget(order(Component.translatable("crusadecraft.war.army.muster"), WarPackets.WarAction.Kind.MUSTER, -1,
+                "crusadecraft.war.army.muster.tip", x, y, mw, true));
         addRenderableWidget(order(Component.translatable("crusadecraft.war.army.follow"), WarPackets.WarAction.Kind.FOLLOW, -1,
-                "crusadecraft.war.army.follow.tip", x + third + 2, y, third, a.soldiers() > 0 && a.order() != ArmyService.Order.FOLLOW));
+                "crusadecraft.war.army.follow.tip", x + mw + 2, y, rest, a.soldiers() > 0 && a.order() != ArmyService.Order.FOLLOW));
         addRenderableWidget(order(Component.translatable("crusadecraft.war.army.hold"), WarPackets.WarAction.Kind.HOLD, -1,
-                "crusadecraft.war.army.hold.tip", x + 2 * (third + 2), y, width - 2 * (third + 2), a.soldiers() > 0));
-        int fw = (width - 2) * 3 / 5;
-        Component formation = Component.translatable("crusadecraft.war.army.formation", Component.translatable(a.formation().key()));
+                "crusadecraft.war.army.hold.tip", x + mw + rest + 4, y, width - mw - rest - 4, a.soldiers() > 0));
+        int dw = Math.min(width / 2, font.width(Component.translatable("crusadecraft.war.army.dismiss")) + 10);
+        int fw = width - dw - 2;
+        Component formation = Component.translatable(a.formation().key());
         addRenderableWidget(order(formation, WarPackets.WarAction.Kind.FORMATION, a.formation().next().ordinal(),
                 "crusadecraft.war.army.formation.tip", x, y + 16, fw, a.soldiers() > 0));
         addRenderableWidget(order(Component.translatable("crusadecraft.war.army.dismiss"), WarPackets.WarAction.Kind.DISMISS, -1,
@@ -424,7 +425,11 @@ public class WarScreen extends Screen {
         int ax = left + 8, ay = armyY();
         Ui.inset(g, ax, ay, LIST_W, armyH());
         Component men = Component.translatable("crusadecraft.war.army.men", view.men(), view.maxMen());
-        Ui.text(g, font, men, ax + 5, ay + 4, Ui.TEXT);
+        if (view.army().soldiers() > 0) {
+            men = men.copy().append(Component.literal(" · ")).append(Component.translatable("crusadecraft.war.army.present", view.army().soldiers(),
+                    Component.translatable(view.army().order().key())));
+        }
+        Ui.fitted(g, font, men, ax + 5, ay + 4, LIST_W - 10, Ui.TEXT);
         Component state = view.raised() ? Component.translatable("crusadecraft.war.army.state.raised", view.upkeep())
                 : Component.translatable("crusadecraft.war.army.state.home");
         Ui.scaled(g, font, Component.literal(font.plainSubstrByWidth(state.getString(), Math.round((LIST_W - 10) / 0.8f))), ax + 5, ay + 14, 0.8f,

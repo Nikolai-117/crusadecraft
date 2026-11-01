@@ -132,6 +132,21 @@ public final class Ui {
         g.pose().popPose();
     }
 
+    /**
+     * Un texte sur une ligne qui tient dans {@code maxWidth} : réduit jusqu'aux deux tiers s'il le faut, coupé au-delà.
+     * Centré verticalement sur la ligne d'un texte ordinaire.
+     */
+    public static void fitted(GuiGraphics g, Font font, Component c, int x, int y, int maxWidth, int color) {
+        int width = font.width(c);
+        if (width <= maxWidth) {
+            text(g, font, c, x, y, color);
+            return;
+        }
+        float k = Math.max(0.67f, maxWidth / (float) width);
+        String s = font.plainSubstrByWidth(c.getString(), Math.round(maxWidth / k));
+        scaled(g, font, Component.literal(s).withStyle(c.getStyle()), x, y + Math.round((1 - k) * 4), k, color, false);
+    }
+
     /** Texte coupé sur plusieurs lignes ; renvoie la hauteur occupée. */
     public static int wrapped(GuiGraphics g, Font font, Component c, int x, int y, int width, int color) {
         List<FormattedCharSequence> lines = font.split(c, width);

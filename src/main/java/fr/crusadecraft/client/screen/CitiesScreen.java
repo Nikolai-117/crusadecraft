@@ -42,6 +42,12 @@ public class CitiesScreen extends Screen {
         if (minecraft != null) rebuildWidgets();
     }
 
+    /** La largeur des boutons des parts de la couronne : de quoi écrire « Impôts 100 % ». */
+    private int shareWidth() {
+        return Math.max(62, 8 + Math.max(font.width(Component.translatable("crusadecraft.city.tax", 100)),
+                font.width(Component.translatable("crusadecraft.city.levy", 100))));
+    }
+
     @Override
     protected void init() {
         w = Math.min(430, width - 16);
@@ -62,7 +68,7 @@ public class CitiesScreen extends Screen {
         addRenderableWidget(attach);
         addRenderableWidget(Button.builder(Component.translatable("gui.done"), b -> onClose()).bounds(left + w - 8 - 60, top + h - 22, 60, 16).build());
 
-        int gw = Math.min(130, w / 3), sw = 62;
+        int gw = Math.min(130, w / 3), sw = shareWidth();
         int bx = left + w - 8 - gw - 2 * (sw + 2);
         for (int i = 0; i < visible && scroll + i < view.rows().size(); i++) {
             CityView.Row r = view.rows().get(scroll + i);
@@ -132,10 +138,10 @@ public class CitiesScreen extends Screen {
         Ui.text(g, font, Component.literal(font.plainSubstrByWidth(view.realmName(), w / 2)), left + 10, top + 25, Ui.TEXT_MUTED);
         boolean over = view.directCount() > view.domainLimit();
         Component domain = Component.translatable("crusadecraft.city.domain", view.directCount(), view.domainLimit(), view.penalty());
-        Ui.text(g, font, Component.literal(font.plainSubstrByWidth(domain.getString(), w - 20)), left + 10, top + 37, over ? Ui.RED : Ui.TEXT);
+        Ui.fitted(g, font, domain, left + 10, top + 37, w - 20, over ? Ui.RED : Ui.TEXT);
         Ui.separator(g, left + 8, listTop - 2, w - 16, Ui.GOLD_DARK);
 
-        int gw = Math.min(130, w / 3), sw = 62;
+        int gw = Math.min(130, w / 3), sw = shareWidth();
         int nameW = w - 16 - gw - 2 * (sw + 2) - 8;
         if (view.rows().isEmpty()) Ui.text(g, font, Component.translatable("crusadecraft.city.empty"), left + 10, listTop + 6, Ui.TEXT_MUTED);
         Component tip = null;

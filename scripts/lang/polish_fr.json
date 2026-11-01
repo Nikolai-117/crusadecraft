@@ -1,0 +1,12 @@
+{
+  "crusadecraft.war.army.present": "%s soldats %s",
+  "crusadecraft.army.order.follow": "suivent",
+  "crusadecraft.army.order.hold": "en position",
+  "crusadecraft.army.order.march": "en marche",
+  "crusadecraft.army.pawn.mine": "Armée : %s",
+  "crusadecraft.army.pawn.host": "Ost %s",
+  "crusadecraft.host.soldier": "Soldat de l'ost %s",
+  "crusadecraft.toast.host.body": "L'ost %s vous fait face : %s soldat(s).",
+  "crusadecraft.toast.host_beaten.body": "L'ost %s est mis en déroute.",
+  "crusadecraft.war.log.host_beaten": "Ost %s défait"
+}

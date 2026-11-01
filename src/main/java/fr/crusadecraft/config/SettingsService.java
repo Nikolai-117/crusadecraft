@@ -125,6 +125,48 @@ public final class SettingsService {
         return o instanceof ForgeConfigSpec.ValueSpec vs ? vs : null;
     }
 
+    /** « hommesParSoldat » devient « Hommes par soldat », « ostesIA » devient « Ostes IA ». */
+    public static String humanize(String key) {
+        List<String> words = new ArrayList<>();
+        StringBuilder word = new StringBuilder();
+        for (int i = 0; i < key.length(); i++) {
+            char c = key.charAt(i);
+            boolean cut = Character.isUpperCase(c) && i > 0
+                    && (Character.isLowerCase(key.charAt(i - 1)) || (i + 1 < key.length() && Character.isLowerCase(key.charAt(i + 1))));
+            if (cut && word.length() > 0) {
+                words.add(word.toString());
+                word.setLength(0);
+            }
+            word.append(c);
+        }
+        if (word.length() > 0) words.add(word.toString());
+        StringBuilder out = new StringBuilder();
+        for (String w : words) {
+            boolean acronym = w.length() > 1 && w.chars().allMatch(Character::isUpperCase);
+            if (out.length() > 0) out.append(' ');
+            String lower = w.toLowerCase(java.util.Locale.ROOT);
+            out.append(acronym ? w : ACCENTS.getOrDefault(lower, lower));
+        }
+        return out.isEmpty() ? key : Character.toUpperCase(out.charAt(0)) + out.substring(1);
+    }
+
+    /** Les mots des clés du fichier, écrits sans accents, tels qu'on les lit. */
+    private static final Map<String, String> ACCENTS = Map.ofEntries(
+            Map.entry("hotel", "hôtel"), Map.entry("trone", "trône"), Map.entry("depart", "départ"), Map.entry("regles", "règles"),
+            Map.entry("quantite", "quantité"), Map.entry("recompense", "récompense"), Map.entry("duree", "durée"), Map.entry("reunion", "réunion"),
+            Map.entry("deplacements", "déplacements"), Map.entry("chomeurs", "chômeurs"), Map.entry("affames", "affamés"),
+            Map.entry("requetes", "requêtes"), Map.entry("bareme", "barème"), Map.entry("impot", "impôt"), Map.entry("impots", "impôts"),
+            Map.entry("etat", "état"), Map.entry("autorises", "autorisés"), Map.entry("autorise", "autorisé"), Map.entry("delai", "délai"),
+            Map.entry("decouverte", "découverte"), Map.entry("heraut", "héraut"), Map.entry("herauts", "hérauts"),
+            Map.entry("independantes", "indépendantes"), Map.entry("editeur", "éditeur"), Map.entry("cout", "coût"), Map.entry("entree", "entrée"),
+            Map.entry("allies", "alliés"), Map.entry("operateurs", "opérateurs"), Map.entry("tresor", "trésor"), Map.entry("armees", "armées"),
+            Map.entry("opacite", "opacité"), Map.entry("penalite", "pénalité"), Map.entry("levees", "levées"), Map.entry("repliques", "répliques"),
+            Map.entry("treve", "trêve"), Map.entry("siege", "siège"), Map.entry("sieges", "sièges"), Map.entry("decisions", "décisions"),
+            Map.entry("repit", "répit"), Map.entry("portee", "portée"), Map.entry("evenement", "événement"), Map.entry("evenements", "événements"),
+            Map.entry("revoltes", "révoltes"), Map.entry("etape", "étape"), Map.entry("pnj", "PNJ"), Map.entry("xp", "XP"),
+            Map.entry("hundred", "Hundred"), Map.entry("years", "Years"), Map.entry("war", "War"), Map.entry("n", "'N'"),
+            Map.entry("taxes", "Taxes"), Map.entry("nobility", "Nobility"), Map.entry("dynmap", "Dynmap"), Map.entry("xaero", "Xaero"));
+
     /** Lit le texte saisi selon le genre du réglage ; {@code null} s'il est illisible. Logique pure. */
     public static Object parse(Kind kind, String text, List<String> choices) {
         String t = text == null ? "" : text.trim();

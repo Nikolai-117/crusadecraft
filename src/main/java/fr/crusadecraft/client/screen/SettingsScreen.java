@@ -68,8 +68,9 @@ public class SettingsScreen extends Screen {
 
     private static String name(SettingsService.Entry e) {
         int dot = e.path().lastIndexOf('.');
-        return dot < 0 ? e.path() : e.path().substring(dot + 1);
+        return SettingsService.humanize(dot < 0 ? e.path() : e.path().substring(dot + 1));
     }
+
 
     private List<SettingsService.Entry> rows() {
         return section == null ? List.of() : sections.getOrDefault(section, List.of());
@@ -177,6 +178,8 @@ public class SettingsScreen extends Screen {
             String label = font.plainSubstrByWidth(sectionName(names.get(i)).getString(), SECTIONS_W - 10);
             Ui.text(g, font, Component.literal(label), sx + 5, y + 1, chosen ? Ui.TEXT_TITLE : Ui.TEXT);
         }
+        // Il y en a d'autres plus bas : une flèche le dit (la molette les fait venir).
+        if (sectionScroll + visible < names.size()) Ui.centered(g, font, Component.literal("▼"), sx + SECTIONS_W / 2, sy + sh - 10, Ui.GOLD);
         // Les réglages de la section choisie.
         Ui.inset(g, rx, rowsTop - 2, rw, rowsBottom - rowsTop + 4);
         List<SettingsService.Entry> rows = rows();
@@ -186,8 +189,7 @@ public class SettingsScreen extends Screen {
             SettingsService.Entry e = rows.get(i);
             int y = rowsTop + (i - rowScroll) * ROW_H;
             int nameW = rw - CONTROL_W - 12;
-            String label = font.plainSubstrByWidth(name(e), nameW);
-            Ui.text(g, font, Component.literal(label), rx + 5, y + 6, Ui.TEXT);
+            Ui.fitted(g, font, Component.literal(name(e)), rx + 5, y + 6, nameW, Ui.TEXT);
             if (e.kind() == SettingsService.Kind.LIST) {
                 String v = font.plainSubstrByWidth(e.value(), Math.round(CONTROL_W / 0.7f));
                 Ui.scaled(g, font, Component.literal(v), rx + rw - CONTROL_W, y + 7, 0.7f, Ui.TEXT_MUTED, false);
@@ -200,6 +202,7 @@ public class SettingsScreen extends Screen {
                 if (e.kind() == SettingsService.Kind.LIST) tip.add(Component.translatable("crusadecraft.settings.list").withStyle(ChatFormatting.DARK_GRAY));
             }
         }
+        if (rowScroll + rowsVisible < rows.size()) Ui.centered(g, font, Component.literal("▼"), rx + rw / 2, rowsBottom - 8, Ui.GOLD);
         if (status != null && Util.getMillis() < statusUntil) {
             Ui.scaled(g, font, status, left + 10, top + h - 19, 0.8f, statusOk ? Ui.GREEN : Ui.RED, false);
         }

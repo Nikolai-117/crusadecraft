@@ -73,6 +73,11 @@ public class LineageScreen extends Screen {
         if (minecraft != null) rebuildWidgets();
     }
 
+    /** Le registre tel qu'il est affiché (pour ouvrir l'arbre de la maison depuis le banc d'essai). */
+    public LineageView currentView() {
+        return view;
+    }
+
     /** La maison ou la communauté affichée, pour que l'écran y revienne après un formulaire. */
     public UUID shownForForm() {
         return shown();
