@@ -22,6 +22,8 @@ public final class PlanTool {
     public static final String TOWNS = "@villes", FAVORITES = "@favoris";
     /** La sorte d'une ville entière, à part des sortes de plans. */
     public static final int TOWN_KIND = 5;
+    /** P38 : une ville entière venue d'un fichier. */
+    public static final int CITY_KIND = 6;
     private static final String TOWN_PREFIX = "town:";
 
     private PlanTool() {}
@@ -131,6 +133,11 @@ public final class PlanTool {
         Plan p = plan.get();
         PlanItem.setChoice(held.get(), new PlanItem.Choice(ref, p.name(), p.sizeX(), p.sizeY(), p.sizeZ(), p.groundY(), rotation, false, 0, 0, 0));
         sendGhost(player, ref);
+        // P38 : ce qu'on a dû remplacer (un autre mod, une autre version), et ce qui manque.
+        if (p.replaced() > 0) player.sendSystemMessage(Component.translatable("crusadecraft.plan.replaced", p.replaced()));
+        if (!p.unknown().isEmpty()) player.sendSystemMessage(Component.translatable("crusadecraft.plan.unknown", p.unknown().size(),
+                SchematicReader.join(p.unknown(), 6)));
+        if (p.city()) player.sendSystemMessage(Component.translatable("crusadecraft.plan.chosen.city", p.name()));
         return Outcome.ok(Component.translatable("crusadecraft.plan.chosen", p.name(), p.sizeX(), p.sizeY(), p.sizeZ()));
     }
 
@@ -148,7 +155,7 @@ public final class PlanTool {
      * ville : bâtiments selon leur rôle, rues, enceinte.
      */
     public record Detail(String ref, String name, int sizeX, int sizeY, int sizeZ, int pieces, int huts, boolean walled, int gridW, int gridH,
-                         int[] colors, int kind, String role) {}
+                         int[] colors, int kind, String role, int replaced, String unknown) {}
 
     /** Le plus grand côté de l'aperçu, en cases. */
     public static final int PREVIEW = 72;
@@ -172,15 +179,16 @@ public final class PlanTool {
             int[][] grid = townPreview(town.get(), style);
             Component name = Component.translatable("crusadecraft.plan.town_name", Component.translatable(style.key()), Component.translatable(size.key()));
             return Optional.of(new Detail(ref, name.getString(), town.get().extent(), 0, town.get().extent(), town.get().pieces().size(), 0,
-                    town.get().walls().length > 0, grid[0][0], grid[0][1], grid[1], TOWN_KIND, ""));
+                    town.get().walls().length > 0, grid[0][0], grid[0][1], grid[1], TOWN_KIND, "", 0, ""));
         }
         Optional<Plan> plan = PlanRef.decode(ref).flatMap(r -> PlanLibrary.load(r, true));
         if (plan.isEmpty()) return Optional.empty();
         Plan p = plan.get();
         int[][] grid = planPreview(p);
         String path = p.ref().source() == PlanRef.Source.PACK ? p.ref().path() : "";
+        int kind = p.city() ? CITY_KIND : path.isEmpty() ? PlanKinds.AUTRE : PlanKinds.kind(path);
         return Optional.of(new Detail(ref, p.name(), p.sizeX(), p.sizeY(), p.sizeZ(), 1, p.huts(), false, grid[0][0], grid[0][1], grid[1],
-                path.isEmpty() ? PlanKinds.AUTRE : PlanKinds.kind(path), path.isEmpty() ? "" : PlanKinds.role(path)));
+                kind, path.isEmpty() ? "" : PlanKinds.role(path), p.replaced(), SchematicReader.join(p.unknown(), 4)));
     }
 
     /** Le dessus d'un plan, vu du ciel : la couleur de carte du bloc le plus haut de chaque colonne, plus claire en hauteur. */
@@ -283,12 +291,17 @@ public final class PlanTool {
 
     /** Au plus, les blocs envoyés pour le fantôme : la surface d'un grand bâtiment tient dedans. */
     public static final int GHOST_MAX = 40_000;
+    /** P38 : le fantôme d'une ville entière, le dessus de ses colonnes (toits, rues, jardins), au plus. */
+    public static final int GHOST_CITY = 64_000;
+    /** Au-delà de tant de poses, le fantôme ne montre que le dessus (une ville entière). */
+    static final int GHOST_SURFACE_FROM = 400_000;
 
     /**
      * Les blocs du fantôme d'un plan (P35) : ceux qu'on voit (un voisin au moins n'est pas dans le plan), sans les
      * fondations ni l'air, positions tassées en un entier et états par leur numéro.
      */
     static int[][] ghost(Plan plan) {
+        if (plan.placements().size() > GHOST_SURFACE_FROM) return surfaceGhost(plan);
         it.unimi.dsi.fastutil.longs.LongOpenHashSet solid = new it.unimi.dsi.fastutil.longs.LongOpenHashSet();
         for (var p : plan.placements()) if (!p.foundation() && !p.state().isAir()) solid.add(net.minecraft.core.BlockPos.asLong(p.x(), p.y(), p.z()));
         it.unimi.dsi.fastutil.ints.IntArrayList pos = new it.unimi.dsi.fastutil.ints.IntArrayList(), ids = new it.unimi.dsi.fastutil.ints.IntArrayList();
@@ -305,6 +318,40 @@ public final class PlanTool {
             if (pos.size() >= GHOST_MAX) break;
             pos.add(fr.crusadecraft.core.build.plan.PlanTool.pack(p.x(), p.y(), p.z()));
             ids.add(net.minecraft.world.level.block.Block.getId(p.state()));
+        }
+        return new int[][]{pos.toIntArray(), ids.toIntArray()};
+    }
+
+    /**
+     * Le fantôme d'une ville entière (P38) : le bloc le plus haut de chaque colonne, ce qu'on voit du ciel. Au-delà de
+     * {@link #GHOST_CITY} colonnes, une sur deux (puis trois…) dans chaque sens.
+     */
+    static int[][] surfaceGhost(Plan plan) {
+        int sx = plan.sizeX(), sz = plan.sizeZ(), minX = -(sx / 2), minZ = -(sz / 2);
+        int[] topY = new int[sx * sz];
+        int[] topId = new int[sx * sz];
+        java.util.Arrays.fill(topY, Integer.MIN_VALUE);
+        for (var p : plan.placements()) {
+            if (p.foundation() || p.state().isAir()) continue;
+            int gx = p.x() - minX, gz = p.z() - minZ;
+            if (gx < 0 || gz < 0 || gx >= sx || gz >= sz) continue;
+            int i = gz * sx + gx;
+            if (p.y() < topY[i]) continue;
+            topY[i] = p.y();
+            topId[i] = net.minecraft.world.level.block.Block.getId(p.state());
+        }
+        int count = 0;
+        for (int y : topY) if (y != Integer.MIN_VALUE) count++;
+        int stride = 1;
+        while (count / (stride * stride) > GHOST_CITY) stride++;
+        it.unimi.dsi.fastutil.ints.IntArrayList pos = new it.unimi.dsi.fastutil.ints.IntArrayList(), ids = new it.unimi.dsi.fastutil.ints.IntArrayList();
+        for (int gz = 0; gz < sz; gz += stride) {
+            for (int gx = 0; gx < sx; gx += stride) {
+                int i = gz * sx + gx;
+                if (topY[i] == Integer.MIN_VALUE || pos.size() >= GHOST_CITY) continue;
+                pos.add(pack(gx + minX, topY[i], gz + minZ));
+                ids.add(topId[i]);
+            }
         }
         return new int[][]{pos.toIntArray(), ids.toIntArray()};
     }
@@ -366,11 +413,18 @@ public final class PlanTool {
             player.sendSystemMessage(TownColony.offer(id));
             return;
         } else {
-            if (PlanRef.decode(choice.ref()).flatMap(r -> PlanLibrary.load(r, true)).isEmpty()) {
+            Optional<Plan> plan = PlanRef.decode(choice.ref()).flatMap(r -> PlanLibrary.load(r, true));
+            if (plan.isEmpty()) {
                 player.displayClientMessage(Component.translatable("crusadecraft.plan.unreadable"), true);
                 return;
             }
-            Journals.paste(player, ground, choice.rotation(), choice.ref(), null, choice.name());
+            UUID id = Journals.paste(player, ground, choice.rotation(), choice.ref(), null, choice.name());
+            // P38 : une ville entière venue d'un fichier devient une ville du royaume, à son nom.
+            if (plan.get().city()) {
+                player.sendSystemMessage(Component.translatable("crusadecraft.plan.pasting", choice.name()));
+                player.sendSystemMessage(fr.crusadecraft.core.build.SiteService.registerImportedTown(player, id, ground, plan.get(), choice.ref()));
+                return;
+            }
         }
         player.sendSystemMessage(Component.translatable("crusadecraft.plan.pasting", choice.name()));
     }

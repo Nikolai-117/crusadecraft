@@ -51,7 +51,7 @@ public final class WorldShots {
     private static final boolean ENABLED = Boolean.getBoolean("crusadecraft.worldshots");
     private static final String WORLD = "crusadecraft-shots";
 
-    private enum Step { BOOT, LOADING, SETUP, WALL, MAP, SHEET, HERALD, REALM, LETTER, SEAL, CHANCERY, COLOMBIER, TOWNHALL, TOWNHALL_CLICK, WAR, WAR_MAP_OPEN, WAR_MAP, WAR_MAP_SHOT, SIEGE, CAPTURE, CAPTURED, WAR_TABLE, RAID, EDITOR, EDITOR_REALM, EDITOR_PAINT, LINEAGE_OPEN, LINEAGE_HOUSE, LINEAGE_SPAWN, LINEAGE_SHOT, STAFF_MENU, STAFF_SHOT, FORT_SHOT, SITES_MAP, PAPER_SHOT, LIEU_FORM, LIEU_SCREEN, LIEU_MAP, CHAT_MAP, WALK_IN, TITLE_SHOT, XAERO_SHOT, TERRAIN_OPEN, TERRAIN_WAIT, TERRAIN_SHOT, TERRAIN_POLITICAL, V3, V4, DONE }
+    private enum Step { BOOT, LOADING, SETUP, WALL, MAP, SHEET, HERALD, REALM, LETTER, SEAL, CHANCERY, COLOMBIER, TOWNHALL, TOWNHALL_CLICK, WAR, WAR_MAP_OPEN, WAR_MAP, WAR_MAP_SHOT, SIEGE, CAPTURE, CAPTURED, WAR_TABLE, RAID, EDITOR, EDITOR_REALM, EDITOR_PAINT, LINEAGE_OPEN, LINEAGE_HOUSE, LINEAGE_SPAWN, LINEAGE_SHOT, STAFF_MENU, STAFF_SHOT, FORT_SHOT, SITES_MAP, PAPER_SHOT, LIEU_FORM, LIEU_SCREEN, LIEU_MAP, CHAT_MAP, WALK_IN, TITLE_SHOT, XAERO_SHOT, TERRAIN_OPEN, TERRAIN_WAIT, TERRAIN_SHOT, TERRAIN_POLITICAL, V3, V4, V5, DONE }
 
     private static Step step = Step.BOOT;
     private static int wait;
@@ -93,6 +93,11 @@ public final class WorldShots {
                 // -Pshots_v3=true : le scénario des phases 26 à 30 à la place du reste.
                 if (Boolean.getBoolean("crusadecraft.worldshots.v3")) {
                     step = Step.V3;
+                    return;
+                }
+                // -Pshots_v5=true : les villes importées de la phase 38 et le bâton d'intendant.
+                if (Boolean.getBoolean("crusadecraft.worldshots.v5")) {
+                    step = Step.V5;
                     return;
                 }
                 // -Pshots_v4=true : les villes de la phase 34, une par style.
@@ -491,6 +496,9 @@ public final class WorldShots {
             }
             case V4 -> {
                 if (WorldShotsV4.tick(mc, WorldShots::grab)) step = Step.DONE;
+            }
+            case V5 -> {
+                if (WorldShotsV5.tick(mc, WorldShots::grab)) step = Step.DONE;
             }
             case DONE -> {
                 // -Dcrusadecraft.worldshots.hold=240 : la partie reste ouverte (pour regarder la carte web Dynmap).

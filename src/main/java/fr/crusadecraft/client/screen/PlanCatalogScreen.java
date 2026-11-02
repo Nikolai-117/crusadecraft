@@ -451,6 +451,15 @@ public class PlanCatalogScreen extends Screen {
             Ui.fitted(g, font, Component.translatable("crusadecraft.plan.detail.huts", d.huts()), dx + 6, y, dw - 12, Ui.TEXT_MUTED);
             y += 10;
         }
+        // P38 : les blocs d'un autre mod ou d'une autre version, remplacés par leur équivalent ; ceux qui manquent.
+        if (d.replaced() > 0) {
+            Ui.fitted(g, font, Component.translatable("crusadecraft.plan.detail.replaced", d.replaced()), dx + 6, y, dw - 12, Ui.TEXT_MUTED);
+            y += 10;
+        }
+        if (!d.unknown().isEmpty()) {
+            Ui.fitted(g, font, Component.translatable("crusadecraft.plan.detail.unknown", d.unknown()), dx + 6, y, dw - 12, Ui.RED);
+            y += 10;
+        }
         // L'aperçu vu du ciel, qui paraît en fondu.
         boolean showLegend = town && favorite.getY() - 6 - y - legendHeight() - 6 >= 56;
         int bottom = favorite.getY() - 6 - (showLegend ? legendHeight() + 6 : 0);

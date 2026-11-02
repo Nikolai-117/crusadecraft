@@ -39,6 +39,11 @@ public final class Site {
     private boolean auto;
     /** P34 : une ville bâtie d'après les plans des packs de style, au lieu du plan dessiné par le code. */
     private fr.crusadecraft.core.build.plan.TownPlan town;
+    /** P38 : une ville posée d'après un fichier (une schématique de ville entière) : son plan, sa taille, son sol. */
+    private String importedRef;
+    private int importedX, importedY, importedZ, importedGround;
+    /** P38 : les bâtiments de la ville, délimités au bâton d'intendant, et leur fonction. */
+    private final java.util.List<fr.crusadecraft.core.city.CityBuilding> buildings = new java.util.ArrayList<>();
 
     public Site(UUID id, SiteKind kind, String name, UUID owner, ResourceLocation dimension, BlockPos anchor, Direction facing,
                 int color, boolean instant, long createdDay) {
@@ -79,15 +84,35 @@ public final class Site {
     public void setProvince(int province) { this.province = province; }
     public fr.crusadecraft.core.build.plan.TownPlan town() { return town; }
     public void setTown(fr.crusadecraft.core.build.plan.TownPlan town) { this.town = town; }
+    public String importedRef() { return importedRef; }
+    public boolean imported() { return importedRef != null; }
+    public int importedHeight() { return importedY; }
+    public int importedGround() { return importedGround; }
+    public java.util.List<fr.crusadecraft.core.city.CityBuilding> buildings() { return buildings; }
+
+    public void setImported(String ref, int sizeX, int sizeY, int sizeZ, int groundY) {
+        this.importedRef = ref;
+        this.importedX = sizeX;
+        this.importedY = sizeY;
+        this.importedZ = sizeZ;
+        this.importedGround = groundY;
+    }
+
+    public java.util.Optional<fr.crusadecraft.core.city.CityBuilding> building(UUID id) {
+        for (var b : buildings) if (b.id().equals(id)) return java.util.Optional.of(b);
+        return java.util.Optional.empty();
+    }
 
     /** Le côté de son emprise : celui de son genre, ou celui de sa ville quand elle est bâtie d'après les plans. */
     public int extent() {
-        return town != null ? town.extent() : kind.size();
+        if (town != null) return town.extent();
+        return importedRef != null ? Math.max(importedX, importedZ) : kind.size();
     }
 
     /** Le territoire qu'elle étend : seulement une fois bâtie (un chantier ne tient encore rien). */
     public int radius() {
-        return built ? Math.max(kind.radius(), town == null ? 0 : town.extent() / 2 + 32) : 0;
+        int own = town != null || importedRef != null ? extent() / 2 + 32 : 0;
+        return built ? Math.max(kind.radius(), own) : 0;
     }
 
     public double distanceSqr(double x, double z) {
@@ -113,6 +138,20 @@ public final class Site {
         if (community != null) t.putUUID("community", community);
         if (auto) t.putBoolean("auto", true);
         if (town != null) t.put("town", town.save());
+        if (importedRef != null) {
+            CompoundTag i = new CompoundTag();
+            i.putString("ref", importedRef);
+            i.putInt("sx", importedX);
+            i.putInt("sy", importedY);
+            i.putInt("sz", importedZ);
+            i.putInt("ground", importedGround);
+            t.put("imported", i);
+        }
+        if (!buildings.isEmpty()) {
+            net.minecraft.nbt.ListTag l = new net.minecraft.nbt.ListTag();
+            for (var b : buildings) l.add(b.save());
+            t.put("buildings", l);
+        }
         return t;
     }
 
@@ -128,6 +167,12 @@ public final class Site {
         if (t.hasUUID("community")) s.community = t.getUUID("community");
         s.auto = t.getBoolean("auto");
         if (t.contains("town")) s.town = fr.crusadecraft.core.build.plan.TownPlan.load(t.getCompound("town"));
+        if (t.contains("imported")) {
+            CompoundTag i = t.getCompound("imported");
+            s.setImported(i.getString("ref"), i.getInt("sx"), i.getInt("sy"), i.getInt("sz"), i.getInt("ground"));
+        }
+        net.minecraft.nbt.ListTag l = t.getList("buildings", net.minecraft.nbt.Tag.TAG_COMPOUND);
+        for (int k = 0; k < l.size(); k++) s.buildings.add(fr.crusadecraft.core.city.CityBuilding.load(l.getCompound(k)));
         return s;
     }
 }

@@ -647,9 +647,68 @@ public final class SiteService {
                 : Component.translatable("crusadecraft.plan.town.joined", city.get().name(), fr.crusadecraft.core.diplomacy.DiplomacyService.name(server, owner));
     }
 
+    /**
+     * P38 : une ville entière venue d'un fichier (une schématique) devient une ville du monde, comme une ville du plan
+     * d'architecte : sur les terres d'un royaume, elle s'y ajoute ; sur une terre libre, elle fonde une nation dont
+     * elle est la capitale. Elle porte le nom de son fichier. Ses habitants viendront avec les fonctions que le bâton
+     * d'intendant donnera à ses bâtiments ; la pose finie, ses bâtiments sont reconnus.
+     */
+    public static Component registerImportedTown(ServerPlayer player, UUID id, BlockPos ground, fr.crusadecraft.core.build.plan.Plan plan,
+                                                 String ref) {
+        MinecraftServer server = player.server;
+        ServerLevel level = player.serverLevel();
+        CrusadeSavedData data = data(server);
+        long today = RealmService.currentDay(server);
+        String name = cityName(plan.name());
+        Optional<UUID> land = Territory.ownerAt(server, level.dimension().location(), ground.getX() + 0.5, ground.getZ() + 0.5);
+        Optional<AiProvince> city = land.flatMap(o -> WorldEditService.addCity(server, level, o, name, WorldEditService.CitySize.VILLE, ground.getX(), ground.getZ()));
+        UUID owner;
+        int color;
+        boolean founded = false;
+        if (city.isPresent()) {
+            owner = land.get();
+            color = data.world().realm(owner).map(AiRealm::color).orElseGet(() -> data.realm(owner).map(Realm::color).orElse(0x7B2D8B));
+        } else {
+            color = TOOL_COLORS[Math.floorMod(name.hashCode(), TOOL_COLORS.length)];
+            AiRealm realm = WorldEditService.addRealm(server, level, name, "", fr.crusadecraft.core.realm.TitleRank.DUCHE, color,
+                    fr.crusadecraft.core.world.AiFaith.FIDELE, fr.crusadecraft.core.world.AiPersonality.OPPORTUNISTE, ground.getX(), ground.getZ());
+            realm.discover(player.getUUID(), today);
+            owner = realm.id();
+            city = Optional.ofNullable(realm.capital());
+            founded = true;
+        }
+        if (city.isEmpty()) return Component.translatable("crusadecraft.plan.town.no_city");
+        Site site = new Site(id, SiteKind.VILLAGE, city.get().name(), owner, level.dimension().location(), ground, Direction.SOUTH, color, true, today);
+        site.setProvince(city.get().id());
+        site.setImported(ref, plan.sizeX(), plan.sizeY(), plan.sizeZ(), plan.groundY());
+        site.setBuilt(true);
+        Community c = new LineageGenerator(ground.asLong() * 31 + today).community(data.lineage(), city.get().name(), CommunityKind.VILLAGE, owner, 0);
+        site.setCommunity(c.id());
+        data.world().add(site);
+        data.setDirty();
+        CrusadeCraft.LOGGER.info("CrusadeCraft : ville importée {} posée en {} ({})", city.get().name(), ground, founded ? "nouvelle nation" : owner);
+        return founded ? Component.translatable("crusadecraft.city.imported.founded", city.get().name())
+                : Component.translatable("crusadecraft.city.imported.joined", city.get().name(), fr.crusadecraft.core.diplomacy.DiplomacyService.name(server, owner));
+    }
+
+    /** Le nom d'une ville d'après son fichier : « dolhimluith » devient « Dolhimluith », « grunbach_v2 » « Grunbach v2 ». */
+    public static String cityName(String label) {
+        String s = label.replace('_', ' ').replace('-', ' ').strip();
+        if (s.isEmpty()) return label;
+        return Character.toUpperCase(s.charAt(0)) + s.substring(1);
+    }
+
     /** Une pose du plan d'architecte s'achève : si c'est une ville du monde, ses habitants arrivent. */
     public static void onPasted(MinecraftServer server, UUID id) {
+        onPasted(server, id, null);
+    }
+
+    public static void onPasted(MinecraftServer server, UUID id, ServerPlayer placer) {
         data(server).world().site(id).ifPresent(site -> {
+            if (site.imported()) {
+                fr.crusadecraft.core.city.CityService.onPasted(server, site, placer);
+                return;
+            }
             if (site.community() == null) return;
             ServerLevel level = server.getLevel(ResourceKey.create(Registries.DIMENSION, site.dimension()));
             if (level == null) return;

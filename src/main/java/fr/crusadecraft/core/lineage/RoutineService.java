@@ -89,7 +89,11 @@ public final class RoutineService {
             boolean feast = fr.crusadecraft.core.court.FeastService.feasting(server, p.realm());
             boolean funeral = !feast && fr.crusadecraft.core.court.FeastService.funeral(server, p.realm());
             Goal goal = goal(level.getDayTime(), atWar, feast || funeral);
-            Optional<BlockPos> target = goal == Goal.COURT ? court(data, p.realm()) : Optional.of(p.worldPos());
+            // P38 : les gens d'une ville passent la journée à leur ouvrage (boutique, place), pas à la cour ; la guerre
+            // et les rassemblements les y appellent quand même.
+            boolean called = atWar || feast || funeral;
+            Optional<BlockPos> target = goal == Goal.HOME ? Optional.of(p.worldPos())
+                    : p.work() != null && !called ? Optional.of(p.work()) : court(data, p.realm());
             if (target.isEmpty()) continue;
             if (walk(mob, target.get())) moved++;
             boolean atCourt = goal == Goal.COURT && mob.blockPosition().distSqr(target.get()) <= AT_COURT * AT_COURT;

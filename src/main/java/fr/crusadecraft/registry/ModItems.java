@@ -57,6 +57,10 @@ public final class ModItems {
     public static final RegistryObject<Item> PLAN = ITEMS.register("plan_architecte",
             () -> new fr.crusadecraft.item.PlanItem(new Item.Properties().stacksTo(1).rarity(Rarity.UNCOMMON)));
 
+    /** P38 : donner un but aux bâtiments d'une ville. */
+    public static final RegistryObject<Item> INTENDANT = ITEMS.register("baton_intendant",
+            () -> new fr.crusadecraft.item.IntendantStaffItem(new Item.Properties().stacksTo(1).rarity(Rarity.UNCOMMON)));
+
     private ModItems() {}
 
     public static void register(IEventBus modBus) {

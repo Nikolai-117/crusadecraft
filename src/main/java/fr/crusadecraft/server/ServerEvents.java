@@ -90,6 +90,8 @@ public final class ServerEvents {
         fr.crusadecraft.core.build.SiteService.onServerStopped();
         fr.crusadecraft.core.build.plan.PlanLibrary.onServerStopped();
         fr.crusadecraft.core.build.plan.Journals.onServerStopped();
+        fr.crusadecraft.core.city.CityService.onServerStopped();
+        fr.crusadecraft.core.city.CityStaff.onServerStopped();
         fr.crusadecraft.core.build.plan.PlanFavorites.onServerStopped();
         fr.crusadecraft.core.world.PaperMapService.onServerStopped();
         fr.crusadecraft.core.world.EntryTitles.onServerStopped();
@@ -120,7 +122,8 @@ public final class ServerEvents {
     public static void onEntityJoin(net.minecraftforge.event.entity.EntityJoinLevelEvent event) {
         if (event.getLevel().isClientSide()) return;
         // Un héraut resté d'une session interrompue n'a plus rien à faire là.
-        if (fr.crusadecraft.core.world.WorldService.isStrayHerald(event.getEntity()) || WarFieldService.isStray(event.getEntity())) {
+        if (fr.crusadecraft.core.world.WorldService.isStrayHerald(event.getEntity()) || WarFieldService.isStray(event.getEntity())
+                || fr.crusadecraft.core.city.CityService.isStray(event.getEntity())) {
             event.setCanceled(true);
             return;
         }
@@ -162,6 +165,8 @@ public final class ServerEvents {
         // Les terres des cartes du client (Xaero) : toutes les cinq secondes, seulement si elles ont changé.
         if (t % 100 == 60) perf("xaero", () -> fr.crusadecraft.core.world.TerritorySync.tick(server));
         if (t % 100 == 80) perf("routines_pnj", () -> fr.crusadecraft.core.lineage.RoutineService.tick(server));
+        // P38 : les gens des villes (arrivées, remplacements, étals regarnis), là où passe un joueur.
+        if (t % 100 == 90) perf("villes", () -> fr.crusadecraft.core.city.CityService.tick(server));
         // La carte en terrain (P18b) : la vraie surface des chunks parcourus, toutes les deux secondes.
         if (t % 40 == 17) perf("terrain", () -> fr.crusadecraft.core.world.terrain.TerrainService.tick(server));
     }

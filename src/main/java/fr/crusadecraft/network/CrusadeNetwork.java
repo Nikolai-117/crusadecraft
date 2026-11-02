@@ -33,7 +33,7 @@ import net.minecraftforge.network.simple.SimpleChannel;
  * (distance, droits, état) avant d'agir.
  */
 public final class CrusadeNetwork {
-    private static final String VERSION = "23";
+    private static final String VERSION = "24";
 
     public static final SimpleChannel CHANNEL = NetworkRegistry.newSimpleChannel(
             ResourceLocation.tryParse(CrusadeCraft.MOD_ID + ":main"),
@@ -256,6 +256,25 @@ public final class CrusadeNetwork {
         CHANNEL.messageBuilder(fr.crusadecraft.network.packet.PlanPackets.Choose.class, nextId++, NetworkDirection.PLAY_TO_SERVER)
                 .encoder(fr.crusadecraft.network.packet.PlanPackets.Choose::encode).decoder(fr.crusadecraft.network.packet.PlanPackets.Choose::decode)
                 .consumerMainThread(fr.crusadecraft.network.packet.PlanPackets.Choose::handle).add();
+        // P38 : le bâton d'intendant, les bâtiments des villes et leur fonction.
+        CHANNEL.messageBuilder(fr.crusadecraft.network.packet.BuildingPackets.OpenBuilding.class, nextId++, NetworkDirection.PLAY_TO_CLIENT)
+                .encoder(fr.crusadecraft.network.packet.BuildingPackets.OpenBuilding::encode).decoder(fr.crusadecraft.network.packet.BuildingPackets.OpenBuilding::decode)
+                .consumerMainThread(fr.crusadecraft.network.packet.BuildingPackets.OpenBuilding::handle).add();
+        CHANNEL.messageBuilder(fr.crusadecraft.network.packet.BuildingPackets.Decide.class, nextId++, NetworkDirection.PLAY_TO_SERVER)
+                .encoder(fr.crusadecraft.network.packet.BuildingPackets.Decide::encode).decoder(fr.crusadecraft.network.packet.BuildingPackets.Decide::decode)
+                .consumerMainThread(fr.crusadecraft.network.packet.BuildingPackets.Decide::handle).add();
+        CHANNEL.messageBuilder(fr.crusadecraft.network.packet.BuildingPackets.OpenCity.class, nextId++, NetworkDirection.PLAY_TO_CLIENT)
+                .encoder(fr.crusadecraft.network.packet.BuildingPackets.OpenCity::encode).decoder(fr.crusadecraft.network.packet.BuildingPackets.OpenCity::decode)
+                .consumerMainThread(fr.crusadecraft.network.packet.BuildingPackets.OpenCity::handle).add();
+        CHANNEL.messageBuilder(fr.crusadecraft.network.packet.BuildingPackets.CityAction.class, nextId++, NetworkDirection.PLAY_TO_SERVER)
+                .encoder(fr.crusadecraft.network.packet.BuildingPackets.CityAction::encode).decoder(fr.crusadecraft.network.packet.BuildingPackets.CityAction::decode)
+                .consumerMainThread(fr.crusadecraft.network.packet.BuildingPackets.CityAction::handle).add();
+        CHANNEL.messageBuilder(fr.crusadecraft.network.packet.BuildingPackets.OutlinesRequest.class, nextId++, NetworkDirection.PLAY_TO_SERVER)
+                .encoder(fr.crusadecraft.network.packet.BuildingPackets.OutlinesRequest::encode).decoder(fr.crusadecraft.network.packet.BuildingPackets.OutlinesRequest::decode)
+                .consumerMainThread(fr.crusadecraft.network.packet.BuildingPackets.OutlinesRequest::handle).add();
+        CHANNEL.messageBuilder(fr.crusadecraft.network.packet.BuildingPackets.Outlines.class, nextId++, NetworkDirection.PLAY_TO_CLIENT)
+                .encoder(fr.crusadecraft.network.packet.BuildingPackets.Outlines::encode).decoder(fr.crusadecraft.network.packet.BuildingPackets.Outlines::decode)
+                .consumerMainThread(fr.crusadecraft.network.packet.BuildingPackets.Outlines::handle).add();
         CHANNEL.messageBuilder(MapEditPackets.SetStyle.class, nextId++, NetworkDirection.PLAY_TO_SERVER)
                 .encoder(MapEditPackets.SetStyle::encode).decoder(MapEditPackets.SetStyle::decode)
                 .consumerMainThread(MapEditPackets.SetStyle::handle).add();

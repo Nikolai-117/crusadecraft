@@ -23,6 +23,9 @@ public final class ClientSetup {
     public static void onOverlays(net.minecraftforge.client.event.RegisterGuiOverlaysEvent event) {
         event.registerAbove(net.minecraftforge.client.gui.overlay.VanillaGuiOverlay.HOTBAR.id(), "plan_architecte",
                 fr.crusadecraft.client.hud.PlanHud::render);
+        // P38 : le HUD du bâton d'intendant.
+        event.registerAbove(net.minecraftforge.client.gui.overlay.VanillaGuiOverlay.HOTBAR.id(), "baton_intendant",
+                fr.crusadecraft.client.hud.CityHud::render);
     }
 
     @SubscribeEvent

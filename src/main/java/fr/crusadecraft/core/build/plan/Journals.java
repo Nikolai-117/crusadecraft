@@ -212,7 +212,8 @@ public final class Journals extends SavedData {
                 PLACEMENTS.remove(job.id);
                 ServerPlayer p = job.player == null ? null : server.getPlayerList().getPlayer(job.player);
                 if (p != null) p.sendSystemMessage(Component.translatable("crusadecraft.plan.done", job.name));
-                if (job.town != null) fr.crusadecraft.core.build.SiteService.onPasted(server, job.id);
+                // Une ville du monde (posée au plan, ou importée d'un fichier) : ses habitants, ses bâtiments.
+                fr.crusadecraft.core.build.SiteService.onPasted(server, job.id, p);
                 CrusadeCraft.LOGGER.info("CrusadeCraft : plan {} posé en {} ({} étapes)", job.name, job.anchor, plan.size());
             }
         }
@@ -239,10 +240,38 @@ public final class Journals extends SavedData {
 
     private static List<Blueprints.Placement> compile(ServerLevel level, Job job) {
         if (job.town != null) {
+            if (job.progress == 0) moveAside(level, job.anchor, job.town.extent() / 2 + 2, job.anchor.getY() - 8, job.anchor.getY() + 40);
             TownPlanner.survey(level, job.anchor, job.town);
             return TownPlanner.placements(job.town);
         }
-        return PlanRef.decode(job.ref).flatMap(r -> PlanLibrary.load(r, true)).map(Plan::placements).orElse(List.of());
+        Optional<Plan> plan = PlanRef.decode(job.ref).flatMap(r -> PlanLibrary.load(r, true));
+        if (plan.isPresent() && job.progress == 0) {
+            int bottom = job.anchor.getY() - plan.get().groundY();
+            moveAside(level, job.anchor, plan.get().footprint() / 2 + 2, bottom - 1, bottom + plan.get().sizeY() + PlanBuilder.CLEARING);
+        }
+        return plan.map(Plan::placements).orElse(List.of());
+    }
+
+    /**
+     * P38 : les bêtes et les gens qui se trouvent sur l'emprise d'une pose sont écartés au-delà du bord le plus proche,
+     * posés sur le sol : sans quoi la ville (et sa colline) les ensevelit et ils meurent étouffés.
+     */
+    static int moveAside(ServerLevel level, BlockPos anchor, int half, int y0, int y1) {
+        net.minecraft.world.phys.AABB box = new net.minecraft.world.phys.AABB(anchor.getX() - half, y0, anchor.getZ() - half,
+                anchor.getX() + half + 1, y1, anchor.getZ() + half + 1);
+        int n = 0;
+        for (net.minecraft.world.entity.LivingEntity e : level.getEntitiesOfClass(net.minecraft.world.entity.LivingEntity.class, box,
+                e -> !(e instanceof net.minecraft.world.entity.player.Player))) {
+            double dx = e.getX() - anchor.getX(), dz = e.getZ() - anchor.getZ();
+            double x = e.getX(), z = e.getZ();
+            if (Math.abs(dx) >= Math.abs(dz)) x = anchor.getX() + (dx < 0 ? -1 : 1) * (half + 4.5);
+            else z = anchor.getZ() + (dz < 0 ? -1 : 1) * (half + 4.5);
+            int y = level.getHeight(net.minecraft.world.level.levelgen.Heightmap.Types.MOTION_BLOCKING_NO_LEAVES, (int) Math.floor(x), (int) Math.floor(z));
+            e.teleportTo(x, y, z);
+            n++;
+        }
+        if (n > 0) CrusadeCraft.LOGGER.info("CrusadeCraft : {} bêtes et gens écartés de l'emprise d'une pose en {}", n, anchor);
+        return n;
     }
 
     /** Un journal vidé : son fichier s'efface. */

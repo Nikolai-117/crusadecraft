@@ -33,9 +33,17 @@ public final class PlanBuilder {
      *                 tonneaux (une ville de l'ordinateur, sans colonie)
      */
     public static Plan build(PlanRef ref, RawPlan raw, boolean keepHuts) {
+        // P38 : une ville entière se pose case par case sans être tenue en mémoire, dans l'orientation de son dessin.
+        if (raw.cells() instanceof GridCells grid) {
+            GridPlacements placements = new GridPlacements(grid, raw.groundY(), keepHuts);
+            return new Plan(ref, raw.name(), grid.w, grid.h, grid.l, raw.groundY(), Direction.SOUTH, placements.huts, placements,
+                    raw.replaced(), raw.unknown());
+        }
         // P36 : seuls les bâtiments sont tournés d'après leur porte ; murailles, routes et décors gardent l'orientation
         // de leur dessin, dont dépendent leurs raccords.
         boolean building = ref.source() != PlanRef.Source.PACK || PlanKinds.kind(ref.path()) == PlanKinds.BATIMENT;
+        // P38 : une ville entière n'a pas « une » entrée ; elle garde l'orientation de son dessin.
+        if (ref.source() == PlanRef.Source.FILE && Math.min(raw.sizeX(), raw.sizeZ()) >= Plan.CITY) building = false;
         Direction front = building ? front(raw) : Direction.SOUTH;
         Rotation r0 = inverse(Blueprints.rotation(front));
         int ox = raw.sizeX() / 2, oz = raw.sizeZ() / 2;
@@ -117,7 +125,7 @@ public final class PlanBuilder {
             for (int y = top; y < top + CLEARING; y++) out.add(new Blueprints.Placement(x, y, z, Blocks.AIR.defaultBlockState(), false));
         }
         out.addAll(blocks);
-        return new Plan(ref, raw.name(), sx, raw.sizeY(), sz, raw.groundY(), front, huts, List.copyOf(out));
+        return new Plan(ref, raw.name(), sx, raw.sizeY(), sz, raw.groundY(), front, huts, List.copyOf(out), raw.replaced(), raw.unknown());
     }
 
     /** La matière des fondations : de la terre sous le naturel, du grès sous le sable, des pavés sous le bâti. */

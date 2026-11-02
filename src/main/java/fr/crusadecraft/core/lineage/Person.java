@@ -35,6 +35,8 @@ public final class Person {
     /** Un villageois l'incarne dans le monde (Comes Alive) : dernière position connue. */
     private ResourceLocation worldDim;
     private BlockPos worldPos;
+    /** P38 : où elle passe la journée (sa boutique, la place de sa ville), au lieu de la cour ; {@code null} : la cour. */
+    private BlockPos work;
 
     /** Traits au plus, et longueur de la biographie. */
     public static final int MAX_TRAITS = 4, BIO_MAX = 300;
@@ -84,6 +86,8 @@ public final class Person {
     public boolean inWorld() { return worldPos != null; }
     public ResourceLocation worldDim() { return worldDim; }
     public BlockPos worldPos() { return worldPos; }
+    public BlockPos work() { return work; }
+    public void setWork(BlockPos work) { this.work = work == null ? null : work.immutable(); }
 
     public void setName(String name) { this.name = name; }
     public void setSurname(String surname) { this.surname = surname == null ? "" : surname; }
@@ -133,6 +137,7 @@ public final class Person {
             t.putString("worldDim", worldDim.toString());
             t.put("worldPos", NbtUtils.writeBlockPos(worldPos));
         }
+        if (work != null) t.put("work", NbtUtils.writeBlockPos(work));
         return t;
     }
 
@@ -170,6 +175,7 @@ public final class Person {
             p.worldDim = ResourceLocation.tryParse(t.getString("worldDim"));
             p.worldPos = NbtUtils.readBlockPos(t.getCompound("worldPos"));
         }
+        if (t.contains("work")) p.work = NbtUtils.readBlockPos(t.getCompound("work"));
         return p;
     }
 }

@@ -270,6 +270,38 @@ données du mod (fichier `crusadecraft.dat` du monde) restent sur place, sans ef
 53m. **Tes propres plans** : dépose tes `.nbt` (bloc de structure) et `.schem` (WorldEdit) dans
     `crusadecraft/plans/` du dossier du jeu (`/crusade plan dossier` donne le chemin). Tes packs Structurize (scans du
     dossier `blueprints/`) apparaissent d'eux-mêmes dans le catalogue.
+53n. **Une ville entière en schématique** (3.6) : range-la dans un sous-dossier de `crusadecraft/plans/` — le nom du
+    dossier devient son étagère dans le catalogue (`plans/Levenzia/dolhimluith.schem` → « Levenzia »). Sur un serveur,
+    c'est le dossier **du serveur** qui compte. Elle se pose telle qu'elle a été bâtie, au bloc près, avec son terrain :
+    son sol (la terre de ses bords) tombe au niveau du bloc visé. Elle garde l'orientation de son dessin (**R** la
+    tourne). Son fantôme montre le dessus de ses toits et de ses rues. Une fois posée, elle devient une **ville de ton
+    royaume**, à son nom, et ses bâtiments sont reconnus d'après leurs portes.
+    **Les blocs qu'on n'a pas** (un autre mod, une version plus récente de Minecraft) prennent leur équivalent installé,
+    **de même forme** : un escalier reste un escalier tourné pareil, une demi-dalle verticale devient une plaque de Dawn
+    of Time, un torchis à colombages un colombage de Domum Ornamentum avec le même motif, le chaume du chaume. Le
+    catalogue dit combien de sortes ont été remplacées, et nomme celles qui n'ont aucun équivalent (laissées vides).
+    La table est dans le mod ; tu la complètes ou la corriges avec `crusadecraft/equivalences.json` (même format :
+    `"me:stucco": ["dawnoftimebuilder:plastered_stone", "minecraft:white_terracotta"]`).
+53o. **Bâton d'intendant** (onglet du mod) : donner un but aux bâtiments d'une ville.
+    - **Clic droit sur une porte** (ou un mur, de l'intérieur) : le bâtiment est reconnu — on suit son intérieur sous
+      le toit, pièce après pièce, étage après étage — et un écran s'ouvre : seize fonctions (maison, mairie, château,
+      temple, caserne, tour de garde, boulangerie, taverne, forge, marché, boucherie, ferme, écurie, bibliothèque,
+      atelier, entrepôt), celle que ses meubles suggèrent marquée d'une ★ (une enclume et un fourneau : une forge), un
+      nom si tu veux, ce qu'on y a trouvé. **Valider** : ses gens arrivent.
+    - **Accroupi, deux clics** : une boîte tracée à la main, pour ce que la porte ne trouve pas (une halle ouverte).
+    - **Vers le ciel** : l'écran de la ville — ses bâtiments, ses gens, **Reconnaître les bâtiments** (toutes les portes
+      d'un coup) et **Accepter les propositions**.
+    - Tant que tu le tiens, chaque bâtiment a son cadre de la couleur de sa fonction (gris pâle : pas encore décidé), et
+      le HUD dit la ville, le bâtiment visé et ses gens.
+    **Ses gens** sont inscrits au registre des lignées, dans la communauté de la ville, et apparaissent en villageois de
+    Comes Alive quand tu approches : une ou deux **familles** par maison (elles passent la journée sur la place du
+    marché, rentrent le soir) ; à la boulangerie un **boulanger** qui vend pain, biscuits, tartes et gâteaux ; à la
+    taverne un **tavernier** (ragoûts, poulet, miel) ; à la forge un **forgeron** (armes, armures, outils) ; des
+    **gardes** à la caserne et au château, un **archer** dans la tour, un **prêtre** au temple, des **marchands** au
+    marché… Chacun reste à son ouvrage le jour. Un marchand mort est remplacé le lendemain ; les étals se regarnissent
+    chaque jour. Une ville fait vivre **80 personnes au plus** (les villageois de Comes Alive pèsent lourd).
+    Changer la fonction d'un bâtiment renvoie ses gens ; « Retirer de la ville » l'efface du plan de la ville (les
+    pierres restent). Le bâton sert au créatif, à l'éditeur de la carte, et au maître de la ville.
 
 ### La carte de guerre
 50. Ouvre la carte du royaume (touche **virgule**) et clique sur **⚔ Guerre**, en bas à droite. Une barre d'outils

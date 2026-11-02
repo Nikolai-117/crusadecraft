@@ -91,7 +91,8 @@ public final class PlanLibrary {
                     String rel = root.getValue().relativize(p).toString().replace('\\', '/');
                     PlanRef ref = new PlanRef(PlanRef.Source.FILE, root.getKey(), rel);
                     String cat = ref.category();
-                    out.add(new Entry(ref.encode(), ref.label(), cat.isEmpty() ? root.getKey() : root.getKey() + "/" + cat, PlanKinds.AUTRE));
+                    // P38 : le sous-dossier est l'étagère (« Levenzia », « Varenhold ») ; à la racine, le nom du dossier.
+                    out.add(new Entry(ref.encode(), ref.label(), cat.isEmpty() ? root.getKey() : cat, PlanKinds.AUTRE));
                 });
             } catch (IOException e) {
                 CrusadeCraft.LOGGER.warn("CrusadeCraft : le dossier de plans {} ne se lit pas", root.getValue(), e);

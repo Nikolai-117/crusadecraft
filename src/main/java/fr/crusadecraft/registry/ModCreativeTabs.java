@@ -32,6 +32,7 @@ public final class ModCreativeTabs {
                 output.accept(ModItems.SEAL.get());
                 output.accept(ModItems.BORNAGE.get());
                 output.accept(ModItems.PLAN.get());
+                output.accept(ModItems.INTENDANT.get());
             })
             .build());
 

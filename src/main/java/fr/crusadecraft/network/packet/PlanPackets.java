@@ -124,12 +124,14 @@ public final class PlanPackets {
             buf.writeVarIntArray(d.colors());
             buf.writeVarInt(d.kind());
             buf.writeUtf(d.role(), 64);
+            buf.writeVarInt(d.replaced());
+            buf.writeUtf(d.unknown(), REF_MAX);
         }
 
         public static Detail decode(FriendlyByteBuf buf) {
             return new Detail(new PlanTool.Detail(buf.readUtf(REF_MAX), buf.readUtf(REF_MAX), buf.readVarInt(), buf.readVarInt(), buf.readVarInt(),
                     buf.readVarInt(), buf.readVarInt(), buf.readBoolean(), buf.readVarInt(), buf.readVarInt(), buf.readVarIntArray(PlanTool.PREVIEW * PlanTool.PREVIEW * 4),
-                    buf.readVarInt(), buf.readUtf(64)));
+                    buf.readVarInt(), buf.readUtf(64), buf.readVarInt(), buf.readUtf(REF_MAX)));
         }
 
         public static void handle(Detail p, Supplier<NetworkEvent.Context> ctx) {
@@ -146,7 +148,8 @@ public final class PlanPackets {
         }
 
         public static Ghost decode(FriendlyByteBuf buf) {
-            return new Ghost(buf.readUtf(REF_MAX), buf.readVarIntArray(PlanTool.GHOST_MAX), buf.readVarIntArray(PlanTool.GHOST_MAX));
+            int max = Math.max(PlanTool.GHOST_MAX, PlanTool.GHOST_CITY);
+            return new Ghost(buf.readUtf(REF_MAX), buf.readVarIntArray(max), buf.readVarIntArray(max));
         }
 
         public static void handle(Ghost p, Supplier<NetworkEvent.Context> ctx) {

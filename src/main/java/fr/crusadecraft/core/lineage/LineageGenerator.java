@@ -227,6 +227,15 @@ public final class LineageGenerator {
         return added;
     }
 
+    /** P38 : quelqu'un qui tient un ouvrage dans une ville (le boulanger, un garde), seul, adulte, avec son nom de famille. */
+    public Person worker(LineageState state, Community c, Role role, boolean mostlyMen) {
+        boolean female = mostlyMen ? random.nextInt(6) == 0 : random.nextInt(3) == 0;
+        Person p = resident(state, c, female, 20 + random.nextInt(36));
+        p.setSurname(SURNAMES.get(random.nextInt(SURNAMES.size())));
+        p.setRole(role);
+        return p;
+    }
+
     private Person resident(LineageState state, Community c, boolean female, int age) {
         Person p = new Person(UUID.randomUUID(), names.personName(female), female, age);
         p.setCommunity(c.id());

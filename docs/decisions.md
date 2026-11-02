@@ -992,3 +992,43 @@ Demandé par Romain (5 octobre) : « que ça fonctionne par chunk directement »
 - Le port reste à faire. Vérifié : 201 tests unitaires, 77 GameTests (dont la maison favorite prise d'abord), le
   bourg européen regardé dans le jeu.
 
+**P38 (2 novembre 2026) — villes importées et bâton d'intendant, version 3.6.0**
+
+Demandé par Romain avec deux schématiques : « la reprendre portrait pour portrait et la rendre fonctionnelle avec les
+commerçants », plus « un bâton pour délimiter et donner un but à un bâtiment » ; Dolhimluith sous « Levenzia »,
+Grunbach sous « Varenhold ». Ses réponses : habitants en **villageois de Comes Alive** ; pour Dolhimluith, bâtie avec
+le mod Fabric « Middle-earth » qu'il n'a pas, des **équivalents qui gardent exactement les formes**.
+
+- **Équivalences de blocs** (`BlockEquivalents`, `data/crusadecraft/equivalences.json`, surchargeable par
+  `crusadecraft/equivalences.json`) : un bloc absent prend le premier candidat installé, propriétés recopiées
+  (orientation, moitié, forme). Les demi-dalles verticales de Middle-earth regardent vers l'extérieur (mesuré dans le
+  fichier : 680 sur 900 ont de l'air devant et un mur derrière), les plaques de Dawn of Time vers le côté qu'elles
+  occupent : l'orientation est retournée. Les torchis à colombages deviennent des colombages de Domum Ornamentum
+  (`materially_retexturable`, bois du cadre et remplissage), tournés selon leur mur. Clés à propriétés
+  (`me:forge[part=top]`), motifs à une étoile (`minecraft:pale_oak_*`), règles de forme en dernier recours. Les 130
+  sortes de Middle-earth de Dolhimluith ont chacune leur règle (vérifié par un test) ; les 3 sortes de 1.21.9 de
+  Grunbach aussi (herbe courte, chêne pâle).
+- Dawn of Time Builder et Decorative Blocks (dans l'instance de Romain) sont chargés en développement depuis
+  `libs/local`, jamais livrés.
+- **Grandes schématiques** : au-delà de 262 144 cases, les cases et les poses sont calculées à la demande
+  (`GridCells`, `GridPlacements`) au lieu d'être tenues en objets ; Grunbach (5,6 millions de cases) aurait coûté un
+  demi-gigaoctet. Limite portée à 12 millions. La pose parcourt au plus 40 cases par bloc changé et par tick ; les
+  données d'entité posées partent aux joueurs (sans quoi les colombages restaient nus jusqu'au rechargement).
+- **Le sol d'une schématique qui apporte son terrain** : médiane, sur le pourtour, de la plus haute couche de terre ;
+  sans terre sur 60 % des bords (un bâtiment seul), la couche du bas comme avant.
+- **Une ville entière** = un fichier dont les deux côtés font au moins 96 blocs : elle garde l'orientation de son
+  dessin, son fantôme est le dessus de ses colonnes (64 000 au plus), et posée elle devient une ville du royaume
+  (`registerImportedTown`, sur le modèle des villes du plan) portant le nom du fichier. Le sous-dossier des fichiers
+  est leur étagère.
+- **Bâton d'intendant** : reconnaissance d'un bâtiment par l'intérieur couvert depuis sa porte (air, portes, plantes,
+  tapis ; un toit dans les 24 blocs au-dessus ; 12 000 cases au plus), boîte élargie d'un bloc, toit suivi tant qu'il
+  couvre un quart de l'emprise ; boîte à la main par deux coins. Ce qu'on reconnaît reste en brouillon tant que le
+  joueur n'a pas choisi. Seize fonctions ; la proposition vient des meubles.
+- **Les gens** sont des personnes du registre des lignées (communauté de la ville), avec un lieu de journée
+  (`Person.work`) : la boutique pour les métiers, la place pour les familles ; la routine les y mène le jour au lieu
+  de la cour. Métier de maître (gardé sans poste de travail) et échanges posés par les données enregistrées du
+  villageois (`overrideOffers` ne fait rien côté serveur : au premier essai, le boulanger vendait au hasard des
+  marchandises de fermier). Arrivées par lots de quatre toutes les cinq secondes quand un joueur est à moins de 48
+  blocs ; marchand mort remplacé le lendemain ; étals regarnis chaque jour ; 80 personnes au plus par ville.
+- Pas de colonie MineColonies pour une ville importée : ses ouvriers rebâtiraient chaque bâtiment avec les plans de
+  leurs packs à la première amélioration — la ville ne resterait pas telle qu'elle a été bâtie.

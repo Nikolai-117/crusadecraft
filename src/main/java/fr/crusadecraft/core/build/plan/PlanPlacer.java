@@ -19,6 +19,8 @@ public final class PlanPlacer {
     /** Fondations : on comble jusqu'à huit blocs sous le plan. */
     public static final int FOUNDATION_DEPTH = 8;
     private static final int FLAGS = Block.UPDATE_CLIENTS | Block.UPDATE_KNOWN_SHAPE;
+    /** Cases parcourues au plus par bloc changé, dans un tick. */
+    static final int STEPS_PER_CHANGE = 40;
 
     private PlanPlacer() {}
 
@@ -29,8 +31,10 @@ public final class PlanPlacer {
      */
     public static int[] advance(ServerLevel level, BlockPos anchor, Rotation rotation, List<Blueprints.Placement> plan, int from,
                                 int allowed, BuildJournal journal) {
-        int changed = 0, i = from;
-        while (i < plan.size() && changed < allowed) {
+        int changed = 0, i = from, steps = 0;
+        // P38 : une ville apporte des millions de cases d'air déjà vides ; on n'en parcourt qu'un nombre borné par tick.
+        int maxSteps = Math.max(allowed, allowed * STEPS_PER_CHANGE);
+        while (i < plan.size() && changed < allowed && steps++ < maxSteps) {
             Blueprints.Placement p = plan.get(i);
             BlockPos pos = Blueprints.place(anchor, p, rotation);
             if (level.isOutsideBuildHeight(pos)) {
@@ -64,6 +68,8 @@ public final class PlanPlacer {
                                 try {
                                     be.load(tag);
                                     be.setChanged();
+                                    // Les données de l'entité partent aux joueurs (le bois et le torchis d'un colombage).
+                                    level.sendBlockUpdated(pos, want, want, Block.UPDATE_CLIENTS);
                                 } catch (RuntimeException ignored) {
                                     // des données d'un autre temps : le bloc reste, nu
                                 }
