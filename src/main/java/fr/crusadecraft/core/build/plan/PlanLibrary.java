@@ -69,6 +69,39 @@ public final class PlanLibrary {
         } catch (IOException e) {
             CrusadeCraft.LOGGER.warn("CrusadeCraft : impossible de créer le dossier des plans", e);
         }
+        installBundled();
+    }
+
+    /** P38 : les plans livrés avec le mod (les villes que Romain a données), et leur liste. */
+    static final String BUNDLED = "/crusadecraft_plans/";
+
+    /**
+     * Range dans le dossier des plans ceux que le mod apporte (Dolhimluith sous Levenzia, Grunbach sous Varenhold),
+     * s'ils n'y sont pas déjà : un fichier du joueur au même nom n'est jamais remplacé. Sur un serveur, c'est le
+     * dossier du serveur qui les reçoit.
+     */
+    public static int installBundled() {
+        int n = 0;
+        try (java.io.InputStream index = PlanLibrary.class.getResourceAsStream(BUNDLED + "index.txt")) {
+            if (index == null) return 0;
+            Path root = roots().get("plans").normalize();
+            for (String line : new String(index.readAllBytes(), java.nio.charset.StandardCharsets.UTF_8).split("\\R")) {
+                String rel = line.strip();
+                if (rel.isEmpty() || rel.startsWith("#")) continue;
+                Path target = root.resolve(rel).normalize();
+                if (!target.startsWith(root) || Files.exists(target)) continue;
+                try (java.io.InputStream in = PlanLibrary.class.getResourceAsStream(BUNDLED + rel)) {
+                    if (in == null) continue;
+                    Files.createDirectories(target.getParent());
+                    Files.copy(in, target);
+                    n++;
+                }
+            }
+        } catch (IOException e) {
+            CrusadeCraft.LOGGER.warn("CrusadeCraft : les plans livrés ne s'installent pas", e);
+        }
+        if (n > 0) CrusadeCraft.LOGGER.info("CrusadeCraft : {} plans livrés rangés dans {}", n, roots().get("plans"));
+        return n;
     }
 
     // ------------------------------------------------------------------ catalogue

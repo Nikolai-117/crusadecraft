@@ -28,3 +28,6 @@ desktop.ini
 
 # Jars de mods tiers copiés de l'instance pour compiler les compatibilités : jamais versionnés ni redistribués
 libs/
+
+# Les villes données par Romain, livrées dans son jar personnel (P38) : jamais versionnées
+src/main/resources/crusadecraft_plans/**/*.schem

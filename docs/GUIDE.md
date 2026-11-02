@@ -17,7 +17,7 @@ Optionnels, déjà présents chez toi, donc activés automatiquement :
 
 ## 2. Installer
 
-1. Le fichier du mod est `E:\crusadecraft\build\libs\crusadecraft-3.5.1.jar`.
+1. Le fichier du mod est `E:\crusadecraft\build\libs\crusadecraft-3.6.1.jar`.
 2. Mets-le dans le dossier des mods de l'instance : `D:\MultiMC\instances\1.20.1\.minecraft\mods\`.
    Dans MultiMC, tu peux aussi faire clic droit sur l'instance → *Modifier* → *Mods* → *Ajouter un fichier*.
    **Retire l'ancien** (`crusadecraft-1.8.0.jar`, ou une version plus vieille) : deux versions du mod ensemble
@@ -270,7 +270,7 @@ données du mod (fichier `crusadecraft.dat` du monde) restent sur place, sans ef
 53m. **Tes propres plans** : dépose tes `.nbt` (bloc de structure) et `.schem` (WorldEdit) dans
     `crusadecraft/plans/` du dossier du jeu (`/crusade plan dossier` donne le chemin). Tes packs Structurize (scans du
     dossier `blueprints/`) apparaissent d'eux-mêmes dans le catalogue.
-53n. **Une ville entière en schématique** (3.6) : range-la dans un sous-dossier de `crusadecraft/plans/` — le nom du
+53n. **Une ville entière en schématique** (3.6). Dolhimluith (Levenzia) et Grunbach (Varenhold) sont livrées avec le mod (3.6.1) : il les range lui-même au démarrage. Pour une autre ville, range-la dans un sous-dossier de `crusadecraft/plans/` — le nom du
     dossier devient son étagère dans le catalogue (`plans/Levenzia/dolhimluith.schem` → « Levenzia »). Sur un serveur,
     c'est le dossier **du serveur** qui compte. Elle se pose telle qu'elle a été bâtie, au bloc près, avec son terrain :
     son sol (la terre de ses bords) tombe au niveau du bloc visé. Elle garde l'orientation de son dessin (**R** la

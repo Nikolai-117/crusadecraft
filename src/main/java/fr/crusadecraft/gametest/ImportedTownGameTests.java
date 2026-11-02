@@ -274,6 +274,24 @@ public final class ImportedTownGameTests {
         }
     }
 
+    // ------------------------------------------------------------------ les villes livrées
+
+    @GameTest(template = TestWorld.TEMPLATE, setupTicks = TestWorld.SETUP_TICKS, batch = "p38_livrees", timeoutTicks = 200)
+    public static void villesDeRomainLivreesAvecLeMod(GameTestHelper h) {
+        PlanLibrary.installBundled();
+        for (String[] c : new String[][]{{"Levenzia", "Levenzia/dolhimluith.schem"}, {"Varenhold", "Varenhold/grunbach.schem"}}) {
+            PlanRef ref = new PlanRef(PlanRef.Source.FILE, "plans", c[1]);
+            if (PlanLibrary.fileEntries().stream().noneMatch(e -> e.ref().equals(ref.encode()) && e.category().equals(c[0]))) {
+                h.fail(c[1] + " n'est pas au catalogue sous " + c[0]);
+            }
+            Optional<Plan> plan = PlanLibrary.load(ref, true);
+            if (plan.isEmpty()) h.fail(c[1] + " ne se lit pas");
+            if (!plan.get().city()) h.fail(c[1] + " n'est pas une ville entière");
+            if (!plan.get().unknown().isEmpty()) h.fail(c[1] + " : sans équivalent " + plan.get().unknown());
+        }
+        h.succeed();
+    }
+
     // ------------------------------------------------------------------ le bâton d'intendant
 
     /** Une petite forge de pierre : 7 × 7, porte au sud, une enclume et un haut fourneau dedans. Renvoie la porte. */
