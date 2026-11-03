@@ -1059,3 +1059,26 @@ veux la voir comme le bâton de construction de MineColonies », des commandes, 
   l'essai du forgeron le cherche donc après 40 ticks (le mod n'était pas en cause). Le faux joueur des essais ne se
   déplace pas par téléportation : on le place.
 
+**P39.1, P39.2 et P40 (3 novembre 2026) — étagère des villes, panneau de placement, fondations, vérifications, 3.8.0**
+
+- **Villes entières** (3.7.1) : Romain ne trouvait pas ses villes, rangées sous « Mes fichiers » en bas de la liste.
+  Les fichiers dont les deux côtés font au moins 96 blocs sont aussi en tête de l'étagère des villes entières, rangés
+  par leur dossier ; l'emprise est lue dans l'en-tête du fichier (gardée tant que le fichier ne change pas).
+- **Panneau de placement** (demandé : « fais comme MineColonies avec le bâton, au pire des touches pour appuyer
+  dessus ») : le clic droit fige le fantôme et ouvre un écran sans voile, avec des boutons ; il remplace la pose
+  directe au clic. Le pas de 5 ou 10 blocs sert aux villes entières.
+- **Fondations jusqu'au sol** (Romain : « du vide en dessous de la ville ») : le fichier de Grunbach est plein (ses
+  deux couches du bas sont du terrain partout) ; le vide venait de dessous, la ville posée sur un point haut et les
+  fondations bornées à huit blocs. Une ville entière comble désormais jusqu'au sol, 96 blocs au plus. Vérifié dans le
+  jeu : 95 colonnes sans sol sur 16 129 sondées, toutes hors de l'emprise de la ville (au bord de la zone sondée).
+- **Bâton façon outil de scan** : clic gauche le premier coin (le bâton ne casse plus de bloc), clic droit le second,
+  la boîte suit le viseur en cyan. Plutôt que le système de MineColonies lui-même : ses bâtiments se rebâtiraient
+  avec ses plans, et la ville importée ne resterait pas telle qu'elle a été bâtie.
+- **Dawn of Time en développement** : ses jars étaient dans `libs/local` sans être chargés ; les essais et les
+  captures prenaient les blocs de secours. Branchés (`-Pwith_decor=false` pour s'en passer), Dolhimluith a été
+  regardée avec le chaume de Dawn of Time, ses ardoises et ses palissades de bois carbonisé.
+- **Essai des villages** (P28) : il lisait la hauteur sous le centre (parfois le haut d'un arbre) et n'aplanissait que
+  63 blocs sur 14 de haut ; il cherche le vrai sol et dégage 81 blocs sur 40.
+- **Partage** : dépôt GitHub `Nikolai-117/crusadecraft` (public, au choix de Romain), adresse des commits remplacée
+  par celle de GitHub sans e-mail, `CLAUDE.md` pour le Claude de son ami, et le README dit quels jars prendre soi-même.
+

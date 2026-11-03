@@ -51,10 +51,17 @@ public final class VillageGameTests {
                     AiPersonality.PACIFIQUE, w.center.getX() + 420, pz);
 
             // Une grande parcelle d'herbe plate : le village et toutes les places de ses quartiers.
+            // Le vrai sol sous le centre (pas le haut d'un arbre), puis une parcelle assez large et assez haute pour
+            // qu'aucun arbre de la forêt voisine ne dépasse : le terrain est tiré au hasard à chaque essai.
             int y0 = level.getHeightmapPos(Heightmap.Types.MOTION_BLOCKING_NO_LEAVES, new BlockPos(px, 0, pz)).getY();
-            for (int dx = -31; dx <= 31; dx++) {
-                for (int dz = -31; dz <= 31; dz++) {
-                    for (int dy = -3; dy <= 14; dy++) {
+            while (y0 > level.getMinBuildHeight() + 1) {
+                var below = level.getBlockState(new BlockPos(px, y0 - 1, pz));
+                if (!below.is(net.minecraft.tags.BlockTags.LOGS) && !below.is(net.minecraft.tags.BlockTags.LEAVES) && !below.canBeReplaced()) break;
+                y0--;
+            }
+            for (int dx = -40; dx <= 40; dx++) {
+                for (int dz = -40; dz <= 40; dz++) {
+                    for (int dy = -3; dy <= 40; dy++) {
                         level.setBlock(new BlockPos(px + dx, y0 + dy, pz + dz), dy < -1 ? Blocks.DIRT.defaultBlockState()
                                 : dy == -1 ? Blocks.GRASS_BLOCK.defaultBlockState() : Blocks.AIR.defaultBlockState(), 2);
                     }

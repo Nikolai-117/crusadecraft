@@ -50,8 +50,10 @@ final class WorldShotsV5 {
     private static final List<City> ALL = List.of(
             new City("dolhimluith", new PlanRef(PlanRef.Source.FILE, "plans", "Levenzia/dolhimluith.schem").encode(), 300),
             new City("grunbach", new PlanRef(PlanRef.Source.FILE, "plans", "Varenhold/grunbach.schem").encode(), 720));
-    /** -Pshots_quick=true : Dolhimluith seule. */
-    private static final List<City> CITIES = Boolean.getBoolean("crusadecraft.worldshots.v4quick") ? ALL.subList(0, 1) : ALL;
+    /** -Pshots_quick=true : Dolhimluith seule ; -Pshots_only=grunbach : celle-là seule. */
+    private static final List<City> CITIES = !System.getProperty("crusadecraft.worldshots.v5only", "").isEmpty()
+            ? ALL.stream().filter(c -> c.label().equals(System.getProperty("crusadecraft.worldshots.v5only"))).toList()
+            : Boolean.getBoolean("crusadecraft.worldshots.v4quick") ? ALL.subList(0, 1) : ALL;
 
     private static List<Step> steps;
     private static int index = -1, wait, waited;
@@ -184,6 +186,18 @@ final class WorldShotsV5 {
                 CrusadeCraft.LOGGER.info("WorldShots v5 : {} achevée en {} s, mémoire {} Mo, {} bâtiments reconnus", c.label(),
                         (System.nanoTime() - STARTED.get(c.label())) / 1_000_000_000L, memoryMb(), s == null ? -1 : s.buildings().size());
                 if (s != null) {
+                    // Du vide sous la ville ? Les colonnes de l'emprise où l'air descend sous le bas de la ville.
+                    ServerLevel lv = player(server).serverLevel();
+                    int[] box = CityService.box(s);
+                    int bottom = s.anchor().getY() - s.importedGround() - 1, holes = 0, columns = 0;
+                    for (int x = box[0] + 4; x <= box[3] - 4; x += 2) {
+                        for (int z = box[2] + 4; z <= box[5] - 4; z += 2) {
+                            columns++;
+                            BlockPos below = new BlockPos(x, bottom, z);
+                            if (lv.getBlockState(below).isAir() && lv.getBlockState(below.below()).isAir()) holes++;
+                        }
+                    }
+                    CrusadeCraft.LOGGER.info("WorldShots v5 : {} — colonnes vides sous la ville : {} sur {}", c.label(), holes, columns);
                     Map<BuildingFunction, Integer> count = new java.util.EnumMap<>(BuildingFunction.class);
                     for (CityBuilding b : s.buildings()) if (b.suggestion() != null) count.merge(b.suggestion(), 1, Integer::sum);
                     CrusadeCraft.LOGGER.info("WorldShots v5 : {} — propositions {}", c.label(), count);
@@ -192,7 +206,7 @@ final class WorldShotsV5 {
             out.add(new Step("haut_" + c.label(), server -> {
                 BlockPos g = GROUND.get(c.label());
                 look(player(server), g.getX() + 0.5, g.getY() + 150, g.getZ() + 110.5, 180f, 52f);
-            }, null, 300, "v5_" + c.label() + "_haut"));
+            }, null, 700, "v5_" + c.label() + "_haut"));
             out.add(new Step("vue_" + c.label(), server -> {
                 BlockPos g = GROUND.get(c.label());
                 look(player(server), g.getX() - 60.5, g.getY() + 40, g.getZ() + 70.5, 220f, 22f);

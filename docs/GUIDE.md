@@ -270,7 +270,8 @@ données du mod (fichier `crusadecraft.dat` du monde) restent sur place, sans ef
 53m. **Tes propres plans** : dépose tes `.nbt` (bloc de structure) et `.schem` (WorldEdit) dans
     `crusadecraft/plans/` du dossier du jeu (`/crusade plan dossier` donne le chemin). Tes packs Structurize (scans du
     dossier `blueprints/`) apparaissent d'eux-mêmes dans le catalogue.
-53n. **Une ville entière en schématique** (3.6). Dolhimluith (Levenzia) et Grunbach (Varenhold) sont livrées avec le mod (3.6.1) : il les range lui-même au démarrage. Pour une autre ville, range-la dans un sous-dossier de `crusadecraft/plans/` — le nom du
+53n. **Une ville entière en schématique** (3.6). Les villes des fichiers sont aussi en tête de l'étagère **Villes
+    entières** du catalogue, sous le nom de leur dossier (Levenzia, Varenhold) (3.7.1). Dolhimluith (Levenzia) et Grunbach (Varenhold) sont livrées avec le mod (3.6.1) : il les range lui-même au démarrage. Pour une autre ville, range-la dans un sous-dossier de `crusadecraft/plans/` — le nom du
     dossier devient son étagère dans le catalogue (`plans/Levenzia/dolhimluith.schem` → « Levenzia »). Sur un serveur,
     c'est le dossier **du serveur** qui compte. Elle se pose telle qu'elle a été bâtie, au bloc près, avec son terrain :
     son sol (la terre de ses bords) tombe au niveau du bloc visé. Elle garde l'orientation de son dessin (**R** la
@@ -302,6 +303,17 @@ données du mod (fichier `crusadecraft.dat` du monde) restent sur place, sans ef
     chaque jour. Une ville fait vivre **80 personnes au plus** (les villageois de Comes Alive pèsent lourd).
     Changer la fonction d'un bâtiment renvoie ses gens ; « Retirer de la ville » l'efface du plan de la ville (les
     pierres restent). Le bâton sert au créatif, à l'éditeur de la carte, et au maître de la ville.
+53o bis. **Le panneau de placement** (3.8), comme le bâton de construction de MineColonies : avec un plan choisi,
+    **clic droit sur le sol** : le fantôme se fige là et un panneau s'ouvre en bas à droite, le monde visible derrière.
+    Ses boutons : **Tourner** (dans les deux sens), **Avancer**, **Reculer**, **Gauche**, **Droite** (selon ton regard),
+    **Monter**, **Descendre**, le **pas** (1, 5 ou 10 blocs), puis **Poser ici** ou **Annuler**. Au clavier : flèches ou
+    Z Q S D, Espace et Maj (monter, descendre), R (tourner), Entrée (poser), Échap (fermer, le fantôme reste figé ; un
+    nouveau clic droit rouvre le panneau). Une ville entière comble aussi le dessous jusqu'au sol (jusqu'à 96 blocs :
+    terre, puis pierre) : plus de vide sous elle si tu la poses sur un point haut.
+53o ter. **Le bâton d'intendant comme l'outil de scan de MineColonies** (3.8) : **clic gauche** sur un bloc pose le
+    premier coin (sans le casser), la boîte suit ton viseur, **clic droit** sur le coin opposé : l'écran de la fonction
+    s'ouvre pour ce bâtiment. Accroupi + clic droit vers le ciel efface les coins. Le clic droit sur une porte reste le
+    raccourci : le bâtiment se reconnaît tout seul.
 53p. **Voir la ville avant de la poser** (3.7) : une ville entière (tes fichiers, Dolhimluith, Grunbach, et les villes
     générées par style) s'affiche **en entier en transparence** là où tu vises, comme au bâton de construction de
     MineColonies : toits, façades et murailles d'abord, puis le terrain, jusqu'à 250 000 blocs. Elle arrive en

@@ -66,6 +66,7 @@ minecraft {
             property 'crusadecraft.worldshots.v4quick', (project.findProperty('shots_quick') == 'true').toString()
             // -Pshots_v5=true : les villes de Romain posées au plan, puis le bâton d'intendant (P38).
             property 'crusadecraft.worldshots.v5', (project.findProperty('shots_v5') == 'true').toString()
+            property 'crusadecraft.worldshots.v5only', (project.findProperty('shots_only') ?: '').toString()
         }
 
         server {
@@ -132,6 +133,15 @@ dependencies {
     // développement pour essayer les nations à thème, sauf -Pwith_byzantine=false. Jamais redistribué.
     if (project.findProperty('with_byzantine') != 'false' && file("libs/local/Byzantine-1.21.1-${byzantine_version}.jar").exists()) {
         runtimeOnly fg.deobf("local:Byzantine-1.21.1:${byzantine_version}")
+    }
+    // P38 : Dawn of Time Builder et Decorative Blocks, de l'instance de Romain : les blocs qui remplacent ceux de
+    // Middle-earth dans les villes importées. Chargés en développement seulement (s'ils sont dans libs/local), sauf
+    // -Pwith_decor=false. Jamais livrés.
+    if (project.findProperty('with_decor') != 'false' && file('libs/local/dawnoftimebuilder-1.5.51.jar').exists()) {
+        runtimeOnly fg.deobf('local:dawnoftimebuilder:1.5.51')
+    }
+    if (project.findProperty('with_decor') != 'false' && file('libs/local/decorative_blocks-4.1.3.jar').exists()) {
+        runtimeOnly fg.deobf('local:decorative_blocks:4.1.3')
     }
     if (project.findProperty('with_mca') != 'false') {
         runtimeOnly fg.deobf("local:minecraft-comes-alive:${mca_version}")

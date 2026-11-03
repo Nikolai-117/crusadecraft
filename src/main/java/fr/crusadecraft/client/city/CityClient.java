@@ -136,7 +136,8 @@ public final class CityClient {
                 BlockPos b = hit.getBlockPos();
                 BlockPos lo = new BlockPos(Math.min(c.getX(), b.getX()), Math.min(c.getY(), b.getY()), Math.min(c.getZ(), b.getZ()));
                 BlockPos hi = new BlockPos(Math.max(c.getX(), b.getX()), Math.max(c.getY(), b.getY()), Math.max(c.getZ(), b.getZ()));
-                LevelRenderer.renderLineBox(pose, lines, box(lo, hi, 0.04), 0.95f, 0.8f, 0.35f, 0.8f);
+                LevelRenderer.renderLineBox(pose, lines, box(lo, hi, 0.04), 0.35f, 0.95f, 1f, 1f);
+                LevelRenderer.renderLineBox(pose, lines, box(lo, hi, 0.09), 0.35f, 0.95f, 1f, 1f);
             }
         });
         buffers.endBatch(RenderType.lines());
