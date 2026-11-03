@@ -37,6 +37,12 @@ public class IntendantStaffItem extends Item {
         return Optional.empty();
     }
 
+    /** P39.2 : le clic gauche pose un coin, il ne casse rien (même en créatif). */
+    @Override
+    public boolean canAttackBlock(net.minecraft.world.level.block.state.BlockState state, Level level, net.minecraft.core.BlockPos pos, Player player) {
+        return false;
+    }
+
     @Override
     public InteractionResult useOn(UseOnContext ctx) {
         if (ctx.getPlayer() == null) return InteractionResult.PASS;

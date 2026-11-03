@@ -1,0 +1,21 @@
+{
+  "crusadecraft.plan.panel.title": "Placement — ajuste, puis pose",
+  "crusadecraft.plan.panel.rotate_left": "↺ Tourner",
+  "crusadecraft.plan.panel.rotate_right": "Tourner ↻",
+  "crusadecraft.plan.panel.forward": "▲ Avancer",
+  "crusadecraft.plan.panel.back": "▼ Reculer",
+  "crusadecraft.plan.panel.left": "◀ Gauche",
+  "crusadecraft.plan.panel.right": "Droite ▶",
+  "crusadecraft.plan.panel.up": "⇧ Monter",
+  "crusadecraft.plan.panel.down": "Descendre ⇩",
+  "crusadecraft.plan.panel.step": "Pas : %s",
+  "crusadecraft.plan.panel.place": "✔ Poser ici",
+  "crusadecraft.plan.panel.cancel": "✖ Annuler",
+  "crusadecraft.plan.panel.where": "Sol en %s %s %s · hauteur %s · %s°",
+  "crusadecraft.plan.panel.nowhere": "Vise le sol pour placer le plan",
+  "crusadecraft.plan.tooltip.2": "Clic droit sur le sol : le fantôme se fige, le panneau de placement s'ouvre",
+  "crusadecraft.plan.hud.hint.place": "Clic droit : figer et ouvrir le panneau de placement",
+  "crusadecraft.city.staff.tooltip.3": "Clic gauche puis clic droit : deux coins à la main · Vers le ciel : la ville",
+  "crusadecraft.city.hud.hint.2": "Clic gauche : 1er coin · clic droit : 2e coin (boîte à la main)",
+  "crusadecraft.city.corner.first": "Premier coin en %s %s %s ; clic droit sur le coin opposé (accroupi + clic droit dans le vide : effacer)."
+}

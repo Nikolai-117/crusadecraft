@@ -94,6 +94,8 @@ public final class Journals extends SavedData {
     private final Map<UUID, ResourceLocation> dims = new HashMap<>();
     private final Map<UUID, List<UUID>> stacks = new LinkedHashMap<>();
     private static final Map<UUID, List<Blueprints.Placement>> PLACEMENTS = new HashMap<>();
+    /** P39.2 : jusqu'où les fondations d'une pose descendent (une ville entière : jusqu'au sol). */
+    private static final Map<UUID, Integer> DEPTHS = new HashMap<>();
 
     public Journals() {}
 
@@ -114,6 +116,7 @@ public final class Journals extends SavedData {
 
     public static void onServerStopped() {
         PLACEMENTS.clear();
+        DEPTHS.clear();
     }
 
     // ------------------------------------------------------------------ défaire
@@ -198,7 +201,7 @@ public final class Journals extends SavedData {
             if (level == null || !level.hasChunkAt(job.anchor)) continue;
             List<Blueprints.Placement> plan = PLACEMENTS.computeIfAbsent(job.id, id -> compile(level, job));
             int[] r = PlanPlacer.advance(level, job.anchor, Rotation.values()[job.rotation], plan, job.progress, budget,
-                    journal(server, job.id, job.dim));
+                    journal(server, job.id, job.dim), DEPTHS.getOrDefault(job.id, PlanPlacer.FOUNDATION_DEPTH));
             job.progress = r[0];
             budget -= Math.max(1, r[1]);
             index.setDirty();
@@ -210,6 +213,7 @@ public final class Journals extends SavedData {
             if (job.progress >= plan.size()) {
                 index.jobs.remove(job);
                 PLACEMENTS.remove(job.id);
+                DEPTHS.remove(job.id);
                 ServerPlayer p = job.player == null ? null : server.getPlayerList().getPlayer(job.player);
                 if (p != null) p.sendSystemMessage(Component.translatable("crusadecraft.plan.done", job.name));
                 // Une ville du monde (posée au plan, ou importée d'un fichier) : ses habitants, ses bâtiments.
@@ -245,6 +249,7 @@ public final class Journals extends SavedData {
             return TownPlanner.placements(job.town);
         }
         Optional<Plan> plan = PlanRef.decode(job.ref).flatMap(r -> PlanLibrary.load(r, true));
+        if (plan.isPresent() && plan.get().city()) DEPTHS.put(job.id, PlanPlacer.CITY_FOUNDATION_DEPTH);
         if (plan.isPresent() && job.progress == 0) {
             int bottom = job.anchor.getY() - plan.get().groundY();
             moveAside(level, job.anchor, plan.get().footprint() / 2 + 2, bottom - 1, bottom + plan.get().sizeY() + PlanBuilder.CLEARING);

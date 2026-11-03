@@ -329,6 +329,39 @@ public final class ImportedTownGameTests {
         }
     }
 
+    // ------------------------------------------------------------------ P39.2 : les fondations d'une ville
+
+    @GameTest(template = TestWorld.TEMPLATE, setupTicks = TestWorld.SETUP_TICKS, batch = "p392_fondations", timeoutTicks = 100)
+    public static void fondationsDUneVilleJusquAuSol(GameTestHelper h) {
+        ServerLevel level = h.getLevel();
+        BlockPos top = ground(level, h.absolutePos(BlockPos.ZERO).getX() + 4700, h.absolutePos(BlockPos.ZERO).getZ());
+        // Un puits de trente blocs sous le sol : une ville posée au-dessus ne doit pas y laisser de vide.
+        for (int d = 0; d < 30; d++) level.setBlock(top.below(d), Blocks.AIR.defaultBlockState(), 2);
+        BlockPos bottom = top.below(30);
+        try {
+            UUID id = UUID.randomUUID();
+            List<fr.crusadecraft.core.build.Blueprints.Placement> one = List.of(new fr.crusadecraft.core.build.Blueprints.Placement(0, 0, 0,
+                    Blocks.DIRT.defaultBlockState(), true));
+            PlanPlacer.advance(level, top, Rotation.NONE, one, 0, 100_000, Journals.journal(level.getServer(), id, level.dimension().location()),
+                    PlanPlacer.CITY_FOUNDATION_DEPTH);
+            for (int d = 0; d < 30; d++) {
+                BlockState st = level.getBlockState(top.below(d));
+                if (st.isAir()) h.fail("du vide à " + d + " blocs sous la ville");
+                if (d < 3 && !st.is(Blocks.DIRT)) h.fail("pas de terre sous le sol : " + st);
+                if (d >= 3 && !st.is(Blocks.STONE)) h.fail("pas de pierre plus bas : " + st);
+            }
+            // Un bâtiment seul, lui, ne descend que de huit blocs.
+            for (int d = 0; d < 30; d++) level.setBlock(top.below(d), Blocks.AIR.defaultBlockState(), 2);
+            PlanPlacer.advance(level, top, Rotation.NONE, one, 0, 100_000, null);
+            if (!level.getBlockState(top.below(8)).isAir()) h.fail("un bâtiment seul descend trop bas");
+            h.succeed();
+        } finally {
+            for (int d = 0; d <= 30; d++) level.setBlock(top.below(d), Blocks.STONE.defaultBlockState(), 2);
+            level.setBlock(top, Blocks.GRASS_BLOCK.defaultBlockState(), 2);
+            if (bottom.getY() < top.getY()) level.setBlock(bottom, Blocks.STONE.defaultBlockState(), 2);
+        }
+    }
+
     // ------------------------------------------------------------------ les villes livrées
 
     @GameTest(template = TestWorld.TEMPLATE, setupTicks = TestWorld.SETUP_TICKS, batch = "p38_livrees", timeoutTicks = 200)

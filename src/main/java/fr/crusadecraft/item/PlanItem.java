@@ -101,7 +101,8 @@ public class PlanItem extends Item {
             // La pose part du client, là où est le fantôme (décalé, figé) ; sans plan choisi, le catalogue.
             if (!ctx.getPlayer().isShiftKeyDown()) {
                 if (choice(ctx.getItemInHand()).isPresent()) {
-                    DistExecutor.unsafeCallWhenOn(Dist.CLIENT, () -> fr.crusadecraft.client.ClientPackets::placePlan);
+                    // P39.2 : comme au bâton de construction de MineColonies, le panneau de placement plutôt que la pose.
+                    DistExecutor.unsafeCallWhenOn(Dist.CLIENT, () -> fr.crusadecraft.client.ClientPackets::openPlacement);
                 } else {
                     DistExecutor.unsafeRunWhenOn(Dist.CLIENT, () -> fr.crusadecraft.client.ClientPackets::requestPlanCatalog);
                 }
@@ -120,7 +121,7 @@ public class PlanItem extends Item {
         } else if (level.isClientSide()) {
             // Un fantôme à l'écran (visé au loin ou figé) : on pose là ; sinon, vers le ciel, le catalogue.
             boolean placed = choice(stack).isPresent() && Boolean.TRUE.equals(
-                    DistExecutor.unsafeCallWhenOn(Dist.CLIENT, () -> fr.crusadecraft.client.ClientPackets::placePlan));
+                    DistExecutor.unsafeCallWhenOn(Dist.CLIENT, () -> fr.crusadecraft.client.ClientPackets::openPlacement));
             if (!placed) DistExecutor.unsafeRunWhenOn(Dist.CLIENT, () -> fr.crusadecraft.client.ClientPackets::requestPlanCatalog);
         }
         return InteractionResultHolder.sidedSuccess(stack, level.isClientSide());

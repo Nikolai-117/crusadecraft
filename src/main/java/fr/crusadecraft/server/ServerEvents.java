@@ -187,6 +187,17 @@ public final class ServerEvents {
         if (!event.getEntity().level().isClientSide() && WarFieldService.sameSide(event.getSource().getEntity(), event.getEntity())) event.setCanceled(true);
     }
 
+    /** P39.2 : le bâton d'intendant en main, le clic gauche sur un bloc pose le premier coin d'une boîte. */
+    @SubscribeEvent
+    public static void onLeftClickBlock(net.minecraftforge.event.entity.player.PlayerInteractEvent.LeftClickBlock event) {
+        if (!(event.getItemStack().getItem() instanceof fr.crusadecraft.item.IntendantStaffItem)) return;
+        event.setCanceled(true);
+        if (event.getEntity() instanceof ServerPlayer player
+                && event.getAction() == net.minecraftforge.event.entity.player.PlayerInteractEvent.LeftClickBlock.Action.START) {
+            fr.crusadecraft.core.city.CityStaff.firstCorner(player, event.getItemStack(), event.getPos());
+        }
+    }
+
     /** Une troupe de guerre qui tombe compte au score de sa guerre ; un villageois du registre des lignées y meurt aussi. */
     @SubscribeEvent
     public static void onDeath(LivingDeathEvent event) {

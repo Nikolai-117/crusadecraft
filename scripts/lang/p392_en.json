@@ -1,0 +1,21 @@
+{
+  "crusadecraft.plan.panel.title": "Placement — adjust, then place",
+  "crusadecraft.plan.panel.rotate_left": "↺ Rotate",
+  "crusadecraft.plan.panel.rotate_right": "Rotate ↻",
+  "crusadecraft.plan.panel.forward": "▲ Forward",
+  "crusadecraft.plan.panel.back": "▼ Back",
+  "crusadecraft.plan.panel.left": "◀ Left",
+  "crusadecraft.plan.panel.right": "Right ▶",
+  "crusadecraft.plan.panel.up": "⇧ Up",
+  "crusadecraft.plan.panel.down": "Down ⇩",
+  "crusadecraft.plan.panel.step": "Step: %s",
+  "crusadecraft.plan.panel.place": "✔ Place here",
+  "crusadecraft.plan.panel.cancel": "✖ Cancel",
+  "crusadecraft.plan.panel.where": "Ground at %s %s %s · height %s · %s°",
+  "crusadecraft.plan.panel.nowhere": "Aim at the ground to place the plan",
+  "crusadecraft.plan.tooltip.2": "Right-click the ground: the ghost freezes and the placement panel opens",
+  "crusadecraft.plan.hud.hint.place": "Right-click: freeze and open the placement panel",
+  "crusadecraft.city.staff.tooltip.3": "Left-click then right-click: two corners by hand · Towards the sky: the town",
+  "crusadecraft.city.hud.hint.2": "Left-click: 1st corner · right-click: 2nd corner (hand-drawn box)",
+  "crusadecraft.city.corner.first": "First corner at %s %s %s; right-click the opposite corner (sneak + right-click the sky: clear)."
+}

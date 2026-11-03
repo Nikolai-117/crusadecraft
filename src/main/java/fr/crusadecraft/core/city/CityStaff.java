@@ -48,7 +48,8 @@ public final class CityStaff {
     // ------------------------------------------------------------------ gestes
 
     public static void useOn(ServerPlayer player, ItemStack stack, BlockPos pos, Direction face, boolean sneaking) {
-        if (sneaking) {
+        // P39.2 : comme l'outil de scan de MineColonies, clic gauche le premier coin, clic droit le second.
+        if (sneaking || cornerA(stack).isPresent()) {
             corner(player, stack, pos);
             return;
         }
@@ -103,6 +104,14 @@ public final class CityStaff {
     public static void found(ServerPlayer player, String name, int radius) {
         Outcome out = CityService.found(player, name, radius);
         player.displayClientMessage(out.message().copy().withStyle(out.success() ? ChatFormatting.GOLD : ChatFormatting.RED), false);
+    }
+
+    /** P39.2 : le clic gauche pose le premier coin (et remplace celui d'avant). */
+    public static void firstCorner(ServerPlayer player, ItemStack stack, BlockPos pos) {
+        CompoundTag t = stack.getOrCreateTagElement(TAG);
+        t.putLong("a", pos.asLong());
+        t.remove("b");
+        say(player, Component.translatable("crusadecraft.city.corner.first", pos.getX(), pos.getY(), pos.getZ()));
     }
 
     /** Un coin de la boîte tracée à la main ; au second, le bâtiment entre en brouillon. */

@@ -148,6 +148,11 @@ public final class ClientPackets {
         fr.crusadecraft.client.map.GhostRenderer.set(ref, pos, st);
     }
 
+    /** P39.2 : le clic droit avec le plan d'architecte : figer le fantôme et ouvrir le panneau de placement. */
+    public static boolean openPlacement() {
+        return fr.crusadecraft.client.map.PlanControl.openPanel(Minecraft.getInstance());
+    }
+
     /** Le clic droit avec le plan d'architecte : poser là où est son fantôme. */
     public static boolean placePlan() {
         return fr.crusadecraft.client.map.PlanControl.place(Minecraft.getInstance());

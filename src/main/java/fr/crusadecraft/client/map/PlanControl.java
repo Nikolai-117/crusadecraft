@@ -114,6 +114,34 @@ public final class PlanControl {
         if (moved) mc.player.displayClientMessage(Component.translatable("crusadecraft.plan.offset", dx, dy, dz), true);
     }
 
+    /** P39.2 : pousser le fantôme selon le regard ({@code right} à droite, {@code up} en haut, {@code forward} devant). */
+    public static void move(Direction facing, int right, int up, int forward) {
+        Direction r = facing.getClockWise();
+        dx += r.getStepX() * right + facing.getStepX() * forward;
+        dz += r.getStepZ() * right + facing.getStepZ() * forward;
+        dy += up;
+    }
+
+    /** Un quart de tour (le plan tenu, côté serveur). */
+    public static void rotate() {
+        CrusadeNetwork.toServer(new PlanPackets.Rotate());
+    }
+
+    /**
+     * P39.2 : le clic droit, comme au bâton de construction de MineColonies : le fantôme se fige là où il est, et le
+     * panneau de placement s'ouvre. Faux si l'on ne vise rien (le clic vers le ciel ouvre alors le catalogue).
+     */
+    public static boolean openPanel(Minecraft mc) {
+        if (frozen == null) {
+            Optional<BlockPos> g = ground(mc);
+            if (g.isEmpty()) return false;
+            frozen = g.get();
+            dx = dy = dz = 0;
+        }
+        mc.setScreen(new fr.crusadecraft.client.screen.PlacementScreen());
+        return true;
+    }
+
     private static boolean nudge(Direction d) {
         dx += d.getStepX();
         dz += d.getStepZ();

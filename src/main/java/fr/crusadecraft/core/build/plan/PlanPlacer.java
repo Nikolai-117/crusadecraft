@@ -31,6 +31,16 @@ public final class PlanPlacer {
      */
     public static int[] advance(ServerLevel level, BlockPos anchor, Rotation rotation, List<Blueprints.Placement> plan, int from,
                                 int allowed, BuildJournal journal) {
+        return advance(level, anchor, rotation, plan, from, allowed, journal, FOUNDATION_DEPTH);
+    }
+
+    /** P39.2 : une ville entière comble jusqu'au sol, aussi bas qu'il le faut (jusqu'à {@code depth} blocs). */
+    public static final int CITY_FOUNDATION_DEPTH = 96;
+    /** Sous les premières couches de terre, de la pierre. */
+    static final int SOIL = 3;
+
+    public static int[] advance(ServerLevel level, BlockPos anchor, Rotation rotation, List<Blueprints.Placement> plan, int from,
+                                int allowed, BuildJournal journal, int depth) {
         int changed = 0, i = from, steps = 0;
         // P38 : une ville apporte des millions de cases d'air déjà vides ; on n'en parcourt qu'un nombre borné par tick.
         int maxSteps = Math.max(allowed, allowed * STEPS_PER_CHANGE);
@@ -42,12 +52,15 @@ public final class PlanPlacer {
                 continue;
             }
             if (p.foundation()) {
-                for (int d = 0; d < FOUNDATION_DEPTH; d++) {
+                for (int d = 0; d < depth; d++) {
                     BlockPos below = pos.below(d);
+                    if (level.isOutsideBuildHeight(below)) break;
                     BlockState here = level.getBlockState(below);
                     if (!here.canBeReplaced() && here.getFluidState().isEmpty()) break;
                     if (journal != null) journal.record(level, below, here);
-                    level.setBlock(below, p.state(), FLAGS);
+                    BlockState fill = d >= SOIL && p.state().is(net.minecraft.world.level.block.Blocks.DIRT)
+                            ? net.minecraft.world.level.block.Blocks.STONE.defaultBlockState() : p.state();
+                    level.setBlock(below, fill, FLAGS);
                     changed++;
                 }
             } else {

@@ -146,6 +146,9 @@ final class WorldShotsV5 {
                 // Le sol visé à moins de 96 blocs : la portée du plan d'architecte.
                 look(p, x + 0.5, y + 48, z + 72.5, 180f, 34f);
             }, null, 900, "v6_" + c.label() + "_fantome"));
+            // P39.2 : le panneau de placement, comme au bâton de construction de MineColonies.
+            out.add(new Step("panneau_" + c.label(), null, mc -> fr.crusadecraft.client.map.PlanControl.openPanel(mc), 80,
+                    "v8_" + c.label() + "_panneau"));
             out.add(new Step("pose_" + c.label(), server -> {
                 ServerPlayer p = player(server);
                 ServerLevel level = p.serverLevel();
@@ -163,6 +166,8 @@ final class WorldShotsV5 {
                 }
                 CrusadeCraft.LOGGER.info("WorldShots v5 : {} posée en {} (site {})", c.label(), ground, SITES.get(c.label()));
             }, mc -> {
+                mc.setScreen(null);
+                fr.crusadecraft.client.map.PlanControl.reset();
                 // Remis à zéro côté client aussi : la pose peut tarder (un terrain à générer) et la précédente est finie.
                 pasted = false;
                 SITES.remove(c.label());
@@ -231,6 +236,17 @@ final class WorldShotsV5 {
             BlockPos g = GROUND.get("dolhimluith");
             look(player(server), g.getX() + 0.5, g.getY() + 55, g.getZ() + 60.5, 180f, 48f);
         }, mc -> mc.setScreen(null), 120, "v5_baton_cadres"));
+        // P39.2 : la boîte à la main, comme l'outil de scan de MineColonies : un coin au clic gauche, le second suit le viseur.
+        out.add(new Step("baton_coins", server -> {
+            ServerPlayer p = player(server);
+            Site s = site(server, "dolhimluith");
+            if (s == null || s.buildings().isEmpty()) return;
+            CityBuilding b = s.buildings().get(s.buildings().size() - 1);
+            CityStaff.firstCorner(p, p.getMainHandItem(), b.min());
+            BlockPos m = b.max();
+            look(p, m.getX() + 9.5, m.getY() + 6, m.getZ() + 9.5, 135f, 32f);
+        }, mc -> mc.setScreen(null), 80, "v8_baton_coins"));
+        out.add(new Step("baton_coins_efface", server -> CityStaff.useInAir(player(server), player(server).getMainHandItem(), true), null, 10, null));
         out.add(new Step("baton_batiment", server -> {
             ServerPlayer p = player(server);
             Site s = site(server, "dolhimluith");

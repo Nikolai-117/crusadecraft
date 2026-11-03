@@ -129,7 +129,16 @@ public final class CityClient {
                 LevelRenderer.renderLineBox(pose, lines, box(current.draftMin(), current.draftMax(), 0.08), 0.95f, 0.8f, 0.35f, 1f);
             }
         }
-        CityStaff.cornerA(staff.get()).ifPresent(c -> LevelRenderer.renderLineBox(pose, lines, new AABB(c).inflate(0.03), 0.95f, 0.8f, 0.35f, 1f));
+        CityStaff.cornerA(staff.get()).ifPresent(c -> {
+            LevelRenderer.renderLineBox(pose, lines, new AABB(c).inflate(0.03), 0.95f, 0.8f, 0.35f, 1f);
+            // P39.2 : la boîte suit le viseur jusqu'au second coin, comme l'outil de scan de MineColonies.
+            if (mc.hitResult instanceof BlockHitResult hit && hit.getType() == HitResult.Type.BLOCK) {
+                BlockPos b = hit.getBlockPos();
+                BlockPos lo = new BlockPos(Math.min(c.getX(), b.getX()), Math.min(c.getY(), b.getY()), Math.min(c.getZ(), b.getZ()));
+                BlockPos hi = new BlockPos(Math.max(c.getX(), b.getX()), Math.max(c.getY(), b.getY()), Math.max(c.getZ(), b.getZ()));
+                LevelRenderer.renderLineBox(pose, lines, box(lo, hi, 0.04), 0.95f, 0.8f, 0.35f, 0.8f);
+            }
+        });
         buffers.endBatch(RenderType.lines());
         pose.popPose();
     }
