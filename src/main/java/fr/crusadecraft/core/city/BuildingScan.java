@@ -73,6 +73,13 @@ public final class BuildingScan {
         return best == null ? Optional.empty() : Optional.of(result(level, best));
     }
 
+    /** Le bâtiment où l'on se tient (P39, pour la commande) : son intérieur suivi depuis là. */
+    public static Optional<Result> fromInside(Level level, BlockPos at) {
+        LongOpenHashSet cells = flood(level, at);
+        if (cells == null) cells = flood(level, at.above());
+        return cells == null ? Optional.empty() : Optional.of(result(level, cells));
+    }
+
     /** Une boîte tracée à la main, deux coins. */
     public static Optional<Result> fromBox(Level level, BlockPos a, BlockPos b) {
         BlockPos min = new BlockPos(Math.min(a.getX(), b.getX()), Math.min(a.getY(), b.getY()), Math.min(a.getZ(), b.getZ()));

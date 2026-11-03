@@ -124,10 +124,28 @@ public final class ClientPackets {
         Minecraft.getInstance().setScreen(new fr.crusadecraft.client.screen.PlanCatalogScreen(sources, folder));
     }
 
-    public static void planGhost(String ref, int[] positions, int[] states) {
-        net.minecraft.world.level.block.state.BlockState[] st = new net.minecraft.world.level.block.state.BlockState[states.length];
-        for (int i = 0; i < states.length; i++) st[i] = net.minecraft.world.level.block.Block.stateById(states[i]);
-        fr.crusadecraft.client.map.GhostRenderer.set(ref, positions, st);
+    /** P39 : les lots du fantôme en cours d'arrivée. */
+    private static String ghostRef = "";
+    private static final it.unimi.dsi.fastutil.ints.IntArrayList GHOST_POS = new it.unimi.dsi.fastutil.ints.IntArrayList(),
+            GHOST_IDS = new it.unimi.dsi.fastutil.ints.IntArrayList();
+
+    public static void planGhost(String ref, int part, int total, int[] positions, int[] states) {
+        if (part == 0 || !ref.equals(ghostRef)) {
+            ghostRef = ref;
+            GHOST_POS.clear();
+            GHOST_IDS.clear();
+        }
+        GHOST_POS.addElements(GHOST_POS.size(), positions);
+        GHOST_IDS.addElements(GHOST_IDS.size(), states);
+        if (part < total - 1) return;
+        int[] pos = GHOST_POS.toIntArray(), ids = GHOST_IDS.toIntArray();
+        GHOST_POS.clear();
+        GHOST_IDS.clear();
+        GHOST_POS.trim();
+        GHOST_IDS.trim();
+        net.minecraft.world.level.block.state.BlockState[] st = new net.minecraft.world.level.block.state.BlockState[ids.length];
+        for (int i = 0; i < ids.length; i++) st[i] = net.minecraft.world.level.block.Block.stateById(ids[i]);
+        fr.crusadecraft.client.map.GhostRenderer.set(ref, pos, st);
     }
 
     /** Le clic droit avec le plan d'architecte : poser là où est son fantôme. */

@@ -1,0 +1,16 @@
+{
+  "crusadecraft.city.none": "No town here: place one with the architect's plan, or found one on the spot (Steward's Staff towards the sky, or /crusade ville fonder <name>).",
+  "crusadecraft.city.hud.outside": "Outside any town · towards the sky: found one here",
+  "crusadecraft.city.found.title": "Found a town here (%s blocks around you) — its name:",
+  "crusadecraft.city.found.denied": "Founding a town needs creative mode or the map editor.",
+  "crusadecraft.city.found.name": "Give it a name (48 letters at most).",
+  "crusadecraft.city.found.taken": "You are already inside a town.",
+  "crusadecraft.city.found.done": "%s %s buildings recognised from their doors; the Steward's Staff gives them a purpose.",
+  "crusadecraft.city.cmd.info": "%s — held by %s",
+  "crusadecraft.city.cmd.building": "Here: %s %s",
+  "crusadecraft.city.cmd.people": "%s people arrive; the town has %s.",
+  "crusadecraft.city.cmd.function.unknown": "Unknown purpose: %s (maison, mairie, chateau, temple, caserne, tour, boulangerie, taverne, forge, marche, boucherie, ferme, ecurie, bibliotheque, atelier, entrepot, aucune).",
+  "crusadecraft.city.cmd.function.outside": "Stand inside a covered building.",
+  "crusadecraft.plan.reloaded": "Plans reread: %s files; %s bundled plans installed; equivalences reread.",
+  "crusadecraft.plan.hud.ghost.preparing": "%s blocks, aim at the ground to see it"
+}

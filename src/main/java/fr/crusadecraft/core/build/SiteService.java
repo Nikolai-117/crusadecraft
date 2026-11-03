@@ -655,11 +655,23 @@ public final class SiteService {
      */
     public static Component registerImportedTown(ServerPlayer player, UUID id, BlockPos ground, fr.crusadecraft.core.build.plan.Plan plan,
                                                  String ref) {
+        return registerCity(player, id, ground, cityName(plan.name()), ref, plan.sizeX(), plan.sizeY(), plan.sizeZ(), plan.groundY());
+    }
+
+    /**
+     * P39 : une ville fondée sur ce qui est déjà bâti (à la main, au WorldEdit) : une emprise carrée autour du joueur,
+     * de {@code radius} blocs, qui devient une ville du monde comme une ville importée. Rien n'est posé.
+     */
+    public static Component registerFoundedTown(ServerPlayer player, BlockPos ground, String name, int radius) {
+        return registerCity(player, UUID.randomUUID(), ground, name, "", radius * 2 + 1, 64, radius * 2 + 1, 16);
+    }
+
+    private static Component registerCity(ServerPlayer player, UUID id, BlockPos ground, String name, String ref, int sizeX, int sizeY, int sizeZ,
+                                          int groundY) {
         MinecraftServer server = player.server;
         ServerLevel level = player.serverLevel();
         CrusadeSavedData data = data(server);
         long today = RealmService.currentDay(server);
-        String name = cityName(plan.name());
         Optional<UUID> land = Territory.ownerAt(server, level.dimension().location(), ground.getX() + 0.5, ground.getZ() + 0.5);
         Optional<AiProvince> city = land.flatMap(o -> WorldEditService.addCity(server, level, o, name, WorldEditService.CitySize.VILLE, ground.getX(), ground.getZ()));
         UUID owner;
@@ -680,7 +692,7 @@ public final class SiteService {
         if (city.isEmpty()) return Component.translatable("crusadecraft.plan.town.no_city");
         Site site = new Site(id, SiteKind.VILLAGE, city.get().name(), owner, level.dimension().location(), ground, Direction.SOUTH, color, true, today);
         site.setProvince(city.get().id());
-        site.setImported(ref, plan.sizeX(), plan.sizeY(), plan.sizeZ(), plan.groundY());
+        site.setImported(ref, sizeX, sizeY, sizeZ, groundY);
         site.setBuilt(true);
         Community c = new LineageGenerator(ground.asLong() * 31 + today).community(data.lineage(), city.get().name(), CommunityKind.VILLAGE, owner, 0);
         site.setCommunity(c.id());

@@ -139,21 +139,23 @@ public final class PlanPackets {
         }
     }
 
-    /** Les blocs du fantôme d'un plan, pour l'aperçu en transparence. */
-    public record Ghost(String ref, int[] positions, int[] states) {
+    /** Un lot des blocs du fantôme d'un plan (P39 : une ville entière arrive en plusieurs lots). */
+    public record Ghost(String ref, int part, int total, int[] positions, int[] states) {
         public static void encode(Ghost p, FriendlyByteBuf buf) {
             buf.writeUtf(p.ref, REF_MAX);
+            buf.writeVarInt(p.part);
+            buf.writeVarInt(p.total);
             buf.writeVarIntArray(p.positions);
             buf.writeVarIntArray(p.states);
         }
 
         public static Ghost decode(FriendlyByteBuf buf) {
-            int max = Math.max(PlanTool.GHOST_MAX, PlanTool.GHOST_CITY);
-            return new Ghost(buf.readUtf(REF_MAX), buf.readVarIntArray(max), buf.readVarIntArray(max));
+            return new Ghost(buf.readUtf(REF_MAX), buf.readVarInt(), buf.readVarInt(), buf.readVarIntArray(PlanTool.GHOST_PART),
+                    buf.readVarIntArray(PlanTool.GHOST_PART));
         }
 
         public static void handle(Ghost p, Supplier<NetworkEvent.Context> ctx) {
-            DistExecutor.unsafeRunWhenOn(Dist.CLIENT, () -> () -> ClientPackets.planGhost(p.ref, p.positions, p.states));
+            DistExecutor.unsafeRunWhenOn(Dist.CLIENT, () -> () -> ClientPackets.planGhost(p.ref, p.part, p.total, p.positions, p.states));
         }
     }
 

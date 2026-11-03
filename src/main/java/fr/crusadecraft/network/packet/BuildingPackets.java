@@ -158,6 +158,38 @@ public final class BuildingPackets {
         }
     }
 
+    /** P39 : hors d'une ville, l'écran pour en fonder une là (son nom ; l'emprise, autour du joueur). */
+    public record OpenFound(int radius) {
+        public static void encode(OpenFound p, FriendlyByteBuf buf) {
+            buf.writeVarInt(p.radius);
+        }
+
+        public static OpenFound decode(FriendlyByteBuf buf) {
+            return new OpenFound(buf.readVarInt());
+        }
+
+        public static void handle(OpenFound p, Supplier<NetworkEvent.Context> ctx) {
+            DistExecutor.unsafeRunWhenOn(Dist.CLIENT, () -> () -> CityClient.openFound(p.radius));
+        }
+    }
+
+    /** Fonder une ville là où l'on est. */
+    public record Found(String name, int radius) {
+        public static void encode(Found p, FriendlyByteBuf buf) {
+            buf.writeUtf(p.name, NAME_MAX);
+            buf.writeVarInt(p.radius);
+        }
+
+        public static Found decode(FriendlyByteBuf buf) {
+            return new Found(buf.readUtf(NAME_MAX), buf.readVarInt());
+        }
+
+        public static void handle(Found p, Supplier<NetworkEvent.Context> ctx) {
+            ServerPlayer player = ctx.get().getSender();
+            if (player != null) CityStaff.found(player, p.name, p.radius);
+        }
+    }
+
     /** Le bâton en main : les cadres de la ville où l'on est. */
     public record OutlinesRequest() {
         public static void encode(OutlinesRequest p, FriendlyByteBuf buf) {}

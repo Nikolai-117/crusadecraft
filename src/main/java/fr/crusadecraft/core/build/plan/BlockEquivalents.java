@@ -73,6 +73,12 @@ public final class BlockEquivalents {
 
     private BlockEquivalents() {}
 
+    /** Relire la table au prochain usage (après l'avoir changée). */
+    public static synchronized void reset() {
+        table = null;
+        userStamp = Long.MIN_VALUE;
+    }
+
     // ------------------------------------------------------------------ lecture de la table
 
     /** La table livrée, plus celle du joueur par-dessus (relue si son fichier change). */

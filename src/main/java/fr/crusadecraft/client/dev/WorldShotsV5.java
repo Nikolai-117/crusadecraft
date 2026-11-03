@@ -136,6 +136,16 @@ final class WorldShotsV5 {
                             plan.sizeX(), plan.sizeY(), plan.sizeZ(), plan.groundY(), plan.placements().size(), plan.replaced(), plan.unknown(), plan.city());
                 }
             }, null, 40, null));
+            // P39 : le fantôme de la ville entière, avant de la poser, là où elle tombera.
+            out.add(new Step("fantome_" + c.label(), server -> {
+                ServerPlayer p = player(server);
+                ServerLevel level = p.serverLevel();
+                int x = origin.getX() + c.offset(), z = origin.getZ() + 60;
+                for (int dx = -10; dx <= 10; dx++) for (int dz = -10; dz <= 10; dz++) level.getChunk((x >> 4) + dx, (z >> 4) + dz);
+                int y = level.getHeight(Heightmap.Types.MOTION_BLOCKING_NO_LEAVES, x, z) - 1;
+                // Le sol visé à moins de 96 blocs : la portée du plan d'architecte.
+                look(p, x + 0.5, y + 48, z + 72.5, 180f, 34f);
+            }, null, 900, "v6_" + c.label() + "_fantome"));
             out.add(new Step("pose_" + c.label(), server -> {
                 ServerPlayer p = player(server);
                 ServerLevel level = p.serverLevel();
@@ -192,6 +202,17 @@ final class WorldShotsV5 {
                 look(player(server), sp.getX() + 0.5, sp.getY() + 4, best.max().getZ() + 9.5, 180f, 12f);
             }, null, 160, "v5_" + c.label() + "_maison"));
         }
+        // P39 : le fantôme d'une ville générée (européenne, taille « ville »), comme au bâton de construction.
+        out.add(new Step("fantome_ville_generee", server -> {
+            ServerPlayer p = player(server);
+            p.setItemInHand(InteractionHand.MAIN_HAND, new ItemStack(ModItems.PLAN.get()));
+            ServerLevel level = p.serverLevel();
+            int x = origin.getX() - 400, z = origin.getZ() + 60;
+            for (int dx = -8; dx <= 8; dx++) for (int dz = -8; dz <= 8; dz++) level.getChunk((x >> 4) + dx, (z >> 4) + dz);
+            int y = level.getHeight(Heightmap.Types.MOTION_BLOCKING_NO_LEAVES, x, z) - 1;
+            CrusadeCraft.LOGGER.info("WorldShots v5 : {}", PlanTool.choose(p, "town:EUROPEENNE:VILLE:5").message().getString());
+            look(p, x + 0.5, y + 52, z + 76.5, 180f, 34f);
+        }, null, 1200, "v6_ville_generee_fantome"));
         // Le bâton d'intendant, à Dolhimluith.
         out.add(new Step("baton_ville", server -> {
             ServerPlayer p = player(server);

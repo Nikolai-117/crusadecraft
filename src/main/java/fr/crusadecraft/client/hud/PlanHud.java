@@ -100,10 +100,13 @@ public final class PlanHud {
                     lines.add(new Component[]{Component.translatable("crusadecraft.plan.hud.shift"),
                             Component.translatable("crusadecraft.plan.hud.shift.value", off[0], off[1], off[2])});
                 }
-                if (!c.town()) {
-                    int n = fr.crusadecraft.client.map.GhostRenderer.ref().equals(c.ref()) ? fr.crusadecraft.client.map.GhostRenderer.size() : -1;
-                    lines.add(new Component[]{Component.translatable("crusadecraft.plan.hud.ghost"), n < 0
-                            ? Component.translatable("crusadecraft.plan.loading") : Component.translatable("crusadecraft.plan.hud.ghost.blocks", n)});
+                {
+                    String ghost = fr.crusadecraft.core.build.plan.PlanTool.ghostRef(c);
+                    boolean here = fr.crusadecraft.client.map.GhostRenderer.ref().equals(ghost);
+                    int n = here ? fr.crusadecraft.client.map.GhostRenderer.size() : -1;
+                    lines.add(new Component[]{Component.translatable("crusadecraft.plan.hud.ghost"), n < 0 ? Component.translatable("crusadecraft.plan.loading")
+                            : !fr.crusadecraft.client.map.GhostRenderer.ready() ? Component.translatable("crusadecraft.plan.hud.ghost.preparing", n)
+                            : Component.translatable("crusadecraft.plan.hud.ghost.blocks", n)});
                 }
             } else {
                 lines.add(new Component[]{Component.translatable("crusadecraft.plan.hud.none"), null});

@@ -129,7 +129,31 @@ public final class CrusadeCommand {
                                 .executes(ctx -> say(ctx, fr.crusadecraft.core.build.plan.TownColony.makeColony(ctx.getSource().getPlayerOrException(), null, true)))
                                 .then(Commands.argument("ville", net.minecraft.commands.arguments.UuidArgument.uuid())
                                         .executes(ctx -> say(ctx, fr.crusadecraft.core.build.plan.TownColony.makeColony(ctx.getSource().getPlayerOrException(),
-                                                net.minecraft.commands.arguments.UuidArgument.getUuid(ctx, "ville"), true))))))
+                                                net.minecraft.commands.arguments.UuidArgument.getUuid(ctx, "ville"), true)))))
+                        // P39 : la ville où l'on est, ses bâtiments et ses gens, sans le bâton.
+                        .then(Commands.literal("info").executes(ctx -> lines(ctx, fr.crusadecraft.core.city.CityCommands.info(ctx.getSource().getPlayerOrException()))))
+                        .then(Commands.literal("ecran").executes(ctx -> say(ctx, fr.crusadecraft.core.city.CityCommands.screen(ctx.getSource().getPlayerOrException()))))
+                        .then(Commands.literal("reconnaitre").executes(ctx -> say(ctx, fr.crusadecraft.core.city.CityCommands.recognize(ctx.getSource().getPlayerOrException()))))
+                        .then(Commands.literal("accepter").executes(ctx -> say(ctx, fr.crusadecraft.core.city.CityCommands.acceptAll(ctx.getSource().getPlayerOrException()))))
+                        .then(Commands.literal("habitants").executes(ctx -> say(ctx, fr.crusadecraft.core.city.CityCommands.people(ctx.getSource().getPlayerOrException()))))
+                        .then(Commands.literal("fonction")
+                                .then(Commands.argument("fonction", StringArgumentType.word())
+                                        .suggests((c, b) -> net.minecraft.commands.SharedSuggestionProvider.suggest(fr.crusadecraft.core.city.CityCommands.functionNames(), b))
+                                        .executes(ctx -> say(ctx, fr.crusadecraft.core.city.CityCommands.function(ctx.getSource().getPlayerOrException(),
+                                                StringArgumentType.getString(ctx, "fonction"), "")))
+                                        .then(Commands.argument("nom", StringArgumentType.greedyString())
+                                                .executes(ctx -> say(ctx, fr.crusadecraft.core.city.CityCommands.function(ctx.getSource().getPlayerOrException(),
+                                                        StringArgumentType.getString(ctx, "fonction"), StringArgumentType.getString(ctx, "nom")))))))
+                        .then(Commands.literal("retirer").executes(ctx -> say(ctx, fr.crusadecraft.core.city.CityCommands.forget(ctx.getSource().getPlayerOrException()))))
+                        .then(Commands.literal("fonder")
+                                .then(Commands.argument("rayon", com.mojang.brigadier.arguments.IntegerArgumentType.integer(
+                                                fr.crusadecraft.core.city.CityService.FOUND_MIN, fr.crusadecraft.core.city.CityService.FOUND_MAX))
+                                        .then(Commands.argument("nom", StringArgumentType.greedyString())
+                                                .executes(ctx -> say(ctx, fr.crusadecraft.core.city.CityService.found(ctx.getSource().getPlayerOrException(),
+                                                        StringArgumentType.getString(ctx, "nom"), com.mojang.brigadier.arguments.IntegerArgumentType.getInteger(ctx, "rayon"))))))
+                                .then(Commands.argument("nom", StringArgumentType.greedyString())
+                                        .executes(ctx -> say(ctx, fr.crusadecraft.core.city.CityService.found(ctx.getSource().getPlayerOrException(),
+                                                StringArgumentType.getString(ctx, "nom"), fr.crusadecraft.core.city.CityService.FOUND_DEFAULT))))))
                 // P34 : le plan d'architecte — défaire sa dernière pose, voir où déposer ses fichiers.
                 .then(Commands.literal("plan")
                         .then(Commands.literal("annuler").executes(ctx -> say(ctx, fr.crusadecraft.core.build.plan.PlanTool.undoLast(
@@ -138,7 +162,10 @@ public final class CrusadeCommand {
                             ctx.getSource().sendSuccess(() -> Component.translatable("crusadecraft.plan.folder",
                                     fr.crusadecraft.core.build.plan.PlanLibrary.folderForDisplay()), false);
                             return 1;
-                        })))
+                        }))
+                        // P39 : relire les fichiers de plans et la table des équivalences (après les avoir changés).
+                        .then(Commands.literal("recharger").requires(src -> src.hasPermission(2))
+                                .executes(ctx -> say(ctx, fr.crusadecraft.core.city.CityCommands.reload()))))
                 // L'écran des réglages du monde (P30) ; il dit lui-même s'il est réservé.
                 .then(Commands.literal("reglages").executes(ctx -> {
                     fr.crusadecraft.network.packet.SettingsPackets.send(ctx.getSource().getPlayerOrException(), true);

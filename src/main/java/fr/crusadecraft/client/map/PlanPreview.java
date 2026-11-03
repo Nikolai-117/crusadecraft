@@ -55,10 +55,10 @@ public final class PlanPreview {
         buffers.endBatch(RenderType.lines());
         pose.popPose();
         // Le fantôme : les blocs du plan en transparence, s'ils sont arrivés (rien pour une ville entière).
-        if (!choice.town()) {
-            if (!GhostRenderer.ref().equals(choice.ref())) requestGhost(choice.ref());
-            else GhostRenderer.render(pose, event.getProjectionMatrix(), cam, ground, choice.rotation());
-        }
+        // P39 : une ville entière aussi, comme au bâton de construction de MineColonies.
+        String ghost = fr.crusadecraft.core.build.plan.PlanTool.ghostRef(choice);
+        if (!GhostRenderer.ref().equals(ghost)) requestGhost(ghost);
+        else GhostRenderer.render(pose, event.getProjectionMatrix(), cam, ground, choice.rotation());
     }
 
     private static String asked = "";

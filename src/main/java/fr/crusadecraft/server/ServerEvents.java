@@ -92,6 +92,7 @@ public final class ServerEvents {
         fr.crusadecraft.core.build.plan.Journals.onServerStopped();
         fr.crusadecraft.core.city.CityService.onServerStopped();
         fr.crusadecraft.core.city.CityStaff.onServerStopped();
+        fr.crusadecraft.core.build.plan.PlanTool.onServerStopped();
         fr.crusadecraft.core.build.plan.PlanFavorites.onServerStopped();
         fr.crusadecraft.core.world.PaperMapService.onServerStopped();
         fr.crusadecraft.core.world.EntryTitles.onServerStopped();

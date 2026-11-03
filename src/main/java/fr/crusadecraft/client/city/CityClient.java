@@ -66,6 +66,15 @@ public final class CityClient {
         Minecraft.getInstance().setScreen(new BuildingScreen(site, city, view, draft));
     }
 
+    /** P39 : fonder une ville ici — son nom, puis le serveur fait le reste. */
+    public static void openFound(int radius) {
+        Minecraft.getInstance().setScreen(new fr.crusadecraft.client.screen.NameForm(null, net.minecraft.network.chat.Component.translatable(
+                "crusadecraft.city.found.title", radius), "", name -> {
+                    CrusadeNetwork.toServer(new BuildingPackets.Found(name, radius));
+                    refresh();
+                }));
+    }
+
     public static void openCity(BuildingPackets.OpenCity p) {
         Minecraft.getInstance().setScreen(new TownScreen(p));
     }

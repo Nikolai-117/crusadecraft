@@ -40,6 +40,15 @@ public final class GhostRenderer {
     private static BlockState[] states = new BlockState[0];
     private static VertexBuffer buffer;
     private static int builtRotation = -1;
+    /**
+     * P39 : une seule mémoire de dessin, gardée et réutilisée (celle de Minecraft ne se libère pas : en créer une par
+     * fantôme la perdait à chaque fois), préparée hors du fil de rendu pour une ville entière.
+     */
+    private static BufferBuilder builder;
+    private static java.util.concurrent.CompletableFuture<BufferBuilder.RenderedBuffer> pending;
+    private static int pendingRotation = -1, generation, pendingGeneration;
+    /** Au-delà, le dessin se prépare à côté : le jeu ne se fige pas. */
+    static final int ASYNC_FROM = 20_000;
 
     private GhostRenderer() {}
 
@@ -48,6 +57,7 @@ public final class GhostRenderer {
         ref = newRef;
         positions = packed;
         states = blockStates;
+        generation++;
         dispose();
     }
 
@@ -57,6 +67,11 @@ public final class GhostRenderer {
 
     public static int size() {
         return positions.length;
+    }
+
+    /** Le dessin est-il prêt (une ville entière se prépare quelques secondes) ? */
+    public static boolean ready() {
+        return buffer != null || positions.length == 0;
     }
 
     public static void dispose() {
@@ -91,17 +106,17 @@ public final class GhostRenderer {
     }
 
     /** Prépare le dessin pour cette orientation : chaque face cachée par un autre bloc du plan est sautée. */
-    private static void build(int rotation, BlockPos tintAt) {
-        dispose();
+    private static BufferBuilder.RenderedBuffer tesselate(int[] packed, BlockState[] blockStates, int rotation, BlockPos tintAt) {
         Minecraft mc = Minecraft.getInstance();
         Rotation rot = Rotation.values()[Math.floorMod(rotation, 4)];
-        Long2ObjectOpenHashMap<BlockState> map = new Long2ObjectOpenHashMap<>(positions.length);
-        for (int i = 0; i < positions.length; i++) {
-            int[] xz = turn(unpackX(positions[i]), unpackZ(positions[i]), rotation);
-            map.put(BlockPos.asLong(xz[0], unpackY(positions[i]), xz[1]), states[i].rotate(rot));
+        Long2ObjectOpenHashMap<BlockState> map = new Long2ObjectOpenHashMap<>(packed.length);
+        for (int i = 0; i < packed.length; i++) {
+            int[] xz = turn(unpackX(packed[i]), unpackZ(packed[i]), rotation);
+            map.put(BlockPos.asLong(xz[0], unpackY(packed[i]), xz[1]), blockStates[i].rotate(rot));
         }
         Ghost level = new Ghost(map, mc.level, tintAt);
-        BufferBuilder bb = new BufferBuilder(Math.max(4096, map.size() * 96));
+        if (builder == null) builder = new BufferBuilder(1 << 18);
+        BufferBuilder bb = builder;
         bb.begin(VertexFormat.Mode.QUADS, DefaultVertexFormat.BLOCK);
         PoseStack ps = new PoseStack();
         BlockRenderDispatcher dispatcher = mc.getBlockRenderer();
@@ -120,20 +135,56 @@ public final class GhostRenderer {
             }
             ps.popPose();
         }
-        BufferBuilder.RenderedBuffer rendered = bb.end();
+        return bb.end();
+    }
+
+    private static void upload(BufferBuilder.RenderedBuffer rendered, int rotation) {
+        dispose();
         buffer = new VertexBuffer(VertexBuffer.Usage.STATIC);
         buffer.bind();
         buffer.upload(rendered);
         VertexBuffer.unbind();
         builtRotation = Math.floorMod(rotation, 4);
-        CrusadeCraft.LOGGER.debug("CrusadeCraft : fantôme de {} préparé ({} blocs)", ref, map.size());
+        CrusadeCraft.LOGGER.debug("CrusadeCraft : fantôme de {} préparé ({} blocs)", ref, positions.length);
+    }
+
+    /** Le dessin pour cette orientation : tout de suite pour un bâtiment, à côté pour une ville (rien tant qu'il se prépare). */
+    private static void prepare(int rotation, BlockPos tintAt) {
+        int rot = Math.floorMod(rotation, 4);
+        if (pending != null) {
+            if (!pending.isDone()) return;
+            BufferBuilder.RenderedBuffer done = pending.getNow(null);
+            boolean current = pendingGeneration == generation && pendingRotation == rot;
+            pending = null;
+            if (done != null) {
+                if (current) upload(done, rot);
+                else done.release();
+            }
+            if (current) return;
+        }
+        if (positions.length < ASYNC_FROM) {
+            upload(tesselate(positions, states, rot, tintAt), rot);
+            return;
+        }
+        int[] packed = positions;
+        BlockState[] blockStates = states;
+        pendingRotation = rot;
+        pendingGeneration = generation;
+        pending = java.util.concurrent.CompletableFuture.supplyAsync(() -> {
+            try {
+                return tesselate(packed, blockStates, rot, tintAt);
+            } catch (RuntimeException e) {
+                CrusadeCraft.LOGGER.warn("CrusadeCraft : le fantôme ne se prépare pas", e);
+                return null;
+            }
+        }, net.minecraft.Util.backgroundExecutor());
     }
 
     /** Dessine le fantôme posé en {@code ground} (le sol du plan au niveau de ce bloc), tourné ainsi. */
     public static void render(PoseStack pose, Matrix4f projection, Camera cam, BlockPos ground, int rotation) {
         if (positions.length == 0) return;
-        if (buffer == null || builtRotation != Math.floorMod(rotation, 4)) build(rotation, ground);
-        if (buffer == null) return;
+        if (buffer == null || builtRotation != Math.floorMod(rotation, 4)) prepare(rotation, ground);
+        if (buffer == null || builtRotation != Math.floorMod(rotation, 4)) return;
         pose.pushPose();
         pose.translate(ground.getX() - cam.getPosition().x, ground.getY() - cam.getPosition().y, ground.getZ() - cam.getPosition().z);
         RenderType type = RenderType.translucent();

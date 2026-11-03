@@ -33,7 +33,7 @@ import net.minecraftforge.network.simple.SimpleChannel;
  * (distance, droits, état) avant d'agir.
  */
 public final class CrusadeNetwork {
-    private static final String VERSION = "24";
+    private static final String VERSION = "25";
 
     public static final SimpleChannel CHANNEL = NetworkRegistry.newSimpleChannel(
             ResourceLocation.tryParse(CrusadeCraft.MOD_ID + ":main"),
@@ -257,6 +257,12 @@ public final class CrusadeNetwork {
                 .encoder(fr.crusadecraft.network.packet.PlanPackets.Choose::encode).decoder(fr.crusadecraft.network.packet.PlanPackets.Choose::decode)
                 .consumerMainThread(fr.crusadecraft.network.packet.PlanPackets.Choose::handle).add();
         // P38 : le bâton d'intendant, les bâtiments des villes et leur fonction.
+        CHANNEL.messageBuilder(fr.crusadecraft.network.packet.BuildingPackets.OpenFound.class, nextId++, NetworkDirection.PLAY_TO_CLIENT)
+                .encoder(fr.crusadecraft.network.packet.BuildingPackets.OpenFound::encode).decoder(fr.crusadecraft.network.packet.BuildingPackets.OpenFound::decode)
+                .consumerMainThread(fr.crusadecraft.network.packet.BuildingPackets.OpenFound::handle).add();
+        CHANNEL.messageBuilder(fr.crusadecraft.network.packet.BuildingPackets.Found.class, nextId++, NetworkDirection.PLAY_TO_SERVER)
+                .encoder(fr.crusadecraft.network.packet.BuildingPackets.Found::encode).decoder(fr.crusadecraft.network.packet.BuildingPackets.Found::decode)
+                .consumerMainThread(fr.crusadecraft.network.packet.BuildingPackets.Found::handle).add();
         CHANNEL.messageBuilder(fr.crusadecraft.network.packet.BuildingPackets.OpenBuilding.class, nextId++, NetworkDirection.PLAY_TO_CLIENT)
                 .encoder(fr.crusadecraft.network.packet.BuildingPackets.OpenBuilding::encode).decoder(fr.crusadecraft.network.packet.BuildingPackets.OpenBuilding::decode)
                 .consumerMainThread(fr.crusadecraft.network.packet.BuildingPackets.OpenBuilding::handle).add();

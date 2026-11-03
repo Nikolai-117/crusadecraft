@@ -302,6 +302,27 @@ données du mod (fichier `crusadecraft.dat` du monde) restent sur place, sans ef
     chaque jour. Une ville fait vivre **80 personnes au plus** (les villageois de Comes Alive pèsent lourd).
     Changer la fonction d'un bâtiment renvoie ses gens ; « Retirer de la ville » l'efface du plan de la ville (les
     pierres restent). Le bâton sert au créatif, à l'éditeur de la carte, et au maître de la ville.
+53p. **Voir la ville avant de la poser** (3.7) : une ville entière (tes fichiers, Dolhimluith, Grunbach, et les villes
+    générées par style) s'affiche **en entier en transparence** là où tu vises, comme au bâton de construction de
+    MineColonies : toits, façades et murailles d'abord, puis le terrain, jusqu'à 250 000 blocs. Elle arrive en
+    quelques secondes (le HUD dit « N blocs, vise le sol pour la voir » tant qu'elle se prépare). Mêmes touches que pour
+    un bâtiment : **R**, **Page↑/↓**, flèches, **G**, **Début**. Vise le sol à moins de 96 blocs.
+53q. **Fonder une ville sur ce qui est déjà bâti** (3.7) : ton propre village, un build collé au WorldEdit… Tiens-toi
+    au milieu, bâton d'intendant **vers le ciel** : hors d'une ville, il propose de la fonder (son nom ; elle couvre 64
+    blocs autour de toi). Ou `/crusade ville fonder <nom>` (`/crusade ville fonder 120 <nom>` pour 120 blocs). Elle
+    devient une ville du royaume dont ce sont les terres (sinon une nation nouvelle), et ses bâtiments sont reconnus.
+53r. **Les commandes des villes** (3.7), pour la ville et le bâtiment où tu te tiens :
+    - `/crusade ville info` : la ville, ses bâtiments, ses gens ; le bâtiment où tu es et qui y vit ;
+    - `/crusade ville ecran` : l'écran de la ville ;
+    - `/crusade ville reconnaitre`, `/crusade ville accepter` : comme les boutons de l'écran ;
+    - `/crusade ville fonction <fonction> [nom]` : donne une fonction au bâtiment où tu es (`maison`, `mairie`,
+      `chateau`, `temple`, `caserne`, `tour`, `boulangerie`, `taverne`, `forge`, `marche`, `boucherie`, `ferme`,
+      `ecurie`, `bibliotheque`, `atelier`, `entrepot`, ou `aucune`) ;
+    - `/crusade ville retirer` : retire de la ville le bâtiment où tu es ;
+    - `/crusade ville habitants` : fait venir tout de suite les gens qui manquent ;
+    - `/crusade plan recharger` (opérateur) : relit les fichiers de plans et `equivalences.json` après les avoir changés.
+    Une maison dont toute la famille est morte accueille une nouvelle famille le lendemain ; quand tu nommes un marché ou
+    une mairie, les familles vont désormais passer la journée autour.
 
 ### La carte de guerre
 50. Ouvre la carte du royaume (touche **virgule**) et clique sur **⚔ Guerre**, en bas à droite. Une barre d'outils

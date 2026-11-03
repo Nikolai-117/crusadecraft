@@ -1032,3 +1032,30 @@ le mod Fabric « Middle-earth » qu'il n'a pas, des **équivalents qui gardent e
   blocs ; marchand mort remplacé le lendemain ; étals regarnis chaque jour ; 80 personnes au plus par ville.
 - Pas de colonie MineColonies pour une ville importée : ses ouvriers rebâtiraient chaque bâtiment avec les plans de
   leurs packs à la première amélioration — la ville ne resterait pas telle qu'elle a été bâtie.
+
+**P38.1 et P39 (3 novembre 2026) — villes livrées, fantôme entier, fonder sur place, commandes, version 3.7.0**
+
+Demandé par Romain avant d'aller dormir : « fais tout », les schématiques mises par moi, « quand je pose la ville je
+veux la voir comme le bâton de construction de MineColonies », des commandes, voire des blocs.
+
+- **Villes livrées** (3.6.1) : Dolhimluith et Grunbach sont dans son jar personnel (dossier de ressources ignoré par
+  git, jamais versionné) et rangées au démarrage dans `crusadecraft/plans/Levenzia` et `Varenhold`, chez lui comme sur
+  le serveur, sans remplacer un fichier du même nom.
+- **Fantôme d'une ville entière** : calculé hors du fil du serveur (les poses ne changent plus une fois lues), envoyé
+  par lots de 60 000 blocs, préparé hors du fil de rendu côté client au-delà de 20 000 blocs. Priorité au haut des
+  colonnes et à tout ce qui est bâti et visible, puis au terrain visible du centre vers les bords, 250 000 blocs au plus
+  (Grunbach atteint la borne ; Dolhimluith 88 560 ; une ville européenne générée 150 000). Une seule mémoire de dessin,
+  gardée et réutilisée : celle de Minecraft 1.20.1 ne se libère pas, et le fantôme en créait une à chaque orientation.
+  Les villes générées ont aussi leur fantôme (le plan tiré au choix est gardé pour lui, sans le refaire).
+- Le cache des plans passe de 24 à 160 : une ville générée en prend plus de deux cents différents, qui se relisaient.
+- **Fonder sur place** (bâton vers le ciel hors d'une ville, ou `/crusade ville fonder`) : une emprise carrée autour du
+  joueur devient une ville du monde, comme une ville importée, sans rien poser. Plutôt qu'un bloc de plus : le bâton
+  et les commandes font déjà tout, un bloc aurait doublé le geste.
+- **Commandes** `/crusade ville info|ecran|reconnaitre|accepter|fonction|retirer|habitants|fonder`, et
+  `/crusade plan recharger`.
+- **Villes vivantes** : une maison vide (famille morte) accueille une famille nouvelle le lendemain ; nommer un marché
+  ou une mairie y déplace la journée des familles.
+- Essais : un villageois posé dans un tronçon à peine chargé n'est visible du monde que quelques ticks plus tard ;
+  l'essai du forgeron le cherche donc après 40 ticks (le mod n'était pas en cause). Le faux joueur des essais ne se
+  déplace pas par téléportation : on le place.
+

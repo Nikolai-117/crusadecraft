@@ -91,10 +91,18 @@ public final class CityStaff {
         }
         Optional<Site> city = CityService.cityAt(player.server, player.level().dimension().location(), player.blockPosition());
         if (city.isEmpty()) {
-            say(player, Component.translatable("crusadecraft.city.none"));
+            // P39 : hors d'une ville, on peut en fonder une sur ce qui est bâti là.
+            if (fr.crusadecraft.core.build.plan.PlanTool.allowed(player)) CrusadeNetwork.toPlayer(player, new BuildingPackets.OpenFound(CityService.FOUND_DEFAULT));
+            else say(player, Component.translatable("crusadecraft.city.none"));
             return;
         }
         sendCity(player, city.get());
+    }
+
+    /** Le joueur a nommé la ville qu'il fonde là où il est. */
+    public static void found(ServerPlayer player, String name, int radius) {
+        Outcome out = CityService.found(player, name, radius);
+        player.displayClientMessage(out.message().copy().withStyle(out.success() ? ChatFormatting.GOLD : ChatFormatting.RED), false);
     }
 
     /** Un coin de la boîte tracée à la main ; au second, le bâtiment entre en brouillon. */

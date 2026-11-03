@@ -274,6 +274,61 @@ public final class ImportedTownGameTests {
         }
     }
 
+    // ------------------------------------------------------------------ P39 : fonder sur place, commandes, fantôme
+
+    @GameTest(template = TestWorld.TEMPLATE, setupTicks = TestWorld.SETUP_TICKS, batch = "p39_fonder", timeoutTicks = 400)
+    public static void fonderSurPlaceEtCommandes(GameTestHelper h) {
+        TestWorld w = TestWorld.realm(h, "Fondeville");
+        ServerLevel level = h.getLevel();
+        var server = level.getServer();
+        CrusadeSavedData data = CrusadeSavedData.get(server);
+        BlockPos base = ground(level, w.center.getX() + 4300, w.center.getZ());
+        fr.crusadecraft.core.world.WorldEditService.grantForTests(w.ruler.getUUID(), true);
+        try {
+            smithy(level, base);
+            // Devant la forge : on fonde la ville sur ce qui est bâti.
+            w.ruler.setPos(base.getX() + 3.5, base.getY() + 1, base.getZ() + 9.5);
+            Outcome out = CityService.found(w.ruler, "Fondeville", 24);
+            if (!out.success()) h.fail("fondation refusée : " + out.message().getString());
+            Optional<Site> site = CityService.cityAt(server, level.dimension().location(), w.ruler.blockPosition());
+            if (site.isEmpty()) h.fail("la ville fondée n'est pas là");
+            if (site.get().buildings().size() != 1 || site.get().buildings().get(0).suggestion() != BuildingFunction.FORGE) {
+                h.fail("bâtiments reconnus : " + site.get().buildings().size());
+            }
+            if (CityService.found(w.ruler, "Encore", 24).success()) h.fail("une ville fondée dans une autre");
+            // Dans la forge : la commande lui donne une fonction et un nom.
+            w.ruler.setPos(base.getX() + 3.5, base.getY() + 1, base.getZ() + 3.5);
+            Outcome f = fr.crusadecraft.core.city.CityCommands.function(w.ruler, "taverne", "Au Lion d'or");
+            if (!f.success()) h.fail("commande fonction : " + f.message().getString());
+            CityBuilding b = site.get().buildings().get(0);
+            if (b.function() != BuildingFunction.TAVERNE || !b.name().equals("Au Lion d'or") || b.occupants().size() != 1) h.fail("la taverne n'est pas faite");
+            if (fr.crusadecraft.core.city.CityCommands.info(w.ruler).size() < 4) h.fail("l'info de la ville est courte");
+            if (!fr.crusadecraft.core.city.CityCommands.function(w.ruler, "port", "").message().getString().contains("port")) h.fail("une fonction inconnue passe");
+            // Le fantôme d'une ville entière : borné, et d'abord ce qui est bâti.
+            List<fr.crusadecraft.core.build.Blueprints.Placement> town = fr.crusadecraft.core.build.plan.PlanTool.ghostPlacements("town:EUROPEENNE:VILLAGE:7");
+            if (town == null || town.isEmpty()) h.fail("pas de poses pour le fantôme d'une ville");
+            int[][] g = fr.crusadecraft.core.build.plan.PlanTool.ghost(town);
+            if (g[0].length == 0 || g[0].length > fr.crusadecraft.core.build.plan.PlanTool.GHOST_LIMIT || g[0].length != g[1].length) {
+                h.fail("fantôme de la ville : " + g[0].length);
+            }
+            h.succeed();
+        } finally {
+            CityService.cityAt(server, level.dimension().location(), base).ifPresent(s -> {
+                for (CityBuilding b : s.buildings()) {
+                    for (UUID u : b.occupants()) {
+                        Entity e = level.getEntity(u);
+                        if (e != null) e.discard();
+                    }
+                }
+            });
+            data.world().clear();
+            data.world().markGenerated(RealmService.currentDay(server));
+            for (BlockPos p : BlockPos.betweenClosed(base.offset(-2, 0, -2), base.offset(8, 9, 8))) level.setBlock(p, Blocks.AIR.defaultBlockState(), 2);
+            fr.crusadecraft.core.world.WorldEditService.grantForTests(w.ruler.getUUID(), false);
+            w.cleanup();
+        }
+    }
+
     // ------------------------------------------------------------------ les villes livrées
 
     @GameTest(template = TestWorld.TEMPLATE, setupTicks = TestWorld.SETUP_TICKS, batch = "p38_livrees", timeoutTicks = 200)
@@ -320,11 +375,37 @@ public final class ImportedTownGameTests {
         var server = level.getServer();
         CrusadeSavedData data = CrusadeSavedData.get(server);
         BlockPos base = ground(level, w.center.getX() + 3900, w.center.getZ());
-        Site site = null;
+        // La zone reste chargée : un villageois posé dans un tronçon à peine chargé n'y est pas encore visible.
+        force(level, base, true);
+        BlockPos door = smithy(level, base);
+        h.runAfterDelay(10, () -> batonBody(h, w, level, server, data, base, door));
+    }
+
+    private static void force(ServerLevel level, BlockPos base, boolean on) {
+        for (int dx = 0; dx <= 8; dx += 8) for (int dz = 0; dz <= 8; dz += 8) level.setChunkForced((base.getX() + dx) >> 4, (base.getZ() + dz) >> 4, on);
+    }
+
+    /**
+     * En trois temps : un villageois posé n'est visible du monde qu'au tick suivant (parfois quelques-uns plus tard dans un
+     * tronçon à peine chargé) ; on le cherche donc un peu après.
+     */
+    private static void batonBody(GameTestHelper h, TestWorld w, ServerLevel level, net.minecraft.server.MinecraftServer server, CrusadeSavedData data,
+                                  BlockPos base, BlockPos door) {
+        Site site = new Site(UUID.randomUUID(), SiteKind.VILLAGE, "Essaiville", w.realm.id(), level.dimension().location(), base.offset(3, 0, 3),
+                Direction.SOUTH, 0x8C2A2A, true, RealmService.currentDay(server));
+        Runnable cleanup = () -> {
+            for (CityBuilding b : site.buildings()) {
+                for (UUID u : b.occupants()) {
+                    Entity e = level.getEntity(u);
+                    if (e != null) e.discard();
+                }
+            }
+            data.world().removeSite(site.id());
+            for (BlockPos p : BlockPos.betweenClosed(base.offset(-2, 0, -2), base.offset(8, 9, 8))) level.setBlock(p, Blocks.AIR.defaultBlockState(), 2);
+            force(level, base, false);
+            w.cleanup();
+        };
         try {
-            BlockPos door = smithy(level, base);
-            site = new Site(UUID.randomUUID(), SiteKind.VILLAGE, "Essaiville", w.realm.id(), level.dimension().location(), base.offset(3, 0, 3),
-                    Direction.SOUTH, 0x8C2A2A, true, RealmService.currentDay(server));
             site.setBuilt(true);
             data.world().add(site);
 
@@ -348,42 +429,35 @@ public final class ImportedTownGameTests {
             if (b.occupants().size() != 1) h.fail("gens de la forge : " + b.occupants().size());
             Person smith = data.lineage().person(b.occupants().get(0)).orElseThrow();
             if (smith.work() == null || !smith.work().equals(b.spot())) h.fail("le forgeron ne travaille pas à sa forge");
-            if (CityService.populate(level, site) != 1) h.fail("le forgeron n'apparaît pas");
-            Entity e = level.getEntity(smith.id());
-            if (!(e instanceof Villager v)) {
-                h.fail("le forgeron n'est pas un villageois : " + e);
+            List<Entity> spawned = CityService.populateEntities(level, site);
+            if (spawned.size() != 1) h.fail("le forgeron n'apparaît pas : " + spawned.size());
+            if (!(spawned.get(0) instanceof Villager v)) {
+                h.fail("le forgeron n'est pas un villageois : " + spawned.get(0));
                 return;
             }
+            if (!v.getUUID().equals(smith.id())) h.fail("le villageois n'est pas le forgeron du registre");
             if (v.getVillagerData().getProfession() != VillagerProfession.WEAPONSMITH) h.fail("métier : " + v.getVillagerData().getProfession());
             if (v.getOffers().isEmpty()) h.fail("le forgeron ne vend rien");
 
-            // Une autre fonction : le forgeron s'en va, le boulanger arrive avec son pain.
+            // Une autre fonction : le forgeron s'en va (même pas encore visible du monde), le boulanger arrive avec son pain.
             CityService.define(w.ruler, site.id(), b, BuildingFunction.BOULANGERIE, "");
-            if (level.getEntity(smith.id()) != null && level.getEntity(smith.id()).isAlive()) h.fail("le forgeron est resté");
+            if (!v.isRemoved()) h.fail("le forgeron est resté");
             if (data.lineage().person(smith.id()).isPresent()) h.fail("le forgeron est resté au registre");
-            CityService.populate(level, site);
-            Entity baker = level.getEntity(b.occupants().get(0));
-            if (!(baker instanceof Villager bv) || bv.getOffers().stream().noneMatch(o -> o.getResult().is(Items.BREAD))) h.fail("le boulanger ne vend pas de pain");
+            List<Entity> bakers = CityService.populateEntities(level, site);
+            Entity baker = bakers.isEmpty() ? null : bakers.get(0);
+            if (!(baker instanceof Villager bv) || bv.getOffers().stream().noneMatch(o -> o.getResult().is(Items.BREAD))) h.fail("le boulanger ne vend pas de pain : " + baker);
 
             // Retirée de la ville, puis retrouvée d'après sa porte.
             CityService.forget(w.ruler, site.id(), b.id());
             if (!site.buildings().isEmpty()) h.fail("le bâtiment n'est pas retiré");
-            if (baker != null && baker.isAlive()) h.fail("le boulanger est resté");
+            if (baker != null && !baker.isRemoved()) h.fail("le boulanger est resté");
             int found = CityService.recognize(level, site);
             if (found != 1 || site.buildings().get(0).suggestion() != BuildingFunction.FORGE) h.fail("reconnaissance : " + found);
             h.succeed();
-        } finally {
-            if (site != null) {
-                for (CityBuilding b : site.buildings()) {
-                    for (UUID u : b.occupants()) {
-                        Entity e = level.getEntity(u);
-                        if (e != null) e.discard();
-                    }
-                }
-                data.world().removeSite(site.id());
-            }
-            for (BlockPos p : BlockPos.betweenClosed(base.offset(-2, 0, -2), base.offset(8, 9, 8))) level.setBlock(p, Blocks.AIR.defaultBlockState(), 2);
-            w.cleanup();
+            cleanup.run();
+        } catch (RuntimeException | AssertionError ex) {
+            cleanup.run();
+            throw ex;
         }
     }
 }

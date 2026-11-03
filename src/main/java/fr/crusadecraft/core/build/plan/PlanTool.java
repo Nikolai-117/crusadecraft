@@ -121,6 +121,10 @@ public final class PlanTool {
             long seed = parts.length == 3 ? parseSeed(parts[2], player.getRandom().nextLong()) : player.getRandom().nextLong();
             Optional<TownPlan> town = TownPlanner.plan(style, size, seed);
             if (town.isEmpty()) return Outcome.no("crusadecraft.town.no_pack");
+            // P39 : son fantôme partira de ce plan-ci, sans le refaire.
+            synchronized (TOWNS_FOR_GHOST) {
+                TOWNS_FOR_GHOST.put(TOWN_PREFIX + style.name() + ":" + size.name() + ":" + seed, town.get());
+            }
             Component name = Component.translatable("crusadecraft.plan.town_name", Component.translatable(style.key()), Component.translatable(size.key()));
             PlanItem.setChoice(held.get(), new PlanItem.Choice("", name.getString(), town.get().extent(), 32, town.get().extent(), 0, rotation, true,
                     style.ordinal(), size.ordinal(), seed));
@@ -289,84 +293,167 @@ public final class PlanTool {
         return (r << 16) | (g << 8) | b;
     }
 
-    /** Au plus, les blocs envoyés pour le fantôme : la surface d'un grand bâtiment tient dedans. */
+    /** Au plus, les blocs d'un bâtiment seul envoyés pour son fantôme (gardé pour les anciens appels). */
     public static final int GHOST_MAX = 40_000;
-    /** P38 : le fantôme d'une ville entière, le dessus de ses colonnes (toits, rues, jardins), au plus. */
-    public static final int GHOST_CITY = 64_000;
-    /** Au-delà de tant de poses, le fantôme ne montre que le dessus (une ville entière). */
-    static final int GHOST_SURFACE_FROM = 400_000;
+    /**
+     * P39 : au plus, les blocs d'un fantôme, une ville entière comprise (ses toits, ses façades, puis son terrain) ; au
+     * delà, le dessin pèserait trop lourd pour la carte graphique. Ils partent par lots de {@link #GHOST_PART}.
+     */
+    public static final int GHOST_LIMIT = 250_000, GHOST_PART = 60_000;
+    /** Les derniers fantômes calculés, gardés pour qu'un second choix soit immédiat. */
+    private static final java.util.Map<String, int[][]> GHOSTS = new java.util.LinkedHashMap<>(8, 0.75f, true) {
+        @Override
+        protected boolean removeEldestEntry(java.util.Map.Entry<String, int[][]> eldest) {
+            return size() > 4;
+        }
+    };
+
+    /** Les villes entières choisies dernièrement, pour leur fantôme. */
+    private static final java.util.Map<String, TownPlan> TOWNS_FOR_GHOST = new java.util.LinkedHashMap<>(8, 0.75f, true) {
+        @Override
+        protected boolean removeEldestEntry(java.util.Map.Entry<String, TownPlan> eldest) {
+            return size() > 4;
+        }
+    };
+
+    public static void onServerStopped() {
+        synchronized (GHOSTS) {
+            GHOSTS.clear();
+        }
+        synchronized (TOWNS_FOR_GHOST) {
+            TOWNS_FOR_GHOST.clear();
+        }
+    }
 
     /**
-     * Les blocs du fantôme d'un plan (P35) : ceux qu'on voit (un voisin au moins n'est pas dans le plan), sans les
-     * fondations ni l'air, positions tassées en un entier et états par leur numéro.
+     * Les blocs du fantôme (P35, P39) : ce qu'on voit, positions tassées en un entier et états par leur numéro. D'abord
+     * le haut de chaque colonne (toits, rues, jardins) et tout ce qui est bâti et visible (un voisin au moins n'est pas
+     * dans le plan) ; puis, s'il reste de la place, le terrain visible (pentes, feuillages), du centre vers les bords.
+     * Sans les fondations ni l'air. Calculé hors du fil du serveur : les poses ne changent plus une fois lues.
      */
-    static int[][] ghost(Plan plan) {
-        if (plan.placements().size() > GHOST_SURFACE_FROM) return surfaceGhost(plan);
+    public static int[][] ghost(java.util.List<fr.crusadecraft.core.build.Blueprints.Placement> placements) {
         it.unimi.dsi.fastutil.longs.LongOpenHashSet solid = new it.unimi.dsi.fastutil.longs.LongOpenHashSet();
-        for (var p : plan.placements()) if (!p.foundation() && !p.state().isAir()) solid.add(net.minecraft.core.BlockPos.asLong(p.x(), p.y(), p.z()));
-        it.unimi.dsi.fastutil.ints.IntArrayList pos = new it.unimi.dsi.fastutil.ints.IntArrayList(), ids = new it.unimi.dsi.fastutil.ints.IntArrayList();
-        for (var p : plan.placements()) {
+        it.unimi.dsi.fastutil.longs.Long2IntOpenHashMap top = new it.unimi.dsi.fastutil.longs.Long2IntOpenHashMap();
+        top.defaultReturnValue(Integer.MIN_VALUE);
+        for (var p : placements) {
             if (p.foundation() || p.state().isAir()) continue;
-            boolean seen = false;
+            solid.add(net.minecraft.core.BlockPos.asLong(p.x(), p.y(), p.z()));
+            long col = net.minecraft.core.BlockPos.asLong(p.x(), 0, p.z());
+            if (p.y() > top.get(col)) top.put(col, p.y());
+        }
+        it.unimi.dsi.fastutil.ints.IntArrayList pos = new it.unimi.dsi.fastutil.ints.IntArrayList(), ids = new it.unimi.dsi.fastutil.ints.IntArrayList();
+        it.unimi.dsi.fastutil.ints.IntArrayList landPos = new it.unimi.dsi.fastutil.ints.IntArrayList(), landIds = new it.unimi.dsi.fastutil.ints.IntArrayList();
+        for (var p : placements) {
+            if (p.foundation() || p.state().isAir()) continue;
+            boolean isTop = top.get(net.minecraft.core.BlockPos.asLong(p.x(), 0, p.z())) == p.y();
+            boolean seen = isTop;
             for (net.minecraft.core.Direction d : net.minecraft.core.Direction.values()) {
-                if (!solid.contains(net.minecraft.core.BlockPos.asLong(p.x() + d.getStepX(), p.y() + d.getStepY(), p.z() + d.getStepZ()))) {
-                    seen = true;
-                    break;
-                }
+                if (seen) break;
+                if (!solid.contains(net.minecraft.core.BlockPos.asLong(p.x() + d.getStepX(), p.y() + d.getStepY(), p.z() + d.getStepZ()))) seen = true;
             }
             if (!seen) continue;
-            if (pos.size() >= GHOST_MAX) break;
-            pos.add(fr.crusadecraft.core.build.plan.PlanTool.pack(p.x(), p.y(), p.z()));
-            ids.add(net.minecraft.world.level.block.Block.getId(p.state()));
+            boolean land = !isTop && natural(p.state());
+            (land ? landPos : pos).add(pack(p.x(), p.y(), p.z()));
+            (land ? landIds : ids).add(net.minecraft.world.level.block.Block.getId(p.state()));
+        }
+        if (pos.size() > GHOST_LIMIT) {
+            pos.size(GHOST_LIMIT);
+            ids.size(GHOST_LIMIT);
+        } else if (pos.size() + landPos.size() > GHOST_LIMIT) {
+            // Le terrain le plus proche du centre d'abord.
+            Integer[] order = new Integer[landPos.size()];
+            for (int i = 0; i < order.length; i++) order[i] = i;
+            java.util.Arrays.sort(order, java.util.Comparator.comparingInt(i -> {
+                int q = landPos.getInt(i);
+                int x = ((q >> 20) & 0x3FF) - 512, z = (q & 0x3FF) - 512;
+                return x * x + z * z;
+            }));
+            for (int k = 0; k < order.length && pos.size() < GHOST_LIMIT; k++) {
+                pos.add(landPos.getInt(order[k]));
+                ids.add(landIds.getInt(order[k]));
+            }
+        } else {
+            pos.addAll(landPos);
+            ids.addAll(landIds);
         }
         return new int[][]{pos.toIntArray(), ids.toIntArray()};
     }
 
-    /**
-     * Le fantôme d'une ville entière (P38) : le bloc le plus haut de chaque colonne, ce qu'on voit du ciel. Au-delà de
-     * {@link #GHOST_CITY} colonnes, une sur deux (puis trois…) dans chaque sens.
-     */
-    static int[][] surfaceGhost(Plan plan) {
-        int sx = plan.sizeX(), sz = plan.sizeZ(), minX = -(sx / 2), minZ = -(sz / 2);
-        int[] topY = new int[sx * sz];
-        int[] topId = new int[sx * sz];
-        java.util.Arrays.fill(topY, Integer.MIN_VALUE);
-        for (var p : plan.placements()) {
-            if (p.foundation() || p.state().isAir()) continue;
-            int gx = p.x() - minX, gz = p.z() - minZ;
-            if (gx < 0 || gz < 0 || gx >= sx || gz >= sz) continue;
-            int i = gz * sx + gx;
-            if (p.y() < topY[i]) continue;
-            topY[i] = p.y();
-            topId[i] = net.minecraft.world.level.block.Block.getId(p.state());
-        }
-        int count = 0;
-        for (int y : topY) if (y != Integer.MIN_VALUE) count++;
-        int stride = 1;
-        while (count / (stride * stride) > GHOST_CITY) stride++;
-        it.unimi.dsi.fastutil.ints.IntArrayList pos = new it.unimi.dsi.fastutil.ints.IntArrayList(), ids = new it.unimi.dsi.fastutil.ints.IntArrayList();
-        for (int gz = 0; gz < sz; gz += stride) {
-            for (int gx = 0; gx < sx; gx += stride) {
-                int i = gz * sx + gx;
-                if (topY[i] == Integer.MIN_VALUE || pos.size() >= GHOST_CITY) continue;
-                pos.add(pack(gx + minX, topY[i], gz + minZ));
-                ids.add(topId[i]);
-            }
-        }
-        return new int[][]{pos.toIntArray(), ids.toIntArray()};
+    /** Du terrain naturel (terre, pierre, sable, feuillage, herbes) : il cède la place aux bâtiments dans le fantôme. */
+    static boolean natural(net.minecraft.world.level.block.state.BlockState s) {
+        return s.is(net.minecraft.tags.BlockTags.LEAVES) || s.is(net.minecraft.tags.BlockTags.DIRT) || s.is(net.minecraft.tags.BlockTags.BASE_STONE_OVERWORLD)
+                || s.is(net.minecraft.tags.BlockTags.SAND) || s.is(net.minecraft.world.level.block.Blocks.GRAVEL) || s.is(net.minecraft.world.level.block.Blocks.CLAY)
+                || !s.getFluidState().isEmpty() || s.canBeReplaced();
     }
 
     public static int pack(int x, int y, int z) {
         return ((x + 512) & 0x3FF) << 20 | ((y + 512) & 0x3FF) << 10 | ((z + 512) & 0x3FF);
     }
 
-    /** Envoie au joueur le fantôme d'un plan (rien pour une ville entière : trop de blocs, le cadre suffit). */
+    /**
+     * Envoie au joueur le fantôme d'un plan, ou d'une ville entière (P39) : les poses sont prises sur le fil du
+     * serveur, les blocs visibles comptés à côté, puis envoyés par lots.
+     */
     public static void sendGhost(ServerPlayer player, String ref) {
-        if (ref == null || ref.isEmpty() || ref.startsWith(TOWN_PREFIX)) return;
-        PlanRef.decode(ref).flatMap(r -> PlanLibrary.load(r, true)).ifPresent(plan -> {
-            int[][] g = ghost(plan);
-            fr.crusadecraft.network.CrusadeNetwork.toPlayer(player, new fr.crusadecraft.network.packet.PlanPackets.Ghost(ref, g[0], g[1]));
-        });
+        if (ref == null || ref.isEmpty()) return;
+        int[][] cached;
+        synchronized (GHOSTS) {
+            cached = GHOSTS.get(ref);
+        }
+        if (cached != null) {
+            sendParts(player, ref, cached);
+            return;
+        }
+        java.util.List<fr.crusadecraft.core.build.Blueprints.Placement> placements = ghostPlacements(ref);
+        if (placements == null) return;
+        net.minecraft.server.MinecraftServer server = player.server;
+        UUID who = player.getUUID();
+        java.util.concurrent.CompletableFuture.supplyAsync(() -> ghost(placements), net.minecraft.Util.backgroundExecutor())
+                .thenAccept(g -> server.execute(() -> {
+                    synchronized (GHOSTS) {
+                        GHOSTS.put(ref, g);
+                    }
+                    ServerPlayer p = server.getPlayerList().getPlayer(who);
+                    if (p != null) sendParts(p, ref, g);
+                }));
+    }
+
+    /** Les poses d'un plan, ou d'une ville entière (« town:STYLE:TAILLE:tirage »). */
+    public static java.util.List<fr.crusadecraft.core.build.Blueprints.Placement> ghostPlacements(String ref) {
+        if (ref.startsWith(TOWN_PREFIX)) {
+            String[] parts = ref.substring(TOWN_PREFIX.length()).split(":");
+            if (parts.length != 3) return null;
+            NationStyle style = NationStyle.byName(parts[0], null);
+            TownSize size;
+            try {
+                size = TownSize.valueOf(parts[1]);
+            } catch (IllegalArgumentException e) {
+                return null;
+            }
+            if (style == null) return null;
+            TownPlan known;
+            synchronized (TOWNS_FOR_GHOST) {
+                known = TOWNS_FOR_GHOST.get(ref);
+            }
+            if (known != null) return TownPlanner.placements(known);
+            return TownPlanner.plan(style, size, parseSeed(parts[2], 1)).map(TownPlanner::placements).orElse(null);
+        }
+        return PlanRef.decode(ref).flatMap(r -> PlanLibrary.load(r, true)).map(Plan::placements).orElse(null);
+    }
+
+    private static void sendParts(ServerPlayer player, String ref, int[][] g) {
+        int total = Math.max(1, (g[0].length + GHOST_PART - 1) / GHOST_PART);
+        for (int part = 0; part < total; part++) {
+            int from = part * GHOST_PART, to = Math.min(g[0].length, from + GHOST_PART);
+            fr.crusadecraft.network.CrusadeNetwork.toPlayer(player, new fr.crusadecraft.network.packet.PlanPackets.Ghost(ref, part, total,
+                    java.util.Arrays.copyOfRange(g[0], from, to), java.util.Arrays.copyOfRange(g[1], from, to)));
+        }
+    }
+
+    /** La référence du fantôme d'un choix : le plan, ou la ville entière avec son tirage. */
+    public static String ghostRef(PlanItem.Choice c) {
+        if (!c.town()) return c.ref();
+        return TOWN_PREFIX + NationStyle.byOrdinal(c.style()).name() + ":" + TownSize.byOrdinal(c.size()).name() + ":" + c.seed();
     }
 
     /** Pose là où le fantôme est, envoyé par le client : revérifié (l'outil en main, les droits, la distance). */

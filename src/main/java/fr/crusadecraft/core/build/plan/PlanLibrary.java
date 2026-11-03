@@ -26,7 +26,8 @@ import java.util.stream.Stream;
  * Les plans lus sont gardés en mémoire, les vingt-quatre derniers.
  */
 public final class PlanLibrary {
-    private static final int CACHE = 24;
+    /** P39 : les plans gardés en mémoire ; une ville générée en prend plus de deux cents différents. */
+    static final int CACHE = 160;
 
     /** Une étagère du catalogue : un pack, ou les fichiers du joueur. */
     public record Source(String id, String label, int count) {}

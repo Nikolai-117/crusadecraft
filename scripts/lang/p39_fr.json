@@ -1,0 +1,16 @@
+{
+  "crusadecraft.city.none": "Pas de ville ici : pose-en une au plan d'architecte, ou fonde-la sur place (bâton d'intendant vers le ciel, ou /crusade ville fonder <nom>).",
+  "crusadecraft.city.hud.outside": "Hors d'une ville · vers le ciel : en fonder une ici",
+  "crusadecraft.city.found.title": "Fonder une ville ici (%s blocs autour de toi) — son nom :",
+  "crusadecraft.city.found.denied": "Fonder une ville demande le mode créatif ou l'éditeur de la carte.",
+  "crusadecraft.city.found.name": "Donne-lui un nom (48 lettres au plus).",
+  "crusadecraft.city.found.taken": "Tu es déjà dans une ville.",
+  "crusadecraft.city.found.done": "%s %s bâtiments reconnus d'après leurs portes ; le bâton d'intendant leur donne une fonction.",
+  "crusadecraft.city.cmd.info": "%s — à %s",
+  "crusadecraft.city.cmd.building": "Ici : %s %s",
+  "crusadecraft.city.cmd.people": "%s personnes arrivent ; la ville en compte %s.",
+  "crusadecraft.city.cmd.function.unknown": "Fonction inconnue : %s (maison, mairie, chateau, temple, caserne, tour, boulangerie, taverne, forge, marche, boucherie, ferme, ecurie, bibliotheque, atelier, entrepot, aucune).",
+  "crusadecraft.city.cmd.function.outside": "Tiens-toi à l'intérieur d'un bâtiment couvert.",
+  "crusadecraft.plan.reloaded": "Plans relus : %s fichiers ; %s plans livrés rangés ; équivalences relues.",
+  "crusadecraft.plan.hud.ghost.preparing": "%s blocs, vise le sol pour le voir"
+}

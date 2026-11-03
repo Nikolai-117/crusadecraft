@@ -63,9 +63,16 @@ public final class CityService {
 
     private CityService() {}
 
+    /**
+     * P39 : les villageois que la ville a fait apparaître. Posé dans un tronçon à peine chargé, un villageois n'est
+     * trouvable par le monde que quelques ticks plus tard : on le garde sous la main pour pouvoir le renvoyer.
+     */
+    private static final Map<UUID, java.lang.ref.WeakReference<Entity>> SPAWNED = new HashMap<>();
+
     public static void onServerStopped() {
         DEAD_SINCE.clear();
         RESTOCKED.clear();
+        SPAWNED.clear();
     }
 
     private static CrusadeSavedData data(MinecraftServer server) {
@@ -234,6 +241,8 @@ public final class CityService {
             dismiss(player.server, b);
             b.setFunction(function);
             if (function != null) settle(player.server, s, b, player.getRandom().nextLong());
+            // Un marché, une mairie : la place de la ville est là désormais.
+            if (function == BuildingFunction.MARCHE || function == BuildingFunction.MAIRIE) respread(player.server, s);
         }
         data(player.server).setDirty();
         if (function == null) return Outcome.ok(Component.translatable("crusadecraft.city.cleared"));
@@ -343,9 +352,11 @@ public final class CityService {
             if (p.isPresent() && p.get().inWorld()) {
                 ServerLevel level = server.getLevel(ResourceKey.create(Registries.DIMENSION, p.get().worldDim()));
                 Entity e = level == null ? null : level.getEntity(id);
-                if (e != null) e.discard();
+                if (e == null && SPAWNED.containsKey(id)) e = SPAWNED.get(id).get();
+                if (e != null && !e.isRemoved()) e.discard();
             }
             state.remove(id);
+            SPAWNED.remove(id);
             DEAD_SINCE.remove(id);
         }
         b.occupants().clear();
@@ -374,6 +385,16 @@ public final class CityService {
             boolean restock = !Long.valueOf(day).equals(RESTOCKED.get(site.id()));
             for (CityBuilding b : site.buildings()) {
                 if (b.function() == null) continue;
+                // P39 : une maison vide (toute sa famille morte) accueille une famille nouvelle le lendemain.
+                if (b.function().dwelling() && !b.occupants().isEmpty() && b.occupants().stream().noneMatch(id -> state.person(id).map(Person::alive).orElse(false))) {
+                    long seen = DEAD_SINCE.computeIfAbsent(b.id(), k -> day);
+                    if (day > seen) {
+                        DEAD_SINCE.remove(b.id());
+                        b.occupants().clear();
+                        settle(server, site, b, level.random.nextLong());
+                    }
+                    continue;
+                }
                 for (int i = 0; i < b.occupants().size(); i++) {
                     UUID id = b.occupants().get(i);
                     Optional<Person> p = state.person(id);
@@ -404,22 +425,41 @@ public final class CityService {
                 }
             }
             if (restock) RESTOCKED.put(site.id(), day);
+            sweep(level, site);
         }
     }
 
     /** Fait apparaître d'un coup tous les gens qui manquent (essais, et villes chargées sans joueur proche). */
     public static int populate(ServerLevel level, Site site) {
+        return populateEntities(level, site).size();
+    }
+
+    /** Les mêmes, en rendant les villageois apparus. */
+    public static List<Entity> populateEntities(ServerLevel level, Site site) {
         LineageState state = data(level.getServer()).lineage();
-        int n = 0;
+        List<Entity> out = new ArrayList<>();
         for (CityBuilding b : site.buildings()) {
             if (b.function() == null || !level.isLoaded(b.spot())) continue;
             for (int i = 0; i < b.occupants().size(); i++) {
                 Optional<Person> p = state.person(b.occupants().get(i));
                 if (p.isEmpty() || !p.get().alive() || p.get().inWorld()) continue;
-                if (spawn(level, state, p.get(), b, i).isPresent()) n++;
+                spawn(level, state, p.get(), b, i).ifPresent(out::add);
             }
         }
-        if (n > 0) data(level.getServer()).setDirty();
+        if (!out.isEmpty()) data(level.getServer()).setDirty();
+        return out;
+    }
+
+    /** P39 : les villageois d'une ville dont la personne n'est plus au registre s'en vont (un bâtiment qui a changé de fonction). */
+    static int sweep(ServerLevel level, Site site) {
+        int[] b = box(site);
+        int n = 0;
+        for (Villager v : level.getEntitiesOfClass(Villager.class, new net.minecraft.world.phys.AABB(b[0], b[1] - 8, b[2], b[3] + 1, b[4] + ABOVE, b[5] + 1),
+                v -> v.getTags().contains(TAG))) {
+            if (!isStray(v)) continue;
+            v.discard();
+            n++;
+        }
         return n;
     }
 
@@ -452,6 +492,7 @@ public final class CityService {
         }
         if (e.isEmpty()) return e;
         e.get().addTag(TAG);
+        SPAWNED.put(p.id(), new java.lang.ref.WeakReference<>(e.get()));
         if (!b.function().dwelling() && p.age() >= 16) CityTrades.apply(e.get(), b.function(), post(b, index), level.random);
         p.setInWorld(level.dimension().location(), at);
         return e;
@@ -465,6 +506,42 @@ public final class CityService {
     }
 
     // ------------------------------------------------------------------ une ville importée
+
+    /**
+     * P39 : fonder une ville là où l'on est, sur ce qui est déjà bâti : elle devient une ville du monde (du royaume
+     * dont ce sont les terres, sinon une nation nouvelle), et ses bâtiments sont reconnus d'après leurs portes.
+     */
+    public static Outcome found(ServerPlayer player, String name, int radius) {
+        if (!PlanTool.allowed(player)) return Outcome.no("crusadecraft.city.found.denied");
+        String clean = name == null ? "" : name.strip();
+        if (clean.isEmpty() || clean.length() > 48) return Outcome.no("crusadecraft.city.found.name");
+        BlockPos at = player.blockPosition();
+        if (cityAt(player.server, player.level().dimension().location(), at).isPresent()) return Outcome.no("crusadecraft.city.found.taken");
+        int r = Math.max(FOUND_MIN, Math.min(FOUND_MAX, radius));
+        BlockPos ground = at.below();
+        Component joined = fr.crusadecraft.core.build.SiteService.registerFoundedTown(player, ground, clean, r);
+        Optional<Site> site = cityAt(player.server, player.level().dimension().location(), at);
+        if (site.isEmpty()) return new Outcome(false, joined);
+        int n = recognize(player.serverLevel(), site.get());
+        return Outcome.ok(Component.translatable("crusadecraft.city.found.done", joined, n));
+    }
+
+    /** L'emprise d'une ville fondée sur place, de son centre à son bord. */
+    public static final int FOUND_MIN = 16, FOUND_MAX = 256, FOUND_DEFAULT = 64;
+
+    /** La place a changé (un marché, une mairie) : les familles y vont désormais passer la journée. */
+    static void respread(MinecraftServer server, Site site) {
+        ServerLevel level = server.getLevel(ResourceKey.create(Registries.DIMENSION, site.dimension()));
+        if (level == null) return;
+        List<BlockPos> spots = outdoorSpots(level, site);
+        LineageState state = data(server).lineage();
+        java.util.Random random = new java.util.Random(site.id().getMostSignificantBits());
+        for (CityBuilding b : site.buildings()) {
+            if (b.function() == null || !b.function().dwelling()) continue;
+            for (UUID id : b.occupants()) state.person(id).ifPresent(p -> p.setWork(spots.get(random.nextInt(spots.size()))));
+        }
+        data(server).setDirty();
+    }
 
     /** La pose d'une ville importée est finie : on reconnaît ses bâtiments, et l'on dit au joueur quoi faire. */
     public static void onPasted(MinecraftServer server, Site site, ServerPlayer placer) {
