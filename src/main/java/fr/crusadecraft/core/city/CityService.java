@@ -142,8 +142,8 @@ public final class CityService {
         return site.anchor().above();
     }
 
-    /** Au plus, les places dehors qu'on cherche autour de la place, et leur écart. */
-    static final int SPOTS = 48, SPOT_STEP = 3, SPOT_RADIUS = 42;
+    /** Au plus, les places dehors qu'on cherche dans la ville. */
+    static final int SPOTS = 160;
 
     /**
      * Des places dehors, dans les rues et sur les places autour de la place de la ville (P38) : chaque membre d'une famille
@@ -153,21 +153,35 @@ public final class CityService {
     static List<BlockPos> outdoorSpots(ServerLevel level, Site site) {
         BlockPos c = plaza(site);
         List<BlockPos> out = new ArrayList<>();
-        for (int r = 0; r <= SPOT_RADIUS && out.size() < SPOTS; r += SPOT_STEP) {
-            for (int dx = -r; dx <= r && out.size() < SPOTS; dx += SPOT_STEP) {
-                for (int dz = -r; dz <= r && out.size() < SPOTS; dz += SPOT_STEP) {
+        // En grille sur toute la ville : les familles se répartissent dans ses rues, pas autour d'un seul bloc.
+        int step = Math.max(4, site.extent() / 14), radius = Math.max(16, site.extent() / 2);
+        for (int r = 0; r <= radius && out.size() < SPOTS; r += step) {
+            for (int dx = -r; dx <= r && out.size() < SPOTS; dx += step) {
+                for (int dz = -r; dz <= r && out.size() < SPOTS; dz += step) {
                     if (Math.max(Math.abs(dx), Math.abs(dz)) != r) continue;
                     int x = c.getX() + dx, z = c.getZ() + dz;
                     if (!level.hasChunk(x >> 4, z >> 4)) continue;
                     BlockPos p = new BlockPos(x, level.getHeight(net.minecraft.world.level.levelgen.Heightmap.Types.MOTION_BLOCKING_NO_LEAVES, x, z), z);
-                    if (Math.abs(p.getY() - c.getY()) > 5 || !inside(site, p) || buildingAt(site, p).isPresent()) continue;
-                    if (!level.getBlockState(p.below()).getFluidState().isEmpty() || !BuildingScan.standable(level, p)) continue;
+                    if (Math.abs(p.getY() - c.getY()) > SPOT_DY || !inside(site, p) || buildingAt(site, p).isPresent()) continue;
+                    BlockState below = level.getBlockState(p.below());
+                    if (!below.getFluidState().isEmpty() || !street(below) || !BuildingScan.standable(level, p)) continue;
                     out.add(p);
                 }
             }
         }
-        if (out.isEmpty()) out.add(c);
         return out;
+    }
+
+    /** Une ville sur sa colline : ses rues montent et descendent autour de la place. */
+    static final int SPOT_DY = 24;
+
+    /** Un sol de rue ou de place, pas un toit ni un arbre : ni escalier, ni dalle, ni clôture, ni vitre, ni feuillage, ni tronc. */
+    static boolean street(BlockState s) {
+        net.minecraft.world.level.block.Block b = s.getBlock();
+        return !(b instanceof net.minecraft.world.level.block.StairBlock || b instanceof net.minecraft.world.level.block.SlabBlock
+                || b instanceof net.minecraft.world.level.block.FenceBlock || b instanceof net.minecraft.world.level.block.WallBlock
+                || b instanceof net.minecraft.world.level.block.IronBarsBlock || b instanceof net.minecraft.world.level.block.AbstractGlassBlock
+                || b instanceof net.minecraft.world.level.block.LeavesBlock) && !s.is(net.minecraft.tags.BlockTags.LOGS);
     }
 
     // ------------------------------------------------------------------ reconnaître
@@ -327,10 +341,11 @@ public final class CityService {
         LineageGenerator gen = new LineageGenerator(seed);
         if (f.dwelling()) {
             ServerLevel level = server.getLevel(ResourceKey.create(Registries.DIMENSION, site.dimension()));
-            List<BlockPos> spots = level == null ? List.of(plaza(site)) : outdoorSpots(level, site);
+            List<BlockPos> spots = level == null ? List.of() : outdoorSpots(level, site);
             java.util.Random random = new java.util.Random(seed);
             for (Person p : gen.populate(state, c, BuildingFunction.families(b.floor()))) {
-                p.setWork(spots.get(random.nextInt(spots.size())));
+                // Sans rue trouvée autour de la place, la famille passe la journée devant chez elle : jamais tous au même bloc.
+                p.setWork(spots.isEmpty() ? b.spot() : spots.get(random.nextInt(spots.size())));
                 b.occupants().add(p.id());
             }
         } else {
@@ -534,6 +549,7 @@ public final class CityService {
         ServerLevel level = server.getLevel(ResourceKey.create(Registries.DIMENSION, site.dimension()));
         if (level == null) return;
         List<BlockPos> spots = outdoorSpots(level, site);
+        if (spots.isEmpty()) return;
         LineageState state = data(server).lineage();
         java.util.Random random = new java.util.Random(site.id().getMostSignificantBits());
         for (CityBuilding b : site.buildings()) {
