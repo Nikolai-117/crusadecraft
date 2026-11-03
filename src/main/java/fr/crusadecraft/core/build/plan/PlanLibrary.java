@@ -135,6 +135,46 @@ public final class PlanLibrary {
         return out;
     }
 
+    /** P39.1 : ce qu'on sait de l'emprise des fichiers, d'après leur en-tête (chemin et date → plus petit côté). */
+    private static final Map<String, Integer> FOOTPRINTS = new HashMap<>();
+
+    /**
+     * Les fichiers qui sont des villes entières (les deux côtés d'au moins {@link Plan#CITY} blocs), pour l'étagère des
+     * villes entières : rangés par leur dossier (« Levenzia », « Varenhold »), nommés comme la ville qu'ils feront.
+     */
+    public static List<Entry> cityFiles() {
+        List<Entry> out = new ArrayList<>();
+        for (Entry e : fileEntries()) {
+            Optional<PlanRef> r = PlanRef.decode(e.ref());
+            if (r.isEmpty()) continue;
+            Path root = roots().get(r.get().pack());
+            if (root == null) continue;
+            Path file = root.resolve(r.get().path()).normalize();
+            if (!file.startsWith(root.normalize()) || footprint(file) < Plan.CITY) continue;
+            out.add(new Entry(e.ref(), fr.crusadecraft.core.build.SiteService.cityName(r.get().label()), e.category(), PlanTool.CITY_KIND));
+        }
+        return out;
+    }
+
+    /** Le plus petit côté d'un fichier, lu dans son en-tête et gardé tant que le fichier ne change pas (0 s'il ne se lit pas). */
+    static int footprint(Path file) {
+        String key;
+        try {
+            key = file + "@" + Files.getLastModifiedTime(file).toMillis();
+        } catch (IOException e) {
+            return 0;
+        }
+        synchronized (FOOTPRINTS) {
+            Integer known = FOOTPRINTS.get(key);
+            if (known != null) return known;
+        }
+        int side = SchematicReader.footprint(file);
+        synchronized (FOOTPRINTS) {
+            FOOTPRINTS.put(key, side);
+        }
+        return side;
+    }
+
     /** Les étagères : chaque pack, puis les fichiers du joueur. */
     public static List<Source> sources() {
         List<Source> out = new ArrayList<>();

@@ -37,9 +37,12 @@ public final class PlanTool {
         return TOWN_PREFIX + style.name() + ":" + size.name();
     }
 
-    /** Les villes entières qu'on peut poser : chaque style dont un pack est installé, de hameau en capitale. */
+    /**
+     * Les villes entières qu'on peut poser : d'abord celles des fichiers (Dolhimluith sous Levenzia, Grunbach sous
+     * Varenhold…, rangées par leur dossier), puis chaque style dont un pack est installé, de hameau en capitale.
+     */
     public static List<PlanLibrary.Entry> towns() {
-        List<PlanLibrary.Entry> out = new ArrayList<>();
+        List<PlanLibrary.Entry> out = new ArrayList<>(PlanLibrary.cityFiles());
         for (NationStyle style : NationStyle.values()) {
             Optional<String> pack = PlanLibrary.packFor(style);
             if (pack.isEmpty()) continue;

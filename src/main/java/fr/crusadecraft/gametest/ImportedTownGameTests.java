@@ -343,6 +343,11 @@ public final class ImportedTownGameTests {
             if (plan.isEmpty()) h.fail(c[1] + " ne se lit pas");
             if (!plan.get().city()) h.fail(c[1] + " n'est pas une ville entière");
             if (!plan.get().unknown().isEmpty()) h.fail(c[1] + " : sans équivalent " + plan.get().unknown());
+            // P39.1 : aussi sur l'étagère des villes entières, sous le nom de leur royaume.
+            if (fr.crusadecraft.core.build.plan.PlanTool.towns().stream().noneMatch(e -> e.ref().equals(ref.encode()) && e.category().equals(c[0])
+                    && e.kind() == fr.crusadecraft.core.build.plan.PlanTool.CITY_KIND)) {
+                h.fail(c[1] + " n'est pas parmi les villes entières sous " + c[0]);
+            }
         }
         h.succeed();
     }

@@ -59,6 +59,21 @@ public final class SchematicReader {
         return n.endsWith(".nbt") || n.endsWith(".schem");
     }
 
+    /** P39.1 : le plus petit côté d'un fichier, d'après son en-tête seulement (0 s'il ne se lit pas). */
+    public static int footprint(Path file) {
+        try (InputStream in = Files.newInputStream(file)) {
+            CompoundTag root = NbtIo.readCompressed(in);
+            if (file.getFileName().toString().toLowerCase(Locale.ROOT).endsWith(".schem")) {
+                CompoundTag s = root.contains("Schematic", Tag.TAG_COMPOUND) ? root.getCompound("Schematic") : root;
+                return Math.min(s.getShort("Width") & 0xFFFF, s.getShort("Length") & 0xFFFF);
+            }
+            ListTag size = root.getList("size", Tag.TAG_INT);
+            return size.size() == 3 ? Math.min(size.getInt(0), size.getInt(2)) : 0;
+        } catch (IOException | RuntimeException e) {
+            return 0;
+        }
+    }
+
     public static RawPlan read(Path file) throws IOException {
         CompoundTag root;
         try (InputStream in = Files.newInputStream(file)) {

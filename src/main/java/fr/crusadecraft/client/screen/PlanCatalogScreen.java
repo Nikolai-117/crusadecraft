@@ -175,7 +175,11 @@ public class PlanCatalogScreen extends Screen {
     }
 
     private static Component categoryLabel(String sourceId, String category) {
-        if (PlanTool.TOWNS.equals(sourceId)) return Component.translatable(NationStyle.byName(category, NationStyle.EUROPEENNE).key());
+        // Les villes entières : par style pour celles qu'on génère, par leur dossier (« Levenzia ») pour celles des fichiers.
+        if (PlanTool.TOWNS.equals(sourceId)) {
+            NationStyle style = NationStyle.byName(category, null);
+            return style != null ? Component.translatable(style.key()) : Component.literal(category);
+        }
         if (PlanTool.FAVORITES.equals(sourceId) && NationStyle.byName(category, null) != null) {
             return Component.translatable("crusadecraft.plan.source.towns").append(" · ").append(Component.translatable(NationStyle.byName(category, null).key()));
         }
