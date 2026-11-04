@@ -23,7 +23,7 @@ public final class AiRealm {
     private String place;
     private TitleRank rank;
     private int color;
-    private final String house;
+    private String house;
     private AiPersonality personality;
     /** Posé à la main dans l'éditeur de la carte (P12) : une régénération du monde ne l'efface pas. */
     private boolean handMade;
@@ -81,6 +81,25 @@ public final class AiRealm {
     public Map<UUID, Long> discoveredBy() { return Collections.unmodifiableMap(discoveredBy); }
 
     public void setRuler(AiCharacter ruler) { this.ruler = ruler; }
+    public void setHouse(String house) { this.house = house; }
+
+    /** P41 : la clé de sa nation écrite d'avance, vide pour un royaume ordinaire. */
+    private String nation = "";
+    /** P41 : le joueur qui règne sur cette nation ; l'ordinateur ne décide alors plus pour elle. */
+    private UUID sovereign;
+    private String sovereignName = "";
+    /** P41 : les lettres qui attendent ce souverain. */
+    private final List<fr.crusadecraft.core.nation.NationMail> mail = new ArrayList<>();
+
+    public String nation() { return nation; }
+    public void setNation(String nation) { this.nation = nation == null ? "" : nation; }
+    public UUID sovereign() { return sovereign; }
+    public String sovereignName() { return sovereignName; }
+    public void setSovereign(UUID player, String name) {
+        this.sovereign = player;
+        this.sovereignName = name == null ? "" : name;
+    }
+    public List<fr.crusadecraft.core.nation.NationMail> mail() { return mail; }
     public void setPlace(String place) { this.place = place; }
     public void setRank(TitleRank rank) { this.rank = rank; }
     public void setColor(int color) { this.color = color; }
@@ -151,6 +170,16 @@ public final class AiRealm {
         t.put("discovered", d);
         if (handMade) t.putBoolean("handMade", true);
         t.putString("style", style.name());
+        if (!nation.isEmpty()) t.putString("nation", nation);
+        if (sovereign != null) {
+            t.putUUID("sovereign", sovereign);
+            t.putString("sovereignName", sovereignName);
+        }
+        if (!mail.isEmpty()) {
+            ListTag m = new ListTag();
+            for (fr.crusadecraft.core.nation.NationMail l : mail) m.add(l.save());
+            t.put("mail", m);
+        }
         return t;
     }
 
@@ -180,6 +209,13 @@ public final class AiRealm {
         if (t.contains("faith")) r.faith = AiFaith.byName(t.getString("faith"), r.faith);
         r.handMade = t.getBoolean("handMade");
         r.style = fr.crusadecraft.core.build.plan.NationStyle.byName(t.getString("style"), r.style);
+        r.nation = t.getString("nation");
+        if (t.hasUUID("sovereign")) {
+            r.sovereign = t.getUUID("sovereign");
+            r.sovereignName = t.getString("sovereignName");
+        }
+        ListTag ml = t.getList("mail", Tag.TAG_COMPOUND);
+        for (int i = 0; i < ml.size(); i++) r.mail.add(fr.crusadecraft.core.nation.NationMail.load(ml.getCompound(i)));
         return r;
     }
 }

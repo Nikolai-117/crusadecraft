@@ -47,6 +47,12 @@ public class TownScreen extends Screen {
         addRenderableWidget(recognize);
         addRenderableWidget(accept);
         addRenderableWidget(Button.builder(Component.translatable("gui.done"), b -> onClose()).bounds(left + W - 12 - 54, by, 54, 16).build());
+        // P41 : la nation de cette ville, son histoire et ses relations.
+        if (city.nation() != null) {
+            addRenderableWidget(Button.builder(Component.translatable("crusadecraft.nation.open"), b ->
+                    CrusadeNetwork.toServer(new fr.crusadecraft.network.packet.NationPackets.Request(city.nation())))
+                    .bounds(left + W - 12 - 90, top + 8, 90, 14).build());
+        }
     }
 
     private void act(int op) {

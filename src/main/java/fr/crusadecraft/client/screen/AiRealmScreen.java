@@ -38,6 +38,12 @@ public class AiRealmScreen extends Screen {
         top = (height - h) / 2;
         addRenderableWidget(Button.builder(Component.translatable("gui.done"), b -> onClose())
                 .bounds(left + w - 90, top + h - 26, 80, 18).build());
+        // P41 : une nation a une histoire, et des relations qu'on peut lire.
+        if (view.nation()) {
+            addRenderableWidget(Button.builder(Component.translatable("crusadecraft.nation.open"), b ->
+                    CrusadeNetwork.toServer(new fr.crusadecraft.network.packet.NationPackets.Request(view.id())))
+                    .bounds(left + 10, top + h - 26, 110, 18).build());
+        }
         AiRealmView.Province capital = view.provinces().stream().filter(AiRealmView.Province::capital).findFirst()
                 .orElse(view.provinces().isEmpty() ? null : view.provinces().get(0));
         if (capital != null) {

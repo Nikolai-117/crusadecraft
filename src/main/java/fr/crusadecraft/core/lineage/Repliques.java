@@ -35,7 +35,9 @@ public final class Repliques extends SimpleJsonResourceReloadListener {
 
     /** Le moment où l'on parle. */
     public enum Moment {
-        FETE, DEUIL, GUERRE, COUR;
+        FETE, DEUIL, GUERRE, COUR,
+        /** P41 : ce qu'écrivent les souverains à une nation. */
+        LETTRE_OFFRE, LETTRE_PRESENT, LETTRE_MERCI, LETTRE_OUTRAGE, LETTRE_GUERRE, LETTRE_ACCEPTE, LETTRE_REFUS;
 
         static Moment byName(String name) {
             return Moment.valueOf(name.trim().toUpperCase(Locale.ROOT));

@@ -609,12 +609,15 @@ public final class SiteService {
             default -> WorldEditService.CitySize.VILLE;
         };
         Optional<UUID> land = Territory.ownerAt(server, level.dimension().location(), ground.getX() + 0.5, ground.getZ() + 0.5);
-        Optional<AiProvince> city = land.flatMap(o -> WorldEditService.addCity(server, level, o, name, citySize, ground.getX(), ground.getZ()));
+        // P41 : le souverain d'une nation qui pose une ville sur une terre libre l'agrandit, il ne fonde pas un royaume de plus.
+        Optional<AiRealm> nation = land.isPresent() ? Optional.empty() : fr.crusadecraft.core.nation.NationService.ruledBy(server, player.getUUID());
+        Optional<UUID> host = nation.isPresent() ? nation.map(AiRealm::id) : land;
+        Optional<AiProvince> city = host.flatMap(o -> WorldEditService.addCity(server, level, o, name, citySize, ground.getX(), ground.getZ()));
         UUID owner;
         int color;
         boolean founded = false;
         if (city.isPresent()) {
-            owner = land.get();
+            owner = host.get();
             color = data.world().realm(owner).map(AiRealm::color).orElseGet(() -> data.realm(owner).map(Realm::color).orElse(0x7B2D8B));
         } else {
             fr.crusadecraft.core.realm.TitleRank rank = switch (size) {
@@ -673,11 +676,21 @@ public final class SiteService {
         CrusadeSavedData data = data(server);
         long today = RealmService.currentDay(server);
         Optional<UUID> land = Territory.ownerAt(server, level.dimension().location(), ground.getX() + 0.5, ground.getZ() + 0.5);
-        Optional<AiProvince> city = land.flatMap(o -> WorldEditService.addCity(server, level, o, name, WorldEditService.CitySize.VILLE, ground.getX(), ground.getZ()));
+        // P41 : une ville rangée dans le dossier d'une nation lui revient, où qu'on la pose ; une ville fondée par le
+        // souverain d'une nation, sur une terre libre, aussi.
+        Optional<AiRealm> nation = fr.crusadecraft.core.nation.NationService.ofRef(server, ref);
+        if (nation.isEmpty() && land.isEmpty()) nation = fr.crusadecraft.core.nation.NationService.ruledBy(server, player.getUUID());
+        Optional<AiProvince> city = nation.isPresent()
+                ? WorldEditService.addCity(server, level, nation.get().id(), name, WorldEditService.CitySize.VILLE, ground.getX(), ground.getZ())
+                : land.flatMap(o -> WorldEditService.addCity(server, level, o, name, WorldEditService.CitySize.VILLE, ground.getX(), ground.getZ()));
         UUID owner;
         int color;
         boolean founded = false;
-        if (city.isPresent()) {
+        if (nation.isPresent() && city.isPresent()) {
+            owner = nation.get().id();
+            color = nation.get().color();
+            nation.get().discover(player.getUUID(), today);
+        } else if (city.isPresent()) {
             owner = land.get();
             color = data.world().realm(owner).map(AiRealm::color).orElseGet(() -> data.realm(owner).map(Realm::color).orElse(0x7B2D8B));
         } else {
@@ -699,6 +712,7 @@ public final class SiteService {
         data.world().add(site);
         data.setDirty();
         CrusadeCraft.LOGGER.info("CrusadeCraft : ville importée {} posée en {} ({})", city.get().name(), ground, founded ? "nouvelle nation" : owner);
+        if (nation.isPresent()) fr.crusadecraft.core.nation.NationService.onCityPlaced(player, nation.get()).ifPresent(player::sendSystemMessage);
         return founded ? Component.translatable("crusadecraft.city.imported.founded", city.get().name())
                 : Component.translatable("crusadecraft.city.imported.joined", city.get().name(), fr.crusadecraft.core.diplomacy.DiplomacyService.name(server, owner));
     }

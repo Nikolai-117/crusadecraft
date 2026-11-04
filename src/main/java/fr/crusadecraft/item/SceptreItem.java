@@ -40,7 +40,10 @@ public class SceptreItem extends Item {
         if (!level.isClientSide && player instanceof ServerPlayer sp) {
             RealmService.realmOf(sp.server, sp.getUUID()).ifPresentOrElse(
                     realm -> RequestRealmPacket.sendView(sp, realm, OpenRealmScreenPacket.Target.MENU),
-                    () -> sp.displayClientMessage(Component.translatable("crusadecraft.realm.none"), true));
+                    // P41 : le souverain d'une nation trouve au sceptre l'écran de son royaume.
+                    () -> fr.crusadecraft.core.nation.NationService.ruledBy(sp.server, sp.getUUID()).ifPresentOrElse(
+                            nation -> fr.crusadecraft.network.packet.NationPackets.send(sp, nation),
+                            () -> sp.displayClientMessage(Component.translatable("crusadecraft.realm.none"), true)));
         }
         return InteractionResultHolder.sidedSuccess(stack, level.isClientSide);
     }

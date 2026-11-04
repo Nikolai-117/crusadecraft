@@ -118,6 +118,19 @@ public final class CrusadeCommand {
                         .then(Commands.literal("ville").then(Commands.argument("nom", StringArgumentType.greedyString())
                                 .executes(ctx -> say(ctx, fr.crusadecraft.core.realm.NameService.renameColonyHere(ctx.getSource().getPlayerOrException(),
                                         StringArgumentType.getString(ctx, "nom")))))))
+                // P41 : les nations écrites d'avance.
+                .then(Commands.literal("nation")
+                        .executes(ctx -> say(ctx, fr.crusadecraft.core.nation.NationCommands.open(ctx.getSource().getPlayerOrException(), null)))
+                        .then(Commands.literal("liste").executes(ctx -> lines(ctx, fr.crusadecraft.core.nation.NationCommands.list(ctx.getSource().getServer()))))
+                        .then(Commands.literal("voir").then(Commands.argument("cle", StringArgumentType.word())
+                                .executes(ctx -> say(ctx, fr.crusadecraft.core.nation.NationCommands.open(ctx.getSource().getPlayerOrException(), StringArgumentType.getString(ctx, "cle"))))))
+                        .then(Commands.literal("couronne").then(Commands.argument("cle", StringArgumentType.word())
+                                .executes(ctx -> say(ctx, fr.crusadecraft.core.nation.NationCommands.crown(ctx.getSource().getPlayerOrException(), StringArgumentType.getString(ctx, "cle"))))))
+                        .then(Commands.literal("abdiquer").executes(ctx -> say(ctx, fr.crusadecraft.core.nation.NationService.abdicate(ctx.getSource().getPlayerOrException()))))
+                        .then(Commands.literal("recharger").requires(s -> s.hasPermission(2))
+                                .executes(ctx -> say(ctx, fr.crusadecraft.core.nation.NationCommands.reload(ctx.getSource().getServer()))))
+                        .then(Commands.literal("restaurer").requires(s -> s.hasPermission(2))
+                                .executes(ctx -> say(ctx, fr.crusadecraft.core.nation.NationCommands.restore(ctx.getSource().getServer())))))
                 // P35 : faire sienne une ville posée — colonie MineColonies, ou capitale d'un royaume à fonder.
                 .then(Commands.literal("ville")
                         .then(Commands.literal("colonie")

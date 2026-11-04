@@ -128,6 +128,8 @@ public final class LifeService {
                 if (random.nextInt(1000) < deathChancePerMille(c.age())) r.council().remove(e.getKey());
                 else r.council().put(e.getKey(), c);
             }
+            // P41 : le joueur qui règne sur une nation ne vieillit pas plus que sur son royaume.
+            if (r.sovereign() != null) continue;
             AiCharacter ruler = older(r.ruler());
             if (random.nextInt(1000) < deathChancePerMille(ruler.age())) {
                 succeed(server, r, ruler, day, random);

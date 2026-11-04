@@ -1,0 +1,12 @@
+{
+  "moment": "lettre_present",
+  "lines": [
+    "{destinataire}, recevez ces {or} pièces en gage de bonne entente. {de} n'oublie pas ses amis.",
+    "Un chariot vous apporte {or} pièces, et mes respects. Les deux sont sincères.",
+    "Nos caisses sont pleines cette saison : voici {or} pièces pour les vôtres. Vous feriez de même, j'en suis sûr.",
+    "On m'a dit que vos routes avaient besoin de réparations. Prenez ces {or} pièces, et pensez à moi sur vos pavés.",
+    "{or} pièces, de la part de {souverain}. Ne cherchez pas de contrepartie : il n'y en a pas, cette fois.",
+    "Pour votre santé et celle de {a}, ces {or} pièces. Buvez à la nôtre.",
+    "Mon trésorier a pleuré en les comptant : {or} pièces, pour vous. Cela lui fera les pieds."
+  ]
+}

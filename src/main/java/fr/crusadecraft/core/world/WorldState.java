@@ -42,6 +42,11 @@ public final class WorldState {
     private final Map<UUID, AiRealm> realms = new LinkedHashMap<>();
     private final List<DejureKingdom> dejure = new ArrayList<>();
     private long lastEconomyDay = Long.MIN_VALUE;
+    /** P41 : les nations déjà nées. Effacée dans l'éditeur, une nation ne revient pas au démarrage suivant. */
+    private final java.util.Set<String> nationsBorn = new java.util.LinkedHashSet<>();
+
+    public boolean nationBorn(String key) { return nationsBorn.contains(key); }
+    public void markNationBorn(String key) { nationsBorn.add(key); }
     /** Les coalitions formées contre des joueurs (P8). */
     private final List<fr.crusadecraft.core.ai.Coalition> coalitions = new ArrayList<>();
     /** Les nouvelles du monde, les plus récentes en tête. */
@@ -136,6 +141,7 @@ public final class WorldState {
     }
 
     public void clear() {
+        nationsBorn.clear();
         realms.clear();
         dejure.clear();
         coalitions.clear();
@@ -165,6 +171,11 @@ public final class WorldState {
     public CompoundTag save() {
         CompoundTag t = new CompoundTag();
         t.putBoolean("generated", generated);
+        if (!nationsBorn.isEmpty()) {
+            ListTag nb = new ListTag();
+            for (String k : nationsBorn) nb.add(net.minecraft.nbt.StringTag.valueOf(k));
+            t.put("nationsBorn", nb);
+        }
         t.putInt("version", version);
         t.putLong("day", generatedDay);
         t.putInt("cx", centerX);
@@ -192,6 +203,8 @@ public final class WorldState {
     public static WorldState load(CompoundTag t) {
         WorldState s = new WorldState();
         s.generated = t.getBoolean("generated");
+        ListTag nb = t.getList("nationsBorn", Tag.TAG_STRING);
+        for (int i = 0; i < nb.size(); i++) s.nationsBorn.add(nb.getString(i));
         s.version = t.contains("version") ? t.getInt("version") : 1;
         s.generatedDay = t.getLong("day");
         s.centerX = t.getInt("cx");

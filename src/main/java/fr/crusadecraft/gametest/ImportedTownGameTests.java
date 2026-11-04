@@ -62,6 +62,11 @@ import java.util.UUID;
 public final class ImportedTownGameTests {
     private ImportedTownGameTests() {}
 
+    /** P41 : une ville entière minuscule, pour les essais qui ne font que l'inscrire au registre : son plan, sans fichier. */
+    static Plan tinyCity() {
+        return new Plan(new PlanRef(PlanRef.Source.FILE, "plans", "essai/ville.schem"), "ville", Plan.CITY, 8, Plan.CITY, 2, Direction.SOUTH, 0, java.util.List.of());
+    }
+
     private static BlockPos ground(ServerLevel level, int x, int z) {
         level.getChunk(x >> 4, z >> 4);
         return new BlockPos(x, level.getHeight(Heightmap.Types.MOTION_BLOCKING_NO_LEAVES, x, z) - 1, z);

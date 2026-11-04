@@ -156,6 +156,18 @@ public final class WorldEditService {
         return realm;
     }
 
+    /** P41 : un royaume qui existe sans encore tenir de terre : il attend sa première ville. */
+    public static AiRealm addLandlessRealm(MinecraftServer server, ServerLevel level, String name, String ruler, TitleRank rank, int color,
+                                           AiFaith faith, AiPersonality personality) {
+        WorldState world = data(server).world();
+        AiRealm realm = new WorldPlanner(WorldPlanner.Settings.defaults(), level.getSeed() ^ name.hashCode() ^ System.nanoTime(), null, level.dimension().location())
+                .handMade(name, rank, color, faith, personality, ruler, world.nextProvinceId(), BlockPos.ZERO, 0, 0, RealmService.currentDay(server));
+        realm.provinces().clear();
+        world.add(realm);
+        data(server).setDirty();
+        return realm;
+    }
+
     public static Outcome editRealm(ServerPlayer player, UUID id, String rawName, TitleRank rank, int colorIndex, AiFaith faith,
                                     AiPersonality personality) {
         if (!canEdit(player)) return denied();

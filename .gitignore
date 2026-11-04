@@ -31,3 +31,6 @@ libs/
 
 # Les villes données par Romain, livrées dans son jar personnel (P38) : jamais versionnées
 src/main/resources/crusadecraft_plans/**/*.schem
+
+# Les nations de Romain (son monde, son lore), livrées dans son jar personnel (P41) : jamais versionnées
+src/main/resources/crusadecraft_nations/*.json

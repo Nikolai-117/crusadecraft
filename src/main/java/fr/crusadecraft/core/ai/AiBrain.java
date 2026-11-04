@@ -70,7 +70,8 @@ public final class AiBrain {
 
     /** Un royaume qui décide pour lui-même : il tient encore une terre et ne prête hommage à personne. */
     private static boolean free(MinecraftServer server, AiRealm ai) {
-        return !ai.landless() && data(server).diplomacy().suzerainOf(ai.id()).isEmpty();
+        // P41 : une nation qui a un souverain ne décide plus pour elle-même : c'est lui qui répond.
+        return !ai.landless() && ai.sovereign() == null && data(server).diplomacy().suzerainOf(ai.id()).isEmpty();
     }
 
     /** Un royaume IA réfléchit : la guerre s'il en a l'envie et les moyens, sinon un traité avec un voisin. */
@@ -185,6 +186,7 @@ public final class AiBrain {
             if (best != null) province = best.id();
         }
         War war = WarService.declareBetween(server, ai.id(), t.id(), cb, province);
+        fr.crusadecraft.core.nation.NationService.onWarDeclared(server, ai, t.id());
         if (t.player()) {
             data(server).realm(t.id()).ifPresent(p -> {
                 long today = RealmService.currentDay(server);

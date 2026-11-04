@@ -64,7 +64,7 @@ public final class CivService {
         CrusadeSavedData data = CrusadeSavedData.get(server);
         int opened = 0;
         for (AiRealm ai : new ArrayList<>(data.world().realms())) {
-            if (ai.landless() || data.diplomacy().suzerainOf(ai.id()).isPresent()) continue;
+            if (ai.landless() || ai.sovereign() != null || data.diplomacy().suzerainOf(ai.id()).isPresent()) continue;
             if (random.nextInt(100) >= CrusadeConfig.SERVER.civChance.get()) continue;
             // P28 : faire grandir ou fonder un village passe avant une place forte de plus.
             if (VillageService.onDay(server, ai, day, random).isPresent() || tryBuild(server, ai, random).isPresent()) opened++;

@@ -677,7 +677,7 @@ public final class UiShots {
                 new AiRealmView.Province("Givrefond", false, fr.crusadecraft.core.world.AiProvince.Anchor.LAND, 17, 12, -900, -650),
                 new AiRealmView.Province("Brisemer", false, fr.crusadecraft.core.world.AiProvince.Anchor.VILLAGE, 31, 22, -1350, -600));
         return new AiRealmView(UUID.randomUUID(), "Ambrevent", TitleRank.ROYAUME, Heraldry.GUEULES.rgb(), "Ormesval",
-                AiPersonality.EXPANSIONNISTE, ruler, council, provinces, 742, 263, 41, 12, 1164, fr.crusadecraft.core.world.AiFaith.FIDELE);
+                AiPersonality.EXPANSIONNISTE, ruler, council, provinces, 742, 263, 41, 12, 1164, fr.crusadecraft.core.world.AiFaith.FIDELE, false);
     }
 
     private static TreasuryView sampleTreasury(long gold) {

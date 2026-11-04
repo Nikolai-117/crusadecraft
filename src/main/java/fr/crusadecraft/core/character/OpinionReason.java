@@ -57,7 +57,9 @@ public enum OpinionReason {
     // P28 : un village fondé trop près de ses terres
     DISPUTE(-15, 30, true),
     // P29 : une caravane pillée en temps de paix
-    BRIGANDAGE(-25, 30, true);
+    BRIGANDAGE(-25, 30, true),
+    // P41 : une vieille amitié entre deux nations
+    AMITIE_ANCIENNE(25, 3650, true);
 
     private final int value;
     private final int durationDays;

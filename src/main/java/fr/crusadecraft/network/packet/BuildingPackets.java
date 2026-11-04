@@ -105,9 +105,11 @@ public final class BuildingPackets {
     }
 
     /** L'écran de la ville : ses bâtiments, ses gens. */
-    public record OpenCity(UUID site, String city, int people, int max, boolean canEdit, List<Row> rows) {
+    public record OpenCity(UUID site, String city, int people, int max, boolean canEdit, List<Row> rows, UUID nation) {
         public static void encode(OpenCity p, FriendlyByteBuf buf) {
             buf.writeUUID(p.site);
+            buf.writeBoolean(p.nation != null);
+            if (p.nation != null) buf.writeUUID(p.nation);
             buf.writeUtf(p.city, NAME_MAX);
             buf.writeVarInt(p.people);
             buf.writeVarInt(p.max);
@@ -125,6 +127,7 @@ public final class BuildingPackets {
 
         public static OpenCity decode(FriendlyByteBuf buf) {
             UUID site = buf.readUUID();
+            UUID nation = buf.readBoolean() ? buf.readUUID() : null;
             String city = buf.readUtf(NAME_MAX);
             int people = buf.readVarInt(), max = buf.readVarInt();
             boolean canEdit = buf.readBoolean();
@@ -133,7 +136,7 @@ public final class BuildingPackets {
             for (int i = 0; i < n; i++) {
                 rows.add(new Row(buf.readUUID(), buf.readVarInt() - 1, buf.readVarInt() - 1, buf.readUtf(NAME_MAX), buf.readVarInt(), buf.readBlockPos()));
             }
-            return new OpenCity(site, city, people, max, canEdit, rows);
+            return new OpenCity(site, city, people, max, canEdit, rows, nation);
         }
 
         public static void handle(OpenCity p, Supplier<NetworkEvent.Context> ctx) {

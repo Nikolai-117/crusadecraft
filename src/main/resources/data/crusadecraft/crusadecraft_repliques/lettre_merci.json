@@ -1,0 +1,10 @@
+{
+  "moment": "lettre_merci",
+  "lines": [
+    "Votre présent de {or} pièces est bien arrivé. {de} s'en souviendra.",
+    "{destinataire}, merci. Vos {or} pièces m'ont évité une discussion pénible avec mon trésorier.",
+    "Il est rare qu'on me donne sans rien me demander. Merci pour ces {or} pièces, et je reste sur mes gardes.",
+    "Vos {or} pièces ont fait grand effet à la cour. On y parle de vous en bien, pour l'instant.",
+    "Recevez les remerciements de {souverain}. {or} pièces, c'est plus qu'une politesse : c'est un geste."
+  ]
+}

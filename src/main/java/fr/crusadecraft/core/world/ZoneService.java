@@ -64,7 +64,7 @@ public final class ZoneService {
      * l'ordinateur, les villes déménagent et {@code from} disparaît ; vers un joueur, elles lui sont tenues (comme
      * des villes prises) et {@code from} reste sans terre, à l'écart.
      */
-    static void absorb(MinecraftServer server, AiRealm from, UUID into) {
+    public static void absorb(MinecraftServer server, AiRealm from, UUID into) {
         CrusadeSavedData data = data(server);
         Optional<AiRealm> aiTarget = data.world().realm(into);
         int moved = 0;

@@ -1,0 +1,4 @@
+# Les nations livrées dans le jar personnel de Romain. Les fichiers eux-mêmes ne sont pas versionnés (voir .gitignore) :
+# sans eux, le mod fonctionne, et une ville posée sur une terre libre fonde une nation à son nom.
+levanzia.json
+varenhold.json

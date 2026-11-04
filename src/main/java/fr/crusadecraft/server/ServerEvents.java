@@ -61,6 +61,8 @@ public final class ServerEvents {
         RealmService.reconcileAll(event.getServer());
         fr.crusadecraft.core.build.plan.PlanLibrary.ensureFolder();
         fr.crusadecraft.core.build.plan.PlanFavorites.get(event.getServer());
+        fr.crusadecraft.core.nation.NationBook.reload();
+        fr.crusadecraft.core.nation.NationService.ensure(event.getServer());
     }
 
     /** Un joueur part : on lui renverra le centre de ses cartes papier à son retour. */
@@ -113,6 +115,7 @@ public final class ServerEvents {
     public static void onLogin(PlayerEvent.PlayerLoggedInEvent event) {
         if (event.getEntity() instanceof ServerPlayer player) {
             RealmService.onLogin(player);
+            fr.crusadecraft.core.nation.NationService.onLogin(player);
             CharacterService.syncTitles(player);
             ConflictDetector.warnPlayer(player);
         }
