@@ -1,0 +1,20 @@
+{
+ "moment": "vie_tic",
+ "lines": [
+  "{Il|Elle} parle à ses bêtes plus qu'à ses voisins.",
+  "{Il|Elle} chante faux, et très tôt.",
+  "{Il|Elle} garde sous son lit une boîte que personne n'a jamais vue ouverte.",
+  "{Il|Elle} dit toujours qu'il va pleuvoir.",
+  "{Il|Elle} doit de l'argent à {voisin}, ou l'inverse : personne ne s'en souvient.",
+  "{Il|Elle} n'a jamais pardonné quelque chose à {voisin}, sans dire quoi.",
+  "{Il|Elle} prétend avoir vu la mer, et la décrit différemment à chaque fois.",
+  "{Il|Elle} compte tout : les pas, les marches, les corbeaux.",
+  "{Il|Elle} rit toujours un peu trop tard aux plaisanteries.",
+  "{Il|Elle} a peur des oies, et ne s'en cache plus.",
+  "{Il|Elle} donne des surnoms à tout le monde, et personne n'aime le sien.",
+  "{Il|Elle} croit dur comme fer à ce que disent les rêves.",
+  "{Il|Elle} est {arrivé|arrivée} en retard à son propre mariage, et on en parle encore.",
+  "{Il|Elle} a un chien qui lui ressemble, et personne n'ose le lui dire."
+ ],
+ "age_min": 16
+}

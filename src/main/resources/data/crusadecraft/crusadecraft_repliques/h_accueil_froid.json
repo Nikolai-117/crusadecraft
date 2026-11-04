@@ -1,0 +1,16 @@
+{
+ "moment": "accueil",
+ "avis_max": -20,
+ "lines": [
+  "Ah. C'est vous.",
+  "Dites ce que vous avez à dire, et partez.",
+  "On m'a parlé de vous, {joueur}. Rien de bon.",
+  "Je n'ai rien à vous dire. Enfin, si, mais ce ne serait pas poli.",
+  "Tout le monde vous a vu, vous savez. Tout le monde.",
+  "Pas ici, pas maintenant, pas vous.",
+  "Si vous voulez quelque chose, demandez-le à quelqu'un d'autre.",
+  "Je garde mes distances. Faites-en autant.",
+  "Vous avez du toupet, de venir me parler.",
+  "Regardez ailleurs, s'il vous plaît. Et marchez ailleurs aussi."
+ ]
+}

@@ -1,0 +1,12 @@
+{
+ "moment": "metier",
+ "metiers": [
+  "CHATEAU"
+ ],
+ "lines": [
+  "Je garde le château, et ce qui reste du courage de la garnison.",
+  "On y dort mal, on y mange froid, et je ne donnerais ma place à personne.",
+  "Ces murs tiennent parce qu'on les surveille. Le jour où on arrête, ils tombent.",
+  "Je rends compte à {souverain}, et à personne d'autre."
+ ]
+}

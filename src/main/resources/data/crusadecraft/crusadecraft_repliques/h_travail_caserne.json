@@ -1,0 +1,12 @@
+{
+ "moment": "travail",
+ "metiers": [
+  "CASERNE"
+ ],
+ "lines": [
+  "Circulez.",
+  "Pas de bagarre ici. Allez la faire dehors.",
+  "Ronde terminée. On recommence.",
+  "Halte. Ah, c'est vous. Continuez."
+ ]
+}

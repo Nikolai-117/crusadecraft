@@ -92,6 +92,8 @@ public final class RoutineService {
             // P38 : les gens d'une ville passent la journée à leur ouvrage (boutique, place), pas à la cour ; la guerre
             // et les rassemblements les y appellent quand même.
             boolean called = atWar || feast || funeral;
+            // P43 : les gens d'une ville ont leur propre journée : voir CityWork.
+            if (p.site() != null && !called) continue;
             Optional<BlockPos> target = goal == Goal.HOME ? Optional.of(p.worldPos())
                     : p.work() != null && !called ? Optional.of(p.work()) : court(data, p.realm());
             if (target.isEmpty()) continue;

@@ -93,6 +93,11 @@ public final class ServerEvents {
         fr.crusadecraft.core.build.plan.PlanLibrary.onServerStopped();
         fr.crusadecraft.core.build.plan.Journals.onServerStopped();
         fr.crusadecraft.core.city.CityService.onServerStopped();
+        fr.crusadecraft.core.city.CityTalk.onServerStopped();
+        fr.crusadecraft.core.city.CityBubbles.onServerStopped();
+        fr.crusadecraft.core.city.CityWork.onServerStopped();
+        fr.crusadecraft.core.city.CityFurniture.onServerStopped();
+        fr.crusadecraft.core.city.CitySeats.onServerStopped();
         fr.crusadecraft.core.city.CityStaff.onServerStopped();
         fr.crusadecraft.core.build.plan.PlanTool.onServerStopped();
         fr.crusadecraft.core.build.plan.PlanFavorites.onServerStopped();
@@ -141,6 +146,9 @@ public final class ServerEvents {
         int t = server.getTickCount();
         // Chaque système est chronométré pour /crusade perf (P24).
         fr.crusadecraft.core.Perf.tick();
+        perf("bulles", () -> fr.crusadecraft.core.city.CityBubbles.tick(server));
+        if (t % 20 == 3) perf("sieges", fr.crusadecraft.core.city.CitySeats::tick);
+        if (t % fr.crusadecraft.core.city.CityWork.EVERY == 7) perf("travail", () -> fr.crusadecraft.core.city.CityWork.tick(server));
         if (t % 600 == 0) perf("personnages", () -> CharacterService.periodic(server));
         if (t % 40 == 0) perf("conseil", () -> fr.crusadecraft.core.council.CouncilService.tick(server));
         if (t % 100 == 50) perf("requetes", () -> fr.crusadecraft.core.council.RequestService.deliver(server));
@@ -190,6 +198,21 @@ public final class ServerEvents {
         if (!event.getEntity().level().isClientSide() && WarFieldService.sameSide(event.getSource().getEntity(), event.getEntity())) event.setCanceled(true);
     }
 
+    /** P45 : les meubles servent : on sonne la cloche, on s'assied, on commerce au comptoir. */
+    @SubscribeEvent
+    public static void onUseBlock(PlayerInteractEvent.RightClickBlock event) {
+        if (event.getLevel().isClientSide() || event.getHand() != net.minecraft.world.InteractionHand.MAIN_HAND || !(event.getEntity() instanceof ServerPlayer player)) return;
+        var pos = event.getPos();
+        if (event.getLevel().getBlockState(pos).getBlock() instanceof net.minecraft.world.level.block.BellBlock) {
+            fr.crusadecraft.core.city.CityFurniture.onBell(player, pos);
+            return;
+        }
+        if (fr.crusadecraft.core.city.CitySeats.onUse(player, pos) || fr.crusadecraft.core.city.CityFurniture.onCounter(player, pos)) {
+            event.setCanceled(true);
+            event.setCancellationResult(InteractionResult.SUCCESS);
+        }
+    }
+
     /** P39.2 : le bâton d'intendant en main, le clic gauche sur un bloc pose le premier coin d'une boîte. */
     @SubscribeEvent
     public static void onLeftClickBlock(net.minecraftforge.event.entity.player.PlayerInteractEvent.LeftClickBlock event) {
@@ -210,6 +233,23 @@ public final class ServerEvents {
             fr.crusadecraft.core.war.ArmyService.onDeath(level.getServer(), event.getEntity());
             fr.crusadecraft.core.war.HostService.onDeath(level.getServer(), event.getEntity());
             fr.crusadecraft.core.diplomacy.CaravanService.onDeath(level.getServer(), event.getEntity(), event.getSource().getEntity());
+            if (event.getSource().getEntity() instanceof ServerPlayer killer) fr.crusadecraft.core.city.CityTalk.onKilled(killer, event.getEntity());
+        }
+    }
+
+    /** P43 : commercer avec un habitant fait bouger les réserves et la bourse de sa ville. */
+    @SubscribeEvent
+    public static void onTrade(net.minecraftforge.event.entity.player.TradeWithVillagerEvent event) {
+        if (event.getEntity() instanceof ServerPlayer player && event.getAbstractVillager() instanceof net.minecraft.world.entity.npc.Villager v) {
+            fr.crusadecraft.core.city.CityLife.onTrade(player, v, event.getMerchantOffer());
+        }
+    }
+
+    /** P42 : un habitant frappé s'en souvient, et la ville en parle. */
+    @SubscribeEvent
+    public static void onHurt(net.minecraftforge.event.entity.living.LivingHurtEvent event) {
+        if (event.getSource().getEntity() instanceof ServerPlayer player && event.getEntity().level() instanceof ServerLevel) {
+            fr.crusadecraft.core.city.CityTalk.onHurt(player, event.getEntity());
         }
     }
 
@@ -248,6 +288,13 @@ public final class ServerEvents {
     @SubscribeEvent
     public static void onEntityInteract(PlayerInteractEvent.EntityInteract event) {
         if (event.getLevel().isClientSide() || !(event.getEntity() instanceof ServerPlayer player)) return;
+        // P42 : accroupi, clic droit sur un habitant d'une ville : sa fiche et la conversation.
+        if (player.isShiftKeyDown() && fr.crusadecraft.core.city.CityTalk.person(player.server, event.getTarget()).isPresent()) {
+            if (event.getHand() == net.minecraft.world.InteractionHand.MAIN_HAND) fr.crusadecraft.core.city.CityTalk.open(player, event.getTarget());
+            event.setCanceled(true);
+            event.setCancellationResult(InteractionResult.SUCCESS);
+            return;
+        }
         // Le héraut d'un royaume IA ne commerce pas : il présente son royaume.
         Optional<java.util.UUID> herald = fr.crusadecraft.core.world.WorldService.heraldRealm(event.getTarget());
         if (herald.isPresent()) {

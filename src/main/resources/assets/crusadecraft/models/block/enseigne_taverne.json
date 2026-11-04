@@ -1,0 +1,6 @@
+{
+ "parent": "crusadecraft:block/enseigne_base",
+ "textures": {
+  "icon": "minecraft:item/mushroom_stew"
+ }
+}

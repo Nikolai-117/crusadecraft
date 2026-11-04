@@ -1,0 +1,11 @@
+{
+ "moment": "accueil",
+ "traits": [
+  "COMPATISSANT"
+ ],
+ "lines": [
+  "Vous avez l'air fatigué. Tout va bien ?",
+  "Il faut s'entraider, sinon à quoi bon ?",
+  "J'ai porté de la soupe à {voisin}. Personne ne pense à lui."
+ ]
+}

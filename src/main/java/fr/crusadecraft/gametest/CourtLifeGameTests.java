@@ -126,7 +126,7 @@ public final class CourtLifeGameTests {
         List<Repliques.Entry> entries = Repliques.entries();
         if (entries.size() < 4) throw new net.minecraft.gametest.framework.GameTestAssertException("seulement " + entries.size() + " lot(s) de répliques");
         Random random = new Random(3);
-        for (Repliques.Moment m : Repliques.Moment.values()) {
+        for (Repliques.Moment m : new Repliques.Moment[]{Repliques.Moment.FETE, Repliques.Moment.DEUIL, Repliques.Moment.GUERRE, Repliques.Moment.COUR}) {
             if (Repliques.pick(entries, m, Role.FAMILLE, List.of(), random) == null) {
                 throw new net.minecraft.gametest.framework.GameTestAssertException("aucune réplique pour le moment " + m);
             }

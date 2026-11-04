@@ -1,0 +1,20 @@
+{
+ "moment": "rumeur",
+ "lines": [
+  "Il paraît que {voisin} a des dettes partout. Je ne vous ai rien dit.",
+  "{voisin} et {conjoint}, vous savez ? Non ? Alors je me tais.",
+  "On a vu de la lumière très tard chez {voisin}. Ça ne me regarde pas. Mais tout de même.",
+  "À {autre_ville}, on raconte que le blé se vend deux fois plus cher. On raconte beaucoup de choses.",
+  "{voisin} prétend avoir vu un loup dans la grand-rue. {voisin} boit, remarquez.",
+  "Ne répétez pas, mais {voisin} a mis de l'eau dans le lait. Enfin, c'est ce qu'on dit.",
+  "Il n'y a rien de neuf. C'est bien ça, le plus inquiétant.",
+  "Il paraît qu'un inconnu pose des questions, en ville. C'est vous ? Ah. Alors il y en a deux.",
+  "{voisin} a encore changé de voisin. C'est lui, le problème, si vous voulez mon avis.",
+  "On dit que des marchands de {autre_ville} viennent par ici. Ils diront le contraire de ce qu'ils disaient la dernière fois.",
+  "J'ai entendu dire que {souverain} serait malade. J'ai entendu aussi le contraire. On verra bien.",
+  "Le prix de la farine va monter. Comment je le sais ? Il monte toujours.",
+  "On dit que quelqu'un vole des poules. Moi je dis que ce sont les poules qui s'en vont.",
+  "{voisin} a mangé trois fois à la taverne cette semaine. D'où lui vient cet argent ? Je pose juste la question.",
+  "Il y aurait une fille de {autre_ville} qui… Non. Non, je ne dis rien. Ce sont ses affaires."
+ ]
+}

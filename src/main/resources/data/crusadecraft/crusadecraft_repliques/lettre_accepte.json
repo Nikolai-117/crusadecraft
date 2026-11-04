@@ -2,9 +2,9 @@
   "moment": "lettre_accepte",
   "lines": [
     "J'accepte : {traite}. Mon sceau est sur le parchemin, le vôtre aussi. Qu'on n'ait pas à le regretter.",
-    "C'est entendu. {traite}, entre {de} et {a}. Faites-le crier sur vos places, je ferai de même.",
-    "{destinataire}, votre offre est honnête et je l'accepte : {traite}.",
-    "Mes conseillers ont trouvé trois raisons de refuser. J'en ai trouvé une d'accepter : {traite}. Elle l'emporte.",
-    "Bien. {traite}. Que nos peuples en profitent avant que nous ne changions d'avis."
+    "C'est entendu : {traite}, entre {de} et {a}. Faites-le crier sur vos places, je ferai de même.",
+    "{destinataire}, votre offre est honnête, et j'accepte {traite}.",
+    "Mes conseillers ont trouvé trois raisons de refuser. J'en ai trouvé une d'accepter {traite}. Elle l'emporte.",
+    "Bien. Va pour {traite}. Que nos peuples en profitent avant que nous ne changions d'avis."
   ]
 }

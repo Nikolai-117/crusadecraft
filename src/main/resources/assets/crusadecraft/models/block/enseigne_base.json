@@ -1,0 +1,122 @@
+{
+ "parent": "minecraft:block/block",
+ "render_type": "minecraft:cutout",
+ "ambientocclusion": false,
+ "textures": {
+  "particle": "minecraft:block/spruce_planks",
+  "wood": "minecraft:block/spruce_planks",
+  "edge": "minecraft:block/dark_oak_planks"
+ },
+ "display": {
+  "gui": {
+   "rotation": [
+    20,
+    200,
+    0
+   ],
+   "translation": [
+    0,
+    0,
+    0
+   ],
+   "scale": [
+    0.8,
+    0.8,
+    0.8
+   ]
+  }
+ },
+ "elements": [
+  {
+   "from": [
+    1,
+    1,
+    14
+   ],
+   "to": [
+    15,
+    15,
+    16
+   ],
+   "faces": {
+    "north": {
+     "uv": [
+      1,
+      1,
+      15,
+      15
+     ],
+     "texture": "#wood"
+    },
+    "south": {
+     "uv": [
+      1,
+      1,
+      15,
+      15
+     ],
+     "texture": "#wood"
+    },
+    "east": {
+     "uv": [
+      0,
+      1,
+      2,
+      15
+     ],
+     "texture": "#edge"
+    },
+    "west": {
+     "uv": [
+      0,
+      1,
+      2,
+      15
+     ],
+     "texture": "#edge"
+    },
+    "up": {
+     "uv": [
+      1,
+      0,
+      15,
+      2
+     ],
+     "texture": "#edge"
+    },
+    "down": {
+     "uv": [
+      1,
+      0,
+      15,
+      2
+     ],
+     "texture": "#edge"
+    }
+   }
+  },
+  {
+   "from": [
+    2.5,
+    2.5,
+    13.9
+   ],
+   "to": [
+    13.5,
+    13.5,
+    13.9
+   ],
+   "faces": {
+    "north": {
+     "uv": [
+      0,
+      0,
+      16,
+      16
+     ],
+     "texture": "#icon"
+    }
+   }
+  }
+ ]
+}

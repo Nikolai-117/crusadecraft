@@ -1082,3 +1082,45 @@ veux la voir comme le bâton de construction de MineColonies », des commandes, 
 - **Partage** : dépôt GitHub `Nikolai-117/crusadecraft` (public, au choix de Romain), adresse des commits remplacée
   par celle de GitHub sans e-mail, `CLAUDE.md` pour le Claude de son ami, et le README dit quels jars prendre soi-même.
 
+**P41, P42 et P43 (4 novembre 2026) — les nations, leurs habitants, leur journée, 3.11.0**
+
+- **Demande** : Levenzia et Varenhold avec une diplomatie et un lore à part entière, des œufs d'habitants, des gens
+  autonomes « dans l'idée de faire leur travail, commercer », et « des textes préfaits en grande quantité, pas besoin d'une
+  vraie IA ». Romain a écarté l'API : aucun modèle de langage, rien qui appelle un service extérieur.
+- **Nation = fichier, jamais écrasé** : `crusadecraft/nations/*.json`. Le mod peut en livrer ; un fichier existant reste
+  tel quel (`restaurer` remet ceux du jar en gardant un `.bak`). Ceux de Romain sont hors du dépôt public, comme ses
+  schématiques : sans eux le mod fonctionne, et une ville sur une terre libre fonde une nation à son nom. Les textes
+  génériques des habitants, eux, sont versionnés : ils ne disent rien de son monde.
+- **Lore** : `E:\victorum\CLAUDE.md` interdit d'écrire le lore à la place de Romain ; il l'a demandé ici, pour le mod. Les
+  faits viennent de `E:\victorum\src\data` (noms, culture, foi, provinces, guerres, dates, liens), le reste est un brouillon
+  dit comme tel en tête de l'histoire, et le wiki n'est pas touché. Il écrit « Levenzia », le wiki « Levànzia » : le royaume
+  porte le nom du wiki, le dossier reste `Levenzia`.
+- **Couronne plutôt que royaume de joueur** : un `Realm` exige une colonie MineColonies pour capitale, qu'une ville
+  importée n'a pas. Une nation reste donc un `AiRealm` avec un `sovereign` : l'ordinateur ne décide plus (AiBrain, CivService,
+  LifeService l'ignorent), et le joueur agit depuis l'écran de la nation. Le Trône posé dans une zone peinte reste possible.
+- **Le français côté serveur** (`core/logic/Fr`) : un serveur dédié ne charge que l'anglais ; `getString()` y aurait écrit
+  « Kingdom of » dans une lettre française. On lit `fr_fr.json` dans le jar pour ce qui s'écrit une fois pour toutes.
+- **Bulles** : un `text_display` de Minecraft qui suit celui qui parle, sans rien à installer côté client ; six répliques à
+  l'écran suffisent à faire vivre une rue, d'où le plafond par ville et par personne. Elles ne survivent pas à un arrêt.
+- **Ce qui est réel et ce qui ne l'est pas** : le fermier moissonne de vrais blocs, les ventes et les réserves sont de vrais
+  nombres qui changent les étals. Le reste de la journée (gestes, livraisons) ne tourne que près d'un joueur ; loin de lui, la
+  ville avance en comptes une fois par jour. Aucun villageois ne marche pour rien.
+- **Limite honnête** : ils suivent un emploi du temps et des règles, ils ne pensent pas. Comes Alive garde son cerveau :
+  un but de marche renouvelé toutes les deux secondes l'emporte d'habitude, pas toujours.
+
+**P44 et P45 (4 novembre 2026) — les enseignes, et une décoration qui sert, 3.12.0**
+
+- **Demande** : « des blocs permettant de définir les bâtiments (boulangerie, école, etc.) », et que « les blocs de décoration
+  soient utilisables et aient une véritable utilité ».
+- **Un bloc par fonction** plutôt qu'un seul avec un choix : il se reconnaît dans une schématique par son identifiant, se
+  fabrique sans écran, et l'on voit ce qu'il est dans l'inventaire. Le dessin réutilise les textures d'objets de Minecraft sur un
+  panneau de bois : rien à redistribuer. Ajouter une fonction ajoute une enseigne ; il faut alors son fichier de modèle.
+- **École, moulin, hospice** : ajoutés à la fin de `BuildingFunction`, enregistrés par leur nom ; un monde existant ne bouge pas.
+- **« Décoration » est large** : Romain n'a pas dit lesquels. On a pris tout ce qui se pose pour faire joli, de n'importe quel mod,
+  reconnu au nom (`Furnishing`), avec des mots testés sur Minecraft et les mods de ses villes. Un bloc mal nommé n'aura pas d'effet :
+  c'est une limite assumée, et rien n'y casse.
+- **Un habitant ne s'assied pas sur un escalier**, un joueur si : un escalier est le plus souvent un escalier. Le support est un
+  porte-armure invisible, retiré quand on se lève et balayé à la visite suivante après un arrêt brutal.
+- **Charme** : la ville est parcourue par petits morceaux (6 000 blocs par passage, soit au plus une minute et quelque pour une
+  ville de 100 blocs de côté, davantage pour Grunbach), jamais d'un coup. Il n'y a de mesure que là où un joueur est passé.
+

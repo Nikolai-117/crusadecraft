@@ -61,6 +61,28 @@ public final class ModItems {
     public static final RegistryObject<Item> INTENDANT = ITEMS.register("baton_intendant",
             () -> new fr.crusadecraft.item.IntendantStaffItem(new Item.Properties().stacksTo(1).rarity(Rarity.UNCOMMON)));
 
+    /** P44 : les enseignes, à poser dans un bâtiment pour lui donner sa fonction. */
+    public static final java.util.Map<fr.crusadecraft.core.city.BuildingFunction, RegistryObject<Item>> SIGNS = signs();
+
+    private static java.util.Map<fr.crusadecraft.core.city.BuildingFunction, RegistryObject<Item>> signs() {
+        java.util.Map<fr.crusadecraft.core.city.BuildingFunction, RegistryObject<Item>> out = new java.util.EnumMap<>(fr.crusadecraft.core.city.BuildingFunction.class);
+        for (fr.crusadecraft.core.city.BuildingFunction f : fr.crusadecraft.core.city.BuildingFunction.values()) {
+            out.put(f, ITEMS.register("enseigne_" + f.name().toLowerCase(java.util.Locale.ROOT), () -> new BlockItem(ModBlocks.SIGNS.get(f).get(), new Item.Properties()) {
+                @Override
+                public void appendHoverText(net.minecraft.world.item.ItemStack stack, net.minecraft.world.level.Level level, java.util.List<net.minecraft.network.chat.Component> tooltip,
+                                            net.minecraft.world.item.TooltipFlag flag) {
+                    tooltip.add(net.minecraft.network.chat.Component.translatable("item.crusadecraft.enseigne.tooltip").withStyle(net.minecraft.ChatFormatting.GRAY));
+                    tooltip.add(net.minecraft.network.chat.Component.translatable("crusadecraft.city.sign.effect." + f.name().toLowerCase(java.util.Locale.ROOT)).withStyle(net.minecraft.ChatFormatting.GRAY));
+                }
+            }));
+        }
+        return out;
+    }
+
+    /** P42 : faire naître un habitant : une ville, un métier, un villageois avec sa fiche. */
+    public static final RegistryObject<Item> OEUF_HABITANT = ITEMS.register("oeuf_habitant",
+            () -> new fr.crusadecraft.item.InhabitantEggItem(new Item.Properties().stacksTo(64).rarity(Rarity.UNCOMMON)));
+
     private ModItems() {}
 
     public static void register(IEventBus modBus) {

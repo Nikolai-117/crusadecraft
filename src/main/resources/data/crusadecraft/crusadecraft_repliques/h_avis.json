@@ -1,0 +1,11 @@
+{
+ "moment": "avis",
+ "avis_min": -14,
+ "avis_max": 14,
+ "lines": [
+  "Vous ? Je ne vous connais pas assez. Revenez dans quelques jours.",
+  "Pour l'instant, je n'ai rien contre vous. C'est déjà beaucoup, ici.",
+  "On verra à l'usage.",
+  "Je n'ai pas d'avis. Enfin, si, mais je le garde."
+ ]
+}

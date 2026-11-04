@@ -80,6 +80,14 @@ public class NationScreen extends Screen {
         }
     }
 
+    /** Pour le banc d'essai : tel onglet (0 histoire, 1 villes, 2 relations, 3 courrier), le premier royaume choisi. */
+    public void showForShots(int index) {
+        tab = Tab.values()[index];
+        scroll = 0;
+        if (!view.relations().isEmpty()) selected = view.relations().get(0).id();
+        rebuildWidgets();
+    }
+
     private void act(int op, int arg) {
         CrusadeNetwork.toServer(new NationPackets.Act(selected, op, arg, letter));
     }
@@ -97,14 +105,16 @@ public class NationScreen extends Screen {
         int i = 0;
         for (Treaty t : Treaty.values()) {
             boolean has = rel.treaties().contains(t.ordinal());
-            Component label = Component.translatable(has ? "crusadecraft.nation.break" : "crusadecraft.nation.propose", Component.translatable(t.key()));
+            Component label = Component.literal(has ? "− " : "+ ").append(Component.translatable(t.key() + ".court"));
             Button b = Button.builder(label, btn -> act(has ? NationService.OP_BREAK : NationService.OP_PROPOSE, t.ordinal()))
-                    .bounds(x + i * (bw + 2), y, bw, 16).build();
+                    .bounds(x + i * (bw + 2), y, bw, 16)
+                    .tooltip(net.minecraft.client.gui.components.Tooltip.create(Component.translatable(has ? "crusadecraft.nation.break" : "crusadecraft.nation.propose", Component.translatable(t.key())))).build();
             b.active = !rel.atWar();
             addRenderableWidget(b);
             i++;
         }
         y += 18;
+        bw = (w - 20) / 3 - 2;
         Button gift = Button.builder(Component.translatable("crusadecraft.nation.gift", NationService.GIFT), b -> act(NationService.OP_GIFT, -1))
                 .bounds(x, y, bw, 16).build();
         gift.active = view.gold() >= NationService.GIFT && !rel.atWar();

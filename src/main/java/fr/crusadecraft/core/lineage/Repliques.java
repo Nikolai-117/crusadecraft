@@ -37,7 +37,15 @@ public final class Repliques extends SimpleJsonResourceReloadListener {
     public enum Moment {
         FETE, DEUIL, GUERRE, COUR,
         /** P41 : ce qu'écrivent les souverains à une nation. */
-        LETTRE_OFFRE, LETTRE_PRESENT, LETTRE_MERCI, LETTRE_OUTRAGE, LETTRE_GUERRE, LETTRE_ACCEPTE, LETTRE_REFUS;
+        LETTRE_OFFRE, LETTRE_PRESENT, LETTRE_MERCI, LETTRE_OUTRAGE, LETTRE_GUERRE, LETTRE_ACCEPTE, LETTRE_REFUS,
+        /** P42 : ce que disent les habitants d'une ville. */
+        ACCUEIL, TRAVAIL, METIER, VILLE, ROYAUME, RUMEUR, RUMEUR_VRAIE, FAMILLE, AVIS, ADIEU, MATIN, MIDI, SOIR, NUIT, PLUIE, ORAGE, DOULEUR, MERCI, PENURIE, REPAS, MARCHE, LIVRAISON,
+        /** P42 : de quoi composer la vie d'un habitant. */
+        VIE_ORIGINE, VIE_METIER, VIE_TIC,
+        /** P42 : les plus petits ne répondent pas comme les grands. */
+        ENFANT, BEBE, ECOLE,
+        /** P45 : quand la cloche sonne. */
+        CLOCHE;
 
         static Moment byName(String name) {
             return Moment.valueOf(name.trim().toUpperCase(Locale.ROOT));
@@ -45,12 +53,69 @@ public final class Repliques extends SimpleJsonResourceReloadListener {
     }
 
     /** Un lot de répliques et à qui il convient. Des ensembles vides : tout le monde. */
-    public record Entry(Moment moment, Set<Role> roles, Set<Trait> traits, List<Component> lines) {
+    public record Entry(Moment moment, Set<Role> roles, Set<Trait> traits, List<Component> lines, Filter filter) {
+        public Entry(Moment moment, Set<Role> roles, Set<Trait> traits, List<Component> lines) {
+            this(moment, roles, traits, lines, Filter.ANY);
+        }
+
         boolean fits(Role role, List<Trait> held) {
-            if (!roles.isEmpty() && !roles.contains(role)) return false;
+            return fits(new Who(role, held, "", "", "", -1, null, 0));
+        }
+
+        boolean fits(Who who) {
+            if (!roles.isEmpty() && !roles.contains(who.role())) return false;
+            if (!filter.fits(who)) return false;
             if (traits.isEmpty()) return true;
-            for (Trait t : held) if (traits.contains(t)) return true;
+            for (Trait t : who.traits()) if (traits.contains(t)) return true;
             return false;
+        }
+
+        /** Un lot pour tout le monde ? Les autres passent avant lui, quand il y en a qui conviennent. */
+        boolean general() {
+            return roles.isEmpty() && traits.isEmpty() && filter == Filter.ANY;
+        }
+    }
+
+    /** P42 : qui parle : son rôle, ses traits, son métier, sa nation, sa ville, son âge, son sexe, ce qu'il pense de celui qui écoute. */
+    public record Who(Role role, List<Trait> traits, String job, String nation, String city, int age, Boolean female, int opinion) {}
+
+    /**
+     * P42 : d'autres façons de réserver un lot, toutes facultatives : à certains métiers ({@code metiers}), nations
+     * ({@code nations}), villes ({@code villes}), à un âge ({@code age_min}, {@code age_max}), à un sexe
+     * ({@code femme}), à une opinion de celui qui écoute ({@code avis_min}, {@code avis_max}).
+     */
+    public record Filter(Set<String> jobs, Set<String> nations, Set<String> cities, int minAge, int maxAge, Boolean female, int minOpinion, int maxOpinion) {
+        public static final Filter ANY = new Filter(Set.of(), Set.of(), Set.of(), Integer.MIN_VALUE, Integer.MAX_VALUE, null, Integer.MIN_VALUE, Integer.MAX_VALUE);
+
+        boolean fits(Who w) {
+            if (this == ANY) return true;
+            if (!jobs.isEmpty() && !jobs.contains(w.job().toUpperCase(Locale.ROOT))) return false;
+            if (!nations.isEmpty() && !nations.contains(w.nation().toLowerCase(Locale.ROOT))) return false;
+            if (!cities.isEmpty() && !cities.contains(w.city().toLowerCase(Locale.ROOT))) return false;
+            if (w.age() < minAge || w.age() > maxAge) return false;
+            if (female != null && !female.equals(w.female())) return false;
+            return w.opinion() >= minOpinion && w.opinion() <= maxOpinion;
+        }
+
+        static Filter parse(JsonObject o) {
+            Set<String> jobs = strings(o, "metiers", true), nations = strings(o, "nations", false), cities = strings(o, "villes", false);
+            int minAge = o.has("age_min") ? o.get("age_min").getAsInt() : Integer.MIN_VALUE, maxAge = o.has("age_max") ? o.get("age_max").getAsInt() : Integer.MAX_VALUE;
+            Boolean female = o.has("femme") ? o.get("femme").getAsBoolean() : null;
+            int minOp = o.has("avis_min") ? o.get("avis_min").getAsInt() : Integer.MIN_VALUE, maxOp = o.has("avis_max") ? o.get("avis_max").getAsInt() : Integer.MAX_VALUE;
+            if (jobs.isEmpty() && nations.isEmpty() && cities.isEmpty() && minAge == Integer.MIN_VALUE && maxAge == Integer.MAX_VALUE && female == null
+                    && minOp == Integer.MIN_VALUE && maxOp == Integer.MAX_VALUE) return ANY;
+            return new Filter(jobs, nations, cities, minAge, maxAge, female, minOp, maxOp);
+        }
+
+        private static Set<String> strings(JsonObject o, String key, boolean upper) {
+            Set<String> out = new java.util.HashSet<>();
+            if (o.has(key)) {
+                for (JsonElement e : o.getAsJsonArray(key)) {
+                    String s = e.getAsString().strip();
+                    out.add(upper ? s.toUpperCase(Locale.ROOT) : s.toLowerCase(Locale.ROOT));
+                }
+            }
+            return out;
         }
     }
 
@@ -82,7 +147,7 @@ public final class Repliques extends SimpleJsonResourceReloadListener {
             else if (!l.getAsString().isBlank()) lines.add(Component.literal(l.getAsString().strip()));
         }
         if (lines.isEmpty()) throw new IllegalArgumentException("aucune réplique");
-        return new Entry(moment, roles, traits, lines);
+        return new Entry(moment, roles, traits, lines, Filter.parse(o));
     }
 
     /**
@@ -90,10 +155,15 @@ public final class Repliques extends SimpleJsonResourceReloadListener {
      * traits) passent avant les lots pour tous, quand il y en a qui conviennent.
      */
     public static Component pick(List<Entry> from, Moment moment, Role role, List<Trait> traits, Random random) {
+        return pick(from, moment, new Who(role, traits, "", "", "", -1, null, 0), random);
+    }
+
+    /** P42 : la même chose, pour quelqu'un qu'on connaît mieux. */
+    public static Component pick(List<Entry> from, Moment moment, Who who, Random random) {
         List<Component> specific = new ArrayList<>(), general = new ArrayList<>();
         for (Entry e : from) {
-            if (e.moment() != moment || !e.fits(role, traits)) continue;
-            (e.roles().isEmpty() && e.traits().isEmpty() ? general : specific).addAll(e.lines());
+            if (e.moment() != moment || !e.fits(who)) continue;
+            (e.general() ? general : specific).addAll(e.lines());
         }
         List<Component> pool = !specific.isEmpty() && (general.isEmpty() || random.nextBoolean()) ? specific : general;
         return pool.isEmpty() ? null : pool.get(random.nextInt(pool.size()));

@@ -1,0 +1,18 @@
+{
+ "moment": "accueil",
+ "age_max": 13,
+ "lines": [
+  "Dis, t'es un chevalier ? Tu as tué un dragon ?",
+  "Maman a dit de pas parler aux gens. Mais toi, t'es rigolo.",
+  "Je sais où {voisin} cache ses pommes. Je dirai pas. Enfin, si tu me donnes quelque chose.",
+  "Tu veux jouer ? Faut courir vite, sinon t'as perdu.",
+  "C'est quoi, ton épée ? Elle coupe ? Je peux toucher ?",
+  "Quand je serai grand, je ferai comme toi. Enfin, je sais pas ce que tu fais.",
+  "Pourquoi t'as une tête comme ça ?",
+  "J'ai vu un rat gros comme ça ! Non, comme ça !",
+  "Je suis pas petit, j'ai {age} ans.",
+  "Chut. On se cache. Tu m'as pas vu.",
+  "T'as des bonbons ? Personne n'a jamais de bonbons.",
+  "{voisin} m'a dit que si je mange pas ma soupe, je vais rester petit. C'est vrai ?"
+ ]
+}

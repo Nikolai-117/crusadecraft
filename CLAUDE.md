@@ -91,6 +91,23 @@ Documents : `docs/decisions.md` (pourquoi chaque chose est comme elle est), `doc
 `docs/conception-villes.md` (ce que Romain a décidé pour les villes), `docs/catalogue-plans.md` (inventaire des pièces
 des packs), `docs/etape-2-plan.md` (le plan des phases).
 
+## Nations et habitants (P41 à P43)
+
+- `core/nation/` : `NationDef` (un fichier JSON), `NationBook` (les lit dans `crusadecraft/nations/`), `NationService`
+  (naissance, couronne, diplomatie du souverain, courrier), `NationScreen`. Les fichiers de Romain sont **hors du dépôt**
+  (`src/main/resources/crusadecraft_nations/*.json`, comme les `.schem`) : ne suppose pas qu'ils existent, et ne les recrée pas.
+- `core/city/` : `CityPeople` (noms de culture, fiches, personnages écrits d'avance), `CityVoice` (choisit un texte et remplit
+  ses trous : `{ville}`, et les accords `{Né|Née}`), `CityTalk` (la conversation, accroupi + clic droit, et les souvenirs),
+  `CityEggs`, `CityBubbles`, `CityWork` (la journée visible, près d'un joueur), `CityLife` (la journée en comptes, pour toutes
+  les villes), `CityEconomy` et `CityRules` (logique pure, testée dans `src/test`).
+- Les textes sont dans `data/crusadecraft/crusadecraft_repliques/*.json`. Un lot peut se réserver à des métiers, des traits, un
+  âge, un sexe, une nation, une ville, une opinion : voir `Repliques.Filter`. Tout texte doit passer `aucunTexteATrou`.
+- `core/city/CitySigns` et `block/BuildingSignBlock` : les enseignes, un bloc par `BuildingFunction`. Une fonction ajoutée
+  demande son modèle, son `blockstate`, sa table de butin, sa recette et ses clés de langue (voir ceux d'une autre).
+- `core/city/Furnishing` (ce qu'est un meuble, d'après son nom), `CitySeats` (s'asseoir), `CityFurniture` (recompter les meubles,
+  le charme, la cloche, le comptoir, les lits). `Furnishing` est en logique pure et testé ; ajoute des mots là, pas ailleurs.
+- Pas de modèle de langage : Romain l'a écarté. Ne pas en ajouter sans qu'il le demande.
+
 ## Pièges déjà rencontrés
 
 - **MineColonies** : n'appeler son API que depuis `compat/minecolonies`. Certaines méthodes des entités de bâtiment ne

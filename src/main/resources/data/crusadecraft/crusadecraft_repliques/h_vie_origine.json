@@ -1,0 +1,18 @@
+{
+ "moment": "vie_origine",
+ "age_min": 16,
+ "lines": [
+  "{Né|Née} à {ville}, comme ses parents avant {lui|elle}.",
+  "{Arrivé|Arrivée} à {ville} encore enfant, dans la charrette d'un oncle.",
+  "{Venu|Venue} de {autre_ville} il y a longtemps, pour une affaire qui a mal tourné.",
+  "{Installé|Installée} ici depuis la dernière guerre, sans jamais dire d'où {il|elle} venait.",
+  "{Fils|Fille} d'un charretier, {il|elle} a grandi sur les routes avant de se fixer à {ville}.",
+  "{Né|Née} sur la route, {il|elle} n'a jamais su dire de quel pays {il|elle} était.",
+  "Sa famille tient une maison à {ville} depuis si longtemps qu'on en a oublié le début.",
+  "{Orphelin|Orpheline} à dix ans, {il|elle} a été {élevé|élevée} par tout le quartier.",
+  "{Revenu|Revenue} à {ville} après des années d'absence, dont {il|elle} ne parle pas.",
+  "{Il|Elle} a passé sa jeunesse à {autre_ville} et ne cesse de le rappeler.",
+  "{Dernier|Dernière} de sept enfants, {il|elle} a appris très tôt à se faire entendre.",
+  "{Né|Née} l'année d'un grand hiver, {il|elle} dit que c'est pour ça qu'{il|elle} n'a jamais froid."
+ ]
+}

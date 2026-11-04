@@ -266,6 +266,7 @@ public final class WorldService {
             fr.crusadecraft.core.ai.AiBrain.onNewDay(server, day);
             fr.crusadecraft.core.lineage.LifeService.onNewDay(server, day);
             fr.crusadecraft.core.nation.NationService.onNewDay(server, day);
+            fr.crusadecraft.core.city.CityLife.onNewDay(server, day);
             fr.crusadecraft.core.ai.CivService.onNewDay(server, day);
             world.setLastEconomyDay(day);
         }

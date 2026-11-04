@@ -1,0 +1,10 @@
+{
+ "moment": "famille",
+ "age_min": 18,
+ "lines": [
+  "Mon frère est parti à {autre_ville}. Il écrit à chaque fois qu'il a besoin d'argent.",
+  "Ma grand-mère disait qu'on ne se marie pas sans voir la belle-mère au réveil.",
+  "Les enfants grandissent. Moi, je rétrécis.",
+  "J'ai une sœur qui ne me parle plus depuis huit ans. Je ne sais plus pourquoi. Elle non plus, je crois."
+ ]
+}

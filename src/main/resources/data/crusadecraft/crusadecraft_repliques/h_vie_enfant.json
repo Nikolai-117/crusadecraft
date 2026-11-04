@@ -1,0 +1,9 @@
+{
+ "moment": "vie_origine",
+ "age_max": 15,
+ "lines": [
+  "{Né|Née} à {ville}, {il|elle} n'a encore rien vu d'autre.",
+  "On ne sait jamais où {il|elle} est, et {il|elle} revient toujours sale.",
+  "{Il|Elle} connaît tous les chats de la ville, et tous les chats le connaissent."
+ ]
+}

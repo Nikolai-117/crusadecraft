@@ -31,7 +31,7 @@ import java.util.Map;
  */
 public record NationDef(String key, String name, String folder, TitleRank rank, int color, AiPersonality personality, AiFaith faith,
                         boolean player, String house, Ruler ruler, List<Tie> ties, Culture culture, List<String> history,
-                        Map<String, CityLore> cities) {
+                        Map<String, CityLore> cities, List<fr.crusadecraft.core.lineage.Repliques.Entry> lines) {
 
     /** Son souverain, pour un royaume de l'ordinateur. */
     public record Ruler(String name, boolean female, int age) {}
@@ -92,8 +92,10 @@ public record NationDef(String key, String name, String folder, TitleRank rank, 
                 cities.put(e.getKey().strip().toLowerCase(Locale.ROOT), new CityLore(strings(c, "histoire"), notables));
             }
         }
+        List<fr.crusadecraft.core.lineage.Repliques.Entry> lines = new ArrayList<>();
+        if (o.has("repliques")) for (JsonElement e : o.getAsJsonArray("repliques")) lines.add(fr.crusadecraft.core.lineage.Repliques.parse(e.getAsJsonObject()));
         return new NationDef(key, name, string(o, "dossier", ""), rank, color, personality, faith, o.has("joueur") && o.get("joueur").getAsBoolean(),
-                string(o, "maison", name), ruler, ties, culture, strings(o, "histoire"), cities);
+                string(o, "maison", name), ruler, ties, culture, strings(o, "histoire"), cities, lines);
     }
 
     private static Notable notable(JsonObject n) {

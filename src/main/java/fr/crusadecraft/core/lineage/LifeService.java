@@ -116,7 +116,7 @@ public final class LifeService {
             for (Person p : new ArrayList<>(data.lineage().persons())) {
                 if (!p.alive()) continue;
                 p.setAge(p.age() + 1);
-                if (random.nextInt(1000) < deathChancePerMille(p.age())) {
+                if (random.nextInt(1000) < deathChancePerMille(p.age()) && !fr.crusadecraft.core.city.CityLife.spared(server, p, random)) {
                     die(server, p);
                     deaths++;
                 }
@@ -151,6 +151,8 @@ public final class LifeService {
         CrusadeSavedData data = CrusadeSavedData.get(server);
         LineageState state = data.lineage();
         p.setAlive(false);
+        // P42 : la ville en parle.
+        if (p.site() != null) data.world().site(p.site()).ifPresent(s -> fr.crusadecraft.core.city.CityRumors.add(server, s, p.female() ? "deces_f" : "deces", p.name(), p.age()));
         if (p.inWorld()) {
             ServerLevel level = server.getLevel(ResourceKey.create(Registries.DIMENSION, p.worldDim()));
             Entity e = level == null ? null : level.getEntity(p.id());

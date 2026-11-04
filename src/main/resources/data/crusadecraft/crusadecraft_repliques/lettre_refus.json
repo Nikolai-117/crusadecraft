@@ -1,10 +1,10 @@
 {
   "moment": "lettre_refus",
   "lines": [
-    "Non. {traite}, pas maintenant, et pas à ces conditions. Vous avez encore à faire vos preuves.",
-    "{destinataire}, je vous sais gré de l'offre, mais {de} ne signera pas : {traite}. Revenez avec de meilleurs arguments.",
-    "Ma cour rirait de moi si je signais cela. {traite} ? Gagnez d'abord notre estime.",
-    "Je ne vous connais pas assez pour vous donner ma parole. Pas de {traite} entre nous, pour l'heure.",
+    "Non. Pas de ça, pas maintenant, et pas à ces conditions. Vous avez encore à faire vos preuves.",
+    "{destinataire}, je vous sais gré de l'offre, mais {de} ne signera pas {traite}. Revenez avec de meilleurs arguments.",
+    "Ma cour rirait de moi si je signais {traite}. Gagnez d'abord notre estime.",
+    "Je ne vous connais pas assez pour vous donner ma parole. Pas de ça entre nous, pour l'heure.",
     "Mes conseillers vous remercient de les avoir fait rire. Ma réponse est non."
   ]
 }

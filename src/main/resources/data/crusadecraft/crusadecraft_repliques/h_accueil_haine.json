@@ -1,0 +1,12 @@
+{
+ "moment": "accueil",
+ "avis_max": -55,
+ "lines": [
+  "Gardes ! Non, attendez. Ils ne viendraient pas à temps. Partez.",
+  "Ne me touchez pas. N'approchez pas. Ne me parlez pas.",
+  "Je sais ce que vous avez fait. Toute la ville le sait.",
+  "Vous ne trouverez plus un ami ici, {joueur}. Plus un seul.",
+  "Un jour, quelqu'un vous le fera payer. J'espère être là.",
+  "Crachez encore sur nos morts, tant que vous y êtes."
+ ]
+}

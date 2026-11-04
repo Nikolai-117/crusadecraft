@@ -1,0 +1,11 @@
+{
+ "moment": "avis",
+ "avis_max": -15,
+ "lines": [
+  "Vous voulez vraiment le savoir ? Ce n'est pas très joli.",
+  "Je vous tolère. Ne m'en demandez pas davantage.",
+  "Je ne vous fais pas confiance. Personne ne vous fait confiance.",
+  "Vous n'êtes pas le bienvenu. Je croyais que ça se voyait.",
+  "On n'oublie pas, ici. Ni ce que vous avez fait, ni qui l'a vu."
+ ]
+}

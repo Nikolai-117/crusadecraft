@@ -1,0 +1,11 @@
+{
+ "moment": "accueil",
+ "traits": [
+  "CALME"
+ ],
+ "lines": [
+  "Rien ne presse. Rien n'a jamais pressé.",
+  "On se fait du souci pour bien peu de chose, à {ville}.",
+  "Respirez. Voilà. Ça ira mieux."
+ ]
+}

@@ -33,7 +33,7 @@ import net.minecraftforge.network.simple.SimpleChannel;
  * (distance, droits, état) avant d'agir.
  */
 public final class CrusadeNetwork {
-    private static final String VERSION = "26";
+    private static final String VERSION = "27";
 
     public static final SimpleChannel CHANNEL = NetworkRegistry.newSimpleChannel(
             ResourceLocation.tryParse(CrusadeCraft.MOD_ID + ":main"),
@@ -257,6 +257,18 @@ public final class CrusadeNetwork {
                 .encoder(fr.crusadecraft.network.packet.PlanPackets.Choose::encode).decoder(fr.crusadecraft.network.packet.PlanPackets.Choose::decode)
                 .consumerMainThread(fr.crusadecraft.network.packet.PlanPackets.Choose::handle).add();
         // P38 : le bâton d'intendant, les bâtiments des villes et leur fonction.
+        CHANNEL.messageBuilder(fr.crusadecraft.network.packet.InhabitantPackets.Open.class, nextId++, NetworkDirection.PLAY_TO_CLIENT)
+                .encoder(fr.crusadecraft.network.packet.InhabitantPackets.Open::encode).decoder(fr.crusadecraft.network.packet.InhabitantPackets.Open::decode)
+                .consumerMainThread(fr.crusadecraft.network.packet.InhabitantPackets.Open::handle).add();
+        CHANNEL.messageBuilder(fr.crusadecraft.network.packet.InhabitantPackets.Say.class, nextId++, NetworkDirection.PLAY_TO_SERVER)
+                .encoder(fr.crusadecraft.network.packet.InhabitantPackets.Say::encode).decoder(fr.crusadecraft.network.packet.InhabitantPackets.Say::decode)
+                .consumerMainThread(fr.crusadecraft.network.packet.InhabitantPackets.Say::handle).add();
+        CHANNEL.messageBuilder(fr.crusadecraft.network.packet.InhabitantPackets.OpenEgg.class, nextId++, NetworkDirection.PLAY_TO_CLIENT)
+                .encoder(fr.crusadecraft.network.packet.InhabitantPackets.OpenEgg::encode).decoder(fr.crusadecraft.network.packet.InhabitantPackets.OpenEgg::decode)
+                .consumerMainThread(fr.crusadecraft.network.packet.InhabitantPackets.OpenEgg::handle).add();
+        CHANNEL.messageBuilder(fr.crusadecraft.network.packet.InhabitantPackets.ChooseEgg.class, nextId++, NetworkDirection.PLAY_TO_SERVER)
+                .encoder(fr.crusadecraft.network.packet.InhabitantPackets.ChooseEgg::encode).decoder(fr.crusadecraft.network.packet.InhabitantPackets.ChooseEgg::decode)
+                .consumerMainThread(fr.crusadecraft.network.packet.InhabitantPackets.ChooseEgg::handle).add();
         CHANNEL.messageBuilder(fr.crusadecraft.network.packet.NationPackets.Request.class, nextId++, NetworkDirection.PLAY_TO_SERVER)
                 .encoder(fr.crusadecraft.network.packet.NationPackets.Request::encode).decoder(fr.crusadecraft.network.packet.NationPackets.Request::decode)
                 .consumerMainThread(fr.crusadecraft.network.packet.NationPackets.Request::handle).add();

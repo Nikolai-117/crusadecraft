@@ -1,0 +1,11 @@
+{
+ "moment": "accueil",
+ "traits": [
+  "HUMBLE"
+ ],
+ "lines": [
+  "Oh, je ne suis personne. Demandez plutôt à {voisin}.",
+  "Je fais de mon mieux. Ce n'est pas grand-chose.",
+  "On me remercie trop. Ça me gêne."
+ ]
+}

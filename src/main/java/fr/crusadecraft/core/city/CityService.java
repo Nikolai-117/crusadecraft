@@ -134,6 +134,11 @@ public final class CityService {
         return (long) (b.max().getX() - b.min().getX() + 1) * (b.max().getY() - b.min().getY() + 1) * (b.max().getZ() - b.min().getZ() + 1);
     }
 
+    /** La place de la ville, pour ceux qui n'habitent pas ce paquet (une pose, un essai). */
+    public static BlockPos plazaOf(Site site) {
+        return plaza(site);
+    }
+
     /** La place de la ville, où les familles passent la journée : le marché, la mairie, sinon le centre. */
     static BlockPos plaza(Site site) {
         for (BuildingFunction f : new BuildingFunction[]{BuildingFunction.MARCHE, BuildingFunction.MAIRIE}) {
@@ -193,6 +198,8 @@ public final class CityService {
     public static int recognize(ServerLevel level, Site site) {
         int[] box = box(site);
         int added = 0;
+        // P44 : les enseignes trouvées en chemin disent ce que sont leurs bâtiments.
+        Map<BlockPos, BuildingFunction> signs = new HashMap<>();
         BlockPos.MutableBlockPos m = new BlockPos.MutableBlockPos();
         for (int y = box[1]; y <= box[4] && added < RECOGNIZE_MAX; y++) {
             for (int z = box[2]; z <= box[5] && added < RECOGNIZE_MAX; z++) {
@@ -200,6 +207,7 @@ public final class CityService {
                     m.set(x, y, z);
                     if (!level.isLoaded(m)) continue;
                     BlockState st = level.getBlockState(m);
+                    if (st.getBlock() instanceof fr.crusadecraft.block.BuildingSignBlock sign) signs.put(m.immutable(), sign.function());
                     if (!(st.getBlock() instanceof DoorBlock) || st.getValue(DoorBlock.HALF) != DoubleBlockHalf.LOWER) continue;
                     if (buildingAt(site, m).isPresent()) continue;
                     Optional<BuildingScan.Result> r = BuildingScan.fromClick(level, m.immutable(), Direction.UP);
@@ -210,7 +218,12 @@ public final class CityService {
                 }
             }
         }
-        if (added > 0) data(level.getServer()).setDirty();
+        for (Map.Entry<BlockPos, BuildingFunction> e : signs.entrySet()) {
+            int before = site.buildings().size();
+            CitySigns.apply(level, site, e.getKey(), e.getValue());
+            added += site.buildings().size() - before;
+        }
+        if (added > 0 || !signs.isEmpty()) data(level.getServer()).setDirty();
         return added;
     }
 
@@ -251,19 +264,25 @@ public final class CityService {
             s.buildings().add(b);
         }
         b.setName(name == null ? "" : name.strip());
-        if (b.function() != function) {
-            dismiss(player.server, b);
-            b.setFunction(function);
-            if (function != null) settle(player.server, s, b, player.getRandom().nextLong());
-            // Un marché, une mairie : la place de la ville est là désormais.
-            if (function == BuildingFunction.MARCHE || function == BuildingFunction.MAIRIE) respread(player.server, s);
-        }
+        assign(player.server, s, b, function, player.getRandom().nextLong());
         data(player.server).setDirty();
         if (function == null) return Outcome.ok(Component.translatable("crusadecraft.city.cleared"));
         int people = b.occupants().size();
         return Outcome.ok(people == 0 && full(player.server, s)
                 ? Component.translatable("crusadecraft.city.defined.full", Component.translatable(function.key()), PEOPLE_MAX)
                 : Component.translatable("crusadecraft.city.defined", Component.translatable(function.key()), people));
+    }
+
+    /** Ce bâtiment change de fonction : ses gens s'en vont, ceux de la nouvelle arrivent. */
+    public static void assign(MinecraftServer server, Site s, CityBuilding b, BuildingFunction function, long seed) {
+        if (b.function() == function) return;
+        dismiss(server, b);
+        b.setFunction(function);
+        CityWork.forgetPoints(b.id());
+        if (function != null) settle(server, s, b, seed);
+        // Un marché, une mairie : la place de la ville est là désormais.
+        if (function == BuildingFunction.MARCHE || function == BuildingFunction.MAIRIE) respread(server, s);
+        data(server).setDirty();
     }
 
     /** Retire un bâtiment de la ville : ses gens s'en vont. */
@@ -338,7 +357,7 @@ public final class CityService {
         if (f == null || full(server, site)) return;
         LineageState state = data(server).lineage();
         Community c = community(server, site);
-        LineageGenerator gen = new LineageGenerator(seed);
+        LineageGenerator gen = CityPeople.generator(server, site, seed);
         if (f.dwelling()) {
             ServerLevel level = server.getLevel(ResourceKey.create(Registries.DIMENSION, site.dimension()));
             List<BlockPos> spots = level == null ? List.of() : outdoorSpots(level, site);
@@ -347,6 +366,7 @@ public final class CityService {
                 // Sans rue trouvée autour de la place, la famille passe la journée devant chez elle : jamais tous au même bloc.
                 p.setWork(spots.isEmpty() ? b.spot() : spots.get(random.nextInt(spots.size())));
                 b.occupants().add(p.id());
+                CityPeople.dress(server, site, p, f, random);
             }
         } else {
             boolean men = f == BuildingFunction.CASERNE || f == BuildingFunction.TOUR || f == BuildingFunction.CHATEAU;
@@ -354,8 +374,10 @@ public final class CityService {
                 Person p = gen.worker(state, c, f.role(), men);
                 p.setWork(b.spot());
                 b.occupants().add(p.id());
+                CityPeople.dress(server, site, p, f, new java.util.Random(seed + i));
             }
         }
+        CityPeople.applyNotables(server, site);
         data(server).setDirty();
     }
 
@@ -417,11 +439,13 @@ public final class CityService {
                     if (!p.get().alive()) {
                         if (b.function().dwelling()) continue;
                         long seen = DEAD_SINCE.computeIfAbsent(id, k -> day);
-                        if (day > seen) {
-                            Person next = new LineageGenerator(level.random.nextLong()).worker(state, community(server, site), b.function().role(),
+                        if (day > seen && state.person(b.occupants().get(i)).filter(Person::alive).isEmpty()) {
+                            Person next = CityPeople.generator(server, site, level.random.nextLong()).worker(state, community(server, site), b.function().role(),
                                     b.function() == BuildingFunction.CASERNE || b.function() == BuildingFunction.TOUR);
                             next.setWork(b.spot());
                             b.occupants().set(i, next.id());
+                            CityPeople.dress(server, site, next, b.function(), new java.util.Random(level.random.nextLong()));
+                            CityRumors.add(server, site, "RELEVE", next.name(), p.get().name());
                             DEAD_SINCE.remove(id);
                             data.setDirty();
                         }
@@ -435,12 +459,30 @@ public final class CityService {
                         }
                     } else if (restock && !b.function().dwelling()) {
                         Entity e = level.getEntity(id);
-                        if (e instanceof Villager v) v.restock();
+                        // P43 : l'étal se regarnit de ce que la ville a réellement.
+                        if (e instanceof Villager v) CityLife.restock(v, site);
                     }
                 }
             }
             if (restock) RESTOCKED.put(site.id(), day);
             sweep(level, site);
+            housekeeping(server, level, site);
+        }
+    }
+
+    /** P42 : ce qu'on balaie en passant (bulles orphelines) ; les fiches d'avant cette version se remplissent. */
+    private static void housekeeping(MinecraftServer server, ServerLevel level, Site site) {
+        int[] b = box(site);
+        var all = new net.minecraft.world.phys.AABB(b[0], b[1] - 8, b[2], b[3] + 1, b[4] + ABOVE, b[5] + 1);
+        CityBubbles.sweep(level, all);
+        CitySeats.sweep(level, all);
+        for (CityBuilding x : site.buildings()) {
+            for (UUID id : x.occupants()) {
+                if (data(server).lineage().person(id).map(p -> p.site() == null).orElse(false)) {
+                    CityPeople.backfill(server, site);
+                    return;
+                }
+            }
         }
     }
 
@@ -465,6 +507,12 @@ public final class CityService {
         return out;
     }
 
+    /** Pour les essais : le villageois qu'on vient de faire apparaître, que le monde ne trouve pas encore. */
+    public static Entity spawnedForTests(UUID id) {
+        java.lang.ref.WeakReference<Entity> r = SPAWNED.get(id);
+        return r == null ? null : r.get();
+    }
+
     /** P39 : les villageois d'une ville dont la personne n'est plus au registre s'en vont (un bâtiment qui a changé de fonction). */
     static int sweep(ServerLevel level, Site site) {
         int[] b = box(site);
@@ -479,7 +527,7 @@ public final class CityService {
     }
 
     /** Un joueur est-il assez près de la ville pour qu'elle vive ? */
-    static boolean watched(ServerLevel level, Site site) {
+    public static boolean watched(ServerLevel level, Site site) {
         int[] b = box(site);
         for (ServerPlayer p : level.players()) {
             if (p.getX() >= b[0] - NEAR && p.getX() <= b[3] + NEAR && p.getZ() >= b[2] - NEAR && p.getZ() <= b[5] + NEAR) return true;
@@ -489,7 +537,11 @@ public final class CityService {
 
     /** Fait apparaître cette personne dans son bâtiment, en villageois de Comes Alive (sinon de Minecraft). */
     static Optional<Entity> spawn(ServerLevel level, LineageState state, Person p, CityBuilding b, int index) {
-        BlockPos at = b.spot();
+        return spawnAt(level, state, p, b.spot(), b.function(), post(b, index));
+    }
+
+    /** P42 : la même chose, à cet endroit, et sans bâtiment s'il le faut. */
+    static Optional<Entity> spawnAt(ServerLevel level, LineageState state, Person p, BlockPos at, BuildingFunction function, String post) {
         Optional<Entity> e;
         if (McaBridge.isReady()) {
             McaBridge.syncTree(level, state, List.of(p));
@@ -508,7 +560,7 @@ public final class CityService {
         if (e.isEmpty()) return e;
         e.get().addTag(TAG);
         SPAWNED.put(p.id(), new java.lang.ref.WeakReference<>(e.get()));
-        if (!b.function().dwelling() && p.age() >= 16) CityTrades.apply(e.get(), b.function(), post(b, index), level.random);
+        if (!function.dwelling() && p.age() >= 16) CityTrades.apply(e.get(), function, post, level.random);
         p.setInWorld(level.dimension().location(), at);
         return e;
     }

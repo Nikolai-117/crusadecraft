@@ -1,0 +1,19 @@
+{
+ "variants": {
+  "facing=north": {
+   "model": "crusadecraft:block/enseigne_maison"
+  },
+  "facing=east": {
+   "model": "crusadecraft:block/enseigne_maison",
+   "y": 90
+  },
+  "facing=south": {
+   "model": "crusadecraft:block/enseigne_maison",
+   "y": 180
+  },
+  "facing=west": {
+   "model": "crusadecraft:block/enseigne_maison",
+   "y": 270
+  }
+ }
+}

@@ -40,7 +40,7 @@ public final class NationGameTests {
 
     private static NationDef def(String key, String name, String folder, boolean player, NationDef.Tie... ties) {
         return new NationDef(key, name, folder, TitleRank.ROYAUME, 0x6D3A7A, AiPersonality.MARCHAND, AiFaith.FIDELE, player, name,
-                player ? null : new NationDef.Ruler("Ruprecht", false, 50), List.of(ties), NationDef.Culture.NONE, List.of("Une histoire."), Map.of());
+                player ? null : new NationDef.Ruler("Ruprecht", false, 50), List.of(ties), NationDef.Culture.NONE, List.of("Une histoire."), Map.of(), List.of());
     }
 
     private static final NationDef.Tie FRIENDS_B = new NationDef.Tie("essaib", List.of(Treaty.COMMERCE, Treaty.NON_AGRESSION), 1);
@@ -103,6 +103,8 @@ public final class NationGameTests {
             w.check(siteB != null && b.id().equals(siteB.owner()), "la ville de Varenhold ne lui revient pas");
             w.check(!b.landless() && b.ownProvinces().size() == 1, "sa nation n'a pas de terre");
             w.check(b.sovereign() == null, "une nation de l'ordinateur a reçu un souverain");
+            w.check(fr.crusadecraft.core.world.Territory.ownerAt(server, level.dimension().location(), at.getX() + 0.5, at.getZ() + 0.5).map(b.id()::equals).orElse(false),
+                    "l'emprise de la ville n'est pas à sa nation");
             w.check(data.world().realms().stream().noneMatch(r -> r.place().equalsIgnoreCase("grunbach")), "une nation a été fondée au nom de la ville");
             w.check(data.lineage().community(siteB.community()).map(c -> b.id().equals(c.realm())).orElse(false), "les gens de la ville ne servent pas sa nation");
 
@@ -215,7 +217,11 @@ public final class NationGameTests {
             w.check(NationService.act(w.ruler, b.id(), NationService.OP_INSULT, -1, null).success(), "l'insulte se refuse");
             w.check(fr.crusadecraft.core.ai.AiBrain.opinion(server, b, a) < warmer, "l'insulte ne change rien");
 
-            // Tant que le joueur règne, l'ordinateur ne signe rien pour lui, et les autres lui écrivent.
+            // Tant que le joueur règne, l'ordinateur ne signe rien pour lui, et les autres lui écrivent. Un royaume
+            // ordinaire, sans fichier, lui écrit aussi (trouvé en jeu : il faisait planter la journée).
+            AiRealm plain = WorldEditService.addRealm(server, level, "Ordinaire", "", TitleRank.DUCHE, 0x224466, AiFaith.FIDELE, AiPersonality.MARCHAND,
+                    w.center.getX() + 1500, w.center.getZ());
+            plain.discover(w.ruler.getUUID(), today);
             a.mail().clear();
             rel.breakTreaty(Treaty.COMMERCE);
             rel.setLastAiLetterDay(Long.MIN_VALUE);

@@ -1,0 +1,13 @@
+{
+ "moment": "accueil",
+ "age_min": 14,
+ "age_max": 17,
+ "lines": [
+  "Quoi ? Je fais rien. J'étais déjà là.",
+  "Ici, il ne se passe jamais rien. Vous avez vu d'autres villes, vous ?",
+  "Un jour, je pars. Je ne sais pas où, mais je pars.",
+  "Mon père veut que je reprenne le métier. Comme si j'avais demandé.",
+  "Vous embauchez ? Pour n'importe quoi, je veux dire. Ailleurs.",
+  "J'ai pas le droit de traîner ici. Vous n'avez rien vu."
+ ]
+}

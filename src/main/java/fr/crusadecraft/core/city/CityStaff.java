@@ -222,7 +222,7 @@ public final class CityStaff {
         }
         CrusadeNetwork.toPlayer(player, new BuildingPackets.OpenCity(site.id(), site.name(), CityService.people(player.server, site), CityService.PEOPLE_MAX,
                 CityService.allowed(player, site), rows,
-                CrusadeSavedData.get(player.server).world().realm(site.owner()).filter(r -> !r.nation().isEmpty()).map(fr.crusadecraft.core.world.AiRealm::id).orElse(null)));
+                CrusadeSavedData.get(player.server).world().realm(site.owner()).filter(r -> !r.nation().isEmpty()).map(fr.crusadecraft.core.world.AiRealm::id).orElse(null), CityLife.summary(site)));
     }
 
     /** Les cadres des bâtiments de la ville où est le joueur (rien hors d'une ville). */

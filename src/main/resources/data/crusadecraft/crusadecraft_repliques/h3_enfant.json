@@ -1,0 +1,29 @@
+{
+ "moment": "enfant",
+ "lines": [
+  "Dis, t'es un chevalier ? Tu as tué un dragon ?",
+  "Maman a dit de pas parler aux gens. Mais toi, t'es rigolo.",
+  "Je sais où {voisin} cache ses pommes. Je dirai pas. Enfin, si tu me donnes quelque chose.",
+  "Tu veux jouer ? Faut courir vite, sinon t'as perdu.",
+  "C'est quoi, ton épée ? Elle coupe ? Je peux toucher ?",
+  "Quand je serai grand, je ferai comme toi. Enfin, je sais pas ce que tu fais.",
+  "Pourquoi t'as une tête comme ça ?",
+  "J'ai vu un rat gros comme ça ! Non, comme ça !",
+  "Je suis pas petit, j'ai {age} ans.",
+  "Chut. On se cache. Tu m'as pas vu.",
+  "T'as des bonbons ? Personne n'a jamais de bonbons.",
+  "{voisin} m'a dit que si je mange pas ma soupe, je vais rester petit. C'est vrai ?",
+  "Mon père, il est plus fort que toi.",
+  "La ville ? Elle est grande. Je connais tous les chats.",
+  "Je sais pas. Faut demander à ma mère.",
+  "J'ai un secret. Mais c'est un secret.",
+  "Le roi, il mange du gâteau tous les jours, c'est {voisin} qui l'a dit.",
+  "J'ai perdu une dent ! Tu veux voir ?",
+  "On a trouvé un truc mort derrière le marché. C'était super.",
+  "Tu sais siffler ? Moi oui. Écoute. Attends. Non, attends.",
+  "Pourquoi ? Mais pourquoi ? Oui, mais pourquoi ?",
+  "C'est pas moi. J'ai rien fait. C'était déjà cassé.",
+  "Quand il pleut, on fait des barrages dans la rue. Après, on se fait gronder.",
+  "{voisin} est méchant. Il a dit que j'étais trop petit pour porter un seau."
+ ]
+}

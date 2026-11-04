@@ -1,0 +1,19 @@
+{
+ "variants": {
+  "facing=north": {
+   "model": "crusadecraft:block/enseigne_hospice"
+  },
+  "facing=east": {
+   "model": "crusadecraft:block/enseigne_hospice",
+   "y": 90
+  },
+  "facing=south": {
+   "model": "crusadecraft:block/enseigne_hospice",
+   "y": 180
+  },
+  "facing=west": {
+   "model": "crusadecraft:block/enseigne_hospice",
+   "y": 270
+  }
+ }
+}

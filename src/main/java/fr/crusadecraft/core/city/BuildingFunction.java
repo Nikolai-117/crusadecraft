@@ -32,7 +32,13 @@ public enum BuildingFunction {
     ECURIE(Role.PAYSAN, List.of("minecraft:leatherworker"), Trades.VANILLA, "minecraft:saddle", 0x9A6B3F),
     BIBLIOTHEQUE(Role.ERUDIT, List.of("minecraft:librarian"), Trades.VANILLA, "minecraft:book", 0x8FA8C9),
     ATELIER(Role.ARTISAN, List.of("minecraft:mason"), Trades.VANILLA, "minecraft:stonecutter", 0xA88B5E),
-    ENTREPOT(Role.MARCHAND, List.of("minecraft:none"), Trades.NONE, "minecraft:barrel", 0xC9A86A);
+    ENTREPOT(Role.MARCHAND, List.of("minecraft:none"), Trades.NONE, "minecraft:barrel", 0xC9A86A),
+    /** P44 : les enfants y vont le matin, et la ville produit dix pour cent de plus. */
+    ECOLE(Role.ERUDIT, List.of("minecraft:librarian"), Trades.VANILLA, "minecraft:writable_book", 0x7FA6D9),
+    /** P44 : la même farine fait plus de pain. */
+    MOULIN(Role.ARTISAN, List.of("minecraft:farmer"), Trades.VANILLA, "minecraft:sugar", 0xD8D2C0),
+    /** P44 : on y meurt moins. */
+    HOSPICE(Role.CLERC, List.of("minecraft:cleric"), Trades.VANILLA, "minecraft:golden_apple", 0xE8A0A0);
 
     /** Ce que vendent ses gens : les échanges de leur métier, ceux du boulanger, du tavernier, du forgeron, ou rien. */
     public enum Trades { NONE, VANILLA, BAKER, TAVERN, SMITH }

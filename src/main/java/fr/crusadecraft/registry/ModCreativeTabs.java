@@ -33,6 +33,8 @@ public final class ModCreativeTabs {
                 output.accept(ModItems.BORNAGE.get());
                 output.accept(ModItems.PLAN.get());
                 output.accept(ModItems.INTENDANT.get());
+                output.accept(ModItems.OEUF_HABITANT.get());
+                for (var sign : ModItems.SIGNS.values()) output.accept(sign.get());
             })
             .build());
 

@@ -1,0 +1,21 @@
+{
+ "moment": "ville",
+ "lines": [
+  "{ville} ? On y est bien, si on ne regarde pas de trop près.",
+  "Ici, tout le monde sait tout sur tout le monde. C'est reposant, on n'a rien à raconter.",
+  "On y vit, on y travaille, on s'y plaint. Comme ailleurs, sauf que là, c'est chez nous.",
+  "Le marché est honnête, enfin, autant qu'un marché peut l'être.",
+  "{voisin} vous dira que tout allait mieux avant. {voisin} a tort.",
+  "J'ai vu {autre_ville} une fois. C'est plus grand. Ce n'est pas mieux.",
+  "Il y a pire que {ville}. Je ne sais pas où, mais il y a pire.",
+  "Ce qui manque, ici ? Des bras, de l'argent et de la patience. Dans cet ordre.",
+  "Le soir, à {ville}, il ne reste que la taverne et les chiens.",
+  "On dit que les rues ont été tracées par un ivrogne. Moi, je crois qu'il était sobre, et que c'est pire.",
+  "Quand il pleut, ça ruisselle jusqu'à la place. Quand il ne pleut pas, ça sent.",
+  "Vous n'avez pas encore tout vu. Il n'y a pas grand-chose à voir, mais vous ne l'avez pas vu.",
+  "Tout le monde ici est cousin de quelqu'un. Faites attention à ce que vous dites.",
+  "On ne meurt pas d'ennui à {ville}. On en vieillit, c'est différent.",
+  "Si vous restez un hiver, vous resterez toujours. C'est ce qu'on dit, et je n'ai vu personne partir.",
+  "La ville n'a pas changé depuis mon enfance. Ni les gens, d'ailleurs. Ni leurs dettes."
+ ]
+}

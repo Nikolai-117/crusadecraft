@@ -38,6 +38,47 @@ public final class Person {
     /** P38 : où elle passe la journée (sa boutique, la place de sa ville), au lieu de la cour ; {@code null} : la cour. */
     private BlockPos work;
 
+    /** P42 : son métier dans sa ville (le nom d'une {@code BuildingFunction}), vide s'il n'en a pas. */
+    private String job = "";
+    /** P42 : la ville où il vit (identifiant de la construction), s'il vit dans une ville. */
+    private UUID site;
+    /** P42 : la clé de son personnage écrit d'avance (« levanzia/dolhimluith/ilaria »), vide pour un habitant ordinaire. */
+    private String notable = "";
+    /** P42 : ce que cette personne pense de chaque joueur, de -100 à 100. */
+    private final java.util.Map<UUID, Integer> opinions = new java.util.HashMap<>();
+    /** P43 : ses économies, et sa faim (0 : repu ; 100 : affamé). */
+    private int coins;
+    private int hunger;
+
+    public String job() { return job; }
+    public void setJob(String job) { this.job = job == null ? "" : job; }
+    public UUID site() { return site; }
+    public void setSite(UUID site) { this.site = site; }
+    public String notable() { return notable; }
+    public void setNotable(String notable) { this.notable = notable == null ? "" : notable; }
+    public int coins() { return coins; }
+    public void setCoins(int coins) { this.coins = Math.max(0, coins); }
+    public int hunger() { return hunger; }
+    public void setHunger(int hunger) { this.hunger = Math.max(0, Math.min(100, hunger)); }
+
+    /** Ce qu'elle pense de ce joueur. */
+    public int opinionOf(UUID player) {
+        return opinions.getOrDefault(player, 0);
+    }
+
+    /** Elle change d'avis sur ce joueur. */
+    public void addOpinion(UUID player, int delta) {
+        int v = Math.max(-100, Math.min(100, opinionOf(player) + delta));
+        if (v == 0) opinions.remove(player);
+        else opinions.put(player, v);
+    }
+
+    /** Le temps passe : les rancunes et les amitiés s'effacent peu à peu. */
+    public void forgetABit() {
+        opinions.replaceAll((k, v) -> v > 0 ? v - 1 : v < 0 ? v + 1 : 0);
+        opinions.values().removeIf(v -> v == 0);
+    }
+
     /** Traits au plus, et longueur de la biographie. */
     public static final int MAX_TRAITS = 4, BIO_MAX = 300;
 
@@ -138,6 +179,16 @@ public final class Person {
             t.put("worldPos", NbtUtils.writeBlockPos(worldPos));
         }
         if (work != null) t.put("work", NbtUtils.writeBlockPos(work));
+        if (!job.isEmpty()) t.putString("job", job);
+        put(t, "site", site);
+        if (!notable.isEmpty()) t.putString("notable", notable);
+        if (coins != 0) t.putInt("coins", coins);
+        if (hunger != 0) t.putInt("hunger", hunger);
+        if (!opinions.isEmpty()) {
+            CompoundTag o = new CompoundTag();
+            for (java.util.Map.Entry<UUID, Integer> e : opinions.entrySet()) o.putInt(e.getKey().toString(), e.getValue());
+            t.put("opinions", o);
+        }
         return t;
     }
 
@@ -176,6 +227,19 @@ public final class Person {
             p.worldPos = NbtUtils.readBlockPos(t.getCompound("worldPos"));
         }
         if (t.contains("work")) p.work = NbtUtils.readBlockPos(t.getCompound("work"));
+        p.job = t.getString("job");
+        p.site = get(t, "site");
+        p.notable = t.getString("notable");
+        p.coins = t.getInt("coins");
+        p.hunger = t.getInt("hunger");
+        CompoundTag o = t.getCompound("opinions");
+        for (String k : o.getAllKeys()) {
+            try {
+                p.opinions.put(UUID.fromString(k), o.getInt(k));
+            } catch (IllegalArgumentException ignored) {
+                // clé illisible : ignorée
+            }
+        }
         return p;
     }
 }

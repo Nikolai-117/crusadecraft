@@ -105,7 +105,7 @@ public final class LineageState {
         return p.surname().isEmpty() ? p.name() : p.name() + " " + p.surname();
     }
 
-    static boolean elides(String place) {
+    public static boolean elides(String place) {
         if (place == null || place.isEmpty()) return false;
         char c = Character.toLowerCase(place.charAt(0));
         return "aeiouyéèêâîôûh".indexOf(c) >= 0 && !place.toLowerCase(java.util.Locale.ROOT).startsWith("hau")

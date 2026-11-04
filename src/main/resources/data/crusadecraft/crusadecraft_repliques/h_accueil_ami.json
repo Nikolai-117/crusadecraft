@@ -1,0 +1,16 @@
+{
+ "moment": "accueil",
+ "avis_min": 25,
+ "lines": [
+  "{joueur} ! Quel plaisir. Tout le monde parle de vous en bien, ici.",
+  "Ah, vous revoilà. Ça me fait plaisir, sincèrement.",
+  "Pour vous, je trouve toujours un moment, {joueur}.",
+  "Asseyez-vous si vous voulez. Vous êtes ici chez vous.",
+  "On vous apprécie, à {ville}, vous savez. Ne le répétez pas, ça vous monterait à la tête.",
+  "Mon ami ! Enfin, si je peux dire ça comme ça.",
+  "Je disais justement à {voisin} que vous étiez quelqu'un de bien.",
+  "Revenez quand vous voulez. La porte n'est jamais fermée pour vous.",
+  "Vous êtes de ceux pour qui on se lève, {joueur}.",
+  "J'ai pensé à vous hier, sans savoir pourquoi. Et vous voilà."
+ ]
+}

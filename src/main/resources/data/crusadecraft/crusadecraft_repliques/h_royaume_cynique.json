@@ -1,0 +1,12 @@
+{
+ "moment": "royaume",
+ "traits": [
+  "CYNIQUE",
+  "INCONSTANT"
+ ],
+ "lines": [
+  "Les rois passent, les impôts restent.",
+  "{souverain} ou un autre, ce n'est pas lui qui rentrera le foin.",
+  "On m'a expliqué la grandeur de {pays}. J'attends encore de la voir dans mon assiette."
+ ]
+}

@@ -314,6 +314,55 @@ données du mod (fichier `crusadecraft.dat` du monde) restent sur place, sans ef
     premier coin (sans le casser), la boîte suit ton viseur, **clic droit** sur le coin opposé : l'écran de la fonction
     s'ouvre pour ce bâtiment. Accroupi + clic droit vers le ciel efface les coins. Le clic droit sur une porte reste le
     raccourci : le bâtiment se reconnaît tout seul.
+53o quater. **Levànzia, Varenhold et les autres nations** (3.9) : une nation est un royaume écrit d'avance, dans un fichier
+    de `crusadecraft/nations/` (nom, couleur, tempérament, histoire, culture, souverain, liens, habitants). Il existe dès
+    le départ, sans terre. Une ville rangée dans son dossier de plans (`Levenzia`, `Varenhold`) lui revient, où qu'on la
+    pose ; une ville déjà posée sous son ancien nom s'y fond sans rien perdre. Sur une **nation de joueur**, celui qui pose
+    la première ville prend la couronne : l'ordinateur ne décide plus pour elle, les autres souverains t'écrivent, et tu
+    réponds depuis son écran (au Sceptre, ou `/crusade nation`) : histoire, villes, relations, traités, présents, guerre,
+    courrier. Les autres nations vivent seules, comme tout royaume de l'ordinateur. Commandes : `/crusade nation liste`,
+    `voir <clé>`, `couronne <clé>`, `abdiquer`, `recharger` (après avoir corrigé un fichier), `restaurer` (remet ceux du
+    jar, les anciens restent en `.bak`). Une nouvelle version du mod n'écrase jamais tes fichiers.
+53o quinquies. **Parler aux habitants** (3.10) : **accroupi, clic droit** sur un habitant : son portrait, son métier, son caractère,
+    sa vie, sa famille, ce qu'il pense de toi, et des sujets de conversation (bonjour, métier, ville, royaume, nouvelles,
+    famille, ce qu'il pense de toi) et son étal. Ce ne sont pas des réponses d'une intelligence artificielle : plus de
+    900 textes écrits d'avance, choisis selon qui parle et qui écoute. Le clic droit ordinaire reste celui de Comes Alive.
+    Les personnages écrits dans le fichier de la nation prennent le premier poste de leur fonction, avec leur nom, leur
+    vie et leurs propres répliques. Ils portent tous les noms de la culture de leur nation.
+53o sexies. **L'œuf d'habitant** (3.10), dans l'onglet créatif : clic droit sur un bloc, choisis la ville et le métier : il naît là,
+    inscrit au registre, à un poste s'il y en a un. L'œuf retient le choix ; accroupi, tu le changes. Une ville en reçoit
+    80 au plus.
+53o septies. **Leur journée** (3.11) : tant qu'un joueur est là, chacun fait son ouvrage, l'outil en main : le fermier moissonne et
+    ressème les champs autour de sa ferme, le forgeron va de l'enclume au four, le boulanger porte son pain à la taverne,
+    les gardes font leur ronde (certains la nuit), l'archer guette, les habitants vont au marché et paient, on déjeune à
+    midi, on boit le soir, les enfants jouent, les anciens ne travaillent plus. Ils parlent : une bulle au-dessus de leur
+    tête, jamais plus de quelques-unes à la fois (`repliques = false` dans la configuration pour la couper).
+53o octies. **Leurs réserves et leur vie** (3.11), jour après jour, même si personne ne regarde : chaque ville a une bourse et
+    des réserves (blé, pain, viande, repas, fer, outils, pierre, bois, cuir, livres), visibles sur l'écran de la ville et
+    avec `/crusade ville info`. Ce qui manque à la ville manque aux étals, ce qui est rare coûte plus cher, et ce que tu y
+    achètes ou vends fait bouger la bourse. Une partie de la richesse va au royaume en impôt. Un traité de commerce amène
+    des convois. On se marie, on a des enfants, un adulte sans métier reprend le poste d'un mort ; une ville qui a faim
+    plusieurs jours perd des familles, une ville qui mange bien en attire. Tout ça se raconte : demande « Des nouvelles ? ».
+    Un habitant se souvient de ce que tu lui fais : un coup, un meurtre, une vente, une conversation ; ça s'efface lentement.
+53o nonies. **Les enseignes** (3.12) : un bloc par fonction (dix-neuf, dont l'école, le moulin et l'hospice, nouveaux), dans l'onglet
+    créatif, ou à fabriquer : un panneau et l'objet du métier (panneau + pain pour la boulangerie). Pose-la dans un bâtiment :
+    il prend cette fonction et ses gens arrivent, sans bâton ni commande. Retire-la : ils s'en vont. Hors d'une ville, on te
+    propose d'en fonder une, et les enseignes déjà posées y sont lues. Une enseigne placée dans une schématique ou une ville
+    bâtie à la main est reconnue toute seule quand la ville se pose. Sans mur autour (un étal, un champ), le bâtiment fait
+    neuf blocs de côté autour d'elle. École : les enfants y vont le matin, et la ville produit 10 % de plus. Moulin : la même
+    farine fait moitié plus de pain. Hospice : une fois sur deux, on y échappe à la mort.
+53o decies. **La décoration sert à quelque chose** (3.12), de Minecraft ou de n'importe quel mod (on la reconnaît à son nom) :
+    - **S'asseoir** : les mains vides, clic droit sur une chaise, un banc, un tabouret, le siège du conseil ou un escalier à
+      l'endroit. Maj pour se lever. Les habitants s'assoient aussi à la taverne, au temple, à midi et le soir.
+    - **Dormir** : un lit dans un logis, et la nuit quelqu'un s'y couche.
+    - **La cloche** : sonne-la dans une ville, et tout le monde vient pendant une minute.
+    - **Le comptoir** : les mains vides, clic droit sur une table ou un comptoir d'un bâtiment où l'on vend : son étal s'ouvre.
+    - **Fours, enclumes, rayonnages, foin, tables** : ils font produire jusqu'à deux fois plus dans le bâtiment de leur métier.
+    - **Coffres, tonneaux, caisses** : huit places de plus dans les réserves, par meuble, dans toute la ville.
+    - **Puits, fontaines, chaudrons** : les habitants y font la corvée d'eau.
+    - **Fleurs, lanternes, tapis, bannières, statues** : le **charme** de la ville, de 0 à 100 (écran de la ville). Il
+      attire des visiteurs, donc de l'argent, et des familles dans les maisons vides. Il se mesure lentement, en parcourant
+      la ville tant qu'un joueur y est. `meublesUtiles = false` dans la configuration coupe tout ça.
 53p. **Voir la ville avant de la poser** (3.7) : une ville entière (tes fichiers, Dolhimluith, Grunbach, et les villes
     générées par style) s'affiche **en entier en transparence** là où tu vises, comme au bâton de construction de
     MineColonies : toits, façades et murailles d'abord, puis le terrain, jusqu'à 250 000 blocs. Elle arrive en

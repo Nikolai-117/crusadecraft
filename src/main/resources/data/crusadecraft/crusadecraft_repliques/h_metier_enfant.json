@@ -1,0 +1,10 @@
+{
+ "moment": "metier",
+ "age_max": 15,
+ "lines": [
+  "Moi je travaille pas, je suis petit. Mais je sais siffler.",
+  "Je garde les poules. Enfin, elles me gardent.",
+  "Plus tard, je serai soldat. Ou boulanger. Ou les deux.",
+  "Je porte des trucs pour {voisin}. Il me donne une pomme."
+ ]
+}

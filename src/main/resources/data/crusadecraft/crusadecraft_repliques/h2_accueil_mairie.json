@@ -1,0 +1,12 @@
+{
+ "moment": "accueil",
+ "metiers": [
+  "MAIRIE"
+ ],
+ "lines": [
+  "Une réclamation ? Le jour du marché. Autre chose ?",
+  "Si c'est pour la chèvre de {voisin}, le dossier est clos.",
+  "Vous tombez bien, il me manque une signature. N'importe laquelle.",
+  "{ville} tient debout, et c'est écrit. J'ai les papiers."
+ ]
+}

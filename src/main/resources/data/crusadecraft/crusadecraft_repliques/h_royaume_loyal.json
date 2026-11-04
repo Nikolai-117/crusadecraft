@@ -1,0 +1,12 @@
+{
+ "moment": "royaume",
+ "traits": [
+  "LOYAL",
+  "ZELE"
+ ],
+ "lines": [
+  "{souverain} est bon pour nous, et je le dirai à qui voudra l'entendre.",
+  "J'irais à la guerre pour {pays}. Je n'en ai pas envie, mais j'irais.",
+  "Il faut être fier de {pays}. Sinon, à quoi bon y payer ses impôts ?"
+ ]
+}

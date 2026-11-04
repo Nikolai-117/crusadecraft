@@ -712,7 +712,10 @@ public final class SiteService {
         data.world().add(site);
         data.setDirty();
         CrusadeCraft.LOGGER.info("CrusadeCraft : ville importée {} posée en {} ({})", city.get().name(), ground, founded ? "nouvelle nation" : owner);
-        if (nation.isPresent()) fr.crusadecraft.core.nation.NationService.onCityPlaced(player, nation.get()).ifPresent(player::sendSystemMessage);
+        if (nation.isPresent()) {
+            fr.crusadecraft.core.nation.NationService.claim(server, site, nation.get().id());
+            fr.crusadecraft.core.nation.NationService.onCityPlaced(player, nation.get()).ifPresent(player::sendSystemMessage);
+        }
         return founded ? Component.translatable("crusadecraft.city.imported.founded", city.get().name())
                 : Component.translatable("crusadecraft.city.imported.joined", city.get().name(), fr.crusadecraft.core.diplomacy.DiplomacyService.name(server, owner));
     }

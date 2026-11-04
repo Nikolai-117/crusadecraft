@@ -45,6 +45,8 @@ public final class CityCommands {
                 .withStyle(ChatFormatting.GOLD));
         out.add(Component.translatable("crusadecraft.city.hud.counts", s.buildings().size(), decided, CityService.people(player.server, s))
                 .withStyle(ChatFormatting.GRAY));
+        out.add(Component.literal(CityLife.summary(s)).withStyle(ChatFormatting.GRAY));
+        for (Site.Rumor r : s.rumors()) out.add(Component.translatable("crusadecraft.city.cmd.rumor", r.text()).withStyle(ChatFormatting.DARK_GRAY));
         Optional<CityBuilding> b = CityService.buildingAt(s, player.blockPosition());
         if (b.isPresent()) {
             BuildingFunction f = b.get().function();

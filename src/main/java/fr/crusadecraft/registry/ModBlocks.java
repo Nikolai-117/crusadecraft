@@ -17,6 +17,18 @@ import net.minecraftforge.registries.RegistryObject;
 public final class ModBlocks {
     public static final DeferredRegister<Block> BLOCKS = DeferredRegister.create(ForgeRegistries.BLOCKS, CrusadeCraft.MOD_ID);
 
+    /** P44 : une enseigne par fonction d'un bâtiment. */
+    public static final java.util.Map<fr.crusadecraft.core.city.BuildingFunction, RegistryObject<Block>> SIGNS = signs();
+
+    private static java.util.Map<fr.crusadecraft.core.city.BuildingFunction, RegistryObject<Block>> signs() {
+        java.util.Map<fr.crusadecraft.core.city.BuildingFunction, RegistryObject<Block>> out = new java.util.EnumMap<>(fr.crusadecraft.core.city.BuildingFunction.class);
+        for (fr.crusadecraft.core.city.BuildingFunction f : fr.crusadecraft.core.city.BuildingFunction.values()) {
+            out.put(f, BLOCKS.register("enseigne_" + f.name().toLowerCase(java.util.Locale.ROOT), () -> new fr.crusadecraft.block.BuildingSignBlock(
+                    BlockBehaviour.Properties.of().mapColor(MapColor.WOOD).strength(1.5F, 3.0F).sound(SoundType.WOOD).noOcclusion().noCollission(), f)));
+        }
+        return out;
+    }
+
     public static final RegistryObject<Block> THRONE = BLOCKS.register("throne", () -> new ThroneBlock(
             BlockBehaviour.Properties.of().mapColor(MapColor.COLOR_RED).strength(2.5F, 6.0F)
                     .sound(SoundType.WOOD).noOcclusion()));

@@ -67,6 +67,8 @@ minecraft {
             // -Pshots_v5=true : les villes de Romain posées au plan, puis le bâton d'intendant (P38).
             property 'crusadecraft.worldshots.v5', (project.findProperty('shots_v5') == 'true').toString()
             property 'crusadecraft.worldshots.v5only', (project.findProperty('shots_only') ?: '').toString()
+            // -Pshots_v6=true : les nations, les habitants et leur journée (P41 à P43).
+            property 'crusadecraft.worldshots.v6', (project.findProperty('shots_v6') == 'true').toString()
         }
 
         server {

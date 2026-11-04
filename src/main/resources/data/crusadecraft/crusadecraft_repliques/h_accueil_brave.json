@@ -1,0 +1,11 @@
+{
+ "moment": "accueil",
+ "traits": [
+  "BRAVE"
+ ],
+ "lines": [
+  "Je n'ai pas peur, moi. C'est peut-être un défaut.",
+  "S'il faut y aller, j'y vais. Il faut juste me dire où.",
+  "On ne recule pas, à {ville}. Enfin, moi non."
+ ]
+}

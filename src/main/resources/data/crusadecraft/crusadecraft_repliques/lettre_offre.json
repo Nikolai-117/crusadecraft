@@ -1,15 +1,15 @@
 {
   "moment": "lettre_offre",
   "lines": [
-    "{destinataire}, nos deux couronnes ont plus à gagner à s'entendre qu'à s'observer. Je vous propose ceci : {traite}. Mon scribe attend votre sceau.",
-    "De {souverain}, de {de}, à {destinataire}. Les routes sont longues et les hivers aussi : scellons ensemble {traite}, et qu'on en parle encore dans cent ans.",
+    "{destinataire}, nos deux couronnes ont plus à gagner à s'entendre qu'à s'observer. Je vous propose {traite}. Mon scribe attend votre sceau.",
+    "De {souverain}, pour {de}, à {destinataire}. Les routes sont longues et les hivers aussi : scellons ensemble {traite}, et qu'on en parle encore dans cent ans.",
     "Mes conseillers me pressent de vous écrire. Pour une fois, je suis de leur avis : {traite}, entre {de} et {a}. Répondez vite, ils vont finir par y prendre goût.",
-    "{destinataire}, je ne suis pas homme à tourner autour du pot. {traite}. Oui ou non ?",
+    "{destinataire}, je n'ai pas l'habitude de tourner autour du pot. Je vous propose {traite}. Oui ou non ?",
     "J'ai fait relire nos anciens accords. Ils sont courts, et vieux. Je vous offre mieux : {traite}, sous nos deux sceaux.",
-    "Le messager qui vous porte ceci a usé trois chevaux. Faites qu'il ne les ait pas usés pour rien : {traite}, entre nos deux royaumes.",
+    "Le messager qui vous porte ceci a usé trois chevaux. Faites qu'il ne les ait pas usés pour rien : je vous propose {traite}.",
     "Nos marchands se parlent déjà, nos soldats se saluent aux frontières. Il ne manque que nos signatures : {traite}.",
-    "On dit de {a} qu'il tient parole. On dit la même chose de {de}. Mettons-le par écrit : {traite}.",
-    "{destinataire}, je préfère vous savoir à mes côtés que dans mon dos. C'est pourquoi je vous propose ceci : {traite}.",
-    "Il y a des signatures qui coûtent moins cher que des garnisons. En voici une : {traite}. J'attends la vôtre."
+    "On dit que {a} tient parole. On dit la même chose {du}. Mettons-le par écrit : {traite}.",
+    "{destinataire}, je préfère vous savoir à mes côtés que dans mon dos. C'est pourquoi je vous propose {traite}.",
+    "Il y a des signatures qui coûtent moins cher que des garnisons. Voici la mienne, pour {traite}. J'attends la vôtre."
   ]
 }

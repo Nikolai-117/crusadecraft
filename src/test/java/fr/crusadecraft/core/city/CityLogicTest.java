@@ -52,7 +52,7 @@ class CityLogicTest {
         assertFalse(BuildingFunction.FORGE.dwelling());
         assertEquals(BuildingFunction.TAVERNE, BuildingFunction.byName("TAVERNE"));
         assertEquals(null, BuildingFunction.byName("PORT"));
-        assertEquals(16, BuildingFunction.values().length);
+        assertEquals(19, BuildingFunction.values().length);
     }
 
     @Test

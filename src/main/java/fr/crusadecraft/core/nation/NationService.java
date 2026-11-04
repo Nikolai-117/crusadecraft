@@ -83,6 +83,9 @@ public final class NationService {
         }
         for (NationDef def : fresh) applyTies(server, def);
         for (NationDef def : NationBook.all()) migrate(server, def);
+        for (Site s : data.world().sites()) {
+            if (s.imported() && data.world().realm(s.owner()).map(r -> !r.nation().isEmpty()).orElse(false)) claim(server, s, s.owner());
+        }
         if (!fresh.isEmpty()) data.setDirty();
     }
 
@@ -135,6 +138,22 @@ public final class NationService {
             ZoneService.absorb(server, old.get(), nation.get().id());
             CrusadeCraft.LOGGER.info("CrusadeCraft : {} rejoint sa nation, {}", s.name(), def.name());
         }
+    }
+
+    /**
+     * L'emprise d'une ville d'une nation est à elle, même posée sur les terres d'un autre : on y lit son nom en entrant, et
+     * ses frontières la suivent sur la carte. Le reste de ces terres ne change pas de main.
+     */
+    public static int claim(MinecraftServer server, Site site, UUID realm) {
+        int[] b = CityService.box(site);
+        int x0 = fr.crusadecraft.core.world.TerritoryMap.cellOf(b[0]), x1 = fr.crusadecraft.core.world.TerritoryMap.cellOf(b[3]);
+        int z0 = fr.crusadecraft.core.world.TerritoryMap.cellOf(b[2]), z1 = fr.crusadecraft.core.world.TerritoryMap.cellOf(b[5]);
+        long[] keys = new long[(x1 - x0 + 1) * (z1 - z0 + 1)];
+        int n = 0;
+        for (int x = x0; x <= x1; x++) for (int z = z0; z <= z1; z++) keys[n++] = fr.crusadecraft.core.world.TerritoryMap.key(x, z);
+        int changed = data(server).world().borders().paint(site.dimension(), keys, realm);
+        if (changed > 0) data(server).setDirty();
+        return changed;
     }
 
     /** La ville et ses gens passent à ce royaume. */
@@ -254,7 +273,7 @@ public final class NationService {
             rel.addOpinion(other.id(), OpinionModifier.of(OpinionReason.TRAITE_SIGNE, today, 1));
         }
         receive(server, mine, other, yes ? Repliques.Moment.LETTRE_ACCEPTE : Repliques.Moment.LETTRE_REFUS, null, 0,
-                Map.of("traite", Component.translatable(treaty.key()).getString()));
+                Map.of("traite", fr.crusadecraft.core.logic.Fr.key(treaty.key() + ".un")));
         data(server).setDirty();
         return yes ? Outcome.ok(Component.translatable("crusadecraft.nation.treaty.signed", Component.translatable(treaty.key()), title(other)))
                 : new Outcome(false, Component.translatable("crusadecraft.nation.treaty.refused", title(other), Component.translatable(treaty.key()), opinion,
@@ -337,7 +356,7 @@ public final class NationService {
         String body = letterText(server, to, from, moment, treaty, gold, extra, random);
         long today = RealmService.currentDay(server);
         Component subject = Component.translatable("crusadecraft.nation.mail.subject." + moment.name().toLowerCase(java.util.Locale.ROOT));
-        NationMail mail = new NationMail(java.util.UUID.randomUUID(), from.id(), title(from).getString(), subject.getString(), body, treaty, gold, today,
+        NationMail mail = new NationMail(java.util.UUID.randomUUID(), from.id(), fr.crusadecraft.core.logic.Fr.of(title(from)), fr.crusadecraft.core.logic.Fr.of(subject), body, treaty, gold, today,
                 today + OFFER_DAYS);
         to.mail().add(0, mail);
         ServerPlayer ruler = server.getPlayerList().getPlayer(to.sovereign());
@@ -348,13 +367,17 @@ public final class NationService {
 
     static String letterText(MinecraftServer server, AiRealm to, AiRealm from, Repliques.Moment moment, Treaty treaty, int gold, Map<String, String> extra, Random random) {
         Component line = Repliques.pick(Repliques.entries(), moment, Role.SOUVERAIN, from.ruler().traits(), random);
-        String text = line == null ? "…" : line.getString();
+        String text = line == null ? "…" : fr.crusadecraft.core.logic.Fr.of(line);
         Map<String, String> vars = new java.util.HashMap<>(extra);
-        vars.put("de", title(from).getString());
-        vars.put("a", title(to).getString());
+        String de = fr.crusadecraft.core.logic.Fr.of(AiNames.realmThe(from.rank(), from.place()));
+        vars.put("de", de);
+        vars.put("De", Character.toUpperCase(de.charAt(0)) + de.substring(1));
+        vars.put("du", fr.crusadecraft.core.logic.Fr.of(AiNames.realmOf(from.rank(), from.place())));
+        vars.put("a", fr.crusadecraft.core.logic.Fr.of(AiNames.realmThe(to.rank(), to.place())));
+        vars.put("du_a", fr.crusadecraft.core.logic.Fr.of(AiNames.realmOf(to.rank(), to.place())));
         vars.put("souverain", from.ruler().name());
         vars.put("destinataire", to.ruler().name());
-        if (treaty != null) vars.put("traite", Component.translatable(treaty.key()).getString());
+        if (treaty != null) vars.put("traite", fr.crusadecraft.core.logic.Fr.key(treaty.key() + ".un"));
         vars.put("or", vars.getOrDefault("or", Integer.toString(gold)));
         return NationRules.fill(text, vars);
     }
@@ -374,10 +397,16 @@ public final class NationService {
         for (NationDef def : NationBook.all()) renewTies(server, def, today);
         for (AiRealm mine : data.world().realms()) {
             if (mine.sovereign() == null) continue;
-            for (AiRealm other : data.world().realms()) {
+            // Une lettre par jour, pas davantage ; les vieux amis écrivent les premiers.
+            List<AiRealm> writers = new ArrayList<>(data.world().realms());
+            java.util.Collections.shuffle(writers, random);
+            writers.sort(Comparator.comparing((AiRealm o) -> o.nation().isEmpty()));
+            int before = mine.mail().size();
+            for (AiRealm other : writers) {
                 if (other == mine || other.landless() || other.sovereign() != null || mine.mail().size() >= MAIL_MAX) continue;
                 if (other.nation().isEmpty() && !other.discoveredBy(mine.sovereign())) continue;
                 letter(server, mine, other, today, random);
+                if (mine.mail().size() > before) break;
             }
         }
         data.setDirty();
@@ -421,7 +450,10 @@ public final class NationService {
 
     /** Ce qu'il propose : d'abord ce que leur amitié ancienne prévoit, puis ce que son tempérament et son opinion lui dictent. */
     private static Treaty offerFor(MinecraftServer server, AiRealm mine, AiRealm other, Relation rel, int opinion, long today) {
-        for (NationDef d : List.of(def(other).orElse(null), def(mine).orElse(null)).stream().filter(java.util.Objects::nonNull).toList()) {
+        List<NationDef> written = new ArrayList<>();
+        def(other).ifPresent(written::add);
+        def(mine).ifPresent(written::add);
+        for (NationDef d : written) {
             for (NationDef.Tie tie : d.ties()) {
                 String partner = d.key().equals(other.nation()) ? mine.nation() : other.nation();
                 if (!tie.with().equalsIgnoreCase(partner)) continue;
@@ -463,7 +495,7 @@ public final class NationService {
             List<Integer> treaties = new ArrayList<>();
             for (Treaty t : Treaty.values()) if (rel.has(t, today)) treaties.add(t.ordinal());
             boolean canWar = mine && !realm.landless() && !o.landless() && WarService.declarationProblem(server, realm.id(), o.id()) == null;
-            relations.add(new NationView.Rel(o.id(), title(o).getString(), o.color(), status.ordinal(), AiBrain.opinion(server, o, realm), treaties, rel.war(), canWar));
+            relations.add(new NationView.Rel(o.id(), fr.crusadecraft.core.logic.Fr.of(title(o)), o.color(), status.ordinal(), AiBrain.opinion(server, o, realm), treaties, rel.war(), canWar));
         }
         List<NationView.Mail> mail = new ArrayList<>();
         if (mine) {
@@ -471,7 +503,7 @@ public final class NationService {
                 mail.add(new NationView.Mail(m.id(), m.sender(), m.subject(), m.body(), m.treaty() == null ? -1 : m.treaty().ordinal(), m.gold(), m.day()));
             }
         }
-        return new NationView(realm.id(), title(realm).getString(), realm.color(), mine, realm.ruler().name(), def.map(d -> d.culture().name()).orElse(""),
+        return new NationView(realm.id(), fr.crusadecraft.core.logic.Fr.of(title(realm)), realm.color(), mine, realm.ruler().name(), def.map(d -> d.culture().name()).orElse(""),
                 def.map(d -> d.culture().faith()).orElse(""), realm.gold(), realm.prestige(), def.map(NationDef::history).orElse(List.of()), cities, relations, mail);
     }
 }

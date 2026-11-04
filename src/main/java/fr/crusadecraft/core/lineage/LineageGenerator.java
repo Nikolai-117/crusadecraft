@@ -28,6 +28,26 @@ public final class LineageGenerator {
 
     private final Random random;
     private final NameGenerator names;
+    /** P42 : les prénoms et les noms de famille d'une culture ; vides : ceux du mod. */
+    private List<String> men = List.of(), women = List.of(), families = List.of();
+
+    /** Les gens qu'il crée portent désormais les noms de cette culture. */
+    public LineageGenerator withNames(List<String> men, List<String> women, List<String> families) {
+        this.men = men;
+        this.women = women;
+        this.families = families;
+        return this;
+    }
+
+    private String first(boolean female) {
+        List<String> pool = female ? women : men;
+        return pool.isEmpty() ? names.personName(female) : pool.get(random.nextInt(pool.size()));
+    }
+
+    private String family() {
+        List<String> pool = families.isEmpty() ? SURNAMES : families;
+        return pool.get(random.nextInt(pool.size()));
+    }
 
     public LineageGenerator(long seed) {
         this.random = new Random(seed);
@@ -190,7 +210,7 @@ public final class LineageGenerator {
                 added.add(p);
                 continue;
             }
-            String surname = SURNAMES.get(random.nextInt(SURNAMES.size()));
+            String surname = family();
             Person head = resident(state, c, random.nextInt(10) < 3, 20 + random.nextInt(36));
             head.setSurname(surname);
             head.setRole(kind.roles().get(random.nextInt(kind.roles().size())));
@@ -231,13 +251,13 @@ public final class LineageGenerator {
     public Person worker(LineageState state, Community c, Role role, boolean mostlyMen) {
         boolean female = mostlyMen ? random.nextInt(6) == 0 : random.nextInt(3) == 0;
         Person p = resident(state, c, female, 20 + random.nextInt(36));
-        p.setSurname(SURNAMES.get(random.nextInt(SURNAMES.size())));
+        p.setSurname(family());
         p.setRole(role);
         return p;
     }
 
     private Person resident(LineageState state, Community c, boolean female, int age) {
-        Person p = new Person(UUID.randomUUID(), names.personName(female), female, age);
+        Person p = new Person(UUID.randomUUID(), first(female), female, age);
         p.setCommunity(c.id());
         p.setRealm(c.realm());
         state.add(p);
@@ -252,7 +272,7 @@ public final class LineageGenerator {
      */
     public Person spouse(LineageState state, Person p) {
         int age = Math.max(16, p.age() - 5 + random.nextInt(11));
-        Person s = new Person(UUID.randomUUID(), names.personName(!p.female()), !p.female(), age);
+        Person s = new Person(UUID.randomUUID(), first(!p.female()), !p.female(), age);
         s.setSurname(p.house() != null ? noble() : p.surname());
         s.setRealm(p.realm());
         s.setCommunity(p.community());
@@ -274,7 +294,7 @@ public final class LineageGenerator {
         Person father = parent.female() ? other.orElse(null) : parent, mother = parent.female() ? parent : other.orElse(null);
         UUID house = father != null && father.house() != null ? father.house() : mother != null ? mother.house() : null;
         boolean female = random.nextBoolean();
-        Person child = new Person(UUID.randomUUID(), names.personName(female), female, age);
+        Person child = new Person(UUID.randomUUID(), first(female), female, age);
         child.setHouse(house);
         child.setSurname(house != null ? "" : (father != null ? father.surname() : parent.surname()));
         child.setFather(father == null ? null : father.id());

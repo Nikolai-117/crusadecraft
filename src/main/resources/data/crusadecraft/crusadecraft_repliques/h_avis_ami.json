@@ -1,0 +1,11 @@
+{
+ "moment": "avis",
+ "avis_min": 15,
+ "lines": [
+  "Vous êtes quelqu'un de bien. Je le dis, et je ne le dis pas souvent.",
+  "Vous pouvez compter sur moi, {joueur}.",
+  "Toute la rue vous apprécie. Moi le premier.",
+  "Revenez souvent. La ville est plus gaie quand vous y êtes.",
+  "Si j'avais une fille à marier… Non, oubliez ça."
+ ]
+}

@@ -1,0 +1,19 @@
+{
+ "variants": {
+  "facing=north": {
+   "model": "crusadecraft:block/enseigne_boucherie"
+  },
+  "facing=east": {
+   "model": "crusadecraft:block/enseigne_boucherie",
+   "y": 90
+  },
+  "facing=south": {
+   "model": "crusadecraft:block/enseigne_boucherie",
+   "y": 180
+  },
+  "facing=west": {
+   "model": "crusadecraft:block/enseigne_boucherie",
+   "y": 270
+  }
+ }
+}

@@ -51,6 +51,10 @@ public final class NationCommands {
     public static Outcome reload(MinecraftServer server) {
         List<String> errors = NationBook.reload();
         NationService.ensure(server);
+        // Une correction du fichier se voit aussitôt sur les personnages déjà dans le monde.
+        for (fr.crusadecraft.core.build.Site s : fr.crusadecraft.data.CrusadeSavedData.get(server).world().sites()) {
+            if (fr.crusadecraft.core.city.CityService.city(s)) fr.crusadecraft.core.city.CityPeople.applyNotables(server, s);
+        }
         if (!errors.isEmpty()) return Outcome.no("crusadecraft.nation.reload.errors", String.join(" ; ", errors));
         return Outcome.ok(Component.translatable("crusadecraft.nation.reload.done", NationBook.all().size()));
     }

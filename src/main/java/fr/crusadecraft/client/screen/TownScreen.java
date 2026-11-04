@@ -113,6 +113,7 @@ public class TownScreen extends Screen {
             y += ROW;
         }
         g.disableScissor();
+        Ui.fitted(g, font, Component.literal(city.economy()), left + 12, top + 34, W - 24, Ui.TEXT_MUTED);
         Ui.wrapped(g, font, Component.translatable("crusadecraft.city.screen.help"), left + 12, top + H - 46, W - 24, Ui.TEXT_MUTED);
         super.render(g, mx, my, partial);
     }

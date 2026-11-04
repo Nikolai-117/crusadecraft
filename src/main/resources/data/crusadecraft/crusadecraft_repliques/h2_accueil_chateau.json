@@ -1,0 +1,12 @@
+{
+ "moment": "accueil",
+ "metiers": [
+  "CHATEAU"
+ ],
+ "lines": [
+  "Vous entrez, vous ressortez, et je vous compte dans les deux sens.",
+  "Le château n'ouvre pas pour tout le monde. Pour vous, on verra.",
+  "On ne se promène pas ici sans raison. Vous en avez une ?",
+  "{souverain} tient ces murs. Moi, je les tiens pour {souverain}."
+ ]
+}

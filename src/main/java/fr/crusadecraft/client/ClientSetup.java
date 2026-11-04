@@ -28,6 +28,12 @@ public final class ClientSetup {
                 fr.crusadecraft.client.hud.CityHud::render);
     }
 
+    /** P42 : l'œuf d'habitant prend les couleurs du royaume et du métier qu'il fera naître. */
+    @SubscribeEvent
+    public static void onItemColors(net.minecraftforge.client.event.RegisterColorHandlersEvent.Item event) {
+        event.register((stack, layer) -> 0xFF000000 | fr.crusadecraft.item.InhabitantEggItem.tint(stack, layer), fr.crusadecraft.registry.ModItems.OEUF_HABITANT.get());
+    }
+
     @SubscribeEvent
     public static void onKeys(RegisterKeyMappingsEvent event) {
         event.register(KeyBindings.REALM_MENU);

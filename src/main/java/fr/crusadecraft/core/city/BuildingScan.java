@@ -255,7 +255,9 @@ public final class BuildingScan {
         if (b == Blocks.CRAFTING_TABLE) return "etabli";
         if (b instanceof CandleBlock) return "bougie";
         if (b == Blocks.TARGET) return "cible";
-        return null;
+        // P45 : les meubles et les décorations des mods, reconnus à leur nom.
+        Furnishing.Kind k = Furnishing.of(net.minecraft.core.registries.BuiltInRegistries.BLOCK.getKey(b).getPath());
+        return k == null ? null : k.key();
     }
 
     /**
@@ -268,6 +270,7 @@ public final class BuildingScan {
         int smith = n(f, "enclume") + n(f, "haut_fourneau") + n(f, "forge");
         if (n(f, "enclume") > 0 && smith >= 2 || n(f, "haut_fourneau") >= 2) return BuildingFunction.FORGE;
         if (n(f, "alambic") > 0 || n(f, "autel") > 0 || n(f, "bougie") >= 4) return BuildingFunction.TEMPLE;
+        if (n(f, "lutrin") > 0 && n(f, "siege") >= 4) return BuildingFunction.ECOLE;
         if (n(f, "livres") >= 8 || n(f, "lutrin") > 0 && n(f, "livres") >= 3) return BuildingFunction.BIBLIOTHEQUE;
         if (n(f, "cible") > 0) return BuildingFunction.CASERNE;
         if (n(f, "fumoir") > 0 && beds == 0) return BuildingFunction.BOUCHERIE;

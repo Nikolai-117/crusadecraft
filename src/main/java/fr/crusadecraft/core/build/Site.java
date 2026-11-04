@@ -45,6 +45,27 @@ public final class Site {
     /** P38 : les bâtiments de la ville, délimités au bâton d'intendant, et leur fonction. */
     private final java.util.List<fr.crusadecraft.core.city.CityBuilding> buildings = new java.util.ArrayList<>();
 
+    /** P42 : une chose qu'on raconte en ville, et le jour où c'est arrivé. */
+    public record Rumor(String text, long day) {}
+
+    private final java.util.List<Rumor> rumors = new java.util.ArrayList<>();
+
+    public java.util.List<Rumor> rumors() { return rumors; }
+
+    /** P45 : son charme, de 0 à 100, mesuré en parcourant la ville : ce que valent ses fleurs, ses lanternes, ses tapis. */
+    private int charm;
+
+    public int charm() { return charm; }
+    public void setCharm(int charm) { this.charm = charm; }
+
+    /** P43 : ses réserves et sa bourse. Une ville d'avant cette version reçoit de quoi commencer. */
+    private fr.crusadecraft.core.city.CityEconomy economy;
+
+    public fr.crusadecraft.core.city.CityEconomy economy() {
+        if (economy == null) economy = fr.crusadecraft.core.city.CityEconomy.fresh();
+        return economy;
+    }
+
     public Site(UUID id, SiteKind kind, String name, UUID owner, ResourceLocation dimension, BlockPos anchor, Direction facing,
                 int color, boolean instant, long createdDay) {
         this.id = id;
@@ -152,6 +173,18 @@ public final class Site {
             for (var b : buildings) l.add(b.save());
             t.put("buildings", l);
         }
+        if (!rumors.isEmpty()) {
+            net.minecraft.nbt.ListTag l = new net.minecraft.nbt.ListTag();
+            for (Rumor r : rumors) {
+                CompoundTag x = new CompoundTag();
+                x.putString("text", r.text());
+                x.putLong("day", r.day());
+                l.add(x);
+            }
+            t.put("rumors", l);
+        }
+        if (economy != null) t.put("economy", economy.save());
+        if (charm != 0) t.putInt("charm", charm);
         return t;
     }
 
@@ -173,6 +206,10 @@ public final class Site {
         }
         net.minecraft.nbt.ListTag l = t.getList("buildings", net.minecraft.nbt.Tag.TAG_COMPOUND);
         for (int k = 0; k < l.size(); k++) s.buildings.add(fr.crusadecraft.core.city.CityBuilding.load(l.getCompound(k)));
+        net.minecraft.nbt.ListTag ru = t.getList("rumors", net.minecraft.nbt.Tag.TAG_COMPOUND);
+        for (int k = 0; k < ru.size(); k++) s.rumors.add(new Rumor(ru.getCompound(k).getString("text"), ru.getCompound(k).getLong("day")));
+        if (t.contains("economy")) s.economy = fr.crusadecraft.core.city.CityEconomy.load(t.getCompound("economy"));
+        s.charm = t.getInt("charm");
         return s;
     }
 }

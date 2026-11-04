@@ -104,6 +104,7 @@ public final class CrusadeConfig {
         public final ForgeConfigSpec.IntValue mourningDays;
         public final ForgeConfigSpec.IntValue feastDays;
         public final ForgeConfigSpec.BooleanValue repliques;
+        public final ForgeConfigSpec.BooleanValue usefulFurniture;
         public final ForgeConfigSpec.BooleanValue civActive;
         public final ForgeConfigSpec.BooleanValue aiHosts;
         public final ForgeConfigSpec.IntValue hostSpeed;
@@ -369,6 +370,8 @@ public final class CrusadeConfig {
                     .define("routines", true);
             repliques = b.comment("Ils disent de temps en temps une réplique (banquet, deuil, guerre, cour) aux joueurs tout proches.",
                     "Les répliques se changent par datapack : data/<espace>/crusadecraft_repliques/*.json.").define("repliques", true);
+            usefulFurniture = b.comment("Les meubles servent : s'asseoir, dormir, sonner la cloche pour rassembler une ville, commercer au comptoir.")
+                    .define("meublesUtiles", true);
             feastDays = b.comment("Jours du monde entre deux banquets d'un même royaume.").defineInRange("joursEntreBanquets", 7, 1, 365);
             mourningDays = b.comment("Jours de deuil à la mort d'un chef de maison du royaume (0 : pas de deuil).").defineInRange("joursDeDeuil", 3, 0, 60);
             b.pop();

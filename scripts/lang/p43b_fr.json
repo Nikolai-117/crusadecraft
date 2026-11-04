@@ -1,0 +1,18 @@
+{
+  "crusadecraft.city.talk.topic.avis": "Ton avis sur moi ?",
+  "crusadecraft.city.rumor.convoi": "un convoi est arrivé %s, avec %s",
+  "crusadecraft.city.rumor.deces": "%s est mort, à %s ans",
+  "crusadecraft.city.rumor.deces_f": "%s est morte, à %s ans",
+  "crusadecraft.city.rumor.releve": "%s a repris le poste de %s, qui n'est plus",
+  "crusadecraft.city.rumor.promotion": "%s a changé de métier : %s, désormais",
+  "crusadecraft.city.good.ble.du": "du blé",
+  "crusadecraft.city.good.pain.du": "du pain",
+  "crusadecraft.city.good.viande.du": "de la viande",
+  "crusadecraft.city.good.repas.du": "des repas",
+  "crusadecraft.city.good.fer.du": "du fer",
+  "crusadecraft.city.good.outils.du": "des outils",
+  "crusadecraft.city.good.pierre.du": "de la pierre",
+  "crusadecraft.city.good.bois.du": "du bois",
+  "crusadecraft.city.good.cuir.du": "du cuir",
+  "crusadecraft.city.good.livre.du": "des livres"
+}

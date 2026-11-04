@@ -1,0 +1,11 @@
+{
+ "moment": "royaume",
+ "age_min": 18,
+ "lines": [
+  "On m'a demandé de me réjouir de la paix. Je me réjouis. C'est fatigant.",
+  "Mon grand-père a fait la guerre pour {pays}. Mon père aussi. Moi, je préfère payer.",
+  "On nous dit que le trésor va bien. Ça ne se voit pas sur nos routes.",
+  "Quand {souverain} passera ici, on nettoiera la grand-rue. C'est déjà un bon motif pour le faire venir.",
+  "Il y a des pays où on ne paie pas d'impôts. Ils n'existent plus, remarquez."
+ ]
+}

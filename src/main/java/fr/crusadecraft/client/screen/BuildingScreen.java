@@ -24,7 +24,7 @@ import java.util.UUID;
  * et ses gens arrivent ; on peut aussi la lui retirer, ou retirer le bâtiment de la ville.
  */
 public class BuildingScreen extends Screen {
-    private static final int W = 380, H = 236, COLS = 4, TILE_W = 48, TILE_H = 38;
+    private static final int W = 380, H = 236, COLS = 5, TILE_W = 44, TILE_H = 38;
 
     private final UUID site;
     private final String city;

@@ -1,0 +1,13 @@
+{
+ "moment": "rumeur_vraie",
+ "lines": [
+  "Vous savez ce qu'on dit ? {rumeur}.",
+  "Toute la ville en parle : {rumeur}.",
+  "C'est {voisin} qui me l'a dit : {rumeur}.",
+  "Je ne devrais pas le répéter, mais {rumeur}.",
+  "Vous n'êtes pas au courant ? {rumeur}.",
+  "On ne parle que de ça depuis ce matin : {rumeur}.",
+  "Il paraît que… non, c'est vrai, je l'ai vu : {rumeur}.",
+  "Tenez-vous bien : {rumeur}."
+ ]
+}

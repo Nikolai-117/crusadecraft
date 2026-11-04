@@ -25,8 +25,12 @@ public final class Portraits {
             int cx = x + w / 2;
             int feet = y + h - 4;
             int scale = Math.max(20, (int) (h / 2.4));
+            // P42 : son nom est déjà écrit à côté, et il déborderait du cadre.
+            boolean shown = living.isCustomNameVisible();
+            living.setCustomNameVisible(false);
             InventoryScreen.renderEntityInInventoryFollowsMouse(g, cx, feet, scale,
                     (float) (cx - mouseX), (float) (feet - scale * 1.6 - mouseY), living);
+            living.setCustomNameVisible(shown);
         } else {
             silhouette(g, x, y, w, h);
         }

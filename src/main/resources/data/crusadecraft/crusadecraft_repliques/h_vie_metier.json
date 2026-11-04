@@ -1,0 +1,14 @@
+{
+ "moment": "vie_metier",
+ "age_min": 16,
+ "lines": [
+  "{Il|Elle} travaille dur et ne se plaint qu'à la taverne.",
+  "{Il|Elle} a déjà fait quatre métiers, et aucun ne lui a plu.",
+  "On dit qu'{il|elle} n'a jamais manqué une journée de travail, ni une occasion de le rappeler.",
+  "{Il|Elle} sait tout faire un peu, et rien tout à fait.",
+  "{Il|Elle} a appris son métier d'un maître qui {le|la} battait, et en parle encore avec tendresse.",
+  "{Il|Elle} a repris ce métier sans l'avoir choisi, et a fini par s'y faire.",
+  "{Il|Elle} met de côté chaque sou pour un projet dont {il|elle} ne dit rien.",
+  "On {le|la} consulte souvent, même pour ce qu'{il|elle} ne connaît pas."
+ ]
+}

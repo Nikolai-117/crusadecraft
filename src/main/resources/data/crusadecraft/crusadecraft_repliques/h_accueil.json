@@ -1,0 +1,30 @@
+{
+ "moment": "accueil",
+ "lines": [
+  "Bien le bonjour, {joueur}.",
+  "Tiens, {joueur}. Vous passez par {ville} ?",
+  "Bonjour. Vous cherchez quelque chose, ou quelqu'un ?",
+  "On se connaît ? Non ? Ça viendra, la ville est petite.",
+  "Belle journée pour traîner, n'est-ce pas ?",
+  "Je n'ai pas beaucoup de temps, mais dites toujours.",
+  "Vous n'êtes pas d'ici, vous. Ça se voit à la façon de regarder les toits.",
+  "Si vous cherchez la taverne, tout le monde finit par la trouver.",
+  "Je vous écoute, {joueur}.",
+  "Ah, de la visite. Ça change.",
+  "Faites attention où vous marchez, on vient de laver.",
+  "{prenom}, pour vous servir. Enfin, pour vous répondre.",
+  "On ne parle pas assez, à {ville}. Allez-y.",
+  "Un visage nouveau ! On va en parler ce soir, je vous préviens.",
+  "Vous avez l'air d'avoir marché longtemps.",
+  "Bonjour bonjour. Vous n'êtes pas des impôts, au moins ?",
+  "On m'a dit qu'un étranger traînait. C'est donc vous.",
+  "Dites-moi, {joueur}, ça va comment, ailleurs ?",
+  "Vous tombez bien, je n'avais personne à qui parler.",
+  "Vous tombez mal, mais vous n'y êtes pour rien.",
+  "Le temps de finir ceci et je suis à vous. Voilà, c'est fini.",
+  "À {ville}, on salue d'abord et on se méfie ensuite. Bonjour.",
+  "Vous avez une bonne tête. Je me suis déjà trompé, remarquez.",
+  "Encore vous ? Non, je plaisante. C'est la première fois, je crois.",
+  "Ça fait du bien de voir quelqu'un qui ne me doit rien."
+ ]
+}

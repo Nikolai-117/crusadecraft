@@ -1,0 +1,10 @@
+{
+ "moment": "famille",
+ "age_min": 18,
+ "lines": [
+  "{conjoint} dit que je parle trop. Vous voyez bien que non.",
+  "{conjoint} et moi, ça fait des années. On ne s'est toujours pas mis d'accord.",
+  "Sans {conjoint}, je ne sais pas ce que je ferais. Moins de vaisselle, sans doute.",
+  "{conjoint} va bien, merci. C'est moi qui m'inquiète, c'est mon rôle."
+ ]
+}
