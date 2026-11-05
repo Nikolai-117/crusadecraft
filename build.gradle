@@ -73,6 +73,14 @@ minecraft {
             property 'crusadecraft.worldshots.v7', (project.findProperty('shots_v7') == 'true').toString()
             property 'crusadecraft.worldshots.v7gardes', (project.findProperty('shots_v7_gardes') == 'true').toString()
             property 'crusadecraft.worldshots.v7civ', (project.findProperty('shots_v7_civ') == 'true').toString()
+            // -Pshots_v7_reel=true : le commerce, la guerre et les chantiers à vitesse réelle (P59), une bonne heure.
+            property 'crusadecraft.worldshots.v7reel', (project.findProperty('shots_v7_reel') == 'true').toString()
+            // -Pshots_open=dossier : ouvre une COPIE d'un monde, posée dans run-worldshots/saves, et la fait vivre (P59).
+            property 'crusadecraft.worldshots.open', (project.findProperty('shots_open') ?: '').toString()
+            // Un monde venu d'une instance a des blocs de mods absents ici : on accepte, c'est une copie.
+            if (project.findProperty('shots_open')) property 'fml.queryResult', 'confirm'
+            // -Pshots_uuid=... : jouer cette copie à la place de son souverain, pour voir ce qu'il voit. Aucune connexion : le client de développement n'a pas de compte.
+            if (project.findProperty('shots_uuid')) args '--uuid', project.findProperty('shots_uuid').toString()
         }
 
         server {

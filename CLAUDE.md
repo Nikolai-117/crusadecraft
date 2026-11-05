@@ -44,6 +44,8 @@ export JAVA_HOME="/chemin/vers/jdk-17"
 ./gradlew build                      # compile + tests unitaires (src/test) → build/libs/crusadecraft-<version>.jar
 rm -rf run-gametest/world && ./gradlew runGameTestServer   # GameTests en monde réel (MineColonies, MCA…)
 ./gradlew runWorldShots -Pshots_v5=true -Pshots_world=normal   # client de développement scénarisé + captures
+./gradlew runWorldShots -Pshots_v7=true -Pshots_v7_reel=true -Pshots_world=normal   # commerce, guerre, chantiers à vitesse réelle : une bonne heure
+./gradlew runWorldShots -Pshots_open=dossier -Pshots_uuid=...   # une COPIE de monde posée dans run-worldshots/saves (level.dat neutre, voir decisions.md, P59)
 ```
 
 - **Tout doit passer avant un commit** : les tests unitaires (210 environ) et les GameTests (83 environ). L'essai

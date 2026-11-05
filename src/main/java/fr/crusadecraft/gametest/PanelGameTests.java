@@ -896,6 +896,96 @@ public final class PanelGameTests {
         }
     }
 
+    @GameTest(template = TestWorld.TEMPLATE, setupTicks = TestWorld.SETUP_TICKS, batch = "p59_camp", timeoutTicks = 1600)
+    public static void leCampDuBlocus(GameTestHelper h) {
+        TestWorld w = TestWorld.realm(h, "CampA");
+        var server = h.getLevel().getServer();
+        var level = h.getLevel();
+        var data = CrusadeSavedData.get(server);
+        WorldEditService.grantForTests(w.ruler.getUUID(), true);
+        data.world().clear();
+        data.world().markGenerated(RealmService.currentDay(server));
+        NationBook.setForTests(List.of(nation("essaia", "Essaia"), nation("essaib", "Essaib")));
+        NationService.ensure(server);
+        AiRealm a = NationService.realm(server, "essaia").orElseThrow(), b = NationService.realm(server, "essaib").orElseThrow();
+        Site home = city(w, server, level, a, "Campee", 0, BuildingFunction.MARCHE, BuildingFunction.CASERNE);
+        data.diplomacy().between(a.id(), b.id()).setWar(true);
+        b.setGold(1000);
+        int men = fr.crusadecraft.core.city.CityCamps.men(home.extent()), radius = fr.crusadecraft.core.city.CityCamps.ring(home.extent());
+        java.util.Set<net.minecraft.world.level.ChunkPos> forced = new java.util.HashSet<>();
+        for (int i = 0; i < men; i++) {
+            int[] off = fr.crusadecraft.core.city.CityCamps.post(i, men, radius, 0);
+            forced.add(new net.minecraft.world.level.ChunkPos(home.anchor().offset(off[0], 0, off[1])));
+        }
+        for (var c : forced) level.setChunkForced(c.x, c.z, true);
+        // Un chunk forcé n'accueille d'entités actives qu'une fois ses voisins générés : quelques secondes, parfois davantage.
+        h.startSequence().thenWaitUntil(() -> {
+            for (int i = 0; i < men; i++) {
+                int[] off = fr.crusadecraft.core.city.CityCamps.post(i, men, radius, 0);
+                if (!level.isPositionEntityTicking(home.anchor().offset(off[0], 0, off[1]))) throw new net.minecraft.gametest.framework.GameTestAssertException("le poste " + i + " n'est pas prêt");
+            }
+        }).thenExecute(() -> h.runAfterDelay(1, () -> {
+            // Pas directement dans la séquence : elle rejouerait le test après un échec, sur des données déjà nettoyées.
+            try {
+                w.check(fr.crusadecraft.core.city.CityBlockades.declare(server, b.id(), home).success(), "le blocus est refusé");
+                int arrived = fr.crusadecraft.core.city.CityCamps.tickForTests(server);
+                w.check(arrived == men, "le camp ne s'installe pas : " + arrived + " sur " + men + ", cercle " + radius + ", difficulté " + level.getDifficulty() + ", charge " + level.isLoaded(home.anchor().offset(radius, 0, 0)) + ", sol " + level.getHeight(net.minecraft.world.level.levelgen.Heightmap.Types.MOTION_BLOCKING_NO_LEAVES, home.anchor().getX() + radius, home.anchor().getZ()) + ", déjà là " + fr.crusadecraft.core.city.CityCamps.soldiers(server, home.id()).size());
+                var soldiers = fr.crusadecraft.core.city.CityCamps.soldiers(server, home.id());
+                w.check(soldiers.size() == men, "pas le bon nombre de soldats : " + soldiers.size() + " sur " + men);
+                w.check(fr.crusadecraft.core.city.CityCamps.tickForTests(server) == 0 && fr.crusadecraft.core.city.CityCamps.soldiers(server, home.id()).size() == men, "le camp se dédouble");
+                net.minecraft.world.entity.Mob one = soldiers.get(0);
+                double d = Math.hypot(one.getX() - home.anchor().getX(), one.getZ() - home.anchor().getZ());
+                w.check(Math.abs(d - radius) < 8, "il n'est pas sur le cercle : " + d + " pour " + radius);
+                w.check(one.isPersistenceRequired() && one.hasRestriction(), "il peut s'en aller");
+                // Ni les habitants, ni le voyageur en paix ; l'ennemi, oui ; celui qui le frappe aussi.
+                var villager = net.minecraft.world.entity.EntityType.VILLAGER.create(level);
+                w.check(fr.crusadecraft.core.city.CityCamps.refuses(one, villager), "il s'en prend à un habitant");
+                w.check(fr.crusadecraft.core.city.CityCamps.refuses(one, w.ruler), "il s'en prend à un voyageur en paix");
+                w.check(!fr.crusadecraft.core.city.CityCamps.refuses(net.minecraft.world.entity.EntityType.VILLAGER.create(level), w.ruler), "un habitant n'est pas un soldat");
+                data.diplomacy().between(w.realm.id(), b.id()).setWar(true);
+                w.check(!fr.crusadecraft.core.city.CityCamps.refuses(one, w.ruler), "il laisse passer l'ennemi de son royaume");
+                // Tombé tout seul : on le remplace, sans le compter.
+                one.kill();
+                w.check(data.world().blockades().get(home.id()).fallen() == 0, "une mort sans adversaire compte");
+                w.check(fr.crusadecraft.core.city.CityCamps.tickForTests(server) == 1, "il n'est pas remplacé");
+                // Tombés sous les coups : jusqu'au matin, il n'en vient pas d'autres.
+                soldiers = fr.crusadecraft.core.city.CityCamps.soldiers(server, home.id());
+                for (int i = 0; i < men - 1; i++) soldiers.get(i).hurt(level.damageSources().playerAttack(w.ruler), 10000f);
+                w.check(data.world().blockades().get(home.id()).fallen() == men - 1, "les morts ne comptent pas : " + data.world().blockades().get(home.id()).fallen());
+                w.check(fr.crusadecraft.core.city.CityCamps.tickForTests(server) == 0, "ils reviennent aussitôt");
+                w.check(fr.crusadecraft.core.city.CityBlockades.blocked(server, home), "le blocus tombe trop tôt");
+                var loaded = fr.crusadecraft.core.world.WorldState.load(data.world().save());
+                w.check(loaded.blockades().get(home.id()).fallen() == men - 1, "le compte des morts ne s'enregistre pas");
+                // Le matin, des renforts.
+                fr.crusadecraft.core.city.CityBlockades.onDay(server, new java.util.Random(1));
+                w.check(data.world().blockades().get(home.id()).fallen() == 0, "pas de renforts au matin");
+                w.check(fr.crusadecraft.core.city.CityCamps.tickForTests(server) == men - 1, "les renforts n'arrivent pas");
+                // Tous, le même jour : le blocus est brisé, le camp s'en va.
+                soldiers = fr.crusadecraft.core.city.CityCamps.soldiers(server, home.id());
+                w.check(soldiers.size() == men, "le compte n'y est pas avant l'assaut : " + soldiers.size());
+                for (var s : soldiers) s.hurt(level.damageSources().playerAttack(w.ruler), 10000f);
+                fr.crusadecraft.core.city.CityBlockades.invalidate();
+                w.check(!data.world().blockades().containsKey(home.id()) && !fr.crusadecraft.core.city.CityBlockades.blocked(server, home), "le blocus survit à son camp");
+                // Un soldat resté d'un blocus fini s'en va tout seul.
+                w.check(fr.crusadecraft.core.city.CityBlockades.declare(server, b.id(), home).success(), "un second blocus est refusé");
+                fr.crusadecraft.core.city.CityCamps.tickForTests(server);
+                w.check(!fr.crusadecraft.core.city.CityCamps.soldiers(server, home.id()).isEmpty(), "le second camp ne s'installe pas");
+                data.world().blockades().remove(home.id());
+                fr.crusadecraft.core.city.CityCamps.tickForTests(server);
+                w.check(fr.crusadecraft.core.city.CityCamps.soldiers(server, home.id()).isEmpty(), "le camp reste après le blocus");
+                h.succeed();
+            } finally {
+                for (var s : fr.crusadecraft.core.city.CityCamps.soldiers(server, home.id())) s.discard();
+                for (var c : forced) level.setChunkForced(c.x, c.z, false);
+                WorldEditService.grantForTests(w.ruler.getUUID(), false);
+                NationBook.setForTests(null);
+                fr.crusadecraft.core.city.CityBlockades.invalidate();
+                data.world().clear();
+                w.cleanup();
+            }
+        }));
+    }
+
     @GameTest(template = TestWorld.TEMPLATE, setupTicks = TestWorld.SETUP_TICKS, batch = "p56_contrats", timeoutTicks = 300)
     public static void contratsDesVilles(GameTestHelper h) {
         TestWorld w = TestWorld.realm(h, "ContratA");
@@ -1040,10 +1130,17 @@ public final class PanelGameTests {
             Person merchant = null;
             for (Person x : data.lineage().persons()) if (x.trip() != null && line.id.equals(x.trip().line())) merchant = x;
             w.check(merchant != null, "pas de caravane depuis le quai : " + line.status);
-            fr.crusadecraft.core.city.CityDocks.pass(server, dock);
+            // P59 : au moment même où elle charge, sans attendre le passage suivant.
             int iron = 0;
             for (int i = 0; i < handler.getSlots(); i++) if (handler.getStackInSlot(i).is(net.minecraft.world.item.Items.IRON_INGOT)) iron += handler.getStackInSlot(i).getCount();
-            w.check(iron == 84, "le fer n'a pas quitté l'entrepôt : " + iron);
+            w.check(iron == 84, "le fer n'a pas quitté l'entrepôt au départ : " + iron);
+            w.check(dock.economy().stock(CityGood.FER) == 84 - fr.crusadecraft.core.city.CityDocks.KEEP, "le quai ne voit pas ce qui reste : " + dock.economy().stock(CityGood.FER));
+            // La colonie se sert ensuite : ce qu'elle prend n'est compté qu'une fois.
+            for (int i = 0, want = 10; i < handler.getSlots() && want > 0; i++) if (handler.getStackInSlot(i).is(net.minecraft.world.item.Items.IRON_INGOT)) want -= handler.extractItem(i, want, false).getCount();
+            fr.crusadecraft.core.city.CityDocks.pass(server, dock);
+            iron = 0;
+            for (int i = 0; i < handler.getSlots(); i++) if (handler.getStackInSlot(i).is(net.minecraft.world.item.Items.IRON_INGOT)) iron += handler.getStackInSlot(i).getCount();
+            w.check(iron == 74 && dock.economy().stock(CityGood.FER) == 74 - fr.crusadecraft.core.city.CityDocks.KEEP, "ce que la colonie a pris est compté deux fois : " + iron);
             // Elle rapporte du pain : il entre dans l'entrepôt, en vrai.
             dest.economy().add(CityGood.PAIN, 100);
             long now = level.getGameTime();
@@ -1051,7 +1148,6 @@ public final class PanelGameTests {
             CityTravel.advanceForTests(server, merchant, now);
             CityTravel.advanceForTests(server, merchant, now);
             w.check(merchant.trip() == null, "elle ne rentre pas");
-            fr.crusadecraft.core.city.CityDocks.pass(server, dock);
             int bread = 0;
             for (int i = 0; i < handler.getSlots(); i++) if (handler.getStackInSlot(i).is(net.minecraft.world.item.Items.BREAD)) bread += handler.getStackInSlot(i).getCount();
             w.check(bread > 0, "le pain n'arrive pas dans l'entrepôt");

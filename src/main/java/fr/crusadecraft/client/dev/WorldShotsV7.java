@@ -83,6 +83,13 @@ final class WorldShotsV7 {
     private static fr.crusadecraft.core.ColonyRef colony;
     private static int[] field;
     private static final int PLATFORM = 180;
+    /** Une étape à vitesse réelle attend au plus tant de ticks : cinquante minutes. */
+    private static final int REAL_LIMIT = 60_000;
+    private static long started, siteStart, polled;
+    private static volatile boolean ready;
+    private static UUID quayDest, quayMerchant, growing;
+    private static int quayTrips, lastDay = -1;
+    private static long lastTalk;
     private static BlockPos origin;
     private static volatile boolean pasted;
     private static final BuildingFunction[] MIX = {BuildingFunction.MARCHE, BuildingFunction.BOULANGERIE, BuildingFunction.TAVERNE, BuildingFunction.FORGE,
@@ -97,7 +104,23 @@ final class WorldShotsV7 {
     static boolean tick(Minecraft mc, BiConsumer<Minecraft, String> grab) {
         if (steps == null) {
             steps = build();
-            if (Boolean.getBoolean("crusadecraft.worldshots.v7civ")) {
+            if (Boolean.getBoolean("crusadecraft.worldshots.v7reel")) {
+                // P59 : la mise en place, sa colonie et son royaume, puis la vitesse réelle.
+                int depart = 0, lines = 0, linesEnd = 0, quay = 0, real = 0;
+                for (int i = 0; i < steps.size(); i++) {
+                    String n = steps.get(i).name();
+                    if (n.equals("depart")) depart = i + 1;
+                    if (n.equals("ligne_panneau")) lines = i;
+                    if (n.equals("carte_lignes")) linesEnd = i + 1;
+                    if (n.equals("quai_colonie")) quay = i;
+                    if (n.equals("reel_debut")) real = i;
+                }
+                List<Step> short_ = new ArrayList<>(steps.subList(0, depart));
+                short_.addAll(steps.subList(lines, linesEnd));
+                short_.addAll(steps.subList(quay, quay + 2));
+                short_.addAll(steps.subList(real, steps.size()));
+                steps = short_;
+            } else if (Boolean.getBoolean("crusadecraft.worldshots.v7civ")) {
                 // P54 à P58 : les villes, ce qu'il faut de commerce et d'ordinateur, puis la suite.
                 int depart = 0, founding = 0, lines = 0, eco = 0, end = steps.size();
                 for (int i = 0; i < steps.size(); i++) {
@@ -128,7 +151,7 @@ final class WorldShotsV7 {
         }
         if (index >= 0 && acted) {
             Step done = steps.get(index);
-            if (done.until() != null && !done.until().getAsBoolean() && waited++ < 12_000) return false;
+            if (done.until() != null && !done.until().getAsBoolean() && waited++ < (done.name().startsWith("reel_") ? REAL_LIMIT : 12_000)) return false;
             acted = false;
             if (done.shot() != null) {
                 grab.accept(mc, done.shot());
@@ -1249,6 +1272,7 @@ final class WorldShotsV7 {
             }
             fr.crusadecraft.config.CrusadeConfig.SERVER.townBlocksPerSecond.set(80);
         }, null, 40, "v13_marche_habitee"));
+        if (Boolean.getBoolean("crusadecraft.worldshots.v7reel")) addReal(out);
         out.add(new Step("fin", server -> {
             ServerPlayer p = player(server);
             fr.crusadecraft.core.nation.NationService.abdicate(p);
@@ -1284,6 +1308,429 @@ final class WorldShotsV7 {
     }
 
     /** Pose cette ville si elle n'y est pas encore, et donne une fonction à ses bâtiments. */
+    // ------------------------------------------------------------------ P59 : à vitesse réelle
+
+    /** Le temps écoulé depuis le début de l'essai, en tête de chaque ligne du journal. */
+    private static void clock(String text, Object... args) {
+        log("[" + (System.currentTimeMillis() - started) / 1000 + " s] " + text, args);
+    }
+
+    /** Attend qu'une condition soit vraie sur le serveur, une fois par seconde : tout passe sur son fil, on ne lit rien de travers. */
+    private static BooleanSupplier onServer(java.util.function.Predicate<MinecraftServer> test) {
+        return () -> {
+            MinecraftServer server = Minecraft.getInstance().getSingleplayerServer();
+            if (server == null) return true;
+            if (ready) {
+                ready = false;
+                return true;
+            }
+            if (++polled % 20 == 0) {
+                server.execute(() -> {
+                    try {
+                        if (test.test(server)) ready = true;
+                    } catch (RuntimeException e) {
+                        CrusadeCraft.LOGGER.error("WorldShots v7 : attente en échec", e);
+                    }
+                });
+            }
+            return false;
+        };
+    }
+
+    /** Pour la capture et pour le journal : ce qu'il y a dans l'entrepôt, et comment ça colle aux départs. */
+    private static void watchTrip(MinecraftServer server) {
+        var data = CrusadeSavedData.get(server);
+        var dock = colony == null ? null : data.world().site(fr.crusadecraft.core.city.CityDocks.idOf(colony)).orElse(null);
+        if (dock == null) return;
+        for (fr.crusadecraft.core.city.CityLine l : data.world().lines()) {
+            if (l.from.equals(dock.id())) clock("ligne du quai : statut {}, {} voyages, {} livrés, {} gagnés", l.status, l.trips, l.moved, l.earned);
+        }
+        clock("sur le quai : fer {}, pain {}, dû au fer {}, dû au pain {}", dock.economy().stock(CityGood.FER), dock.economy().stock(CityGood.PAIN),
+                data.world().docks().get(dock.id()).owed(CityGood.FER), data.world().docks().get(dock.id()).owed(CityGood.PAIN));
+        logShelf("[" + (System.currentTimeMillis() - started) / 1000 + " s] entrepôt");
+    }
+
+    private static void hover(ServerPlayer p, Site s, int dx, int dz, int up, float yaw, float pitch) {
+        int x = s.anchor().getX() + dx, z = s.anchor().getZ() + dz;
+        p.serverLevel().getChunk(x >> 4, z >> 4);
+        look(p, x + 0.5, p.serverLevel().getHeight(Heightmap.Types.MOTION_BLOCKING_NO_LEAVES, x, z) + up, z + 0.5, yaw, pitch);
+    }
+
+    private static void addReal(List<Step> out) {
+        out.add(new Step("reel_debut", server -> {
+            started = System.currentTimeMillis();
+            ServerPlayer p = player(server);
+            ServerLevel level = p.serverLevel();
+            // Le temps passe pour de vrai à partir d'ici : plus aucun jour forcé, aucun chantier accéléré, aucun trajet abrégé.
+            level.getGameRules().getRule(net.minecraft.world.level.GameRules.RULE_DAYLIGHT).set(true, server);
+            server.setDifficulty(net.minecraft.world.Difficulty.NORMAL, true);
+            fr.crusadecraft.config.CrusadeConfig.SERVER.townBlocksPerSecond.set(80);
+            var dock = fr.crusadecraft.core.city.CityDocks.ensure(server, colony).orElse(null);
+            if (dock == null) {
+                clock("ATTENTION : pas de quai");
+                return;
+            }
+            fr.crusadecraft.core.city.CityCommerce.Stop pick = null;
+            for (var s : fr.crusadecraft.core.city.CityCommerce.stops(server, dock)) {
+                if (s.war() || s.dock() || s.id().equals(dest) || s.distance() < 150 || s.distance() > 1500) continue;
+                if (pick == null || s.distance() < pick.distance()) pick = s;
+            }
+            if (pick == null) {
+                clock("ATTENTION : pas de destination pour le quai");
+                return;
+            }
+            quayDest = pick.id();
+            Site d = fr.crusadecraft.core.city.CityMarkets.of(server, pick.id()).orElse(null);
+            if (d != null) {
+                d.economy().add(CityGood.PAIN, 100);
+                d.economy().addPurse(2000);
+            }
+            clock("destination du quai : {} à {} blocs ; {}", pick.name(), pick.distance(), fr.crusadecraft.core.city.CityCommerce.create(server, dock, pick.id(), CityGood.FER, 32, CityGood.PAIN, 1, 1, false).message().getString());
+            watchTrip(server);
+        }, mc -> mc.setScreen(null), 20, null));
+        out.add(new Step("reel_quai_part", null, null, 20, "v14_quai_part", onServer(server -> {
+            var data = CrusadeSavedData.get(server);
+            UUID id = fr.crusadecraft.core.city.CityDocks.idOf(colony);
+            for (Person x : data.lineage().persons()) {
+                if (x.trip() == null || !id.equals(x.trip().home()) || x.trip().line() == null) continue;
+                quayMerchant = x.id();
+                quayTrips = 1;
+                clock("la caravane du quai part d'elle-même, au prochain passage");
+                watchTrip(server);
+                // La colonie se sert derrière elle : ce qu'elle prend ne doit être compté qu'une fois.
+                var handler = fr.crusadecraft.compat.minecolonies.MineColoniesBridge.warehouse(colony).orElse(null);
+                if (handler != null) {
+                    for (int i = 0, want = 10; i < handler.getSlots() && want > 0; i++) if (handler.getStackInSlot(i).is(Items.IRON_INGOT)) want -= handler.extractItem(i, want, false).getCount();
+                    logShelf("la colonie a pris 10 fers");
+                }
+                return true;
+            }
+            return false;
+        })));
+        // ------------------------------------------------------------ le blocus, son camp
+        out.add(new Step("reel_blocus", server -> {
+            ServerPlayer p = player(server);
+            CrusadeSavedData data = CrusadeSavedData.get(server);
+            UUID me = fr.crusadecraft.core.city.WorldEconomy.myRealm(p);
+            Site h = site(server, dest);
+            clock("je dirige {} ; la guerre à {}", me, h.name());
+            if (me != null) data.diplomacy().between(me, h.owner()).setWar(true);
+            fr.crusadecraft.core.city.WorldEconomy.send(p, false);
+        }, mc -> mc.setScreen(null), 30, null));
+        out.add(new Step("reel_blocus_onglet", null, mc -> {
+            click(mc, "Villes");
+            for (int i = 0; i < 4; i++) click(mc, "Trier");
+        }, 20, null));
+        out.add(new Step("reel_blocus_bloque", null, mc -> click(mc, "Bloquer"), 30, "v14_blocus_ecran"));
+        out.add(new Step("reel_blocus_grunbach", server -> {
+            ServerPlayer p = player(server);
+            CrusadeSavedData data = CrusadeSavedData.get(server);
+            UUID me = fr.crusadecraft.core.city.WorldEconomy.myRealm(p);
+            Site h = site(server, dest);
+            // On veut voir le camp autour d'une vraie ville à murs : si le bouton a pris un marché, on lève et on prend celle-ci.
+            if (!data.world().blockades().containsKey(h.id())) {
+                for (UUID id : new ArrayList<>(data.world().blockades().keySet())) {
+                    Site other = site(server, id);
+                    if (other != null) fr.crusadecraft.core.city.CityBlockades.lift(server, me, other);
+                }
+                clock("{}", fr.crusadecraft.core.city.CityBlockades.declare(server, me, h).message().getString());
+            }
+            blockaded = h.id();
+            // Seul ce point de départ est arrangé : peu de vivres, pour que la faim vienne en une heure et non en trois.
+            for (CityGood g : new CityGood[]{CityGood.BLE, CityGood.PAIN, CityGood.VIANDE}) h.economy().take(g, Math.max(0, h.economy().stock(g) - 20));
+            clock("{} : {} ; {} bâtiments, largeur {}, {} soldats sur un cercle de {} blocs", h.name(), fr.crusadecraft.core.city.CityBlockades.explain(server, h), h.buildings().size(), h.extent(),
+                    fr.crusadecraft.core.city.CityCamps.men(h.extent()), fr.crusadecraft.core.city.CityCamps.ring(h.extent()));
+            int r = fr.crusadecraft.core.city.CityCamps.ring(h.extent());
+            hover(p, h, r + 24, 0, 40, 90f, 25f);
+        }, mc -> mc.setScreen(null), 320, "v14_camp_vue"));
+        out.add(new Step("reel_camp_soldat", server -> {
+            ServerPlayer p = player(server);
+            var men = fr.crusadecraft.core.city.CityCamps.soldiers(server, blockaded);
+            clock("{} soldats autour de la ville", men.size());
+            Entity bearer = null;
+            for (var m : men) {
+                clock("  {} ({}) en {}, sol {}, cible {}", m.getName().getString(), m.getType().getDescriptionId(), m.blockPosition().toShortString(), p.serverLevel().getHeight(Heightmap.Types.MOTION_BLOCKING_NO_LEAVES, m.getBlockX(), m.getBlockZ()), m.getTarget() == null ? "aucune" : m.getTarget().getName().getString());
+                if (bearer == null && m.getItemBySlot(net.minecraft.world.entity.EquipmentSlot.HEAD).getItem() instanceof net.minecraft.world.item.BannerItem) bearer = m;
+            }
+            if (bearer != null) standNear(p, bearer, 5, 5);
+        }, null, 60, "v14_camp_soldat"));
+        // ------------------------------------------------------------ une escorte, du premier pas au dernier
+        out.add(new Step("reel_escorte_offre", server -> {
+            ServerPlayer p = player(server);
+            CrusadeSavedData data = CrusadeSavedData.get(server);
+            Site h = site(server, home);
+            data.world().contracts().clear();
+            h.economy().add(CityGood.PAIN, 200);
+            h.economy().addPurse(500);
+            data.world().lines().removeIf(l -> l.from.equals(home));
+            for (Person x : data.lineage().persons()) if (x.trip() != null && x.trip().line() != null && home.equals(x.trip().home())) x.setTrip(null);
+            fr.crusadecraft.core.city.CityCommerce.Stop pick = null;
+            for (var s : fr.crusadecraft.core.city.CityCommerce.stops(server, h)) {
+                if (s.war() || s.dock() || s.id().equals(dest) || s.distance() < 200 || s.distance() > 1500 || fr.crusadecraft.core.city.CityBlockades.blocked(server).contains(s.id())) continue;
+                if (pick == null || s.distance() < pick.distance()) pick = s;
+            }
+            if (pick == null) {
+                clock("ATTENTION : pas de destination pour l'escorte");
+                return;
+            }
+            Site d = fr.crusadecraft.core.city.CityMarkets.of(server, pick.id()).orElse(null);
+            clock("escorte vers {} à {} blocs ; {}", pick.name(), pick.distance(), fr.crusadecraft.core.city.CityCommerce.create(server, h, pick.id(), CityGood.PAIN, 24, null, 4, 1, false).message().getString());
+            if (d != null) {
+                var pass = fr.crusadecraft.core.city.CityTolls.passage(server, h, d);
+                var route = fr.crusadecraft.core.city.CityRoads.between(server, h, d);
+                clock("la route : {} blocs pour {} à vol d'oiseau ; coupée {}, péage {}", (int) route.length(), (int) Math.sqrt(h.anchor().distSqr(d.anchor())), pass.cut(), pass.toll());
+            }
+            Random r = new Random(9);
+            long today = fr.crusadecraft.core.realm.RealmService.currentDay(server);
+            contract = null;
+            for (int i = 0; i < 60 && contract == null; i++) {
+                var o = fr.crusadecraft.core.city.CityContracts.post(server, h, r, today);
+                if (o.isPresent() && o.get().kind == fr.crusadecraft.core.city.CityContract.Kind.ESCORT) contract = o.get().id;
+                else o.ifPresent(c -> data.world().contracts().remove(c));
+            }
+            emeralds = p.getInventory().countItem(Items.EMERALD);
+            BlockPos at = CityService.plazaOf(h);
+            look(p, at.getX() + 0.5, at.getY() + 8, at.getZ() + 8.5, 180f, 20f);
+            clock("une escorte : {}", contract);
+            fr.crusadecraft.core.city.WorldEconomy.send(p, false);
+        }, mc -> mc.setScreen(null), 30, null));
+        out.add(new Step("reel_escorte_onglet", null, mc -> click(mc, "Contrats"), 20, null));
+        out.add(new Step("reel_escorte_accepte", null, mc -> click(mc, "Accepter"), 60, "v14_escorte_acceptee"));
+        out.add(new Step("reel_escorte_route", server -> clock("en route"), mc -> mc.setScreen(null), 40, "v14_escorte_fin", onServer(server -> {
+            ServerPlayer p = player(server);
+            var c = contract == null ? null : fr.crusadecraft.core.city.CityContracts.find(server, contract).orElse(null);
+            if (c == null || c.merchant == null) return true;
+            Person m = person(server, c.merchant);
+            if (m == null || m.trip() == null || m.trip().stage() != Trip.Stage.OUT) return true;
+            Entity e = p.serverLevel().getEntity(c.merchant);
+            if (e != null) overlook(p, e);
+            else {
+                for (CityTravel.Pawn pawn : CityTravel.pawns(server)) {
+                    if (!pawn.id().equals(c.merchant)) continue;
+                    p.serverLevel().getChunk(pawn.x() >> 4, pawn.z() >> 4);
+                    look(p, pawn.x() + 6.5, p.serverLevel().getHeight(Heightmap.Types.MOTION_BLOCKING_NO_LEAVES, pawn.x(), pawn.z()) + 10, pawn.z() + 6.5, 135f, 35f);
+                }
+            }
+            if (System.currentTimeMillis() - lastTalk > 30_000) {
+                lastTalk = System.currentTimeMillis();
+                clock("escorte : marchand {} ; présence {}/{}", e == null ? "hors du monde" : e.blockPosition().toShortString(), c.near, c.total);
+            }
+            return false;
+        })));
+        out.add(new Step("reel_escorte_bilan", server -> clock("arrivé ; émeraudes {} puis {}", emeralds, player(server).getInventory().countItem(Items.EMERALD)), null, 100, "v14_escorte_payee"));
+        // ------------------------------------------------------------ un marché bâtit sa ville, à sa vitesse
+        out.add(new Step("reel_chantier", server -> {
+            ServerPlayer p = player(server);
+            CrusadeSavedData data = CrusadeSavedData.get(server);
+            Site pick = null;
+            for (Site m : data.world().markets()) {
+                if (fr.crusadecraft.core.city.CityDocks.isDockId(m.id()) || m.id().equals(quayDest) || fr.crusadecraft.core.city.CityBlockades.blocked(server, m)) continue;
+                pick = m;
+            }
+            if (pick == null) {
+                clock("aucun marché");
+                return;
+            }
+            pick.setProsperity(fr.crusadecraft.core.city.CityGrowth.required());
+            market = pick.id();
+            siteStart = System.currentTimeMillis();
+            clock("{} est mûr (seule chose arrangée ici : sa prospérité) ; on s'en approche", pick.name());
+            hover(p, pick, 50, 50, 70, 135f, 40f);
+        }, mc -> mc.setScreen(null), 600, "v14_chantier_1"));
+        out.add(new Step("reel_chantier_2", server -> {
+            for (Site s : CrusadeSavedData.get(server).world().sites()) {
+                if (s.grown()) {
+                    growing = s.id();
+                    clock("{} : chantier ouvert, {} blocs à poser", s.name(), s.town() == null ? -1 : s.town().total());
+                }
+            }
+        }, null, 6000, "v14_chantier_2"));
+        out.add(new Step("reel_chantier_3", server -> clock("chantier : encore en cours après 5 minutes"), null, 6000, "v14_chantier_3"));
+        out.add(new Step("reel_chantier_fini", null, null, 40, "v14_chantier_fini", onServer(server -> {
+            Site s = site(server, growing);
+            if (s == null) return true;
+            if (System.currentTimeMillis() - siteStart > 40 * 60_000L) {
+                clock("{} : pas fini au bout de 40 minutes", s.name());
+                return true;
+            }
+            if (s.built() && !s.buildings().isEmpty()) {
+                clock("{} : fini en {} minutes, {} bâtiments", s.name(), (System.currentTimeMillis() - siteStart) / 60_000, s.buildings().size());
+                return true;
+            }
+            return false;
+        })));
+        out.add(new Step("reel_chantier_peuple", server -> {
+            Site s = site(server, growing);
+            if (s != null) clock("{} : {} habitants ; {}", s.name(), CityService.people(server, s), CityLife.summary(s));
+            watchTrip(server);
+        }, null, 200, "v14_chantier_peuple"));
+        // ------------------------------------------------------------ la caravane du quai est rentrée toute seule
+        out.add(new Step("reel_quai_retour", server -> {
+            ServerPlayer p = player(server);
+            var dock = fr.crusadecraft.core.city.CityDocks.ensure(server, colony).orElse(null);
+            if (dock != null) hover(p, dock, 3, 6, 4, 180f, 15f);
+            clock("retour à la colonie, loin de laquelle on était depuis une demi-heure");
+        }, mc -> mc.setScreen(null), 200, null));
+        out.add(new Step("reel_quai_bilan", null, null, 20, "v14_quai_retour", onServer(server -> {
+            if (colony == null) return true;
+            var handler = fr.crusadecraft.compat.minecolonies.MineColoniesBridge.warehouse(colony).orElse(null);
+            boolean bread = false;
+            if (handler != null) for (int i = 0; i < handler.getSlots(); i++) if (handler.getStackInSlot(i).is(Items.BREAD)) bread = true;
+            if (System.currentTimeMillis() - lastTalk > 60_000) {
+                lastTalk = System.currentTimeMillis();
+                watchTrip(server);
+            }
+            if (bread) {
+                clock("le pain est dans l'entrepôt");
+                watchTrip(server);
+            }
+            return bread;
+        })));
+        // ------------------------------------------------------------ la faim vient toute seule
+        out.add(new Step("reel_famine_place", server -> {
+            Site h = site(server, blockaded);
+            if (h != null) hover(player(server), h, fr.crusadecraft.core.city.CityCamps.ring(h.extent()) + 24, 0, 40, 90f, 25f);
+        }, mc -> mc.setScreen(null), 100, null));
+        out.add(new Step("reel_famine", null, null, 20, "v14_famine_camp", onServer(server -> {
+            Site h = site(server, blockaded);
+            if (h == null) return true;
+            int day = (int) fr.crusadecraft.core.realm.RealmService.currentDay(server);
+            if (day != lastDay) {
+                lastDay = day;
+                clock("jour {} : famine {}, blé {}, pain {}, viande {} ; {} soldats", day, h.economy().famine(), h.economy().stock(CityGood.BLE), h.economy().stock(CityGood.PAIN), h.economy().stock(CityGood.VIANDE), fr.crusadecraft.core.city.CityCamps.soldiers(server, blockaded).size());
+            }
+            return h.economy().famine() > 0;
+        })));
+        out.add(new Step("reel_famine_panneau", server -> {
+            Site h = site(server, blockaded);
+            if (h == null) return;
+            clock("la faim : {}", CityLife.summary(h));
+            CityPanel.open(player(server), h);
+        }, null, 40, "v14_famine_panneau"));
+        // ------------------------------------------------------------ le garde et le monstre, de part et d'autre d'un muret
+        out.add(new Step("reel_garde", server -> {
+            ServerPlayer p = player(server);
+            ServerLevel level = p.serverLevel();
+            Site h = site(server, home);
+            if (h.buildings().stream().noneMatch(b -> b.function() == BuildingFunction.CASERNE)) {
+                CityService.define(p, h.id(), h.buildings().get(h.buildings().size() - 1), BuildingFunction.CASERNE, "");
+            }
+            guardian = null;
+            for (CityBuilding b : h.buildings()) {
+                if (b.function() != BuildingFunction.CASERNE) continue;
+                for (UUID id : b.occupants()) {
+                    Person x = person(server, id);
+                    if (x != null && x.alive() && x.trip() == null && x.age() >= 16) guardian = id;
+                }
+            }
+            BlockPos at = CityService.plazaOf(h);
+            look(p, at.getX() + 0.5, at.getY() + 8, at.getZ() + 8.5, 180f, 20f);
+            CityService.populate(level, h);
+            clock("le garde : {}", guardian == null ? "aucun" : person(server, guardian).name());
+        }, mc -> mc.setScreen(null), 120, null));
+        out.add(new Step("reel_garde_mur", server -> {
+            ServerPlayer p = player(server);
+            ServerLevel level = p.serverLevel();
+            Entity g = guardian == null ? null : level.getEntity(guardian);
+            if (g == null) {
+                clock("pas de garde dans le monde");
+                return;
+            }
+            Site h = site(server, home);
+            int x = h.anchor().getX() + 400, z = h.anchor().getZ();
+            level.getChunk(x >> 4, z >> 4);
+            int ground = PLATFORM + 1;
+            for (BlockPos q : BlockPos.betweenClosed(new BlockPos(x - 8, PLATFORM, z - 8), new BlockPos(x + 8, PLATFORM, z + 8))) level.setBlock(q, net.minecraft.world.level.block.Blocks.SMOOTH_STONE.defaultBlockState(), 2);
+            for (BlockPos q : BlockPos.betweenClosed(new BlockPos(x + 1, ground, z - 8), new BlockPos(x + 1, ground + 2, z + 8))) level.setBlock(q, net.minecraft.world.level.block.Blocks.STONE_BRICKS.defaultBlockState(), 2);
+            g.teleportTo(x + 0.7, ground, z + 0.5);
+            var zombie = net.minecraft.world.entity.EntityType.ZOMBIE.create(level);
+            zombie.moveTo(x + 2.3, ground, z + 0.5);
+            zombie.setNoAi(true);
+            zombie.setPersistenceRequired();
+            zombie.setCustomName(net.minecraft.network.chat.Component.literal("Le monstre du muret"));
+            level.addFreshEntity(zombie);
+            monster = zombie.getUUID();
+            look(p, x + 1.5, ground + 7, z + 7.5, 180f, 45f);
+            clock("le garde et le monstre à {} blocs, de part et d'autre du muret ; se voient-ils : {}", g.distanceTo(zombie), ((LivingEntity) g).hasLineOfSight(zombie));
+        }, null, 120, "v14_garde_muret"));
+        out.add(new Step("reel_garde_bilan", server -> {
+            ServerPlayer p = player(server);
+            Entity z = monster == null ? null : p.serverLevel().getEntity(monster);
+            Entity g = guardian == null ? null : p.serverLevel().getEntity(guardian);
+            clock("six secondes plus tard : le monstre {}, le garde à {} blocs", z instanceof LivingEntity l && l.isAlive() ? l.getHealth() + " points de vie" : "mort", g == null || z == null ? -1 : (int) g.distanceTo(z));
+            if (z != null) z.discard();
+        }, null, 10, null));
+        // ------------------------------------------------------------ ma colonie sous blocus : je me bats, et je le brise
+        out.add(new Step("reel_defense", server -> {
+            ServerPlayer p = player(server);
+            ServerLevel level = p.serverLevel();
+            var dock = fr.crusadecraft.core.city.CityDocks.ensure(server, colony).orElse(null);
+            UUID foe = site(server, dest).owner();
+            CrusadeSavedData.get(server).world().realm(foe).ifPresent(r -> r.setGold(1000));
+            clock("{}", fr.crusadecraft.core.city.CityBlockades.declare(server, foe, dock).message().getString());
+            int r = fr.crusadecraft.core.city.CityCamps.ring(dock.extent());
+            int x = dock.anchor().getX() + r - 3, z = dock.anchor().getZ();
+            level.getChunk(x >> 4, z >> 4);
+            int y = level.getHeight(Heightmap.Types.MOTION_BLOCKING_NO_LEAVES, x, z);
+            p.setGameMode(net.minecraft.world.level.GameType.SURVIVAL);
+            p.setHealth(p.getMaxHealth());
+            p.getAbilities().flying = false;
+            p.onUpdateAbilities();
+            p.connection.teleport(x + 0.5, y, z + 0.5, 90f, 5f);
+            clock("je descends à {} blocs du centre, en survie", r - 3);
+        }, mc -> mc.setScreen(null), 300, "v14_defense_combat"));
+        out.add(new Step("reel_defense_bilan", server -> {
+            ServerPlayer p = player(server);
+            var dock = fr.crusadecraft.core.city.CityDocks.ensure(server, colony).orElse(null);
+            var men = fr.crusadecraft.core.city.CityCamps.soldiers(server, dock.id());
+            long aim = men.stream().filter(m -> m.getTarget() == p).count();
+            var last = p.getLastDamageSource();
+            clock("quinze secondes plus tard : moi {} points de vie, dernier coup {} ; {} soldats, dont {} me visent", p.getHealth(), last == null ? "aucun" : last.getMsgId(), men.size(), aim);
+            p.setGameMode(net.minecraft.world.level.GameType.CREATIVE);
+            p.setHealth(p.getMaxHealth());
+        }, null, 40, null));
+        out.add(new Step("reel_brise", null, null, 40, "v14_blocus_brise", onServer(server -> {
+            ServerPlayer p = player(server);
+            CrusadeSavedData data = CrusadeSavedData.get(server);
+            UUID id = fr.crusadecraft.core.city.CityDocks.idOf(colony);
+            if (!data.world().blockades().containsKey(id)) {
+                clock("le blocus de la colonie est brisé");
+                return true;
+            }
+            var men = fr.crusadecraft.core.city.CityCamps.soldiers(server, id);
+            if (men.isEmpty()) return false;
+            var m = men.get(0);
+            m.hurt(p.serverLevel().damageSources().playerAttack(p), 10000f);
+            clock("un soldat tombe ; tombés aujourd'hui : {}", data.world().blockades().containsKey(id) ? data.world().blockades().get(id).fallen() : -1);
+            return false;
+        })));
+        out.add(new Step("reel_brise_camp", server -> {
+            UUID id = fr.crusadecraft.core.city.CityDocks.idOf(colony);
+            clock("cinq secondes plus tard, autour de la colonie : {} soldats", fr.crusadecraft.core.city.CityCamps.soldiers(server, id).size());
+            var dock = fr.crusadecraft.core.city.CityDocks.ensure(server, colony).orElse(null);
+            if (dock != null) clock("et sa bourse, ses réserves : {}", CityLife.summary(dock));
+            Site h = site(server, blockaded);
+            if (h != null) hover(player(server), h, fr.crusadecraft.core.city.CityCamps.ring(h.extent()) + 24, 0, 40, 90f, 25f);
+        }, null, 110, null));
+        // ------------------------------------------------------------ la paix : le camp de Grunbach lève le pied au matin
+        out.add(new Step("reel_paix", server -> {
+            ServerPlayer p = player(server);
+            UUID me = fr.crusadecraft.core.city.WorldEconomy.myRealm(p);
+            if (me != null) CrusadeSavedData.get(server).diplomacy().between(me, site(server, dest).owner()).setWar(false);
+            clock("la paix ; {} soldats encore là", fr.crusadecraft.core.city.CityCamps.soldiers(server, blockaded).size());
+        }, null, 20, null));
+        out.add(new Step("reel_paix_matin", null, null, 200, "v14_paix", onServer(server -> {
+            if (CrusadeSavedData.get(server).world().blockades().containsKey(blockaded)) return false;
+            clock("le matin : le blocus est levé");
+            return true;
+        })));
+        out.add(new Step("reel_bilan", server -> {
+            clock("le camp : {} soldats autour de la ville (0 attendu)", fr.crusadecraft.core.city.CityCamps.soldiers(server, blockaded).size());
+            watchTrip(server);
+            clock("essai à vitesse réelle terminé");
+        }, null, 10, null));
+    }
+
     private static void place(List<Step> out, String label, String ref, int offset) {
         out.add(new Step("pose_" + label, server -> {
             pasted = false;

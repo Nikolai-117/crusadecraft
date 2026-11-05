@@ -126,7 +126,7 @@ public final class CityGuards {
     }
 
     /** En guerre contre le royaume de ce garde ? */
-    private static boolean enemy(MinecraftServer server, ServerPlayer player, UUID owner) {
+    static boolean enemy(MinecraftServer server, ServerPlayer player, UUID owner) {
         Optional<fr.crusadecraft.core.realm.Realm> mine = fr.crusadecraft.core.realm.RealmService.realmOf(server, player.getUUID());
         if (mine.isPresent() && !mine.get().id().equals(owner) && data(server).diplomacy().between(mine.get().id(), owner).war()) return true;
         Optional<fr.crusadecraft.core.world.AiRealm> nation = fr.crusadecraft.core.nation.NationService.ruledBy(server, player.getUUID());

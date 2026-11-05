@@ -61,17 +61,26 @@ public final class CityBlockades {
         }
     }
 
-    /** Qui la bloque, depuis quand. */
-    public record Blockade(UUID by, long since) {
+    /** Qui la bloque, depuis quand, et combien de ses soldats sont tombés aujourd'hui (P59). */
+    public record Blockade(UUID by, long since, int fallen) {
+        public Blockade(UUID by, long since) {
+            this(by, since, 0);
+        }
+
+        public Blockade withFallen(int n) {
+            return new Blockade(by, since, n);
+        }
+
         public CompoundTag save() {
             CompoundTag t = new CompoundTag();
             t.putUUID("by", by);
             t.putLong("since", since);
+            if (fallen > 0) t.putInt("fallen", fallen);
             return t;
         }
 
         public static Blockade load(CompoundTag t) {
-            return new Blockade(t.getUUID("by"), t.getLong("since"));
+            return new Blockade(t.getUUID("by"), t.getLong("since"), t.getInt("fallen"));
         }
     }
 
@@ -225,6 +234,8 @@ public final class CityBlockades {
                 remove(server, target);
                 continue;
             }
+            // Il arrive des renforts au matin : un blocus se brise en un jour, ou pas du tout.
+            if (b.fallen() > 0) data.world().blockades().put(e.getKey(), b.withFallen(0));
             if (target.economy().famine() > 0) {
                 warBetween(data, b.by(), target.owner()).ifPresent(w -> {
                     w.addBattle(w.side(b.by()));
@@ -243,6 +254,33 @@ public final class CityBlockades {
             }
             if (best != null && pay(server, r.id(), COST)) put(server, r.id(), best);
         }
+    }
+
+    /**
+     * P59 : un soldat du camp tombe sous les coups de quelqu'un. Le dernier tombé, le blocus est brisé : c'est la seule façon d'en sortir sans la paix.
+     * Renvoie combien il en reste debout, ou -1 si cette ville n'est plus sous blocus.
+     */
+    static int soldierKilled(MinecraftServer server, Site target, int men) {
+        CrusadeSavedData data = data(server);
+        Blockade b = data.world().blockades().get(target.id());
+        if (b == null) return -1;
+        int fallen = b.fallen() + 1;
+        data.setDirty();
+        if (fallen < men) {
+            data.world().blockades().put(target.id(), b.withFallen(fallen));
+            return men - fallen;
+        }
+        remove(server, target);
+        long today = RealmService.currentDay(server);
+        warBetween(data, b.by(), target.owner()).ifPresent(w -> {
+            w.addBattle(w.side(target.owner()));
+            w.log(today, "crusadecraft.war.event.blockade_broken", w.side(target.owner()), target.name());
+        });
+        Component title = Component.translatable("crusadecraft.city.blockade.broken.toast");
+        Component body = Component.translatable("crusadecraft.city.blockade.broken.toast.body", target.name(), WarMapService.name(data, b.by()));
+        warn(server, target.owner(), title, body);
+        warn(server, b.by(), title, body);
+        return 0;
     }
 
     /** Pour un texte : pourquoi cette ville est coupée du monde. */

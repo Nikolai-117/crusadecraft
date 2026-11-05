@@ -1,0 +1,8 @@
+{
+  "crusadecraft.city.blockade.soldier": "Soldier of %s",
+  "crusadecraft.city.blockade.left": "%s soldiers left around %s",
+  "crusadecraft.city.blockade.broken": "The blockade of %s is broken",
+  "crusadecraft.city.blockade.broken.toast": "Blockade broken",
+  "crusadecraft.city.blockade.broken.toast.body": "The camp of %2$s around %1$s is gone.",
+  "crusadecraft.war.event.blockade_broken": "The blockade of %s is broken"
+}

@@ -231,6 +231,14 @@ public final class CityDocks {
         });
     }
 
+    /**
+     * P59 : une caravane charge ou décharge sur ce quai. L'entrepôt le sait tout de suite, sans attendre le prochain passage : sinon la colonie aurait le
+     * temps d'utiliser ce qui est déjà parti, et la marchandise existerait deux fois. Loin de tout joueur, cela reste noté sur le quai : la colonie, elle non plus, n'y touche pas.
+     */
+    static void touch(MinecraftServer server, Site s) {
+        if (isDockId(s.id())) pass(server, s);
+    }
+
     /** Quatre fois par jour : tous les quais passent. */
     static void pulse(MinecraftServer server) {
         CrusadeSavedData data = data(server);

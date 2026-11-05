@@ -642,6 +642,7 @@ public final class CityTravel {
                 break;
             }
         }
+        CityDocks.touch(server, dest);
         long stay = STAY_MIN + level.random.nextInt(STAY_SPREAD);
         p.setTrip(t.next(Trip.Stage.STAY, now, now + stay, back, backAmount, earned));
         data(server).setDirty();
@@ -697,6 +698,7 @@ public final class CityTravel {
         home.economy().addPurse(t.earned());
         if (t.back() != null) home.economy().add(t.back(), t.backAmount());
         if (t.earned() > 0) CityGrowth.onSale(server, home);
+        CityDocks.touch(server, home);
         CityRumors.add(server, home, "retour", p.name(), dest.name());
         comeBack(level, p, home);
         // Il remet ce qu'il rapporte à quelqu'un, s'il est là pour ça.

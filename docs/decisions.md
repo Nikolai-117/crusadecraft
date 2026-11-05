@@ -1165,6 +1165,17 @@ veux la voir comme le bâton de construction de MineColonies », des commandes, 
 - **Les gardes frappent eux-mêmes** (`target.hurt`), au lieu de compter sur l'intelligence de Comes Alive, qui fuit plus qu'elle ne combat. On efface leur peur à chaque passage.
   Rien ne se déclenche en créatif, comme les monstres de Minecraft.
 
+**P59 (5 novembre 2026) — ce qui restait à régler, 3.15.1**
+
+- **Demande** : « finis ce qui reste à régler » : la colonie, le blocus invisible, les essais à vitesse réelle, sur un monde normal et sur son vrai monde.
+- **Un quai écrit dans l'entrepôt à l'instant du chargement**, avant et après. Avant, l'écart attendait le passage suivant (jusqu'à cinq minutes) : la colonie pouvait utiliser ce qui était déjà parti.
+- **Le camp ne pose aucun bloc** : un blocus se lève, et il ne doit rien laisser. Il n'existe que devant un joueur ; le blocus lui-même reste un fait des données.
+- **Les soldats ne visent que l'ennemi de leur royaume**, par `LivingChangeTargetEvent`, quel que soit le mob : vindicateurs et bandits s'en prendraient sinon aux habitants, et le siège tournerait au massacre sans que personne l'ait décidé.
+- **Les tuer tous dans la journée brise le blocus** : sans ça, des soldats visibles seraient un décor qu'on tue pour rien. C'est un ajout que Romain n'avait pas demandé tel quel : il se justifie par ce qui précède, et se défait en une ligne.
+- **Les soldats n'arrivent que dans un chunk qui tourne vraiment** (`isPositionEntityTicking`) : posés au bord de la distance de vue, ils ne sont pas listés au passage suivant, qui en remet d'autres.
+- **`-Pshots_open=dossier`** ouvre une copie d'un monde et note ce qu'il contient avant et après trois jours. Un monde de l'instance de Romain ne s'ouvre pas tel quel en développement (ses 158 mods y écrivent 48 318 entrées, et ses réglages de génération ne se lisent pas) : on garde ses données et on remplace `level.dat` par celui d'un monde neutre, et `dimensions/` s'en va. On voit ainsi ses vraies données, pas ses vrais blocs.
+- **`-Pshots_v7_reel=true`** : le scénario à vitesse réelle (une bonne heure) ; plus aucun jour forcé, aucun trajet abrégé, aucun chantier accéléré. Seuls points de départ arrangés : des vivres bas, et la prospérité d'un marché.
+
 **P54 à P58 (5 novembre 2026) — l'économie du monde, la guerre et le commerce, les contrats, les colonies, les marchés qui bâtissent, 3.15.0**
 
 - **Demande** : « fait tout sauf les bandits » : l'écran d'économie, blocus et péages, contrats pour le joueur, colonies reliées, villes de l'ordinateur qui se construisent.

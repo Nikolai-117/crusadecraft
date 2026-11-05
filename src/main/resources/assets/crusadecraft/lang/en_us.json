@@ -3205,5 +3205,11 @@
   "crusadecraft.economy.prosperity.ready": "Prosperity: %s of %s. It will build its town when a player comes near",
   "crusadecraft.city.rumor.prospere": "The merchants here talk of building real houses: money is no longer lacking",
   "crusadecraft.city.journal.grown": "%s is a real town now: %s buildings are filling up",
-  "crusadecraft.economy.sort.enemy": "enemies first"
+  "crusadecraft.economy.sort.enemy": "enemies first",
+  "crusadecraft.city.blockade.soldier": "Soldier of %s",
+  "crusadecraft.city.blockade.left": "%s soldiers left around %s",
+  "crusadecraft.city.blockade.broken": "The blockade of %s is broken",
+  "crusadecraft.city.blockade.broken.toast": "Blockade broken",
+  "crusadecraft.city.blockade.broken.toast.body": "The camp of %2$s around %1$s is gone.",
+  "crusadecraft.war.event.blockade_broken": "The blockade of %s is broken"
 }

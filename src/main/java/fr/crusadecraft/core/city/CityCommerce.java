@@ -226,6 +226,8 @@ public final class CityCommerce {
 
     /** Une caravane part sur cette ligne, s'il y a quelqu'un pour la mener et quelque chose à charger. */
     static boolean dispatch(MinecraftServer server, CityLine l, Site home, Site dest) {
+        // P59 : on charge d'après ce que l'entrepôt contient à cet instant, pas d'après son état au dernier passage.
+        CityDocks.touch(server, home);
         CityEconomy eco = home.economy();
         CityGood good = l.good != null ? l.good : CityTravel.richest(eco);
         int amount = good == null ? 0 : Math.min(l.amount, eco.stock(good) - RESERVE);
@@ -248,6 +250,7 @@ public final class CityCommerce {
         if (good != null) eco.take(good, amount);
         if (money > 0) eco.addPurse(-money);
         CityTravel.departLine(server, l, home, dest, lead, good, amount, money);
+        CityDocks.touch(server, home);
         l.status = "road";
         l.lastDay = RealmService.currentDay(server);
         return true;

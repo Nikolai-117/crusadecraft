@@ -51,7 +51,7 @@ public final class WorldShots {
     private static final boolean ENABLED = Boolean.getBoolean("crusadecraft.worldshots");
     private static final String WORLD = "crusadecraft-shots";
 
-    private enum Step { BOOT, LOADING, SETUP, WALL, MAP, SHEET, HERALD, REALM, LETTER, SEAL, CHANCERY, COLOMBIER, TOWNHALL, TOWNHALL_CLICK, WAR, WAR_MAP_OPEN, WAR_MAP, WAR_MAP_SHOT, SIEGE, CAPTURE, CAPTURED, WAR_TABLE, RAID, EDITOR, EDITOR_REALM, EDITOR_PAINT, LINEAGE_OPEN, LINEAGE_HOUSE, LINEAGE_SPAWN, LINEAGE_SHOT, STAFF_MENU, STAFF_SHOT, FORT_SHOT, SITES_MAP, PAPER_SHOT, LIEU_FORM, LIEU_SCREEN, LIEU_MAP, CHAT_MAP, WALK_IN, TITLE_SHOT, XAERO_SHOT, TERRAIN_OPEN, TERRAIN_WAIT, TERRAIN_SHOT, TERRAIN_POLITICAL, V3, V4, V5, V6, V7, DONE }
+    private enum Step { COPY_LOADING, COPY, BOOT, LOADING, SETUP, WALL, MAP, SHEET, HERALD, REALM, LETTER, SEAL, CHANCERY, COLOMBIER, TOWNHALL, TOWNHALL_CLICK, WAR, WAR_MAP_OPEN, WAR_MAP, WAR_MAP_SHOT, SIEGE, CAPTURE, CAPTURED, WAR_TABLE, RAID, EDITOR, EDITOR_REALM, EDITOR_PAINT, LINEAGE_OPEN, LINEAGE_HOUSE, LINEAGE_SPAWN, LINEAGE_SHOT, STAFF_MENU, STAFF_SHOT, FORT_SHOT, SITES_MAP, PAPER_SHOT, LIEU_FORM, LIEU_SCREEN, LIEU_MAP, CHAT_MAP, WALK_IN, TITLE_SHOT, XAERO_SHOT, TERRAIN_OPEN, TERRAIN_WAIT, TERRAIN_SHOT, TERRAIN_POLITICAL, V3, V4, V5, V6, V7, DONE }
 
     private static Step step = Step.BOOT;
     private static int wait;
@@ -75,8 +75,29 @@ public final class WorldShots {
         switch (step) {
             case BOOT -> {
                 if (mc.screen == null || mc.level != null || mc.getOverlay() != null) return;
+                // -Pshots_open=dossier : une copie d'un monde, qu'on ne recrée surtout pas.
+                String copy = System.getProperty("crusadecraft.worldshots.open", "");
+                if (!copy.isEmpty()) {
+                    CrusadeCraft.LOGGER.info("WorldShots : ouverture de la copie {}", copy);
+                    mc.createWorldOpenFlows().loadLevel(mc.screen, copy);
+                    step = Step.COPY_LOADING;
+                    wait = 20;
+                    return;
+                }
                 createWorld(mc);
                 step = Step.LOADING;
+            }
+            case COPY_LOADING -> {
+                if (mc.level != null && mc.player != null && mc.getSingleplayerServer() != null) {
+                    step = Step.COPY;
+                    wait = 200;
+                    return;
+                }
+                WorldShotsCopy.answer(mc);
+                wait = 20;
+            }
+            case COPY -> {
+                if (WorldShotsCopy.tick(mc, WorldShots::grab)) step = Step.DONE;
             }
             case LOADING -> {
                 if (mc.level == null || mc.player == null || mc.getSingleplayerServer() == null) return;

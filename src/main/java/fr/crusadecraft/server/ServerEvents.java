@@ -182,6 +182,7 @@ public final class ServerEvents {
         perf("plans", () -> fr.crusadecraft.core.build.plan.Journals.tick(server));
         if (t % 200 == 173) perf("villes IA", () -> fr.crusadecraft.core.build.plan.AiTowns.tick(server));
         if (t % 200 == 181) perf("marches", () -> fr.crusadecraft.core.city.CityGrowth.tick(server));
+        if (t % fr.crusadecraft.core.city.CityCamps.EVERY == 57) perf("blocus", () -> fr.crusadecraft.core.city.CityCamps.tick(server));
         // Les lieux suivent le monde (une ville renommée, un royaume disparu) : toutes les vingt secondes suffisent.
         if (t % 400 == 200) perf("lieux", () -> fr.crusadecraft.core.place.PlaceService.sync(server));
         // Le passage d'une frontière de chunk à l'autre : une vérification par seconde suffit.
@@ -207,7 +208,7 @@ public final class ServerEvents {
     /** Les golems d'un village assiégé ne s'en prennent pas à sa garnison. */
     @SubscribeEvent
     public static void onChangeTarget(LivingChangeTargetEvent event) {
-        if (!event.getEntity().level().isClientSide() && WarFieldService.sameSide(event.getEntity(), event.getNewTarget())) event.setCanceled(true);
+        if (!event.getEntity().level().isClientSide() && (WarFieldService.sameSide(event.getEntity(), event.getNewTarget()) || fr.crusadecraft.core.city.CityCamps.refuses(event.getEntity(), event.getNewTarget()))) event.setCanceled(true);
     }
 
     @SubscribeEvent
@@ -249,10 +250,22 @@ public final class ServerEvents {
             fr.crusadecraft.core.lineage.LineageService.onDeath(level.getServer(), event.getEntity());
             fr.crusadecraft.core.war.ArmyService.onDeath(level.getServer(), event.getEntity());
             fr.crusadecraft.core.war.HostService.onDeath(level.getServer(), event.getEntity());
+            fr.crusadecraft.core.city.CityCamps.onDeath(level.getServer(), event.getEntity(), event.getSource().getEntity());
             fr.crusadecraft.core.diplomacy.CaravanService.onDeath(level.getServer(), event.getEntity(), event.getSource().getEntity());
             if (event.getSource().getEntity() instanceof ServerPlayer killer) fr.crusadecraft.core.city.CityTalk.onKilled(killer, event.getEntity());
             if (event.getEntity() instanceof ServerPlayer fallen) fr.crusadecraft.core.city.CityGuards.forgive(fallen.getUUID());
         }
+    }
+
+    /** P59 : un soldat de blocus ne laisse rien : il ne faudrait pas qu'un siège devienne une ferme à émeraudes. */
+    @SubscribeEvent
+    public static void onDrops(net.minecraftforge.event.entity.living.LivingDropsEvent event) {
+        if (event.getEntity().getTags().contains(fr.crusadecraft.core.city.CityCamps.TAG)) event.setCanceled(true);
+    }
+
+    @SubscribeEvent
+    public static void onExperience(net.minecraftforge.event.entity.living.LivingExperienceDropEvent event) {
+        if (event.getEntity().getTags().contains(fr.crusadecraft.core.city.CityCamps.TAG)) event.setCanceled(true);
     }
 
     /** P43 : commercer avec un habitant fait bouger les réserves et la bourse de sa ville. */

@@ -484,6 +484,7 @@ guerre contre le leur. En créatif, ils t'ignorent. Une ville garde toujours au 
 - **Une route qui passe chez l'ennemi est coupée.** Sur la carte, elle devient rouge, et sa ligne attend la paix.
 - **Le péage** : une caravane étrangère paie à chaque royaume qu'elle traverse, sauf traité de commerce, de passage ou alliance. **La douane** : le royaume prend sa part sur ce qu'un étranger vend chez lui, sauf traité de commerce. Les deux vont au trésor, et se règlent dans l'onglet Commerce de n'importe laquelle de ses villes. L'ordinateur fixe les siens selon son tempérament.
 - **Le blocus** : en guerre, le bouton **Bloquer** de l'écran d'économie (onglet Villes) coupe une ville ennemie du monde, pour 8 pièces par jour, 3 blocus au plus. Plus de grain de la campagne, plus d'importations, plus de caravanes : ses réserves baissent jusqu'à la famine, et chaque jour de famine compte pour toi dans la guerre. L'ordinateur en fait autant, à toi aussi, pour 8 jours au plus. Un siège, une occupation ou une armée à moins de 96 blocs ont le même effet, sans rien coûter. Un anneau rouge le montre sur la carte.
+- **Le camp du blocus** : le blocus se voit dans le monde. Dès qu'un joueur approche, des soldats se tiennent en cercle autour de la ville, un sur quatre portant la bannière de son royaume. Ils ne s'en prennent qu'aux joueurs en guerre contre leur royaume et à qui les frappe : un voyageur en paix passe, et les habitants ne risquent rien. **Tue-les tous dans la même journée et le blocus est brisé** ; au matin, ceux qui manquent sont remplacés. Ils ne laissent rien : ni objet, ni expérience.
 
 ### Les contrats
 
@@ -738,10 +739,10 @@ Pour accélérer le temps pendant un test : `/time add 24000` fait passer un jou
 - Les caravanes ne marchent dans le monde que près d'un joueur ; loin de tout, elles avancent sur la carte. Après un
   redémarrage, elles repartent de leur première capitale, et un pillage en cours est oublié.
 - Une marchandise par royaume, pas de stocks ni de marché : le commerce reste une affaire de revenus.
-- Le quai d'une colonie lit son entrepôt au passage, quatre fois par jour : si la colonie consomme entre-temps ce qu'une caravane a déjà emporté, on ne le lui reprend pas. Seul le
+- Le quai d'une colonie écrit dans son entrepôt au moment où une caravane charge ou décharge, si l'entrepôt est chargé ; sinon, cela attend sur le quai jusqu'au retour d'un joueur. Seul le
   premier entrepôt chargé compte, et il faut que quelqu'un soit assez près pour que son chunk soit chargé.
 - Une escorte ne se bat que contre ce qui s'en prend à elle : il n'y a pas de bandits sur les routes (Romain n'en veut pas), le danger vient des monstres et de la guerre.
-- Un blocus ne se voit pas dans le monde : pas de soldats autour de la ville. Il se lit sur la carte, dans l'écran d'économie, et dans ce que la ville endure.
+- Les soldats d'un camp de blocus sont ceux des autres guerres du mod : les bandits de Hundred Years War s'il est là, sinon des pillards et des vindicateurs ; en mode paisible, où les monstres s'effacent, des golems. Il n'y a ni tentes ni feux de camp : le blocus ne pose aucun bloc dans le monde.
 - Les routes sont tracées d'après le terrain que le générateur prévoit : elles ne savent rien de ce qu'on a bâti, et un obstacle réel fait franchir un ressaut d'un
   petit saut. Pas de ponts : une rivière trop large se traverse à pied, ou d'un saut.
 - Les marchés de l'ordinateur sont des comptes : pas de bâtiments, personne à y voir. Un voyageur qui y arrive se promène sur le siège de la ville.

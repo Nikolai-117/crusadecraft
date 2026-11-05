@@ -1,5 +1,6 @@
 package fr.crusadecraft.core.city;
 
+import static org.junit.jupiter.api.Assertions.assertArrayEquals;
 import static org.junit.jupiter.api.Assertions.assertEquals;
 import static org.junit.jupiter.api.Assertions.assertFalse;
 import static org.junit.jupiter.api.Assertions.assertNotNull;
@@ -603,5 +604,16 @@ class NpcPanelLogicTest {
         shut.simulate(new CityEconomy.Census(farmers, 0, true, java.util.Map.of(), 0, 0, true), false, false, new Random(1));
         assertEquals(48, free.stock(CityGood.BLE), "quatre fermiers libres");
         assertEquals(12, shut.stock(CityGood.BLE), "les champs sont hors les murs");
+    }
+
+    @Test
+    void aBlockadeCampCirclesTheTown() {
+        assertEquals(48, CityCamps.ring(0), "une petite ville : un cercle assez large quand même");
+        assertEquals(124, CityCamps.ring(200));
+        assertEquals(16, CityCamps.men(0));
+        assertEquals(24, CityCamps.men(800), "jamais une armée entière");
+        assertArrayEquals(new int[]{48, 0}, CityCamps.post(0, 8, 48, 0));
+        assertArrayEquals(new int[]{0, 48}, CityCamps.post(2, 8, 48, 0));
+        assertArrayEquals(new int[]{-48, 0}, CityCamps.post(4, 8, 48, 0));
     }
 }

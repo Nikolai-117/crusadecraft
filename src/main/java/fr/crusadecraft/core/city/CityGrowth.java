@@ -94,7 +94,7 @@ public final class CityGrowth {
         int max = CrusadeConfig.SERVER.aiTownsAtOnce.get(), range = CrusadeConfig.SERVER.aiTownRange.get(), opened = 0;
         for (Site m : new ArrayList<>(data.world().markets())) {
             if (building + opened >= max) break;
-            if (CityDocks.isDockId(m.id()) || !mature(m)) continue;
+            if (CityDocks.isDockId(m.id()) || !mature(m) || CityBlockades.blocked(server, m)) continue;
             AiRealm realm = null;
             AiProvince province = null;
             for (AiRealm r : data.world().realms()) {
@@ -167,6 +167,12 @@ public final class CityGrowth {
             if (l.to.equals(market.id())) l.to = city.id();
         }
         for (CityContract c : data.world().contracts()) if (c.to.equals(market.id())) c.to = city.id();
+        // P59 : un blocus décidé pendant le chantier suit la ville, et son camp avec lui.
+        CityBlockades.Blockade held = data.world().blockades().remove(market.id());
+        if (held != null) {
+            data.world().blockades().put(city.id(), held);
+            CityBlockades.invalidate();
+        }
         data.setDirty();
     }
 }
