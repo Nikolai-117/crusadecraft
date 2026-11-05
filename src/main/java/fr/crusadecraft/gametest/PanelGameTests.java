@@ -992,6 +992,86 @@ public final class PanelGameTests {
         }
     }
 
+    @GameTest(template = TestWorld.TEMPLATE, setupTicks = TestWorld.SETUP_TICKS, batch = "p57_colonie", timeoutTicks = 300)
+    public static void leQuaiDUneColonie(GameTestHelper h) {
+        TestWorld w = TestWorld.realm(h, "QuaiA");
+        var server = h.getLevel().getServer();
+        var level = h.getLevel();
+        var data = CrusadeSavedData.get(server);
+        try {
+            data.world().clear();
+            data.world().markGenerated(RealmService.currentDay(server));
+            // Sans entrepôt, un quai existe, et le dit.
+            var dock = fr.crusadecraft.core.city.CityDocks.ensure(server, w.colony).orElse(null);
+            w.check(dock != null, "pas de quai pour la colonie d'un royaume");
+            w.check(dock.owner().equals(w.realm.id()), "le quai n'est pas au royaume");
+            w.check(data.world().isMarket(dock.id()) && !data.world().sites().contains(dock), "un quai se range avec les marchés, hors des constructions du monde");
+            w.check(!fr.crusadecraft.core.city.CityDocks.hasWarehouse(w.colony), "un entrepôt sorti de nulle part");
+            // Un vrai entrepôt, avec de quoi vendre, et une épée à laquelle on ne doit pas toucher.
+            net.minecraft.core.BlockPos at = w.center.offset(4, 0, 0);
+            fr.crusadecraft.compat.minecolonies.MineColoniesTestKit.addWarehouse(level, w.colony, at, 1);
+            var handler = fr.crusadecraft.compat.minecolonies.MineColoniesBridge.warehouse(w.colony).orElse(null);
+            w.check(handler != null, "on ne trouve pas l'entrepôt");
+            w.check(handler.getSlots() > 0, "un entrepôt sans place");
+            net.minecraftforge.items.ItemHandlerHelper.insertItemStacked(handler, new net.minecraft.world.item.ItemStack(net.minecraft.world.item.Items.IRON_INGOT, 64), false);
+            net.minecraftforge.items.ItemHandlerHelper.insertItemStacked(handler, new net.minecraft.world.item.ItemStack(net.minecraft.world.item.Items.IRON_INGOT, 36), false);
+            net.minecraft.world.item.ItemStack sword = new net.minecraft.world.item.ItemStack(net.minecraft.world.item.Items.DIAMOND_SWORD);
+            sword.enchant(net.minecraft.world.item.enchantment.Enchantments.SHARPNESS, 3);
+            net.minecraftforge.items.ItemHandlerHelper.insertItemStacked(handler, sword, false);
+            fr.crusadecraft.core.city.CityDocks.pass(server, dock);
+            w.check(dock.economy().stock(CityGood.FER) == 100 - fr.crusadecraft.core.city.CityDocks.KEEP, "le quai ne voit pas l'entrepôt : " + dock.economy().stock(CityGood.FER));
+            w.check(dock.economy().stock(CityGood.OUTILS) == 0, "le quai compte une épée enchantée parmi ses outils");
+            // Le panneau du quai, depuis la colonie.
+            w.ruler.setPos(w.center.getX() + 0.5, w.center.getY(), w.center.getZ() + 2.5);
+            CompoundTag view = CityPanel.view(server, dock);
+            w.check(view.getBoolean("dock") && view.getBoolean("warehouse"), "le panneau ne dit pas que c'est un quai relié");
+            w.check(!CityPanel.edit(w.ruler, dock.id(), tag(t -> t.putInt("purse", 500))).success(), "on crée de l'argent sur un quai");
+            // Une ligne vers une ville : du fer part vraiment de l'entrepôt.
+            NationBook.setForTests(List.of(nation("essaia", "Essaia")));
+            NationService.ensure(server);
+            AiRealm a = NationService.realm(server, "essaia").orElseThrow();
+            Site dest = city(w, server, level, a, "Quaiarr", 300, BuildingFunction.MARCHE);
+            w.check(fr.crusadecraft.core.city.CityCommerce.stops(server, dest).stream().anyMatch(x -> x.id().equals(dock.id()) && x.dock()), "une ville ne propose pas la colonie");
+            w.check(fr.crusadecraft.core.city.CityCommerce.create(server, dock, dest.id(), CityGood.FER, 16, CityGood.PAIN, 1, 0, false).success(), "pas de ligne depuis le quai");
+            fr.crusadecraft.core.city.CityLine line = data.world().lines().get(0);
+            line.waited = 99;
+            w.realm.setGold(1000);
+            fr.crusadecraft.core.city.CityCommerce.pulse(server);
+            Person merchant = null;
+            for (Person x : data.lineage().persons()) if (x.trip() != null && line.id.equals(x.trip().line())) merchant = x;
+            w.check(merchant != null, "pas de caravane depuis le quai : " + line.status);
+            fr.crusadecraft.core.city.CityDocks.pass(server, dock);
+            int iron = 0;
+            for (int i = 0; i < handler.getSlots(); i++) if (handler.getStackInSlot(i).is(net.minecraft.world.item.Items.IRON_INGOT)) iron += handler.getStackInSlot(i).getCount();
+            w.check(iron == 84, "le fer n'a pas quitté l'entrepôt : " + iron);
+            // Elle rapporte du pain : il entre dans l'entrepôt, en vrai.
+            dest.economy().add(CityGood.PAIN, 100);
+            long now = level.getGameTime();
+            CityTravel.advanceForTests(server, merchant, now);
+            CityTravel.advanceForTests(server, merchant, now);
+            CityTravel.advanceForTests(server, merchant, now);
+            w.check(merchant.trip() == null, "elle ne rentre pas");
+            fr.crusadecraft.core.city.CityDocks.pass(server, dock);
+            int bread = 0;
+            for (int i = 0; i < handler.getSlots(); i++) if (handler.getStackInSlot(i).is(net.minecraft.world.item.Items.BREAD)) bread += handler.getStackInSlot(i).getCount();
+            w.check(bread > 0, "le pain n'arrive pas dans l'entrepôt");
+            boolean kept = false;
+            for (int i = 0; i < handler.getSlots(); i++) if (handler.getStackInSlot(i).is(net.minecraft.world.item.Items.DIAMOND_SWORD)) kept = true;
+            w.check(kept, "l'épée a disparu");
+            // Une colonie hors de tout royaume n'a pas de quai.
+            fr.crusadecraft.core.ColonyRef other = w.foreignColony(w.ruler, "QuaiLibre");
+            w.check(fr.crusadecraft.core.city.CityDocks.ensure(server, other).isEmpty(), "un quai pour une colonie sans royaume");
+            // Le quai survit à l'enregistrement.
+            var loaded = fr.crusadecraft.core.world.WorldState.load(data.world().save());
+            w.check(loaded.docks().containsKey(dock.id()) && loaded.isMarket(dock.id()), "le quai ne s'enregistre pas");
+            h.succeed();
+        } finally {
+            NationBook.setForTests(null);
+            data.world().clear();
+            w.cleanup();
+        }
+    }
+
     @GameTest(template = TestWorld.TEMPLATE, setupTicks = TestWorld.SETUP_TICKS, batch = "p51_lignes", timeoutTicks = 300)
     public static void lignesDeCommerce(GameTestHelper h) {
         TestWorld w = TestWorld.realm(h, "CommerceA");

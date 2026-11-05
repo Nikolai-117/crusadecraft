@@ -3194,5 +3194,10 @@
   "crusadecraft.contract.dir.southwest": "to the south-west",
   "crusadecraft.contract.dir.west": "to the west",
   "crusadecraft.contract.dir.northwest": "to the north-west",
-  "crusadecraft.city.rumor.contrat": "%s kept their word: you can trust them with what matters"
+  "crusadecraft.city.rumor.contrat": "%s kept their word: you can trust them with what matters",
+  "crusadecraft.city.dock.linked": "Dock linked to the warehouse",
+  "crusadecraft.city.dock.no_warehouse": "Build a warehouse: the dock will empty into it",
+  "crusadecraft.city.dock.no_realm": "This colony belongs to no realm: its trade would have no treasury to go to.",
+  "crusadecraft.city.dock.stock": "This is what the warehouse can spare: anything above %s of each good, plus what is waiting to be stored. Enchanted or named items are never sold.",
+  "crusadecraft.city.panel.trade.stop.dock": "%s, colony (%s blocks)"
 }

@@ -43,6 +43,9 @@ public final class CityPanel {
     /** Une réserve ne garde pas plus de tenues que ça. */
     static final int POOL_MAX = 128;
 
+    /** Ce qui se règle sur le quai d'une colonie. */
+    private static final java.util.Set<String> DOCK_KEYS = java.util.Set.of("lineAdd", "lineToggle", "linePave", "lineRemove", "toll", "duty", "goSee");
+
     private CityPanel() {}
 
     private static CrusadeSavedData data(MinecraftServer server) {
@@ -59,6 +62,14 @@ public final class CityPanel {
     /** Le panneau de la ville où l'on se tient. */
     public static Outcome openHere(ServerPlayer player) {
         Optional<Site> site = CityService.cityAt(player.server, player.level().dimension().location(), player.blockPosition());
+        // P57 : dans une colonie, c'est son quai qu'on règle.
+        if (site.isEmpty()) {
+            Optional<fr.crusadecraft.core.ColonyRef> colony = fr.crusadecraft.compat.minecolonies.MineColoniesBridge.colonyAt(player.level(), player.blockPosition());
+            if (colony.isPresent()) {
+                site = CityDocks.ensure(player.server, colony.get());
+                if (site.isEmpty()) return Outcome.no("crusadecraft.city.dock.no_realm");
+            }
+        }
         if (site.isEmpty()) return Outcome.no("crusadecraft.city.none");
         if (!open(player, site.get())) return Outcome.no("crusadecraft.city.denied");
         return Outcome.ok(Component.literal(site.get().name()));
@@ -69,6 +80,13 @@ public final class CityPanel {
         CrusadeSavedData data = data(server);
         LineageState state = data.lineage();
         CompoundTag t = new CompoundTag();
+        // P57 : le quai d'une colonie : on repasse à l'entrepôt avant de montrer quoi que ce soit.
+        if (CityDocks.isDockId(site.id())) {
+            CityDocks.pass(server, site);
+            t.putBoolean("dock", true);
+            t.putBoolean("warehouse", CityDocks.colonyOf(server, site.id()).map(CityDocks::hasWarehouse).orElse(false));
+            t.putInt("keep", CityDocks.KEEP);
+        }
         t.putUUID("site", site.id());
         t.putString("name", site.name());
         t.put("settings", site.settings().save());
@@ -154,6 +172,7 @@ public final class CityPanel {
             x.putUUID("id", s.id());
             x.putString("name", s.name());
             x.putBoolean("ai", s.ai());
+            x.putBoolean("dock", s.dock());
             x.putBoolean("war", s.war());
             x.putInt("distance", s.distance());
             stops.add(x);
@@ -206,6 +225,10 @@ public final class CityPanel {
         if (found.isEmpty()) return Outcome.no("crusadecraft.city.unknown");
         Site site = found.get();
         if (!CityService.allowed(player, site)) return Outcome.no("crusadecraft.city.denied");
+        // P57 : sur un quai, seul le commerce se règle. Toucher à ses réserves créerait des objets dans l'entrepôt.
+        if (CityDocks.isDockId(site.id())) {
+            for (String key : c.getAllKeys()) if (!DOCK_KEYS.contains(key)) return Outcome.no("crusadecraft.city.denied");
+        }
         Outcome out = apply(player, site, c);
         data(player.server).setDirty();
         // Il a pu céder sa ville à quelqu'un d'autre : il n'y a alors plus rien à lui montrer.

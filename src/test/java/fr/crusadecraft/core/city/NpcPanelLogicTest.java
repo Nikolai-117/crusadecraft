@@ -479,4 +479,108 @@ class NpcPanelLogicTest {
         assertEquals(c.merchant, l.merchant);
         assertEquals(9, l.total);
     }
+
+    /** Un entrepôt de papier. */
+    private static final class Shelf implements CityDocks.Warehouse {
+        final java.util.EnumMap<CityGood, Integer> items = new java.util.EnumMap<>(CityGood.class);
+        int room = Integer.MAX_VALUE;
+
+        @Override
+        public int count(CityGood g) {
+            return items.getOrDefault(g, 0);
+        }
+
+        @Override
+        public int take(CityGood g, int n) {
+            int got = Math.min(count(g), n);
+            items.put(g, count(g) - got);
+            return got;
+        }
+
+        @Override
+        public int give(CityGood g, int n) {
+            int put = Math.min(room, n);
+            items.put(g, count(g) + put);
+            room -= put;
+            return put;
+        }
+    }
+
+    private static CityEconomy emptyEconomy() {
+        CityEconomy e = new CityEconomy();
+        e.setStock(CityGood.FER, 0);
+        return e;
+    }
+
+    @Test
+    void aDockShowsWhatTheWarehouseCanSpare() {
+        fr.crusadecraft.core.ColonyRef ref = new fr.crusadecraft.core.ColonyRef(net.minecraft.resources.ResourceLocation.tryParse("minecraft:overworld"), 7);
+        CityDocks.Dock dock = new CityDocks.Dock(ref);
+        CityEconomy e = emptyEconomy();
+        Shelf w = new Shelf();
+        w.items.put(CityGood.FER, 100);
+        w.items.put(CityGood.BOIS, 10);
+        CityDocks.sync(e, dock, w);
+        assertEquals(100 - CityDocks.KEEP, e.stock(CityGood.FER), "on voit ce qui dépasse de ce qu'on lui laisse");
+        assertEquals(0, e.stock(CityGood.BOIS), "ce qu'elle a de justesse n'est pas à vendre");
+        // Une caravane en emporte seize : au passage suivant, ils quittent vraiment l'entrepôt.
+        e.take(CityGood.FER, 16);
+        CityDocks.sync(e, dock, w);
+        assertEquals(84, w.count(CityGood.FER), "l'entrepôt n'a pas donné ce qui est parti");
+        assertEquals(84 - CityDocks.KEEP, e.stock(CityGood.FER));
+        // Une caravane apporte du pain : il va à l'entrepôt.
+        e.add(CityGood.PAIN, 24);
+        CityDocks.sync(e, dock, w);
+        assertEquals(24, w.count(CityGood.PAIN), "le pain n'est pas rangé");
+    }
+
+    @Test
+    void aDockWaitsWhileTheWarehouseIsAway() {
+        fr.crusadecraft.core.ColonyRef ref = new fr.crusadecraft.core.ColonyRef(net.minecraft.resources.ResourceLocation.tryParse("minecraft:overworld"), 8);
+        CityDocks.Dock dock = new CityDocks.Dock(ref);
+        CityEconomy e = emptyEconomy();
+        Shelf w = new Shelf();
+        w.items.put(CityGood.FER, 100);
+        CityDocks.sync(e, dock, w);
+        // Plus personne n'est là : l'entrepôt n'est pas chargé. Le commerce tourne quand même, et on note.
+        e.take(CityGood.FER, 16);
+        e.add(CityGood.PAIN, 24);
+        CityDocks.sync(e, dock, null);
+        assertEquals(24, dock.owed(CityGood.PAIN), "on oublie ce qu'on doit lui apporter");
+        assertEquals(-16, dock.owed(CityGood.FER), "on oublie ce qu'on lui a pris");
+        assertEquals(100, w.count(CityGood.FER), "on ne touche à rien sans lui");
+        assertEquals(24, e.stock(CityGood.PAIN), "le pain attend sur le quai");
+        // Il revient : tout s'écrit.
+        CityDocks.sync(e, dock, w);
+        assertEquals(84, w.count(CityGood.FER));
+        assertEquals(24, w.count(CityGood.PAIN));
+        assertEquals(0, dock.owed(CityGood.PAIN));
+        assertEquals(0, dock.owed(CityGood.FER));
+    }
+
+    @Test
+    void aFullWarehouseKeepsTheRestOnTheDock() {
+        fr.crusadecraft.core.ColonyRef ref = new fr.crusadecraft.core.ColonyRef(net.minecraft.resources.ResourceLocation.tryParse("minecraft:overworld"), 9);
+        CityDocks.Dock dock = new CityDocks.Dock(ref);
+        CityEconomy e = emptyEconomy();
+        Shelf w = new Shelf();
+        w.room = 10;
+        e.add(CityGood.PAIN, 24);
+        CityDocks.sync(e, dock, w);
+        assertEquals(10, w.count(CityGood.PAIN));
+        assertEquals(14, dock.owed(CityGood.PAIN), "rien ne se perd : le reste attend sur le quai");
+        assertEquals(14, e.stock(CityGood.PAIN), "et il reste à vendre");
+    }
+
+    @Test
+    void aDockHasItsOwnKindOfId() {
+        fr.crusadecraft.core.ColonyRef a = new fr.crusadecraft.core.ColonyRef(net.minecraft.resources.ResourceLocation.tryParse("minecraft:overworld"), 1);
+        fr.crusadecraft.core.ColonyRef b = new fr.crusadecraft.core.ColonyRef(net.minecraft.resources.ResourceLocation.tryParse("minecraft:the_nether"), 1);
+        assertTrue(CityDocks.isDockId(CityDocks.idOf(a)));
+        assertFalse(CityDocks.idOf(a).equals(CityDocks.idOf(b)), "deux mondes, deux quais");
+        assertFalse(CityDocks.isDockId(UUID.randomUUID()));
+        assertFalse(CityDocks.isDockId(CityMarkets.idOf(1)), "un marché n'est pas un quai");
+        CityDocks.Dock d = new CityDocks.Dock(a);
+        assertEquals(a, CityDocks.Dock.load(d.save()).colony);
+    }
 }

@@ -92,6 +92,11 @@ public final class CityEconomy {
         return got;
     }
 
+    /** P57 : ce que montre l'entrepôt d'une colonie. */
+    void setStock(CityGood g, int n) {
+        stock.put(g, Math.max(0, n));
+    }
+
     /** Un marché, qui n'a pas d'habitants à compter, tient lui-même ses jours de faim. */
     void setFamine(int days) {
         famine = Math.max(0, days);

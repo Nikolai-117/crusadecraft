@@ -101,7 +101,12 @@ public final class CityCommerce {
     // ------------------------------------------------------------------ où aller
 
     /** Une destination possible, pour le panneau : une vraie ville, ou une ville de la carte. */
-    public record Stop(UUID id, String name, boolean ai, boolean war, int distance) {}
+    public record Stop(UUID id, String name, boolean ai, boolean war, int distance) {
+        /** P57 : le quai d'une colonie. */
+        public boolean dock() {
+            return CityDocks.isDockId(id);
+        }
+    }
 
     /** Où l'on peut aller depuis cette ville, de la plus proche à la plus lointaine. */
     public static List<Stop> stops(MinecraftServer server, Site from) {
@@ -114,6 +119,15 @@ public final class CityCommerce {
             if (s.province() >= 0) covered.add(s.province());
             if (s == from || !s.dimension().equals(from.dimension())) continue;
             out.add(new Stop(s.id(), s.name(), false, atWar(server, from.owner(), s.owner()), distance(from, s.anchor().getX(), s.anchor().getZ())));
+        }
+        // P57 : les colonies des royaumes : leur entrepôt reçoit ce qu'on leur apporte.
+        for (fr.crusadecraft.core.realm.Realm r : data.realms()) {
+            for (fr.crusadecraft.core.ColonyRef c : r.allColonies()) {
+                UUID id = CityDocks.idOf(c);
+                if (id.equals(from.id()) || !c.dimension().equals(from.dimension())) continue;
+                Optional<net.minecraft.core.BlockPos> at = fr.crusadecraft.compat.minecolonies.MineColoniesBridge.center(c);
+                if (at.isPresent()) out.add(new Stop(id, fr.crusadecraft.compat.minecolonies.MineColoniesBridge.info(c).name(), false, atWar(server, from.owner(), r.id()), distance(from, at.get().getX(), at.get().getZ())));
+            }
         }
         for (AiRealm r : data.world().realms()) {
             for (AiProvince p : r.provinces()) {
@@ -171,6 +185,8 @@ public final class CityCommerce {
     public static void pulse(MinecraftServer server) {
         if (!CrusadeConfig.SERVER.routines.get()) return;
         CrusadeSavedData data = data(server);
+        // P57 : ce que les quais ont reçu passe dans les entrepôts, et ce que ceux-ci contiennent devient vendable.
+        CityDocks.pulse(server);
         Set<UUID> running = new HashSet<>();
         for (Person p : data.lineage().persons()) if (p.alive() && p.trip() != null && p.trip().line() != null) running.add(p.trip().line());
         for (CityLine l : new ArrayList<>(data.world().lines())) {
@@ -309,7 +325,8 @@ public final class CityCommerce {
         CrusadeSavedData data = data(server);
         for (CityLine l : data.world().lines()) if (l.from.equals(from.id())) return;
         List<Stop> near = new ArrayList<>();
-        for (Stop s : stops(server, from)) if (!s.war() && s.distance() <= AI_RANGE && !CityBlockades.blocked(server).contains(s.id())) near.add(s);
+        // L'ordinateur ne livre pas d'office une colonie : son entrepôt ne se remplit que de ce que son maître a demandé.
+        for (Stop s : stops(server, from)) if (!s.war() && !s.dock() && s.distance() <= AI_RANGE && !CityBlockades.blocked(server).contains(s.id())) near.add(s);
         if (near.isEmpty()) return;
         // Les voisins d'abord, et de préférence une vraie ville : c'est là que le commerce se voit.
         Stop pick = null;

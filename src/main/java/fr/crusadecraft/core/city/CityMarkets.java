@@ -52,7 +52,10 @@ public final class CityMarkets {
     public static Optional<Site> of(MinecraftServer server, UUID id) {
         CrusadeSavedData data = data(server);
         Optional<Site> known = data.world().site(id);
-        if (known.isPresent() || !isMarketId(id)) return known;
+        if (known.isPresent()) return known;
+        // P57 : le quai d'une colonie.
+        if (CityDocks.isDockId(id)) return CityDocks.of(server, id);
+        if (!isMarketId(id)) return known;
         int province = (int) id.getLeastSignificantBits();
         for (AiRealm r : data.world().realms()) {
             for (AiProvince p : r.provinces()) if (p.id() == province) return Optional.of(ensure(server, r, p));
@@ -88,7 +91,7 @@ public final class CityMarkets {
     }
 
     /** Ceux qui le tiennent : ses marchands, ses gardes. Ils n'habitent nulle part dans le monde ; ils n'y paraissent qu'en voyage. */
-    private static void staff(MinecraftServer server, Site s, BuildingFunction f, long seed) {
+    static void staff(MinecraftServer server, Site s, BuildingFunction f, long seed) {
         BlockPos at = s.anchor().above();
         CityBuilding b = new CityBuilding(UUID.randomUUID(), at, at, at);
         b.setStats(60, 1, Map.of());
@@ -136,7 +139,9 @@ public final class CityMarkets {
     /** Une fois par jour : chaque marché vit, suit le sort de sa province, et remplace ceux qu'il a perdus. */
     public static void onDay(MinecraftServer server, Random random) {
         CrusadeSavedData data = data(server);
+        CityDocks.onDay(server);
         for (Site m : new ArrayList<>(data.world().markets())) {
+            if (CityDocks.isDockId(m.id())) continue;
             AiRealm owner = null;
             AiProvince province = null;
             for (AiRealm r : data.world().realms()) {

@@ -30,6 +30,17 @@ public final class MineColoniesTestKit {
 
     private MineColoniesTestKit() {}
 
+    /** P57 : un entrepôt pour cette colonie. */
+    public static void addWarehouse(ServerLevel level, ColonyRef ref, BlockPos at, int buildingLevel) {
+        Block hut = ForgeRegistries.BLOCKS.getValue(ResourceLocation.tryParse("minecolonies:blockhutwarehouse"));
+        level.setBlock(at, hut.defaultBlockState(), Block.UPDATE_ALL);
+        BlockEntity be = level.getBlockEntity(at);
+        if (!(be instanceof AbstractTileEntityColonyBuilding te)) throw new IllegalStateException("Pas d'entité de bâtiment sur l'entrepôt de test : " + be);
+        IBuilding building = colony(ref).getServerBuildingManager().addNewBuilding(te, level);
+        if (building == null) throw new IllegalStateException("MineColonies n'a pas enregistré l'entrepôt de test");
+        building.setBuildingLevel(buildingLevel);
+    }
+
     /** Crée une colonie appartenant à {@code owner}, avec un Hôtel de ville au niveau voulu (0 = aucun). */
     public static ColonyRef createColony(ServerLevel level, BlockPos center, ServerPlayer owner, String name, int townHallLevel) {
         // Les tests réutilisent les mêmes emplacements : une colonie laissée par un test qui a échoué sans

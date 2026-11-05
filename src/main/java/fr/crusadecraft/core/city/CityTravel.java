@@ -173,7 +173,7 @@ public final class CityTravel {
         all.addAll(data.world().markets());
         List<Site> out = new ArrayList<>();
         for (Site s : all) {
-            if (s == home || !CityService.city(s) || s.buildings().isEmpty() || !s.dimension().equals(home.dimension())) continue;
+            if (s == home || !CityService.city(s) || s.buildings().isEmpty() || !s.dimension().equals(home.dimension()) || CityDocks.isDockId(s.id())) continue;
             if (!s.owner().equals(home.owner()) && data.diplomacy().between(s.owner(), home.owner()).war()) continue;
             out.add(s);
         }
@@ -679,6 +679,8 @@ public final class CityTravel {
         }
         if (e == null) {
             BlockPos at = CityService.plazaOf(dest);
+            // Un marché, un quai : pas de place bâtie où paraître. À côté de son centre, sur la terre ferme.
+            if (data(server).world().isMarket(dest.id()) && level.hasChunk((at.getX() + 8) >> 4, (at.getZ() + 8) >> 4)) at = surface(level, at.getX() + 8, at.getZ() + 8);
             if (level.isLoaded(at)) CityService.spawnTraveller(level, data(server).lineage(), p, at);
             return;
         }

@@ -142,7 +142,9 @@ public class CityPanelScreen extends Screen {
         left = (width - W) / 2;
         top = (height - H) / 2;
         // Des onglets à la largeur de leur nom : huit n'y tiendraient pas autrement.
-        Tab[] all = Tab.values();
+        Tab[] all = view.getBoolean("dock") ? new Tab[]{Tab.LIVE, Tab.TRADE, Tab.STOCK} : Tab.values();
+        // P57 : le quai d'une colonie n'a ni bâtiments ni gens à régler.
+        if (view.getBoolean("dock") && tab != Tab.LIVE && tab != Tab.STOCK) tab = Tab.TRADE;
         int used = 0;
         for (Tab t : all) used += font.width(Component.translatable("crusadecraft.city.panel.tab." + t.name().toLowerCase(Locale.ROOT)));
         int pad = Math.max(2, (W - 24 - used - (all.length - 1)) / all.length);
@@ -476,7 +478,7 @@ public class CityPanelScreen extends Screen {
     }
 
     private Component stopName(CompoundTag s) {
-        return Component.translatable(s.getBoolean("war") ? "crusadecraft.city.panel.trade.stop.war" : s.getBoolean("ai") ? "crusadecraft.city.panel.trade.stop.ai" : "crusadecraft.city.panel.trade.stop", s.getString("name"), s.getInt("distance"));
+        return Component.translatable(s.getBoolean("war") ? "crusadecraft.city.panel.trade.stop.war" : s.getBoolean("dock") ? "crusadecraft.city.panel.trade.stop.dock" : s.getBoolean("ai") ? "crusadecraft.city.panel.trade.stop.ai" : "crusadecraft.city.panel.trade.stop", s.getString("name"), s.getInt("distance"));
     }
 
     private void initTrade() {
@@ -568,6 +570,8 @@ public class CityPanelScreen extends Screen {
     }
 
     private void initStock() {
+        // Sur un quai, les réserves sont ce que contient l'entrepôt : elles se lisent, et ne se changent pas d'ici.
+        if (view.getBoolean("dock")) return;
         CityGood[] goods = CityGood.values();
         for (int i = 0; i < goods.length; i++) {
             CityGood g = goods[i];
@@ -615,7 +619,8 @@ public class CityPanelScreen extends Screen {
         renderBackground(g);
         Ui.panel(g, left, top, W, H);
         Ui.scaled(g, font, Component.literal(view.getString("name")), left + 12, top + 8, 1.25f, Ui.TEXT_TITLE, false);
-        Ui.fitted(g, font, Component.translatable("crusadecraft.city.panel.people.count", view.getInt("people"), view.getInt("max")), left + W - 112, top + 10, 100, Ui.TEXT_MUTED);
+        if (view.getBoolean("dock")) Ui.fitted(g, font, Component.translatable(view.getBoolean("warehouse") ? "crusadecraft.city.dock.linked" : "crusadecraft.city.dock.no_warehouse"), left + W - 212, top + 10, 200, view.getBoolean("warehouse") ? Ui.TEXT_MUTED : Ui.GOLD);
+        else Ui.fitted(g, font, Component.translatable("crusadecraft.city.panel.people.count", view.getInt("people"), view.getInt("max")), left + W - 112, top + 10, 100, Ui.TEXT_MUTED);
         if (!view.getString("blocked").isEmpty()) Ui.fitted(g, font, Component.literal(view.getString("blocked")), left + 140, top + 10, W - 140 - 116, Ui.RED);
         switch (tab) {
             case LIVE -> renderLive(g);
@@ -788,6 +793,7 @@ public class CityPanelScreen extends Screen {
             Ui.fitted(g, font, Component.literal(Integer.toString(stock.getInt(good.name()))), cx + 88, y + 3, 40, stock.getInt(good.name()) < 16 ? Ui.RED : Ui.TEXT_TITLE);
         }
         int py = y0() + 5 * ROW;
+        if (view.getBoolean("dock")) Ui.wrapped(g, font, Component.translatable("crusadecraft.city.dock.stock", view.getInt("keep")), x(), py + 20, W - 24, Ui.TEXT_MUTED);
         Ui.fitted(g, font, Component.translatable("crusadecraft.city.panel.purse"), x(), py + 3, 80, Ui.TEXT);
         Ui.fitted(g, font, Component.literal(Long.toString(view.getLong("purse"))), x() + 88, py + 3, 40, Ui.TEXT_TITLE);
         ListTag orders = view.getList("orders", Tag.TAG_COMPOUND);

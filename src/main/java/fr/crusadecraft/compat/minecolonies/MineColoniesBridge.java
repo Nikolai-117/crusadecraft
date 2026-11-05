@@ -505,6 +505,26 @@ public final class MineColoniesBridge {
         return out;
     }
 
+    /**
+     * P57 : le premier entrepôt bâti et chargé de cette colonie : ses rayonnages, comme un seul inventaire. Rien si elle n'en a
+     * pas, ou si personne n'est assez près pour que son chunk soit chargé.
+     */
+    public static Optional<net.minecraftforge.items.IItemHandler> warehouse(ColonyRef ref) {
+        if (broken) return Optional.empty();
+        try {
+            IColony c = colony(ref);
+            if (c == null || c.getWorld() == null) return Optional.empty();
+            for (com.minecolonies.api.colony.buildings.workerbuildings.IWareHouse w : c.getServerBuildingManager().getWareHouses()) {
+                if (w.getBuildingLevel() <= 0 || !c.getWorld().hasChunkAt(w.getPosition()) || w.getTileEntity() == null) continue;
+                net.minecraftforge.common.util.LazyOptional<net.minecraftforge.items.IItemHandler> cap = w.getCapability(net.minecraftforge.common.capabilities.ForgeCapabilities.ITEM_HANDLER, null);
+                if (cap.isPresent()) return cap.resolve();
+            }
+        } catch (LinkageError e) {
+            breakBridge(e);
+        }
+        return Optional.empty();
+    }
+
     /** Un poste de garde d'une colonie (tour de garde, caserne, tour de caserne) : sa position et son niveau. */
     public record GuardPost(BlockPos pos, int level) {}
 

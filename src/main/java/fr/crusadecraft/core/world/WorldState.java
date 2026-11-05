@@ -109,6 +109,11 @@ public final class WorldState {
     /** P52 : les routes tracées, par paire de villes. */
     private final Map<String, fr.crusadecraft.core.city.CityRoads.Route> roads = new java.util.HashMap<>();
 
+    /** P57 : les quais des colonies, dont le site est rangé avec les marchés. */
+    private final Map<UUID, fr.crusadecraft.core.city.CityDocks.Dock> docks = new java.util.HashMap<>();
+
+    public Map<UUID, fr.crusadecraft.core.city.CityDocks.Dock> docks() { return docks; }
+
     /** P56 : ce que les villes demandent aux joueurs. */
     private final List<fr.crusadecraft.core.city.CityContract> contracts = new ArrayList<>();
 
@@ -196,6 +201,7 @@ public final class WorldState {
         blockades.clear();
         tradeRules.clear();
         contracts.clear();
+        docks.clear();
         tradeMoved = new long[16];
         tradeMoney = new long[16];
         generated = false;
@@ -225,6 +231,11 @@ public final class WorldState {
             ListTag mt = new ListTag();
             for (fr.crusadecraft.core.build.Site m : markets.values()) mt.add(m.save());
             t.put("markets", mt);
+        }
+        if (!docks.isEmpty()) {
+            CompoundTag dt = new CompoundTag();
+            docks.forEach((k, d) -> dt.put(k.toString(), d.save()));
+            t.put("docks", dt);
         }
         if (!contracts.isEmpty()) {
             ListTag ct = new ListTag();
@@ -300,6 +311,8 @@ public final class WorldState {
             fr.crusadecraft.core.build.Site m = fr.crusadecraft.core.build.Site.load(mt.getCompound(i));
             s.markets.put(m.id(), m);
         }
+        CompoundTag dt = t.getCompound("docks");
+        for (String k : dt.getAllKeys()) s.docks.put(UUID.fromString(k), fr.crusadecraft.core.city.CityDocks.Dock.load(dt.getCompound(k)));
         ListTag ct = t.getList("contracts", Tag.TAG_COMPOUND);
         for (int i = 0; i < ct.size(); i++) s.contracts.add(fr.crusadecraft.core.city.CityContract.load(ct.getCompound(i)));
         CompoundTag bt = t.getCompound("blockades");

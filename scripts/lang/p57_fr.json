@@ -1,0 +1,7 @@
+{
+  "crusadecraft.city.dock.linked": "Quai relié à l'entrepôt",
+  "crusadecraft.city.dock.no_warehouse": "Bâtis un entrepôt : le quai s'y videra",
+  "crusadecraft.city.dock.no_realm": "Cette colonie n'appartient à aucun royaume : son commerce n'aurait pas de trésor où aller.",
+  "crusadecraft.city.dock.stock": "Voici ce que l'entrepôt peut céder : tout ce qui dépasse %s de chaque marchandise, en plus de ce qui attend d'y être rangé. Les objets enchantés ou nommés ne se vendent jamais.",
+  "crusadecraft.city.panel.trade.stop.dock": "%s, colonie (%s blocs)"
+}

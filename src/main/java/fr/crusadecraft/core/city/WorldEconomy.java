@@ -74,6 +74,7 @@ public final class WorldEconomy {
             x.putString("realm", Fr.of(WarMapService.name(data, s.owner())));
             x.putBoolean("mine", s.owner().equals(mine));
             x.putBoolean("market", data.world().isMarket(s.id()));
+            x.putBoolean("dock", CityDocks.isDockId(s.id()));
             x.putInt("people", people);
             x.putLong("purse", e.purse());
             x.putInt("famine", e.famine());
