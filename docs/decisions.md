@@ -1147,3 +1147,20 @@ veux la voir comme le bâton de construction de MineColonies », des commandes, 
   réseau de routes serait une phase à part entière.
 - **Trouvé en route** : la carte plantait si la toute première tuile de terrain calculée était celle de l'origine du monde (une clé nulle
   confondue avec « rien de calculé ») : le bug datait de la carte en terrain, il est corrigé.
+
+**P51 à P53 (5 novembre 2026) — les lignes de commerce, les routes, les gardes, 3.14.0**
+
+- **Demande** : « créer des lignes de commerce », « un vrai simulateur de civilisation », entre deux villes, l'IA et la sienne ; que la caravane marche « jusqu'au point
+  d'arrivée » même sans être vue ; que la garde « attaque les mobs, et toi si tu attaques ».
+- **Les marchés plutôt que des villes vides** : la plupart des villes de l'ordinateur n'ont aucun bloc. Plutôt qu'un second système de commerce, chacune reçoit à la demande un
+  `Site` rangé à part (`WorldState.markets`) : `world().site(id)` le trouve, tout le reste du commerce marche tel quel, et les écrans, la carte et le territoire,
+  qui lisent `sites()`, ne le voient pas. Un marché disparaît quand sa province disparaît ou qu'une vraie ville la remplace.
+- **Le temps plutôt qu'une entité** : c'est ce qui fait qu'une caravane « marche » sans joueur. Sa position se calcule, et vaut pour un serveur vide, un redémarrage, un joueur qui
+  arrive en cours de route. Sous les yeux d'un joueur seulement, on attend qu'elle arrive vraiment avant de la dire arrivée.
+- **Le tracé hors du fil du serveur** : le terrain prévu par le générateur, comme la carte en terrain, sans charger un chunk. La recherche est en logique pure, donc testée avec un
+  lac et un col. Une route déjà là coûte moitié moins : le réseau se forme sans qu'on le décide.
+- **Le chemin au sol ne touche qu'à l'herbe et à la terre**, sous les pas, jamais dans une ville, et se choisit par ligne. L'ordinateur ne trace rien : un monde ne doit pas
+  se couvrir de chemins sans que son joueur l'ait demandé.
+- **Une ville ne se vide pas** : une caravane ne part plus si la moitié des adultes sont déjà en route, et il reste toujours un garde. Sans ça, le premier passage a vidé Dolhimluith.
+- **Les gardes frappent eux-mêmes** (`target.hurt`), au lieu de compter sur l'intelligence de Comes Alive, qui fuit plus qu'elle ne combat. On efface leur peur à chaque passage.
+  Rien ne se déclenche en créatif, comme les monstres de Minecraft.

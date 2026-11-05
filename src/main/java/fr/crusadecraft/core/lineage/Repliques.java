@@ -49,7 +49,9 @@ public final class Repliques extends SimpleJsonResourceReloadListener {
         /** P48 : un voyageur, et P49 : ce qu'ils écrivent aux joueurs. */
         VOYAGE, MESSAGE_AMI, MESSAGE_COMMANDE, MESSAGE_MERCI, MESSAGE_PLAINTE, MESSAGE_VOYAGE, MESSAGE_VENTE,
         /** P50 : deux habitants, face à face. */
-        ECHANGE_DEMANDE, ECHANGE_REPONSE, REMISE_LIVRE, REMISE_RECOIT, GROS_VEND, GROS_ACHETE, CAUSETTE, CAUSETTE_REPONSE;
+        ECHANGE_DEMANDE, ECHANGE_REPONSE, REMISE_LIVRE, REMISE_RECOIT, GROS_VEND, GROS_ACHETE, CAUSETTE, CAUSETTE_REPONSE,
+        /** P53 : des gardes qui se battent. */
+        GARDE_ALERTE, GARDE_COMBAT;
 
         static Moment byName(String name) {
             return Moment.valueOf(name.trim().toUpperCase(Locale.ROOT));

@@ -760,6 +760,7 @@ public class MapScreen extends Screen {
         g.enableScissor(mapX, mapY, mapX + mapW, mapY + mapH);
         if (warMode()) renderWarZones(g);
         if (!editing()) renderTrade(g);
+        renderCommerce(g);
         renderTravellers(g);
         renderPlaces(g);
         renderSeats(g);
@@ -800,6 +801,7 @@ public class MapScreen extends Screen {
             List<Component> tip = warMode() ? warTooltip(mouseX, mouseY) : List.of();
             if (tip.isEmpty() && !editing()) tip = armyTooltip(mouseX, mouseY);
             if (tip.isEmpty() && !editing()) tip = travellerTooltip(mouseX, mouseY);
+            if (tip.isEmpty() && !editing()) tip = commerceTooltip(mouseX, mouseY);
             if (tip.isEmpty() && !editing()) tip = tradeTooltip(mouseX, mouseY);
             if (tip.isEmpty()) tip = tooltip(rasterOwner(mouseX, mouseY));
             if (!tip.isEmpty()) g.renderComponentTooltip(font, tip, mouseX, mouseY);
@@ -1341,6 +1343,35 @@ public class MapScreen extends Screen {
                 g.fill(cx + 1, cy + 1, cx + 3, cy + 3, INK);
             }
         }
+    }
+
+    /** P51 : les lignes de commerce : le tracé de leur route, en or pour les tiennes, plus discret pour celles de l'ordinateur. */
+    private void renderCommerce(GuiGraphics g) {
+        for (MapView.CommerceLine l : view.commerce()) {
+            int color = l.ai() ? 0xB0B8A98C : 0xF0E7BD55;
+            for (int i = 1; i < l.xs().length; i++) {
+                int x0 = screenX(l.xs()[i - 1]), y0 = screenY(l.zs()[i - 1]), x1 = screenX(l.xs()[i]), y1 = screenY(l.zs()[i]);
+                double len = Math.hypot(x1 - x0, y1 - y0);
+                if (len < 1) continue;
+                double angle = Math.atan2(y1 - y0, x1 - x0);
+                bar(g, x0, y0, angle, (int) Math.round(len), l.ai() ? 1 : 2, color);
+            }
+        }
+    }
+
+    private List<Component> commerceTooltip(double mouseX, double mouseY) {
+        for (MapView.CommerceLine l : view.commerce()) {
+            for (int i = 1; i < l.xs().length; i++) {
+                if (segmentDistance(mouseX, mouseY, screenX(l.xs()[i - 1]), screenY(l.zs()[i - 1]), screenX(l.xs()[i]), screenY(l.zs()[i])) > 3) continue;
+                List<Component> tip = new ArrayList<>();
+                tip.add(Component.translatable(l.ai() ? "crusadecraft.city.line.map.ai" : "crusadecraft.city.line.map.mine").withStyle(ChatFormatting.GOLD));
+                tip.add(Component.literal(l.from() + " → " + l.to()).withStyle(ChatFormatting.WHITE));
+                if (!l.what().isEmpty()) tip.add(Component.literal(l.what()).withStyle(ChatFormatting.YELLOW));
+                tip.add(Component.translatable("crusadecraft.city.line.map.trips", l.trips()).withStyle(ChatFormatting.GRAY));
+                return tip;
+            }
+        }
+        return List.of();
     }
 
     /** P50 : les voyageurs : un chariot pour une caravane, un point pour celui qui marche seul, et le trait de ce qu'il lui reste à faire. */

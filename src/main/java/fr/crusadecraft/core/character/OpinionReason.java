@@ -59,7 +59,9 @@ public enum OpinionReason {
     // P29 : une caravane pillée en temps de paix
     BRIGANDAGE(-25, 30, true),
     // P41 : une vieille amitié entre deux nations
-    AMITIE_ANCIENNE(25, 3650, true);
+    AMITIE_ANCIENNE(25, 3650, true),
+    // P51 : le commerce rapproche
+    ECHANGES(6, 20, true);
 
     private final int value;
     private final int durationDays;

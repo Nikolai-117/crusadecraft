@@ -96,7 +96,25 @@ public final class WorldState {
 
     public Collection<fr.crusadecraft.core.build.Site> sites() { return sites.values(); }
 
-    public Optional<fr.crusadecraft.core.build.Site> site(UUID id) { return Optional.ofNullable(id == null ? null : sites.get(id)); }
+    public Optional<fr.crusadecraft.core.build.Site> site(UUID id) {
+        if (id == null) return Optional.empty();
+        fr.crusadecraft.core.build.Site s = sites.get(id);
+        return Optional.ofNullable(s != null ? s : markets.get(id));
+    }
+
+    /** P51 : les marchés des villes qui n'existent que sur la carte : ils commercent, mais ne sont pas des constructions du monde. */
+    private final Map<UUID, fr.crusadecraft.core.build.Site> markets = new java.util.LinkedHashMap<>();
+    /** P51 : les lignes de commerce. */
+    private final List<fr.crusadecraft.core.city.CityLine> lines = new ArrayList<>();
+    /** P52 : les routes tracées, par paire de villes. */
+    private final Map<String, fr.crusadecraft.core.city.CityRoads.Route> roads = new java.util.HashMap<>();
+
+    public Collection<fr.crusadecraft.core.build.Site> markets() { return markets.values(); }
+    public void addMarket(fr.crusadecraft.core.build.Site m) { markets.put(m.id(), m); }
+    public void removeMarket(UUID id) { markets.remove(id); }
+    public boolean isMarket(UUID id) { return id != null && markets.containsKey(id); }
+    public List<fr.crusadecraft.core.city.CityLine> lines() { return lines; }
+    public Map<String, fr.crusadecraft.core.city.CityRoads.Route> roads() { return roads; }
 
     public void add(fr.crusadecraft.core.build.Site site) { sites.put(site.id(), site); }
 
@@ -155,6 +173,9 @@ public final class WorldState {
         news.clear();
         borders = new TerritoryMap();
         sites.clear();
+        markets.clear();
+        lines.clear();
+        roads.clear();
         generated = false;
     }
 
@@ -178,6 +199,21 @@ public final class WorldState {
     public CompoundTag save() {
         CompoundTag t = new CompoundTag();
         t.putBoolean("generated", generated);
+        if (!markets.isEmpty()) {
+            ListTag mt = new ListTag();
+            for (fr.crusadecraft.core.build.Site m : markets.values()) mt.add(m.save());
+            t.put("markets", mt);
+        }
+        if (!lines.isEmpty()) {
+            ListTag lt = new ListTag();
+            for (fr.crusadecraft.core.city.CityLine l : lines) lt.add(l.save());
+            t.put("cityLines", lt);
+        }
+        if (!roads.isEmpty()) {
+            CompoundTag rt = new CompoundTag();
+            roads.forEach((k, r) -> rt.put(k, r.save()));
+            t.put("roads", rt);
+        }
         if (!post.isEmpty()) {
             CompoundTag pt = new CompoundTag();
             post.forEach((player, letters) -> {
@@ -220,6 +256,15 @@ public final class WorldState {
     public static WorldState load(CompoundTag t) {
         WorldState s = new WorldState();
         s.generated = t.getBoolean("generated");
+        ListTag mt = t.getList("markets", Tag.TAG_COMPOUND);
+        for (int i = 0; i < mt.size(); i++) {
+            fr.crusadecraft.core.build.Site m = fr.crusadecraft.core.build.Site.load(mt.getCompound(i));
+            s.markets.put(m.id(), m);
+        }
+        ListTag lt = t.getList("cityLines", Tag.TAG_COMPOUND);
+        for (int i = 0; i < lt.size(); i++) s.lines.add(fr.crusadecraft.core.city.CityLine.load(lt.getCompound(i)));
+        CompoundTag rt = t.getCompound("roads");
+        for (String k : rt.getAllKeys()) s.roads.put(k, fr.crusadecraft.core.city.CityRoads.Route.load(rt.getCompound(k)));
         CompoundTag pt = t.getCompound("post");
         for (String k : pt.getAllKeys()) {
             try {

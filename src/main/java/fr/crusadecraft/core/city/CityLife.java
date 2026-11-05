@@ -67,6 +67,9 @@ public final class CityLife {
             if (site.buildings().isEmpty() || !CityService.city(site)) continue;
             day(server, site, random);
         }
+        // P51 : les villes de l'ordinateur vivent et commercent aussi.
+        CityMarkets.onDay(server, random);
+        CityCommerce.planAi(server, random);
         data.setDirty();
     }
 

@@ -447,6 +447,29 @@ ses ventes, celui à qui tu as fait du tort te le dit. Une lettre t'attend si tu
 **Les commandes** : une ville qui manque de quelque chose t'écrit, et paie en émeraudes. Va parler à n'importe lequel de ses habitants
 avec ce qu'il faut sur toi : le bouton **Livrer** s'allume.
 
+### Les lignes de commerce : le monde commerce sans toi
+
+Dans le panneau d'une ville, l'onglet **Commerce** ouvre une ligne vers n'importe quelle autre ville : la tienne, celle d'une nation, ou une ville de
+l'ordinateur, même si elle n'existe que sur la carte. Tu choisis ce qu'on y envoie, combien, ce qu'on en rapporte, le rythme, l'escorte, et si les caravanes
+tracent un chemin au sol. « Selon besoin » : le surplus du moment à l'aller, ce qui manque le plus au retour.
+
+- **Tout marche sans joueur.** Les caravanes partent, marchent, vendent et rentrent, qu'on les voie ou non. Elles suivent leur route en temps réel : si tu
+  t'approches à moins de 64 blocs, tu les trouves là où elles en sont.
+- **Les prix sont vrais.** Une ville paie plus cher ce dont elle manque. Sans traité de commerce avec son royaume, on n'en tire que la moitié. Les marchands
+  libres vont d'eux-mêmes là où ils vendront le mieux. Deux royaumes qui commercent s'apprécient davantage, tant que ça dure.
+- **Les villes de l'ordinateur vivent aussi.** Celle qui n'a pas de murs a un *marché* : des réserves, une bourse, des marchands et des gardes, qui ne paraissent
+  qu'en voyage. Elle produit ce que sa terre donne, s'épuise du reste, et ouvre seule ses lignes, vers ses voisines ou vers tes villes.
+- **Les routes contournent** les lacs et les pentes, et préfèrent les routes qui existent déjà : un réseau se forme tout seul. On les voit sur la carte : en or
+  les tiennes, plus discrètes celles de l'ordinateur ; un chariot par caravane en route.
+- **Le chemin au sol** : sur une ligne qui le demande, l'herbe et la terre deviennent un chemin sous les pas de la caravane, jamais dans une ville. C'est le seul
+  endroit où le commerce change des blocs de ton monde, et il se coupe ligne par ligne, à la création.
+
+### Les gardes se battent
+
+Ceux des casernes, des tours et des châteaux, et ceux des escortes : épée en main (arc pour ceux des tours), ils courent sur les monstres à portée. **Si tu frappes un
+habitant, un garde ou un lama de caravane, les gardes de sa ville te tombent dessus** pendant une minute et demie, et te tapent vraiment, jusqu'à te tuer. Mort, tu es quitte. Pareil si ton royaume est en
+guerre contre le leur. En créatif, ils t'ignorent. Une ville garde toujours au moins un garde chez elle.
+
 ### La carte de guerre
 50. Ouvre la carte du royaume (touche **virgule**) et clique sur **⚔ Guerre**, en bas à droite. Une barre d'outils
     apparaît sous la carte : **Offensive**, **Défense**, **Objectif** (trois pinceaux qui peignent chunk par chunk,
@@ -674,9 +697,12 @@ Pour accélérer le temps pendant un test : `/time add 24000` fait passer un jou
 - Les caravanes ne marchent dans le monde que près d'un joueur ; loin de tout, elles avancent sur la carte. Après un
   redémarrage, elles repartent de leur première capitale, et un pillage en cours est oublié.
 - Une marchandise par royaume, pas de stocks ni de marché : le commerce reste une affaire de revenus.
-- Les caravanes des villes marchent en ligne droite d'une ville à l'autre : il n'y a pas de réseau de routes. Une rivière ou une falaise les
-  arrête ; au bout de trente secondes, elles franchissent l'obstacle d'un coup, même sous tes yeux.
-- Les gardes d'escorte ne se battent pas : ils marchent avec la caravane, l'épée à la main, mais ne la défendent pas si on l'attaque.
+- Les colonies MineColonies ne sont pas des villes de commerce : une ligne relie des villes posées et des villes de la carte, pas une colonie. Son entrepôt ne se
+  remplit pas des caravanes.
+- Les routes sont tracées d'après le terrain que le générateur prévoit : elles ne savent rien de ce qu'on a bâti, et un obstacle réel fait franchir un ressaut d'un
+  petit saut. Pas de ponts : une rivière trop large se traverse à pied, ou d'un saut.
+- Les marchés de l'ordinateur sont des comptes : pas de bâtiments, personne à y voir. Un voyageur qui y arrive se promène sur le siège de la ville.
+- Les gardes frappent au corps à corps et tirent à l'arc, sans plus : pas de formation, pas de retraite. Ils ne se battent que près d'un joueur.
 - Les échanges face à face ne se jouent que près d'un joueur ; loin, tout passe en comptes. Si l'acheteur n'arrive pas jusqu'au vendeur en
   quarante secondes sous tes yeux, la vente se fait quand même, sans la scène ; sans témoin, il se retrouve à côté de lui.
 - Les habitants suivent des règles et des textes écrits d'avance : ils ne pensent pas.

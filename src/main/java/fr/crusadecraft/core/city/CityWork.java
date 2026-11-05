@@ -136,8 +136,8 @@ public final class CityWork {
     /** Une personne, à ce moment de sa journée. */
     public static void live(MinecraftServer server, ServerLevel level, Site site, CityBuilding b, Person p, PathfinderMob mob) {
         if (mob instanceof Villager v && v.isTrading()) return;
-        // P50 : il est en train de traiter avec quelqu'un.
-        if (CityScenes.busy(p.id())) return;
+        // P50 : il est en train de traiter avec quelqu'un ; P53 : il se bat.
+        if (CityScenes.busy(p.id()) || CityGuards.fighting(p.id())) return;
         State s = STATES.computeIfAbsent(p.id(), k -> new State());
         long now = level.getGameTime();
         CityRules.Activity a = activity(level.getDayTime(), p);
@@ -585,7 +585,7 @@ public final class CityWork {
 
     /** P48 : un voyageur sur place : il va d'un lieu à l'autre, s'assied à la taverne, achète au marché, et parle. */
     static void visit(MinecraftServer server, ServerLevel level, Site site, Site home, Person p, PathfinderMob mob) {
-        if ((mob instanceof Villager v && v.isTrading()) || CityScenes.busy(p.id())) return;
+        if ((mob instanceof Villager v && v.isTrading()) || CityScenes.busy(p.id()) || CityGuards.fighting(p.id())) return;
         State s = STATES.computeIfAbsent(p.id(), k -> new State());
         long now = level.getGameTime();
         unstick(level, mob, s, now);

@@ -100,6 +100,8 @@ public final class ServerEvents {
         fr.crusadecraft.core.city.CityScenes.onServerStopped();
         fr.crusadecraft.core.city.CityJournal.onServerStopped();
         fr.crusadecraft.core.city.CityTravel.onServerStopped();
+        fr.crusadecraft.core.city.CityRoads.onServerStopped();
+        fr.crusadecraft.core.city.CityGuards.onServerStopped();
         fr.crusadecraft.core.city.CityPost.onServerStopped();
         fr.crusadecraft.core.city.CityFurniture.onServerStopped();
         fr.crusadecraft.core.city.CitySeats.onServerStopped();
@@ -159,6 +161,7 @@ public final class ServerEvents {
         if (t % fr.crusadecraft.core.city.CityWork.EVERY == 23) perf("voyages", () -> fr.crusadecraft.core.city.CityTravel.tick(server));
         if (t % fr.crusadecraft.core.city.CityTravel.PULSE == 311) perf("voyages", () -> fr.crusadecraft.core.city.CityTravel.pulse(server));
         if (t % fr.crusadecraft.core.city.CityScenes.EVERY == 3) perf("scenes", () -> fr.crusadecraft.core.city.CityScenes.tick(server));
+        if (t % fr.crusadecraft.core.city.CityGuards.EVERY == 6) perf("gardes", () -> fr.crusadecraft.core.city.CityGuards.tick(server));
         if (t % 600 == 0) perf("personnages", () -> CharacterService.periodic(server));
         if (t % 40 == 0) perf("conseil", () -> fr.crusadecraft.core.council.CouncilService.tick(server));
         if (t % 100 == 50) perf("requetes", () -> fr.crusadecraft.core.council.RequestService.deliver(server));
@@ -244,6 +247,7 @@ public final class ServerEvents {
             fr.crusadecraft.core.war.HostService.onDeath(level.getServer(), event.getEntity());
             fr.crusadecraft.core.diplomacy.CaravanService.onDeath(level.getServer(), event.getEntity(), event.getSource().getEntity());
             if (event.getSource().getEntity() instanceof ServerPlayer killer) fr.crusadecraft.core.city.CityTalk.onKilled(killer, event.getEntity());
+            if (event.getEntity() instanceof ServerPlayer fallen) fr.crusadecraft.core.city.CityGuards.forgive(fallen.getUUID());
         }
     }
 
@@ -260,6 +264,7 @@ public final class ServerEvents {
     public static void onHurt(net.minecraftforge.event.entity.living.LivingHurtEvent event) {
         if (event.getSource().getEntity() instanceof ServerPlayer player && event.getEntity().level() instanceof ServerLevel) {
             fr.crusadecraft.core.city.CityTalk.onHurt(player, event.getEntity());
+            fr.crusadecraft.core.city.CityTravel.onPackHurt(player, event.getEntity());
         }
     }
 

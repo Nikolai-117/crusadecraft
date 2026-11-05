@@ -240,6 +240,136 @@ class NpcPanelLogicTest {
     }
 
     @Test
+    void pricesFollowScarcityAndTreaties() {
+        CityEconomy full = CityEconomy.fresh(), empty = CityEconomy.fresh();
+        full.add(CityGood.PAIN, 100);
+        empty.take(CityGood.PAIN, 1000);
+        int normal = CityCommerce.price(CityGood.PAIN, full, true), rare = CityCommerce.price(CityGood.PAIN, empty, true);
+        assertEquals(2, normal);
+        assertTrue(rare > normal, "ce qui manque se paie plus cher : " + rare);
+        assertEquals(1, CityCommerce.price(CityGood.PAIN, full, false), "sans traité, moitié moins");
+        assertEquals(1, CityCommerce.price(CityGood.BLE, full, false), "jamais moins d'une pièce");
+        assertTrue(CityCommerce.basePrice(CityGood.OUTILS) > CityCommerce.basePrice(CityGood.BLE));
+    }
+
+    @Test
+    void aMarketLivesOffItsLand() {
+        CityEconomy e = CityEconomy.fresh();
+        int fer = e.stock(CityGood.FER), livre = e.stock(CityGood.LIVRE);
+        long purse = e.purse();
+        for (int i = 0; i < 4; i++) CityMarkets.simulate(e, CityGood.FER, 20);
+        assertEquals(fer + 4 * 20, e.stock(CityGood.FER), "sa terre donne sa spécialité");
+        assertEquals(Math.max(0, livre - 4), e.stock(CityGood.LIVRE), "ce qu'elle ne produit pas s'épuise");
+        assertTrue(e.purse() > purse);
+        for (int i = 0; i < 40; i++) CityMarkets.simulate(e, CityGood.FER, 20);
+        assertTrue(e.stock(CityGood.FER) <= CityEconomy.CAP, "les réserves ont une limite");
+        assertEquals(0, e.stock(CityGood.LIVRE));
+    }
+
+    @Test
+    void aLineSurvivesSaving() {
+        CityLine l = new CityLine(new UUID(1, 1), new UUID(2, 2), new UUID(3, 3));
+        l.good = CityGood.FER;
+        l.back = CityGood.PAIN;
+        l.amount = 48;
+        l.every = 2;
+        l.escort = 1;
+        l.pave = true;
+        l.active = false;
+        l.ai = true;
+        l.trips = 5;
+        l.moved = 240;
+        l.earned = 700;
+        l.status = "road";
+        CityLine r = CityLine.load(l.save());
+        assertEquals(CityGood.FER, r.good);
+        assertEquals(CityGood.PAIN, r.back);
+        assertEquals(48, r.amount);
+        assertEquals(2, r.every);
+        assertTrue(r.pave && r.ai && !r.active);
+        assertEquals(700, r.earned);
+        assertEquals("road", r.status);
+        CityLine free = CityLine.load(new CityLine(new UUID(1, 1), new UUID(2, 2), new UUID(3, 3)).save());
+        assertNull(free.good, "sans marchandise choisie : le surplus du moment");
+        UUID a = new UUID(1, 2), b = new UUID(3, 4), line = new UUID(5, 6);
+        Trip t = new Trip(a, b, Trip.Stage.OUT, 10, 20, CityGood.FER, 8, null, 0, 0, null, line);
+        assertEquals(t, Trip.load(t.save()));
+        assertEquals(line, t.next(Trip.Stage.STAY, 20, 30, null, 0, 0).line());
+    }
+
+    /** Un terrain plat, avec au milieu ce qu'on veut. */
+    private static CityRoads.Terrain flatWith(java.util.function.IntBinaryOperator height) {
+        return height::applyAsInt;
+    }
+
+    private static boolean touches(java.util.List<int[]> route, int x0, int z0, int x1, int z1) {
+        CityRoads.Route r = CityRoads.Route.of(route);
+        int steps = (int) r.length();
+        for (int i = 0; i <= steps; i++) {
+            int[] p = r.at((double) i / Math.max(1, steps));
+            if (p[0] >= x0 && p[0] <= x1 && p[1] >= z0 && p[1] <= z1) return true;
+        }
+        return false;
+    }
+
+    @Test
+    void roadsGoAroundWaterAndHills() {
+        List<int[]> flat = CityRoads.plan(0, 0, 640, 0, flatWith((x, z) -> 70), 63, 20000);
+        assertNotNull(flat);
+        assertEquals(2, flat.size(), "sur du plat, on va tout droit");
+        // Un lac en travers du chemin.
+        List<int[]> lake = CityRoads.plan(0, 0, 640, 0, flatWith((x, z) -> x > 240 && x < 400 && Math.abs(z) < 120 ? 50 : 70), 63, 20000);
+        assertNotNull(lake);
+        assertFalse(touches(lake, 260, -100, 380, 100), "la route traverse le lac");
+        assertTrue(CityRoads.Route.of(lake).length() > 640, "un détour est plus long");
+        assertEquals(0, lake.get(0)[0]);
+        assertEquals(640, lake.get(lake.size() - 1)[0]);
+        // Une falaise qui barre tout, sauf un col.
+        List<int[]> pass = CityRoads.plan(0, 0, 640, 0, flatWith((x, z) -> x > 300 && x < 340 && Math.abs(z - 160) > 24 ? 140 : 70), 63, 20000);
+        assertNotNull(pass);
+        assertTrue(touches(pass, 300, 136, 340, 184), "la route ne passe pas par le col");
+        // Trop loin pour le temps qu'on y met : on renonce, et on marchera tout droit.
+        assertNull(CityRoads.plan(0, 0, 6400, 6400, flatWith((x, z) -> (x / 16 + z / 16) % 2 == 0 ? 60 : 120), 63, 8));
+    }
+
+    @Test
+    void roadsPreferExistingRoads() {
+        CityRoads.Terrain withRoad = new CityRoads.Terrain() {
+            @Override
+            public int height(int x, int z) {
+                return 70;
+            }
+
+            @Override
+            public boolean road(int x, int z) {
+                return Math.abs(z - 96) < 12;
+            }
+        };
+        List<int[]> r = CityRoads.plan(0, 0, 640, 0, withRoad, 63, 20000);
+        assertNotNull(r);
+        assertTrue(touches(r, 200, 84, 440, 108), "la route ignore celle qui existe déjà");
+    }
+
+    @Test
+    void aRouteIsWalkedFromEndToEnd() {
+        CityRoads.Route r = CityRoads.Route.of(List.of(new int[]{0, 0}, new int[]{100, 0}, new int[]{100, 100}));
+        assertEquals(200, r.length());
+        assertEquals(0, r.at(0)[0]);
+        assertEquals(50, r.at(0.25)[0]);
+        assertEquals(100, r.at(0.5)[0]);
+        assertEquals(50, r.at(0.75)[1]);
+        assertEquals(100, r.at(1)[1]);
+        assertEquals(100, r.at(5)[1], "au-delà de la fin, on y reste");
+        CityRoads.Route back = r.reversed();
+        assertEquals(100, back.at(0)[1]);
+        assertEquals(0, back.at(1)[0]);
+        assertEquals(r.at(0.3)[0], back.at(0.7)[0]);
+        CityRoads.Route again = CityRoads.Route.load(r.save());
+        assertEquals(r.length(), again.length());
+        assertEquals(100, again.at(1)[1]);
+    }
+
+    @Test
     void nationKeysAreClean() {
         assertEquals("levanzia", NationFile.keyOf("Levànzia"));
         assertEquals("royaume_du_nord", NationFile.keyOf("  Royaume du Nord! "));

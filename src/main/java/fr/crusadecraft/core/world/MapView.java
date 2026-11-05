@@ -23,7 +23,16 @@ import java.util.UUID;
 public record MapView(ResourceLocation dimension, int focusX, int focusZ, int playerX, int playerZ, int territoryRadius,
                       int colonyRadius, List<Territory> territories, List<Seat> seats, List<Dejure> dejure,
                       boolean canEdit, boolean editing, Borders borders, List<Place> places, War war, List<TradeLine> routes,
-                      List<ArmyPawn> armies, List<Traveller> travellers) {
+                      List<ArmyPawn> armies, List<Traveller> travellers, List<CommerceLine> commerce) {
+
+    /** P51 : une ligne de commerce, et le tracé de sa route. */
+    public record CommerceLine(int[] xs, int[] zs, String from, String to, String what, int trips, boolean ai) {}
+
+    public MapView(ResourceLocation dimension, int focusX, int focusZ, int playerX, int playerZ, int territoryRadius,
+                   int colonyRadius, List<Territory> territories, List<Seat> seats, List<Dejure> dejure,
+                   boolean canEdit, boolean editing, Borders borders, List<Place> places, War war, List<TradeLine> routes, List<ArmyPawn> armies, List<Traveller> travellers) {
+        this(dimension, focusX, focusZ, playerX, playerZ, territoryRadius, colonyRadius, territories, seats, dejure, canEdit, editing, borders, places, war, routes, armies, travellers, List.of());
+    }
 
     /** P50 : un voyageur sur la route, une caravane s'il porte quelque chose. */
     public record Traveller(int x, int z, int toX, int toZ, String name, String from, String to, int percent, boolean caravan, String cargo) {}
@@ -306,6 +315,16 @@ public record MapView(ResourceLocation dimension, int focusX, int focusZ, int pl
             buf.writeBoolean(t.caravan());
             buf.writeUtf(t.cargo());
         }
+        buf.writeVarInt(commerce.size());
+        for (CommerceLine l : commerce) {
+            buf.writeVarIntArray(l.xs());
+            buf.writeVarIntArray(l.zs());
+            buf.writeUtf(l.from());
+            buf.writeUtf(l.to());
+            buf.writeUtf(l.what());
+            buf.writeVarInt(l.trips());
+            buf.writeBoolean(l.ai());
+        }
     }
 
     private static void writeWar(FriendlyByteBuf buf, War war) {
@@ -461,7 +480,12 @@ public record MapView(ResourceLocation dimension, int focusX, int focusZ, int pl
         for (int i = 0; i < n; i++) {
             travellers.add(new Traveller(buf.readInt(), buf.readInt(), buf.readInt(), buf.readInt(), buf.readUtf(), buf.readUtf(), buf.readUtf(), buf.readVarInt(), buf.readBoolean(), buf.readUtf()));
         }
+        n = buf.readVarInt();
+        List<CommerceLine> commerce = new ArrayList<>(n);
+        for (int i = 0; i < n; i++) {
+            commerce.add(new CommerceLine(buf.readVarIntArray(), buf.readVarIntArray(), buf.readUtf(), buf.readUtf(), buf.readUtf(), buf.readVarInt(), buf.readBoolean()));
+        }
         return new MapView(dim, fx, fz, px, pz, radius, colonyRadius, territories, seats, dejure, canEdit, editing, new Borders(keys, owners), places,
-                war, routes, armies, travellers);
+                war, routes, armies, travellers, commerce);
     }
 }

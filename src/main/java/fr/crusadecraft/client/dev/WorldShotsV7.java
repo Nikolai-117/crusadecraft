@@ -77,7 +77,9 @@ final class WorldShotsV7 {
     private static BlockPos standerAt, walkerAt;
     private static String notchHash = "";
     private static volatile int imports;
-    private static UUID founded, caravanner;
+    private static UUID founded, caravanner, guardian, monster;
+    private static int[] field;
+    private static final int PLATFORM = 180;
     private static BlockPos origin;
     private static volatile boolean pasted;
     private static final BuildingFunction[] MIX = {BuildingFunction.MARCHE, BuildingFunction.BOULANGERIE, BuildingFunction.TAVERNE, BuildingFunction.FORGE,
@@ -90,7 +92,19 @@ final class WorldShotsV7 {
     }
 
     static boolean tick(Minecraft mc, BiConsumer<Minecraft, String> grab) {
-        if (steps == null) steps = build();
+        if (steps == null) {
+            steps = build();
+            if (Boolean.getBoolean("crusadecraft.worldshots.v7gardes")) {
+                int from = 0, to = 0;
+                for (int i = 0; i < steps.size(); i++) {
+                    if (steps.get(i).name().equals("depart")) to = i + 1;
+                    if (steps.get(i).name().equals("garde_prepare")) from = i;
+                }
+                List<Step> short_ = new ArrayList<>(steps.subList(0, to));
+                short_.addAll(steps.subList(from, steps.size()));
+                steps = short_;
+            }
+        }
         if (wait > 0) {
             wait--;
             return false;
@@ -766,6 +780,179 @@ final class WorldShotsV7 {
             CrusadeSavedData.get(server).world().realm(s.owner()).ifPresent(r -> log("royaume : {}, nation {}, souverain {}, rang {}", r.place(), r.nation(), r.sovereignName(), r.rank()));
             log("le joueur règne sur : {}", fr.crusadecraft.core.nation.NationService.ruledBy(server, p.getUUID()).map(AiRealm::place).orElse("rien"));
         }, null, 10, null));
+        // ------------------------------------------------------------ un simulateur : lignes, marchés, routes
+        out.add(new Step("ligne_panneau", server -> {
+            ServerPlayer p = player(server);
+            Site h = site(server, home);
+            BlockPos at = CityService.plazaOf(h);
+            look(p, at.getX() + 0.5, at.getY() + 8, at.getZ() + 8.5, 180f, 20f);
+            CityPanel.open(p, h);
+        }, mc -> mc.setScreen(null), 30, null));
+        out.add(new Step("ligne_onglet", null, mc -> click(mc, "Commerce"), 20, "v12_panneau_commerce"));
+        // La ville la plus proche est à deux pas : on prend la cinquième, pour avoir une vraie route à regarder.
+        out.add(new Step("ligne_choisit", null, mc -> {
+            for (int i = 0; i < 5; i++) {
+                for (GuiEventListener c : mc.screen == null ? List.<GuiEventListener>of() : new ArrayList<>(mc.screen.children())) {
+                    if (c instanceof AbstractButton b && b.getMessage().getString().equals("▸")) {
+                        b.onPress();
+                        break;
+                    }
+                }
+            }
+        }, 10, null));
+        out.add(new Step("ligne_cree", null, mc -> click(mc, "Créer la ligne"), 30, "v12_ligne_creee"));
+        out.add(new Step("ligne_part", server -> {
+            CrusadeSavedData data = CrusadeSavedData.get(server);
+            for (fr.crusadecraft.core.city.CityLine l : data.world().lines()) log("ligne {} → {} : {} ({}), rythme {}, chemin {}", data.world().site(l.from).map(Site::name).orElse("?"), data.world().site(l.to).map(Site::name).orElse("?"), l.good, l.amount, l.every, l.pave);
+            site(server, home).economy().add(CityGood.PAIN, 120);
+            fr.crusadecraft.core.city.CityCommerce.pulse(server);
+            for (fr.crusadecraft.core.city.CityLine l : data.world().lines()) log("après le départ : statut {}", l.status);
+        }, null, 120, null));
+        out.add(new Step("ordinateur", server -> {
+            CrusadeSavedData data = CrusadeSavedData.get(server);
+            Random r = new Random(11);
+            for (int i = 0; i < 12; i++) fr.crusadecraft.core.city.CityCommerce.planAi(server, r);
+            for (int i = 0; i < 12; i++) fr.crusadecraft.core.city.CityMarkets.onDay(server, r);
+            for (int i = 0; i < 4; i++) {
+                for (fr.crusadecraft.core.city.CityLine l : data.world().lines()) l.waited = 99;
+                fr.crusadecraft.core.city.CityCommerce.pulse(server);
+            }
+            log("{} marchés, {} lignes, {} routes tracées, {} voyageurs", data.world().markets().size(), data.world().lines().size(), data.world().roads().size(), CityTravel.pawns(server).size());
+            for (fr.crusadecraft.core.city.CityLine l : data.world().lines()) log("ligne {} → {} : {}, statut {}, ordinateur {}", data.world().site(l.from).map(Site::name).orElse("?"), data.world().site(l.to).map(Site::name).orElse("?"), l.good, l.status, l.ai);
+            for (Site m : data.world().markets()) log("marché {} : {}", m.name(), CityLife.summary(m));
+        }, mc -> mc.setScreen(null), 200, null));
+        out.add(new Step("routes", server -> {
+            CrusadeSavedData data = CrusadeSavedData.get(server);
+            data.world().roads().forEach((k, r) -> log("route : {} points, {} blocs", r.xs().length, (int) r.length()));
+            Site h = site(server, home), d = site(server, dest);
+            log("Dolhimluith → Grunbach : tout droit {} blocs, route {} blocs", (int) Math.sqrt(h.anchor().distSqr(d.anchor())), (int) fr.crusadecraft.core.city.CityRoads.between(server, h, d).length());
+        }, null, 10, null));
+        out.add(new Step("carte_lignes", null, mc -> fr.crusadecraft.network.CrusadeNetwork.toServer(new fr.crusadecraft.network.packet.WorldPackets.RequestMap(true)), 60, "v12_carte_lignes"));
+        // ------------------------------------------------------------ une caravane marche sur sa ligne, et creuse son chemin
+        out.add(new Step("chemin_suit", server -> {
+            ServerPlayer p = player(server);
+            for (Person x : CrusadeSavedData.get(server).lineage().persons()) {
+                if (x.trip() == null || x.trip().line() == null || !x.trip().home().equals(home)) continue;
+                caravanner = x.id();
+                Site h = site(server, home), d = site(server, x.trip().dest());
+                if (d == null) continue;
+                fr.crusadecraft.core.city.CityRoads.Route route = fr.crusadecraft.core.city.CityRoads.between(server, x.trip().stage() == Trip.Stage.BACK ? d : h, x.trip().stage() == Trip.Stage.BACK ? h : d);
+                log("sa route : {} points, {} blocs", route.xs().length, (int) route.length());
+                int[] at = route.at(x.trip().progress(p.serverLevel().getGameTime()));
+                p.serverLevel().getChunk(at[0] >> 4, at[1] >> 4);
+                look(p, at[0] + 8.5, p.serverLevel().getHeight(Heightmap.Types.MOTION_BLOCKING_NO_LEAVES, at[0] + 8, at[1] + 8) + 12, at[1] + 8.5, 135f, 40f);
+                log("on rejoint la caravane de {} : {} ; {}", x.name(), x.trip().stage(), x.trip().good());
+                break;
+            }
+        }, mc -> mc.setScreen(null), 300, null));
+        for (int i = 1; i <= 2; i++) {
+            int n = i;
+            out.add(new Step("chemin_vue_" + n, server -> {
+                ServerPlayer p = player(server);
+                Entity e = caravanner == null ? null : p.serverLevel().getEntity(caravanner);
+                int path = 0;
+                if (e != null) {
+                    overlook(p, e);
+                    for (BlockPos q : BlockPos.betweenClosed(e.blockPosition().offset(-24, -4, -24), e.blockPosition().offset(24, 4, 24))) {
+                        if (p.serverLevel().getBlockState(q).is(net.minecraft.world.level.block.Blocks.DIRT_PATH)) path++;
+                    }
+                }
+                log("caravane sur sa ligne {} : {} ; sur {} ; {} blocs de chemin autour d'elle", n, e == null ? "absente" : e.blockPosition().toShortString(), e == null ? "?" : p.serverLevel().getBlockState(e.blockPosition().below()).getBlock(), path);
+            }, null, 300, "v12_chemin_" + n));
+        }
+        // ------------------------------------------------------------ les gardes se battent
+        out.add(new Step("garde_prepare", server -> {
+            ServerPlayer p = player(server);
+            ServerLevel level = p.serverLevel();
+            Site h = site(server, home);
+            guardian = null;
+            log("difficulté du monde : {} ; on passe en normal pour que les coups portent", server.getWorldData().getDifficulty());
+            server.setDifficulty(net.minecraft.world.Difficulty.NORMAL, true);
+            if (h.buildings().stream().noneMatch(b -> b.function() == BuildingFunction.CASERNE)) {
+                CityBuilding last = h.buildings().get(h.buildings().size() - 1);
+                log("{} ; on en fait une caserne", CityService.define(p, h.id(), last, BuildingFunction.CASERNE, "").message().getString());
+            }
+            for (CityBuilding b : h.buildings()) {
+                if (b.function() != BuildingFunction.CASERNE) continue;
+                for (UUID id : b.occupants()) {
+                    Person x = person(server, id);
+                    if (x != null && x.alive() && x.trip() == null) guardian = id;
+                }
+            }
+            BlockPos at = CityService.plazaOf(h);
+            look(p, at.getX() + 0.5, at.getY() + 8, at.getZ() + 8.5, 180f, 20f);
+            CityService.populate(level, h);
+            log("le garde : {}", guardian == null ? "aucun de libre" : person(server, guardian).name());
+        }, mc -> mc.setScreen(null), 120, null));
+        out.add(new Step("garde_monstre", server -> {
+            ServerPlayer p = player(server);
+            ServerLevel level = p.serverLevel();
+            Entity g = guardian == null ? null : level.getEntity(guardian);
+            if (g == null) {
+                log("pas de garde dans le monde");
+                return;
+            }
+            Site h = site(server, home), d = site(server, dest);
+            field = new int[]{h.anchor().getX() + (d.anchor().getX() - h.anchor().getX()) * 3 / 10, h.anchor().getZ() + (d.anchor().getZ() - h.anchor().getZ()) * 3 / 10};
+            level.getChunk(field[0] >> 4, field[1] >> 4);
+            int ground = PLATFORM + 1;
+            for (BlockPos q : BlockPos.betweenClosed(new BlockPos(field[0] - 16, PLATFORM, field[1] - 16), new BlockPos(field[0] + 16, PLATFORM, field[1] + 16))) level.setBlock(q, net.minecraft.world.level.block.Blocks.SMOOTH_STONE.defaultBlockState(), 2);
+            g.teleportTo(field[0] + 0.5, ground, field[1] + 0.5);
+            int gx = field[0] + 5, gz = field[1];
+            var zombie = net.minecraft.world.entity.EntityType.ZOMBIE.create(level);
+            zombie.moveTo(gx + 0.5, ground, gz + 0.5);
+            zombie.setCustomName(net.minecraft.network.chat.Component.literal("Le monstre d'essai"));
+            level.addFreshEntity(zombie);
+            monster = zombie.getUUID();
+            look(p, field[0] + 2.5, ground + 5, field[1] + 9.5, 180f, 25f);
+            log("un monstre à {} blocs du garde", (int) g.distanceTo(zombie));
+        }, null, 40, "v12_garde_voit_monstre"));
+        out.add(new Step("garde_frappe", server -> {
+            ServerPlayer p = player(server);
+            Entity g = guardian == null ? null : p.serverLevel().getEntity(guardian);
+            Entity z = monster == null ? null : p.serverLevel().getEntity(monster);
+            log("le garde se bat : {}, à {} blocs de sa cible ; le monstre : {}", g != null && fr.crusadecraft.core.city.CityGuards.fighting(guardian), g == null || z == null ? -1 : (int) g.distanceTo(z), z instanceof LivingEntity l ? l.getHealth() + " points de vie" : "plus là");
+        }, null, 100, "v12_garde_frappe"));
+        out.add(new Step("garde_bilan", server -> {
+            ServerPlayer p = player(server);
+            Entity z = monster == null ? null : p.serverLevel().getEntity(monster);
+            log("le monstre, cent ticks plus tard : {}", z instanceof LivingEntity l && l.isAlive() ? l.getHealth() + " points de vie" : "mort");
+            if (z != null) z.discard();
+        }, null, 10, null));
+        out.add(new Step("joueur_frappe", server -> {
+            ServerPlayer p = player(server);
+            ServerLevel level = p.serverLevel();
+            p.setGameMode(net.minecraft.world.level.GameType.SURVIVAL);
+            p.setHealth(p.getMaxHealth());
+            Entity g = guardian == null ? null : level.getEntity(guardian);
+            if (!(g instanceof LivingEntity guardMob) || field == null) return;
+            int ground = PLATFORM + 1;
+            g.teleportTo(field[0] + 0.5, ground, field[1] + 0.5);
+            p.getAbilities().flying = false;
+            p.onUpdateAbilities();
+            int px = field[0] + 6, pz = field[1] + 6;
+            p.connection.teleport(px + 0.5, ground, pz + 0.5, 135f, 5f);
+            // Le joueur frappe un habitant, sous les yeux du garde : pour de vrai, comme une épée.
+            Entity victim = baker == null ? null : level.getEntity(baker);
+            Entity hit = victim != null && victim.distanceTo(g) < 24 ? victim : g;
+            hit.hurt(level.damageSources().playerAttack(p), 1f);
+            log("le joueur frappe {} ; {} points de vie ; rancune : {}", hit.getName().getString(), p.getHealth(), fr.crusadecraft.core.city.CityGuards.hasGrudge(server, p.getUUID(), home));
+        }, null, 50, "v12_garde_attaque_joueur"));
+        out.add(new Step("joueur_mi_course", server -> {
+            ServerPlayer p = player(server);
+            Entity g = guardian == null ? null : p.serverLevel().getEntity(guardian);
+            log("à mi-course : joueur {} points de vie, le garde à {} blocs", p.getHealth(), g == null ? -1 : (int) g.distanceTo(p));
+        }, null, 50, "v12_garde_attaque_joueur_2"));
+        out.add(new Step("joueur_bilan", server -> {
+            ServerPlayer p = player(server);
+            Entity g = guardian == null ? null : p.serverLevel().getEntity(guardian);
+            var last = p.getLastDamageSource();
+            log("cent ticks plus tard : joueur {} points de vie, dernier coup : {} par {}, le garde vise le joueur : {}, à {} blocs", p.getHealth(), last == null ? "aucun" : last.getMsgId(), last == null || last.getEntity() == null ? "personne" : last.getEntity().getName().getString(),
+                    guardian != null && p.getUUID().equals(fr.crusadecraft.core.city.CityGuards.targetOf(guardian)), g == null ? -1 : (int) g.distanceTo(p));
+            p.setGameMode(net.minecraft.world.level.GameType.CREATIVE);
+            p.setHealth(p.getMaxHealth());
+            fr.crusadecraft.core.city.CityGuards.onServerStopped();
+        }, null, 40, null));
         out.add(new Step("fin", server -> {
             ServerPlayer p = player(server);
             fr.crusadecraft.core.nation.NationService.abdicate(p);

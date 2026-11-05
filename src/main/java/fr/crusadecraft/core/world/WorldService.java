@@ -405,7 +405,24 @@ public final class WorldService {
                 CrusadeConfig.SERVER.colonyRadius.get(), territories, seats, dejure, canEdit, editing, borders(world, dim, index),
                 fr.crusadecraft.core.place.PlaceService.mapPlaces(server, dim),
                 editing ? MapView.War.NONE : fr.crusadecraft.core.war.WarMapService.view(player, dim), editing ? List.of() : tradeLines(player, dim),
-                editing ? List.of() : armyPawns(player, dim), editing ? List.of() : travellers(player, dim));
+                editing ? List.of() : armyPawns(player, dim), editing ? List.of() : travellers(player, dim), editing ? List.of() : commerce(player, dim));
+    }
+
+    /** P51 : les lignes de commerce de cette dimension, du moins celles d'un royaume qu'on connaît. */
+    static List<MapView.CommerceLine> commerce(ServerPlayer player, ResourceLocation dim) {
+        CrusadeSavedData data = CrusadeSavedData.get(player.server);
+        boolean all = fr.crusadecraft.core.build.plan.PlanTool.allowed(player);
+        List<MapView.CommerceLine> out = new ArrayList<>();
+        for (fr.crusadecraft.core.city.CityLine l : data.world().lines()) {
+            var from = data.world().site(l.from).orElse(null);
+            var to = data.world().site(l.to).orElse(null);
+            if (from == null || to == null || !from.dimension().equals(dim)) continue;
+            if (!all && !known(data, from.owner(), player) && !known(data, to.owner(), player)) continue;
+            var route = fr.crusadecraft.core.city.CityRoads.between(player.server, from, to);
+            String what = l.good == null ? "" : fr.crusadecraft.core.logic.Fr.key(l.good.key() + ".du");
+            out.add(new MapView.CommerceLine(route.xs(), route.zs(), from.name(), to.name(), what, l.trips, l.ai));
+        }
+        return out;
     }
 
     /** P50 : ceux qui sont sur les routes : d'un royaume qu'on connaît, on sait qui marche, et où. */

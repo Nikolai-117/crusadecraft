@@ -446,7 +446,8 @@ public final class PanelGameTests {
             w.check(data.world().post(w.ruler.getUUID()).stream().anyMatch(l -> l.kind() == CityPost.Kind.VOYAGE && l.text().contains("Arrivee")), "son ami n'a pas reçu de lettre");
             CityService.populate(level, home);
             w.check(!p.inWorld(), "il reparaît chez lui alors qu'il est parti");
-            // Il arrive : il vend, et achète ce qui manque chez lui.
+            // Il arrive : il vend, et achète ce qui manque chez lui, aux prix de là-bas.
+            int sell = fr.crusadecraft.core.city.CityCommerce.price(CityGood.PAIN, dest.economy(), true), buy = fr.crusadecraft.core.city.CityCommerce.price(CityGood.FER, dest.economy(), true);
             long now = level.getGameTime();
             CityTravel.advanceForTests(server, p, now);
             t = p.trip();
@@ -454,7 +455,7 @@ public final class PanelGameTests {
             w.check(dest.economy().stock(CityGood.PAIN) == stockDest + t.amount(), "la ville visitée n'a pas reçu la marchandise");
             w.check(t.back() == CityGood.FER && t.backAmount() > 0, "il ne rapporte pas ce qui manque chez lui");
             w.check(dest.economy().stock(CityGood.FER) == ironDest - t.backAmount(), "ce qu'il rapporte n'a pas quitté la ville visitée");
-            w.check(t.earned() >= 0 && dest.economy().purse() == purseDest - t.amount() * 2L + t.backAmount() * 2L, "les comptes de la vente ne tombent pas juste : " + dest.economy().purse());
+            w.check(t.earned() >= 0 && dest.economy().purse() == purseDest - (long) t.amount() * sell + (long) t.backAmount() * buy, "les comptes de la vente ne tombent pas juste : " + dest.economy().purse());
             w.check(dest.rumors().stream().anyMatch(r -> r.text().contains("Depart")), "personne n'en parle là-bas");
             w.check(Trip.load(t.save()).equals(t), "un voyage ne s'enregistre pas");
             w.check(Person.load(p.save()).trip() != null, "un voyageur enregistré oublie son voyage");
@@ -600,6 +601,8 @@ public final class PanelGameTests {
         Site s = city(w, server, level, a, "Marcheval", 0, BuildingFunction.BOULANGERIE, BuildingFunction.TAVERNE);
         Person baker = data.lineage().person(s.buildings().get(0).occupants().get(0)).orElseThrow();
         Person keeper = data.lineage().person(s.buildings().get(1).occupants().get(0)).orElseThrow();
+        // De jour : la nuit, tout le monde dort, et personne ne vend rien.
+        level.setDayTime(3000);
         // Ces gens vivent à côté du gabarit : leur terrain doit rester chargé, sinon le monde ne les trouve plus.
         BlockPos at = s.anchor();
         for (int dx = -1; dx <= 2; dx++) for (int dz = -1; dz <= 2; dz++) level.setChunkForced((at.getX() >> 4) + dx, (at.getZ() >> 4) + dz, true);
@@ -768,6 +771,280 @@ public final class PanelGameTests {
             data.world().clear();
             w.cleanup();
         }
+    }
+
+    /** Une ligne de commerce, telle que le panneau la crée : elle part, vend, rapporte, et se suspend. */
+    @GameTest(template = TestWorld.TEMPLATE, setupTicks = TestWorld.SETUP_TICKS, batch = "p51_lignes", timeoutTicks = 300)
+    public static void lignesDeCommerce(GameTestHelper h) {
+        TestWorld w = TestWorld.realm(h, "CommerceA");
+        var server = h.getLevel().getServer();
+        var level = h.getLevel();
+        var data = CrusadeSavedData.get(server);
+        WorldEditService.grantForTests(w.ruler.getUUID(), true);
+        try {
+            data.world().clear();
+            data.world().markGenerated(RealmService.currentDay(server));
+            NationBook.setForTests(List.of(nation("essaia", "Essaia"), nation("essaib", "Essaib")));
+            NationService.ensure(server);
+            AiRealm a = NationService.realm(server, "essaia").orElseThrow(), b = NationService.realm(server, "essaib").orElseThrow();
+            Site home = city(w, server, level, a, "Lignedep", 0, BuildingFunction.MARCHE, BuildingFunction.CASERNE);
+            Site dest = city(w, server, level, a, "Lignearr", 200, BuildingFunction.MARCHE);
+            Site foe = city(w, server, level, b, "Lignefoe", 400, BuildingFunction.MARCHE);
+            // Ce que propose le panneau.
+            var stops = fr.crusadecraft.core.city.CityCommerce.stops(server, home);
+            w.check(stops.stream().anyMatch(x -> x.id().equals(dest.id())) && stops.stream().noneMatch(x -> x.id().equals(home.id())), "le panneau ne propose pas les bonnes villes");
+            CompoundTag view = CityPanel.view(server, home);
+            w.check(view.getList("stops", 10).size() == stops.size() || view.getList("stops", 10).size() == 64, "la vue ne donne pas les destinations");
+            // Une ligne : du fer, seize par voyage, un voyage par quart de journée.
+            home.economy().add(CityGood.FER, 100);
+            dest.economy().add(CityGood.PAIN, 100);
+            CompoundTag add = new CompoundTag();
+            add.putUUID("to", dest.id());
+            add.putString("good", "FER");
+            add.putString("back", "PAIN");
+            add.putInt("amount", 16);
+            add.putInt("every", 1);
+            add.putInt("escort", 1);
+            add.putBoolean("pave", true);
+            Outcome out = CityPanel.edit(w.ruler, home.id(), tag(t -> t.put("lineAdd", add)));
+            w.check(out.success(), "la ligne n'est pas créée : " + out.message().getString());
+            w.check(data.world().lines().size() == 1, "la ligne n'est pas enregistrée");
+            fr.crusadecraft.core.city.CityLine line = data.world().lines().get(0);
+            w.check(line.good == CityGood.FER && line.back == CityGood.PAIN && line.amount == 16 && line.pave, "la ligne n'a pas ses réglages");
+            w.check(!CityPanel.edit(w.ruler, home.id(), tag(t -> t.put("lineAdd", add))).success(), "on crée deux fois la même ligne");
+            CompoundTag self = add.copy();
+            self.putUUID("to", home.id());
+            w.check(!CityPanel.edit(w.ruler, home.id(), tag(t -> t.put("lineAdd", self))).success(), "une ville commerce avec elle-même");
+            w.check(CityPanel.view(server, home).getList("lines", 10).size() == 1, "le panneau ne montre pas la ligne");
+            // Elle part : on charge, le marchand prend la route, l'escorte suit.
+            int fer = home.economy().stock(CityGood.FER);
+            fr.crusadecraft.core.city.CityCommerce.pulse(server);
+            Person merchant = null;
+            int guards = 0;
+            for (Person x : data.lineage().persons()) {
+                if (x.trip() == null) continue;
+                if (line.id.equals(x.trip().line())) merchant = x;
+                if (x.trip().leader() != null) guards++;
+            }
+            w.check(merchant != null, "la ligne ne fait partir personne");
+            w.check(guards == 1, "l'escorte n'est pas celle demandée : " + guards);
+            w.check(merchant.trip().good() == CityGood.FER && merchant.trip().amount() == 16 && home.economy().stock(CityGood.FER) == fer - 16, "la charge n'est pas la bonne");
+            // Pas deux caravanes à la fois sur une ligne.
+            fr.crusadecraft.core.city.CityCommerce.pulse(server);
+            int running = 0;
+            for (Person x : data.lineage().persons()) if (x.trip() != null && line.id.equals(x.trip().line())) running++;
+            w.check(running == 1, "deux caravanes sur la même ligne");
+            // Elle arrive sans qu'aucun joueur ne soit là : elle vend, au prix de là-bas, et prend ce qu'on a demandé.
+            long purse = dest.economy().purse();
+            int unit = fr.crusadecraft.core.city.CityCommerce.price(CityGood.FER, dest.economy(), true);
+            long now = level.getGameTime();
+            CityTravel.advanceForTests(server, merchant, now);
+            Trip t = merchant.trip();
+            w.check(t.stage() == Trip.Stage.STAY, "elle n'arrive pas");
+            w.check(t.back() == CityGood.PAIN && t.backAmount() > 0, "elle ne rapporte pas ce qu'on a demandé");
+            int unitBack = fr.crusadecraft.core.city.CityCommerce.price(CityGood.PAIN, dest.economy(), true);
+            w.check(dest.economy().purse() == purse - 16L * unit + (long) t.backAmount() * unitBack, "les comptes ne tombent pas juste : " + dest.economy().purse());
+            w.check(line.trips == 1 && line.moved == 16 && line.earned == 16L * unit, "la ligne ne tient pas ses comptes");
+            // Elle rentre.
+            CityTravel.advanceForTests(server, merchant, now);
+            CityTravel.advanceForTests(server, merchant, now);
+            w.check(merchant.trip() == null, "elle ne rentre pas");
+            // Suspendue, elle ne part plus.
+            CityPanel.edit(w.ruler, home.id(), tag(x -> x.putUUID("lineToggle", line.id)));
+            w.check(!line.active, "on ne suspend pas une ligne");
+            line.waited = 99;
+            fr.crusadecraft.core.city.CityCommerce.pulse(server);
+            w.check(merchant.trip() == null, "une ligne suspendue fait partir quelqu'un");
+            // En guerre, plus de ligne.
+            data.diplomacy().between(a.id(), b.id()).setWar(true);
+            CompoundTag atWar = add.copy();
+            atWar.putUUID("to", foe.id());
+            w.check(!CityPanel.edit(w.ruler, home.id(), tag(x -> x.put("lineAdd", atWar))).success(), "une ligne s'ouvre vers l'ennemi");
+            data.diplomacy().between(a.id(), b.id()).setWar(false);
+            // Enregistrée puis relue.
+            var reread = fr.crusadecraft.core.world.WorldState.load(data.world().save());
+            w.check(reread.lines().size() == 1 && reread.lines().get(0).trips == 1, "les lignes ne s'enregistrent pas");
+            // Retirée.
+            CityPanel.edit(w.ruler, home.id(), tag(x -> x.putUUID("lineRemove", line.id)));
+            w.check(data.world().lines().isEmpty(), "une ligne ne se retire pas");
+            h.succeed();
+        } finally {
+            NationBook.setForTests(null);
+            WorldEditService.grantForTests(w.ruler.getUUID(), false);
+            data.world().clear();
+            w.cleanup();
+        }
+    }
+
+    /** Une ville de l'ordinateur qui n'existe que sur la carte commerce quand même : un marché, ses marchands, ses caravanes. */
+    @GameTest(template = TestWorld.TEMPLATE, setupTicks = TestWorld.SETUP_TICKS, batch = "p51_marches", timeoutTicks = 300)
+    public static void villesDeLOrdinateur(GameTestHelper h) {
+        TestWorld w = TestWorld.realm(h, "CommerceB");
+        var server = h.getLevel().getServer();
+        var level = h.getLevel();
+        var data = CrusadeSavedData.get(server);
+        WorldEditService.grantForTests(w.ruler.getUUID(), true);
+        try {
+            data.world().clear();
+            data.world().markGenerated(RealmService.currentDay(server));
+            AiRealm ai = WorldEditService.addRealm(server, level, "Portmarchand", "", TitleRank.COMTE, 0x2E7D32, AiFaith.FIDELE, AiPersonality.MARCHAND, w.center.getX() + 500, w.center.getZ());
+            AiRealm ai2 = WorldEditService.addRealm(server, level, "Autreport", "", TitleRank.COMTE, 0x7D2E32, AiFaith.FIDELE, AiPersonality.MARCHAND, w.center.getX() + 800, w.center.getZ());
+            var province = ai.capital();
+            int sites = data.world().sites().size();
+            var stops = fr.crusadecraft.core.city.CityCommerce.stops(server, CityMarkets0(server, ai2));
+            w.check(stops.stream().anyMatch(x -> x.ai() && x.name().equals(province.name())), "la ville de la carte n'est pas proposée");
+            Site market = fr.crusadecraft.core.city.CityMarkets.of(server, fr.crusadecraft.core.city.CityMarkets.idOf(province.id())).orElseThrow();
+            w.check(data.world().isMarket(market.id()), "ce n'est pas un marché");
+            w.check(data.world().sites().size() == sites + 0 && data.world().sites().stream().noneMatch(x -> x.id().equals(market.id())), "un marché compte parmi les constructions du monde");
+            w.check(data.world().site(market.id()).isPresent(), "on ne retrouve pas le marché");
+            w.check(market.owner().equals(ai.id()) && market.name().equals(province.name()), "le marché n'est pas celui de cette ville");
+            int people = CityService.people(server, market);
+            w.check(people >= 3, "le marché n'a personne pour le tenir : " + people);
+            // Toujours le même.
+            w.check(fr.crusadecraft.core.city.CityMarkets.of(server, market.id()).orElseThrow() == market, "on crée deux marchés pour une ville");
+            // Sa journée : il vit de sa terre.
+            int before = market.economy().stock(CityGood.PAIN);
+            long purse = market.economy().purse();
+            fr.crusadecraft.core.city.CityMarkets.onDay(server, new Random(1));
+            w.check(market.economy().purse() > purse, "un marché ne gagne rien");
+            // Une ligne vers lui, et sa caravane en retour.
+            Site other = CityMarkets0(server, ai2);
+            other.economy().add(CityGood.OUTILS, 100);
+            Outcome made = fr.crusadecraft.core.city.CityCommerce.create(server, other, market.id(), CityGood.OUTILS, 8, null, 1, 1, false);
+            w.check(made.success(), "pas de ligne entre deux villes de l'ordinateur : " + made.message().getString());
+            fr.crusadecraft.core.city.CityCommerce.pulse(server);
+            Person lead = null;
+            for (Person x : data.lineage().persons()) if (x.trip() != null && x.trip().line() != null) lead = x;
+            w.check(lead != null, "sa caravane ne part pas");
+            int outils = market.economy().stock(CityGood.OUTILS);
+            long now = level.getGameTime();
+            CityTravel.advanceForTests(server, lead, now);
+            w.check(market.economy().stock(CityGood.OUTILS) == outils + 8, "le marché ne reçoit pas la marchandise");
+            CityTravel.advanceForTests(server, lead, now);
+            CityTravel.advanceForTests(server, lead, now);
+            w.check(lead.trip() == null, "la caravane ne rentre pas");
+            w.check(!lead.inWorld(), "un marchand de marché reste dans le monde en rentrant");
+            // L'ordinateur décide tout seul.
+            data.world().lines().clear();
+            for (int day = 0; day < 20 && data.world().lines().stream().noneMatch(l -> l.ai); day++) fr.crusadecraft.core.city.CityCommerce.planAi(server, new Random(day));
+            w.check(data.world().lines().stream().anyMatch(l -> l.ai), "l'ordinateur n'ouvre aucune ligne");
+            // Relu après un arrêt.
+            var reread = fr.crusadecraft.core.world.WorldState.load(data.world().save());
+            w.check(reread.isMarket(market.id()) && reread.site(market.id()).isPresent() && reread.site(market.id()).orElseThrow().buildings().size() == market.buildings().size(), "un marché ne s'enregistre pas");
+            // Sa province disparaît : le marché aussi.
+            ai.provinces().clear();
+            fr.crusadecraft.core.city.CityMarkets.onDay(server, new Random(2));
+            w.check(!data.world().isMarket(market.id()), "un marché survit à sa province");
+            h.succeed();
+        } finally {
+            WorldEditService.grantForTests(w.ruler.getUUID(), false);
+            data.world().clear();
+            w.cleanup();
+        }
+    }
+
+    private static Site CityMarkets0(MinecraftServer server, AiRealm realm) {
+        return fr.crusadecraft.core.city.CityMarkets.ensure(server, realm, realm.capital());
+    }
+
+    /** Un garde voit un monstre : il court dessus et il frappe. Ça se joue dans le monde, tick après tick. */
+    @GameTest(template = TestWorld.TEMPLATE, setupTicks = TestWorld.SETUP_TICKS, batch = "p53_gardes", timeoutTicks = 400)
+    public static void unGardeSeBat(GameTestHelper h) {
+        TestWorld w = TestWorld.realm(h, "GardesA");
+        var server = h.getLevel().getServer();
+        var level = h.getLevel();
+        var data = CrusadeSavedData.get(server);
+        WorldEditService.grantForTests(w.ruler.getUUID(), true);
+        data.world().clear();
+        data.world().markGenerated(RealmService.currentDay(server));
+        NationBook.setForTests(List.of(nation("essaia", "Essaia")));
+        NationService.ensure(server);
+        AiRealm a = NationService.realm(server, "essaia").orElseThrow();
+        Site s = city(w, server, level, a, "Gardeville", 0, BuildingFunction.CASERNE);
+        Person guard = data.lineage().person(s.buildings().get(0).occupants().get(0)).orElseThrow();
+        BlockPos at = s.anchor();
+        for (int dx = -1; dx <= 2; dx++) for (int dz = -1; dz <= 2; dz++) level.setChunkForced((at.getX() >> 4) + dx, (at.getZ() >> 4) + dz, true);
+        boolean[] cleaned = {false};
+        net.minecraft.world.entity.monster.Zombie[] zombie = new net.minecraft.world.entity.monster.Zombie[1];
+        BlockPos[] paved = new BlockPos[1];
+        Runnable once = () -> {
+            if (cleaned[0]) return;
+            cleaned[0] = true;
+            for (int dx = -1; dx <= 2; dx++) for (int dz = -1; dz <= 2; dz++) level.setChunkForced((at.getX() >> 4) + dx, (at.getZ() >> 4) + dz, false);
+            if (zombie[0] != null) zombie[0].discard();
+            for (UUID id : s.buildings().get(0).occupants()) {
+                Entity e = level.getEntity(id);
+                if (e != null) e.discard();
+            }
+            fr.crusadecraft.core.city.CityGuards.onServerStopped();
+            NationBook.setForTests(null);
+            WorldEditService.grantForTests(w.ruler.getUUID(), false);
+            data.world().clear();
+            w.cleanup();
+        };
+        try {
+            CityService.populate(level, s);
+            for (UUID id : s.buildings().get(0).occupants()) {
+                Entity e = CityService.spawnedForTests(id);
+                if (e != null) e.teleportTo(e.getX(), level.getHeight(net.minecraft.world.level.levelgen.Heightmap.Types.MOTION_BLOCKING_NO_LEAVES, e.getBlockX(), e.getBlockZ()), e.getZ());
+            }
+        } catch (RuntimeException e) {
+            once.run();
+            throw e;
+        }
+        h.runAfterDelay(30, () -> {
+            try {
+                Entity e = level.getEntity(guard.id());
+                w.check(e != null, "le garde n'est pas là");
+                zombie[0] = net.minecraft.world.entity.EntityType.ZOMBIE.create(level);
+                w.check(zombie[0] != null, "pas de monstre");
+                zombie[0].moveTo(e.getX() + 4, e.getY(), e.getZ());
+                w.check(level.addFreshEntity(zombie[0]), "le monstre n'entre pas dans le monde");
+                // Un joueur qui frappe quelqu'un de cette ville : on s'en souvient.
+                w.check(!fr.crusadecraft.core.city.CityGuards.hasGrudge(server, w.ruler.getUUID(), s.id()), "on en veut à un innocent");
+                fr.crusadecraft.core.city.CityGuards.provoke(server, w.ruler, s.id());
+                w.check(fr.crusadecraft.core.city.CityGuards.hasGrudge(server, w.ruler.getUUID(), s.id()), "on oublie celui qui a frappé");
+                w.check(!fr.crusadecraft.core.city.CityGuards.hasGrudge(server, w.ruler.getUUID(), new UUID(1, 2)), "toutes les villes lui en veulent");
+                w.check(fr.crusadecraft.core.city.CityGuards.isGuard(guard), "un garde n'est pas reconnu");
+                // Sous les pas d'une caravane, l'herbe devient un chemin ; la pierre reste de la pierre.
+                BlockPos under = e.blockPosition().below();
+                for (int dx = -1; dx <= 1; dx++) for (int dz = -1; dz <= 1; dz++) level.setBlock(under.offset(dx, 0, dz), net.minecraft.world.level.block.Blocks.GRASS_BLOCK.defaultBlockState(), 3);
+                level.setBlock(under.offset(1, 0, 0), net.minecraft.world.level.block.Blocks.STONE.defaultBlockState(), 3);
+                paved[0] = under;
+            } catch (RuntimeException e) {
+                once.run();
+                throw e;
+            }
+        });
+        h.runAfterDelay(45, () -> {
+            try {
+                // La ville elle-même a ses rues : on essaie sur un coin qui n'est à personne.
+                data.world().removeSite(s.id());
+                var mob = (net.minecraft.world.entity.PathfinderMob) level.getEntity(guard.id());
+                if (mob != null && mob.onGround()) {
+                    BlockPos stoneAt = paved[0].offset(1, 0, 0);
+                    mob.teleportTo(paved[0].getX() + 0.5, paved[0].getY() + 1, paved[0].getZ() + 0.5);
+                    fr.crusadecraft.core.city.CityRoads.wear(server, level, mob, new UUID(9, 9));
+                    w.check(level.getBlockState(paved[0]).is(net.minecraft.world.level.block.Blocks.DIRT_PATH), "l'herbe ne devient pas un chemin : " + level.getBlockState(paved[0]));
+                    w.check(level.getBlockState(stoneAt).is(net.minecraft.world.level.block.Blocks.STONE), "la pierre a été creusée");
+                }
+                data.world().add(s);
+            } catch (RuntimeException e) {
+                once.run();
+                throw e;
+            }
+        });
+        h.runAfterDelay(200, () -> {
+            try {
+                Entity e = level.getEntity(guard.id());
+                w.check(e instanceof net.minecraft.world.entity.LivingEntity l && l.getMaxHealth() >= 40, "le garde n'est pas plus solide qu'un autre");
+                w.check(e instanceof net.minecraft.world.entity.LivingEntity l2 && l2.getMainHandItem().is(Items.IRON_SWORD), "le garde n'a pas d'épée");
+                w.check(!zombie[0].isAlive() || zombie[0].getHealth() < zombie[0].getMaxHealth(), "le garde n'a pas touché le monstre : " + zombie[0].getHealth() + ", à " + e.distanceTo(zombie[0]) + " blocs, cible " + fr.crusadecraft.core.city.CityGuards.targetOf(guard.id()));
+                h.succeed();
+            } finally {
+                once.run();
+            }
+        });
     }
 
     private static Repliques.Moment kindMoment(CityPost.Kind kind) {

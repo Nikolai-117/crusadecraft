@@ -3,7 +3,8 @@ package fr.crusadecraft.core.city;
 import fr.crusadecraft.config.CrusadeConfig;
 import fr.crusadecraft.core.build.Site;
 import fr.crusadecraft.core.diplomacy.Relation;
-import fr.crusadecraft.core.diplomacy.Treaty;
+import fr.crusadecraft.core.character.OpinionModifier;
+import fr.crusadecraft.core.character.OpinionReason;
 import fr.crusadecraft.core.lineage.LineageState;
 import fr.crusadecraft.core.lineage.Person;
 import fr.crusadecraft.core.logic.Fr;
@@ -55,7 +56,13 @@ public final class CityTravel {
     /** Un joueur à moins de tant de blocs de lui le voit. */
     static final int UNSEEN = 48;
     /** Sans avoir bougé depuis tant de ticks, il est coincé (une rivière, une falaise) : il franchit l'obstacle, même sous les yeux de quelqu'un. */
-    static final int STUCK = 600;
+    static final int STUCK = 240;
+    /** Sous les yeux de quelqu'un, il ne franchit que ça d'un coup. */
+    static final int HOP = 7;
+    /** Arrivé à moins de tant de blocs, il est arrivé. */
+    static final int REACHED = 40;
+    /** S'il est encore en route tant de ticks après l'heure prévue, sous les yeux de quelqu'un, on cesse de l'attendre. */
+    static final int LATE_MAX = 2400;
     /** Sans avoir bougé depuis tant de ticks, il cherche un détour. */
     static final int DETOUR = 100;
     /** Au plus tant de voyageurs d'une ville à la fois, escorte comprise. */
@@ -103,6 +110,7 @@ public final class CityTravel {
 
     /** Quatre fois par jour de jeu : chaque ville voit si quelqu'un part. Sans joueur aussi : le commerce n'attend personne. */
     public static void pulse(MinecraftServer server) {
+        CityCommerce.pulse(server);
         for (Site s : new ArrayList<>(data(server).world().sites())) {
             if (CityService.city(s) && !s.buildings().isEmpty()) maybeDepart(server, s, RANDOM);
         }
@@ -112,7 +120,7 @@ public final class CityTravel {
         return f == BuildingFunction.CASERNE || f == BuildingFunction.TOUR || f == BuildingFunction.CHATEAU;
     }
 
-    private static boolean free(Person p) {
+    static boolean free(Person p) {
         if (p.trip() != null || p.age() < 16 || p.age() >= CityRules.RETIREMENT) return false;
         return !p.hasSettings() || (p.settings().canTravel && p.settings().behavior == NpcSettings.Behavior.SCHEDULE);
     }
@@ -139,23 +147,48 @@ public final class CityTravel {
         if (away >= AT_ONCE) return;
         if (!merchants.isEmpty() && random.nextInt(100) < MERCHANT) {
             Person p = merchants.get(random.nextInt(merchants.size()));
-            destination(server, home, random).ifPresent(dest -> depart(server, home, dest, p, true));
+            // Un marchand va là où il vendra le mieux.
+            bestBuyer(server, home, richest(home.economy()), random).ifPresent(dest -> depart(server, home, dest, p, true));
         } else if (!others.isEmpty() && random.nextInt(100) < OTHER) {
             Person p = others.get(random.nextInt(others.size()));
             destination(server, home, random).ifPresent(dest -> depart(server, home, dest, p, false));
         }
     }
 
-    /** Où aller : une ville du même monde, qui ne soit pas en guerre avec la sienne. */
-    public static Optional<Site> destination(MinecraftServer server, Site home, Random random) {
+    /** Les villes où l'on peut aller d'ici : celles du même monde, qui ne sont pas en guerre avec la sienne, marchés de l'ordinateur compris. */
+    private static List<Site> reachable(MinecraftServer server, Site home) {
         CrusadeSavedData data = data(server);
+        List<Site> all = new ArrayList<>(data.world().sites());
+        all.addAll(data.world().markets());
         List<Site> out = new ArrayList<>();
-        for (Site s : data.world().sites()) {
+        for (Site s : all) {
             if (s == home || !CityService.city(s) || s.buildings().isEmpty() || !s.dimension().equals(home.dimension())) continue;
             if (!s.owner().equals(home.owner()) && data.diplomacy().between(s.owner(), home.owner()).war()) continue;
             out.add(s);
         }
+        return out;
+    }
+
+    /** Où aller : une ville du même monde, qui ne soit pas en guerre avec la sienne. */
+    public static Optional<Site> destination(MinecraftServer server, Site home, Random random) {
+        List<Site> out = reachable(server, home);
         return out.isEmpty() ? Optional.empty() : Optional.of(out.get(random.nextInt(out.size())));
+    }
+
+    /** Pour un marchand : là où sa marchandise se vend le plus cher, à distance raisonnable. */
+    static Optional<Site> bestBuyer(MinecraftServer server, Site home, CityGood good, Random random) {
+        List<Site> out = reachable(server, home);
+        if (out.isEmpty() || good == null) return destination(server, home, random);
+        Site best = null;
+        double top = Double.NEGATIVE_INFINITY;
+        for (Site s : out) {
+            double profit = CityCommerce.price(good, s.economy(), CityCommerce.fair(server, home, s)) * LOAD - Math.sqrt(home.anchor().distSqr(s.anchor())) / 100 + random.nextDouble() * 4;
+            if (profit > top) {
+                top = profit;
+                best = s;
+            }
+        }
+        return Optional.ofNullable(best);
     }
 
     /** Il part : un marchand charge ce que sa ville a en trop ; s'il n'y a rien, il emporte de quoi acheter ce qui manque. */
@@ -172,33 +205,46 @@ public final class CityTravel {
                 home.economy().addPurse(-money);
             }
         }
+        leave(server, level, home, dest, p, good, amount, money, null, ESCORT);
+    }
+
+    /** Une caravane part sur une ligne de commerce : on a déjà pris ce qu'elle emporte. */
+    static void departLine(MinecraftServer server, CityLine line, Site home, Site dest, Person p, CityGood good, int amount, int money) {
+        ServerLevel level = server.getLevel(ResourceKey.create(Registries.DIMENSION, home.dimension()));
+        if (level == null) return;
+        leave(server, level, home, dest, p, good, amount, money, line.id, line.escort);
+    }
+
+    private static void leave(MinecraftServer server, ServerLevel level, Site home, Site dest, Person p, CityGood good, int amount, int money, UUID line, int escort) {
         long now = level.getGameTime();
-        int road = roadTicks(Math.sqrt(home.anchor().distSqr(dest.anchor())));
-        Trip trip = new Trip(home.id(), dest.id(), Trip.Stage.OUT, now, now + road, good, amount, null, 0, money);
+        int road = roadTicks(CityRoads.between(server, home, dest).length());
+        Trip trip = new Trip(home.id(), dest.id(), Trip.Stage.OUT, now, now + road, good, amount, null, 0, money, null, line);
         p.setTrip(trip);
         CityRumors.add(server, home, "voyage", p.name(), dest.name());
         if (good != null) CityJournal.add(server, home, CityJournal.Kind.ROAD, Fr.key("crusadecraft.city.journal.caravan", p.name(), Fr.key(good.key() + ".du"), amount, dest.name()));
-        if (good != null || money > 0) recruit(server, home, p, trip);
+        if ((good != null || money > 0) && escort > 0) recruit(server, home, p, trip, escort);
         CityPost.travelNews(server, home, dest, p);
         data(server).setDirty();
     }
 
     /** Une caravane emmène une escorte, si sa ville a des gardes de libres. */
-    private static void recruit(MinecraftServer server, Site home, Person lead, Trip t) {
+    private static void recruit(MinecraftServer server, Site home, Person lead, Trip t, int count) {
         LineageState state = data(server).lineage();
-        int n = 0;
+        List<Person> ready = new ArrayList<>();
         for (CityBuilding b : home.buildings()) {
             if (b.function() == null || !guardJob(b.function())) continue;
             for (UUID id : b.occupants()) {
                 Person g = state.person(id).filter(Person::alive).orElse(null);
-                if (g == null || !free(g)) continue;
-                g.setTrip(new Trip(t.home(), t.dest(), t.stage(), t.start(), t.end(), null, 0, null, 0, 0, lead.id()));
-                if (++n >= ESCORT) return;
+                if (g != null && free(g)) ready.add(g);
             }
+        }
+        // Une ville ne reste jamais sans le moindre garde.
+        for (int i = 0; i < Math.min(count, ready.size() - 1); i++) {
+            ready.get(i).setTrip(new Trip(t.home(), t.dest(), t.stage(), t.start(), t.end(), null, 0, null, 0, 0, lead.id()));
         }
     }
 
-    private static CityGood richest(CityEconomy e) {
+    static CityGood richest(CityEconomy e) {
         CityGood best = null;
         for (CityGood g : CityGood.values()) {
             if (e.stock(g) > SURPLUS && (best == null || e.stock(g) > e.stock(best))) best = g;
@@ -206,7 +252,7 @@ public final class CityTravel {
         return best;
     }
 
-    private static CityGood lacking(CityEconomy e) {
+    static CityGood lacking(CityEconomy e) {
         CityGood worst = null;
         for (CityGood g : CityGood.values()) {
             if (e.stock(g) < CityEconomy.LOW && (worst == null || e.stock(g) < e.stock(worst))) worst = g;
@@ -252,12 +298,12 @@ public final class CityTravel {
             switch (t.stage()) {
                 case OUT -> {
                     road(server, level, p, home.get(), dest.get(), t, now);
-                    if (now >= t.end()) arrive(server, level, p, home.get(), dest.get(), t, now);
+                    if (now >= t.end() && reached(level, p, dest.get(), t, now)) arrive(server, level, p, home.get(), dest.get(), t, now);
                 }
                 case STAY -> stay(server, level, p, home.get(), dest.get(), t, now);
                 case BACK -> {
                     road(server, level, p, dest.get(), home.get(), t, now);
-                    if (now >= t.end()) comeHome(server, level, p, home.get(), dest.get(), t);
+                    if (now >= t.end() && reached(level, p, home.get(), t, now)) comeHome(server, level, p, home.get(), dest.get(), t);
                 }
             }
         }
@@ -265,6 +311,13 @@ public final class CityTravel {
             sweepIn = 5;
             sweepPacks(server);
         }
+    }
+
+    /** S'il marche sous les yeux de quelqu'un, il va jusqu'au bout avant d'être arrivé. Sinon, l'heure fait foi : il a marché sans qu'on le voie. */
+    private static boolean reached(ServerLevel level, Person p, Site to, Trip t, long now) {
+        Entity e = level.getEntity(p.id());
+        if (e == null || now > t.end() + LATE_MAX) return true;
+        return Math.hypot(e.getX() - to.anchor().getX(), e.getZ() - to.anchor().getZ()) <= REACHED;
     }
 
     /** Un garde d'escorte suit son marchand : mêmes étapes, mêmes heures. */
@@ -278,7 +331,7 @@ public final class CityTravel {
             return;
         }
         if (lt.stage() != t.stage() || lt.start() != t.start() || lt.end() != t.end()) {
-            t = new Trip(t.home(), t.dest(), lt.stage(), lt.start(), lt.end(), null, 0, null, 0, 0, t.leader());
+            t = new Trip(t.home(), t.dest(), lt.stage(), lt.start(), lt.end(), null, 0, null, 0, 0, t.leader(), null);
             p.setTrip(t);
         }
         switch (t.stage()) {
@@ -304,8 +357,9 @@ public final class CityTravel {
     /** Sur la route : un point qui avance, sauf si un joueur est assez près pour le croiser. */
     private static void road(MinecraftServer server, ServerLevel level, Person p, Site from, Site to, Trip t, long now) {
         double f = t.progress(now);
-        double x = from.anchor().getX() + (to.anchor().getX() - from.anchor().getX()) * f;
-        double z = from.anchor().getZ() + (to.anchor().getZ() - from.anchor().getZ()) * f;
+        CityRoads.Route route = CityRoads.between(server, from, to);
+        int[] point = route.at(f);
+        double x = point[0], z = point[1];
         Entity e = level.getEntity(p.id());
         if (e == null) {
             if (!playerNear(level, x, z, APPEAR) || !level.hasChunk((int) x >> 4, (int) z >> 4)) return;
@@ -317,19 +371,31 @@ public final class CityTravel {
             vanish(level, p);
             return;
         }
-        if (!(e instanceof PathfinderMob mob) || CityScenes.busy(p.id())) return;
+        if (!(e instanceof PathfinderMob mob) || CityScenes.busy(p.id()) || CityGuards.fighting(p.id())) return;
         double dx = mob.getX() - x, dz = mob.getZ() - z;
         boolean late = dx * dx + dz * dz > LAG * LAG, seen = playerNear(level, mob.getX(), mob.getZ(), UNSEEN), stuck = stuck(p.id(), mob, now);
-        if (late && level.hasChunk((int) x >> 4, (int) z >> 4) && (!seen || stuck)) {
+        if (late && level.hasChunk((int) x >> 4, (int) z >> 4) && !seen) {
             BlockPos at = surface(level, (int) x, (int) z);
             mob.teleportTo(at.getX() + 0.5, at.getY(), at.getZ() + 0.5);
             bringPack(level, mob, p);
             return;
         }
+        if (stuck && seen) {
+            // Un ressaut, une berge : il passe de l'autre côté, et ne reste pas planté devant le joueur.
+            double dist = Math.max(1, Math.hypot(x - mob.getX(), z - mob.getZ()));
+            int hx = (int) (mob.getX() + (x - mob.getX()) / dist * HOP), hz = (int) (mob.getZ() + (z - mob.getZ()) / dist * HOP);
+            if (level.hasChunk(hx >> 4, hz >> 4)) {
+                BlockPos at = surface(level, hx, hz);
+                mob.teleportTo(at.getX() + 0.5, at.getY(), at.getZ() + 0.5);
+                bringPack(level, mob, p);
+                MOVED.remove(p.id());
+                return;
+            }
+        }
         // Il vise un point un peu plus loin sur la route ; les gardes marchent de part et d'autre.
-        double g = Math.min(1, f + 24.0 / Math.max(1, Math.sqrt(from.anchor().distSqr(to.anchor()))));
         int side = t.leader() == null ? 0 : (p.id().hashCode() % 2 == 0 ? 3 : -3);
-        int ax = (int) (from.anchor().getX() + (to.anchor().getX() - from.anchor().getX()) * g) + side, az = (int) (from.anchor().getZ() + (to.anchor().getZ() - from.anchor().getZ()) * g) - side;
+        int[] ahead = route.at(Math.min(1, f + 24.0 / Math.max(1, route.length())));
+        int ax = ahead[0] + side, az = ahead[1] - side;
         if (level.hasChunk(ax >> 4, az >> 4)) {
             BlockPos aim = surface(level, ax, az);
             // Il n'avance plus : un détour vers un point au hasard dans sa direction, sur la terre ferme, le remet en route.
@@ -340,6 +406,8 @@ public final class CityTravel {
             CityWork.toward(mob, aim, 2, ROAD_SPEED);
         }
         dress(level, mob, p, t);
+        // Sur une ligne qui le demande, ses pas tracent le chemin.
+        if (t.line() != null && CityCommerce.line(server, t.line()).map(l -> l.pave).orElse(false)) CityRoads.wear(server, level, mob, p.id());
         CityWork.roadTalk(server, level, from, p, mob, now);
     }
 
@@ -476,6 +544,19 @@ public final class CityTravel {
         }
     }
 
+    /** Un joueur s'en prend à une bête de caravane : c'est s'en prendre à la caravane. */
+    public static void onPackHurt(ServerPlayer player, Entity beast) {
+        for (String tag : beast.getTags()) {
+            if (!tag.startsWith(PACK_TAG + ":")) continue;
+            try {
+                Person owner = data(player.server).lineage().person(UUID.fromString(tag.substring(PACK_TAG.length() + 1))).orElse(null);
+                if (owner != null && owner.trip() != null) CityGuards.provoke(player.server, player, owner.trip().home());
+            } catch (IllegalArgumentException ignored) {
+                // Une étiquette illisible : rien à faire.
+            }
+        }
+    }
+
     /** Il disparaît du monde, avec ses bêtes : le registre sait où il en est. */
     private static void vanish(ServerLevel level, Person p) {
         unpack(level, p.id());
@@ -491,9 +572,10 @@ public final class CityTravel {
         int earned = t.earned();
         CityGood back = null;
         int backAmount = 0;
-        int price = fair(server, home, dest) ? PRICE : PRICE_FOREIGN;
+        boolean fair = CityCommerce.fair(server, home, dest);
         if (t.good() != null) {
-            int want = Math.min(t.amount() * price, (int) Math.min(Integer.MAX_VALUE, dest.economy().purse()));
+            // Le prix est celui de cette ville, aujourd'hui : plus elle en manque, plus elle paie.
+            int want = Math.min(t.amount() * CityCommerce.price(t.good(), dest.economy(), fair), (int) Math.min(Integer.MAX_VALUE, dest.economy().purse()));
             earned += want;
             dest.economy().addPurse(-want);
             dest.economy().add(t.good(), t.amount());
@@ -501,22 +583,27 @@ public final class CityTravel {
             CityRumors.add(server, dest, "marchand", p.name(), from(home), goods);
             CityJournal.add(server, dest, CityJournal.Kind.ROAD, Fr.key("crusadecraft.city.journal.sold", p.name(), from(home), goods, t.amount(), CityOrders.money(want)));
             CityPost.saleNews(server, home, dest, p, t.good(), t.amount(), want);
+            if (t.line() != null) CityCommerce.onSold(server, t.line(), t.amount(), want);
+            rapprochement(server, home, dest);
         } else if (earned == 0) {
             CityRumors.add(server, dest, "passage", p.name(), from(home));
         }
         // Ce qui manque chez lui et abonde ici : il en rapporte, en payant sur ce qu'il a.
         if (earned > 0) {
+            CityGood wanted = t.line() == null ? null : CityCommerce.line(server, t.line()).map(l -> l.back).orElse(null);
             for (CityGood g : CityGood.values()) {
-                if (dest.economy().stock(g) > SURPLUS && home.economy().stock(g) < CityEconomy.LOW) {
-                    int affordable = Math.min(LOAD, earned / price);
-                    if (affordable <= 0) break;
-                    back = g;
-                    backAmount = dest.economy().take(g, affordable);
-                    earned -= backAmount * price;
-                    dest.economy().addPurse(backAmount * price);
-                    CityJournal.add(server, dest, CityJournal.Kind.ROAD, Fr.key("crusadecraft.city.journal.bought", p.name(), Fr.key(g.key() + ".du"), backAmount, home.name()));
-                    break;
-                }
+                boolean take = wanted != null ? g == wanted && dest.economy().stock(g) > CityCommerce.RESERVE : dest.economy().stock(g) > SURPLUS && home.economy().stock(g) < CityEconomy.LOW;
+                if (!take) continue;
+                int unit = CityCommerce.price(g, dest.economy(), fair);
+                int spare = wanted != null ? dest.economy().stock(g) - CityCommerce.RESERVE : LOAD;
+                int affordable = Math.min(Math.min(LOAD, spare), earned / unit);
+                if (affordable <= 0) break;
+                back = g;
+                backAmount = dest.economy().take(g, affordable);
+                earned -= backAmount * unit;
+                dest.economy().addPurse(backAmount * unit);
+                CityJournal.add(server, dest, CityJournal.Kind.ROAD, Fr.key("crusadecraft.city.journal.bought", p.name(), Fr.key(g.key() + ".du"), backAmount, home.name()));
+                break;
             }
         }
         long stay = STAY_MIN + level.random.nextInt(STAY_SPREAD);
@@ -531,18 +618,22 @@ public final class CityTravel {
         return (LineageState.elides(s.name()) ? "d'" : "de ") + s.name();
     }
 
-    /** Même royaume, ou traité de commerce : le juste prix. Sinon, on lui fait payer d'être étranger. */
-    private static boolean fair(MinecraftServer server, Site home, Site dest) {
-        if (home.owner().equals(dest.owner())) return true;
+    /** Deux royaumes qui commercent s'en trouvent mieux : l'amitié dure tant que le commerce dure, sans s'accumuler. */
+    private static void rapprochement(MinecraftServer server, Site home, Site dest) {
+        if (home.owner().equals(dest.owner())) return;
+        long today = RealmService.currentDay(server);
         Relation r = data(server).diplomacy().between(home.owner(), dest.owner());
-        return r.has(Treaty.COMMERCE, RealmService.currentDay(server));
+        for (UUID holder : List.of(home.owner(), dest.owner())) {
+            r.opinionOf(holder).removeIf(m -> m.reason() == OpinionReason.ECHANGES);
+            r.addOpinion(holder, OpinionModifier.of(OpinionReason.ECHANGES, today, 1));
+        }
     }
 
     /** Sur place, il vit comme un visiteur. Son séjour fini, il repart. */
     private static void stay(MinecraftServer server, ServerLevel level, Person p, Site home, Site dest, Trip t, long now) {
         Entity e = level.getEntity(p.id());
         if (t.leader() == null && now >= t.end()) {
-            int road = roadTicks(Math.sqrt(home.anchor().distSqr(dest.anchor())));
+            int road = roadTicks(CityRoads.between(server, dest, home).length());
             p.setTrip(t.next(Trip.Stage.BACK, now, now + road, t.back(), t.backAmount(), t.earned()));
             CityJournal.add(server, dest, CityJournal.Kind.ROAD, Fr.key("crusadecraft.city.journal.leaves", p.name(), home.name()));
             data(server).setDirty();
@@ -582,14 +673,15 @@ public final class CityTravel {
         unpack(level, p.id());
         p.setTrip(null);
         CityWork.afterScene(p.id());
-        if (e != null && house != null) p.setInWorld(level.dimension().location(), house.spot());
+        // Ceux d'un marché de l'ordinateur n'ont nulle part où vivre dans le monde : ils s'effacent en arrivant.
+        if (e != null && house != null && !data(level.getServer()).world().isMarket(home.id())) p.setInWorld(level.dimension().location(), house.spot());
         else vanish(level, p);
     }
 
     /** Pour les essais : le temps a passé, on tire les conséquences sans qu'aucun joueur ne soit là. */
     public static void advanceForTests(MinecraftServer server, Person p, long now) {
         Trip t = p.trip();
-        p.setTrip(new Trip(t.home(), t.dest(), t.stage(), t.start(), now, t.good(), t.amount(), t.back(), t.backAmount(), t.earned(), t.leader()));
+        p.setTrip(new Trip(t.home(), t.dest(), t.stage(), t.start(), now, t.good(), t.amount(), t.back(), t.backAmount(), t.earned(), t.leader(), t.line()));
         tick(server);
     }
 
@@ -613,7 +705,8 @@ public final class CityTravel {
             long now = level.getGameTime();
             Site from = t.stage() == Trip.Stage.BACK ? dest : home, to = t.stage() == Trip.Stage.BACK ? home : dest;
             double f = t.stage() == Trip.Stage.STAY ? 1 : t.progress(now);
-            double x = from.anchor().getX() + (to.anchor().getX() - from.anchor().getX()) * f, z = from.anchor().getZ() + (to.anchor().getZ() - from.anchor().getZ()) * f;
+            int[] point = CityRoads.between(server, from, to).at(f);
+            double x = point[0], z = point[1];
             Entity e = level.getEntity(p.id());
             if (e != null) {
                 x = e.getX();

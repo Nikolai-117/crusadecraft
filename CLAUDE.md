@@ -113,6 +113,8 @@ des packs), `docs/etape-2-plan.md` (le plan des phases).
 - `core/city/CityScenes` : deux habitants face à face ; les comptes bougent dans `settle`, pas avant. `CityJournal` : l'onglet En direct, rien
   n'y est enregistré. `CityTravel` + `Trip` : voyages et caravanes, positions calculées ; une escorte a un `Trip.leader`. `CityPost` et
   `CityOrders` : le courrier, les commandes.
+- `core/city/CityCommerce` (lignes, prix, plan de l'ordinateur), `CityLine`, `CityMarkets` (les villes sans murs : des `Site` hors de `sites()`, dans `world().markets()`),
+  `CityRoads` (A* en logique pure, tracés dans `world().roads()`), `CityGuards` (les gardes se battent, rancune par ville).
 - Pas de modèle de langage : Romain l'a écarté. Ne pas en ajouter sans qu'il le demande.
 
 ## Pièges déjà rencontrés
@@ -121,6 +123,8 @@ des packs), `docs/etape-2-plan.md` (le plan des phases).
   ce qu'on observe. Ne pas programmer une tâche depuis une tâche programmée (`runAfterDelay`, `onEachTick`) : tout planifier d'avance. Hors du gabarit, le
   sol du monde d'essai est plus haut que `w.center` : un villageois posé là étouffe. Regarder le journal (`died`) avant d'accuser le code.
 - **Le tchat masqué** (une ancienne étape de `WorldShots`) fait refuser les commandes sans bruit : `Tchat désactivé`.
+- **Le monde d'essai du vrai client est en paisible** : les monstres s'y effacent aussitôt, et un coup n'y fait aucun dégât. Passer en normal avant de juger un combat.
+- **Avant l'aube, tout le monde dort** : au début d'une série d'essais, l'heure du monde est tôt, et personne ne vend rien. Fixer l'heure dans l'essai.
 
 - **MineColonies** : n'appeler son API que depuis `compat/minecolonies`. Certaines méthodes des entités de bâtiment ne
   compilent pas (classe de Domum absente du classpath de compilation) : passer par `IBuilding`. Un `Blueprint` de

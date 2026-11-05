@@ -38,6 +38,8 @@ import java.util.UUID;
 public final class CityPanel {
     /** Un champ de noms ne garde pas plus que ça. */
     static final int NAMES_MAX = 256;
+    /** On propose au plus tant de destinations, les plus proches. */
+    static final int STOPS_SHOWN = 64;
     /** Une réserve ne garde pas plus de tenues que ça. */
     static final int POOL_MAX = 128;
 
@@ -132,6 +134,31 @@ public final class CityPanel {
         ListTag orders = new ListTag();
         for (CityOrders.Order o : site.orders()) orders.add(o.save());
         t.put("orders", orders);
+        // P51 : son commerce : les lignes qui la touchent, et où elle peut en ouvrir.
+        ListTag lines = new ListTag();
+        for (CityLine l : data.world().lines()) {
+            if (!l.from.equals(site.id()) && !l.to.equals(site.id())) continue;
+            CompoundTag x = l.save();
+            x.putBoolean("mine", l.from.equals(site.id()) && !l.ai);
+            x.putBoolean("outgoing", l.from.equals(site.id()));
+            x.putString("fromName", data.world().site(l.from).map(Site::name).orElse("?"));
+            x.putString("toName", data.world().site(l.to).map(Site::name).orElse("?"));
+            lines.add(x);
+        }
+        t.put("lines", lines);
+        ListTag stops = new ListTag();
+        int shown = 0;
+        for (CityCommerce.Stop s : CityCommerce.stops(server, site)) {
+            if (shown++ >= STOPS_SHOWN) break;
+            CompoundTag x = new CompoundTag();
+            x.putUUID("id", s.id());
+            x.putString("name", s.name());
+            x.putBoolean("ai", s.ai());
+            x.putBoolean("war", s.war());
+            x.putInt("distance", s.distance());
+            stops.add(x);
+        }
+        t.put("stops", stops);
         return t;
     }
 
@@ -244,6 +271,20 @@ public final class CityPanel {
             if (c.contains("buildingName")) b.get().setName(c.getString("buildingName").strip());
             if (c.getBoolean("forget")) done = CityService.forget(player, site.id(), b.get().id());
         }
+        // Son commerce.
+        if (c.contains("lineAdd")) {
+            CompoundTag l = c.getCompound("lineAdd");
+            done = CityCommerce.create(server, site, l.getUUID("to"), goodOf(l.getString("good")), l.getInt("amount"), goodOf(l.getString("back")), l.getInt("every"), l.getInt("escort"), l.getBoolean("pave"));
+            if (!done.success()) return done;
+        }
+        if (c.hasUUID("lineToggle") || c.hasUUID("linePave") || c.hasUUID("lineRemove")) {
+            UUID id = c.hasUUID("lineToggle") ? c.getUUID("lineToggle") : c.hasUUID("linePave") ? c.getUUID("linePave") : c.getUUID("lineRemove");
+            Optional<CityLine> found = CityCommerce.line(server, id).filter(l -> l.from.equals(site.id()));
+            if (found.isEmpty()) return Outcome.no("crusadecraft.city.unknown");
+            if (c.hasUUID("lineToggle")) found.get().active = !found.get().active;
+            if (c.hasUUID("linePave")) found.get().pave = !found.get().pave;
+            if (c.hasUUID("lineRemove")) data(server).world().lines().remove(found.get());
+        }
         // Son allure.
         if (c.contains("poolAdd")) {
             String look = c.getString("poolAdd"), job = c.getString("poolJob");
@@ -285,6 +326,14 @@ public final class CityPanel {
             if (i >= 0 && i < site.orders().size()) site.orders().remove(i);
         }
         return done;
+    }
+
+    private static CityGood goodOf(String name) {
+        try {
+            return name == null || name.isEmpty() ? null : CityGood.valueOf(name);
+        } catch (IllegalArgumentException e) {
+            return null;
+        }
     }
 
     private static String poolKey(String job) {

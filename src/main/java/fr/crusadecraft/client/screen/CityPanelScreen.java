@@ -38,7 +38,7 @@ import java.util.function.Consumer;
 public class CityPanelScreen extends Screen {
     private static final int W = 440, H = 250, ROW = 18;
 
-    private enum Tab { LIVE, GENERAL, CAMP, BUILDINGS, PEOPLE, LOOKS, STOCK }
+    private enum Tab { LIVE, GENERAL, CAMP, BUILDINGS, PEOPLE, LOOKS, TRADE, STOCK }
 
     /** On revient là où l'on était, d'une ouverture à l'autre. */
     private static Tab tab = Tab.GENERAL;
@@ -141,17 +141,23 @@ public class CityPanelScreen extends Screen {
     protected void init() {
         left = (width - W) / 2;
         top = (height - H) / 2;
+        // Des onglets à la largeur de leur nom : huit n'y tiendraient pas autrement.
         Tab[] all = Tab.values();
-        int tw = (W - 24 - (all.length - 1) * 2) / all.length;
-        for (int i = 0; i < all.length; i++) {
-            Tab t = all[i];
-            Button b = Button.builder(Component.translatable("crusadecraft.city.panel.tab." + t.name().toLowerCase(Locale.ROOT)), x -> {
+        int used = 0;
+        for (Tab t : all) used += font.width(Component.translatable("crusadecraft.city.panel.tab." + t.name().toLowerCase(Locale.ROOT)));
+        int pad = Math.max(2, (W - 24 - used - (all.length - 1)) / all.length);
+        int tx = left + 12;
+        for (Tab t : all) {
+            Component name = Component.translatable("crusadecraft.city.panel.tab." + t.name().toLowerCase(Locale.ROOT));
+            int tw = font.width(name) + pad;
+            Button b = Button.builder(name, x -> {
                 tab = t;
                 scroll = 0;
                 rebuildWidgets();
-            }).bounds(left + 12 + i * (tw + 2), top + 24, tw, 14).build();
+            }).bounds(tx, top + 24, tw, 14).build();
             b.active = t != tab;
             addRenderableWidget(b);
+            tx += tw + 1;
         }
         addRenderableWidget(Button.builder(Component.translatable("gui.done"), b -> onClose()).bounds(left + W - 66, top + H - 22, 54, 16).build());
         switch (tab) {
@@ -161,6 +167,7 @@ public class CityPanelScreen extends Screen {
             case BUILDINGS -> initBuildings();
             case PEOPLE -> initPeople();
             case LOOKS -> initLooks();
+            case TRADE -> initTrade();
             case STOCK -> initStock();
         }
     }
@@ -441,6 +448,112 @@ public class CityPanelScreen extends Screen {
         button("crusadecraft.skin.folder", x() + 342, iy, 74, b -> net.minecraft.Util.getPlatform().openFile(SkinClient.localFolder().toFile()));
     }
 
+    // ------------------------------------------------------------------ le commerce
+
+    private static final int[] AMOUNTS = {8, 16, 24, 32, 48, 64}, RHYTHMS = {1, 2, 4, 8};
+    private int stopIndex, goodIndex = -1, backIndex = -1, amountIndex = 2, rhythmIndex = 2, escortCount = 2;
+    private boolean paveNew = true;
+    private static final int TRADE_ROW = 15, TRADE_LIST = 118;
+
+    private Component goodName(int index) {
+        return index < 0 ? Component.translatable("crusadecraft.city.panel.trade.auto") : Component.translatable(CityGood.values()[index].key());
+    }
+
+    /** Un réglage à faire défiler : ◂ valeur ▸. */
+    private void cycle(int x, int y, int w, Component value, Runnable prev, Runnable next) {
+        button("crusadecraft.city.panel.prev", x, y, 14, b -> {
+            prev.run();
+            rebuildWidgets();
+        });
+        Button shown = Button.builder(value, b -> {
+        }).bounds(x + 15, y, w, 14).build();
+        shown.active = false;
+        addRenderableWidget(shown);
+        button("crusadecraft.city.panel.next", x + 16 + w, y, 14, b -> {
+            next.run();
+            rebuildWidgets();
+        });
+    }
+
+    private Component stopName(CompoundTag s) {
+        return Component.translatable(s.getBoolean("war") ? "crusadecraft.city.panel.trade.stop.war" : s.getBoolean("ai") ? "crusadecraft.city.panel.trade.stop.ai" : "crusadecraft.city.panel.trade.stop", s.getString("name"), s.getInt("distance"));
+    }
+
+    private void initTrade() {
+        ListTag stops = view.getList("stops", Tag.TAG_COMPOUND);
+        int goods = CityGood.values().length;
+        int y = y0(), lx = x() + 52, rx = x() + 268;
+        if (!stops.isEmpty()) {
+            stopIndex = Mth.clamp(stopIndex, 0, stops.size() - 1);
+            cycle(lx, y, 324, stopName(stops.getCompound(stopIndex)), () -> stopIndex = Math.floorMod(stopIndex - 1, stops.size()), () -> stopIndex = (stopIndex + 1) % stops.size());
+        }
+        y += TRADE_ROW;
+        cycle(lx, y, 100, goodName(goodIndex), () -> goodIndex = goodIndex <= -1 ? goods - 1 : goodIndex - 1, () -> goodIndex = goodIndex + 1 >= goods ? -1 : goodIndex + 1);
+        cycle(rx, y, 60, Component.literal(Integer.toString(AMOUNTS[amountIndex])), () -> amountIndex = Math.floorMod(amountIndex - 1, AMOUNTS.length), () -> amountIndex = (amountIndex + 1) % AMOUNTS.length);
+        y += TRADE_ROW;
+        cycle(lx, y, 100, goodName(backIndex), () -> backIndex = backIndex <= -1 ? goods - 1 : backIndex - 1, () -> backIndex = backIndex + 1 >= goods ? -1 : backIndex + 1);
+        cycle(rx, y, 60, Component.translatable("crusadecraft.city.panel.trade.rhythm." + RHYTHMS[rhythmIndex]), () -> rhythmIndex = Math.floorMod(rhythmIndex - 1, RHYTHMS.length), () -> rhythmIndex = (rhythmIndex + 1) % RHYTHMS.length);
+        y += TRADE_ROW;
+        cycle(lx, y, 40, Component.literal(Integer.toString(escortCount)), () -> escortCount = Math.floorMod(escortCount - 1, 3), () -> escortCount = (escortCount + 1) % 3);
+        toggle("crusadecraft.city.panel.trade.pave", paveNew, x() + 134, y, 100, v -> {
+            paveNew = v;
+            rebuildWidgets();
+        });
+        Button create = button("crusadecraft.city.panel.trade.create", rx, y, 148, b -> send(t -> {
+            CompoundTag l = new CompoundTag();
+            l.putUUID("to", stops.getCompound(stopIndex).getUUID("id"));
+            l.putString("good", goodIndex < 0 ? "" : CityGood.values()[goodIndex].name());
+            l.putString("back", backIndex < 0 ? "" : CityGood.values()[backIndex].name());
+            l.putInt("amount", AMOUNTS[amountIndex]);
+            l.putInt("every", RHYTHMS[rhythmIndex]);
+            l.putInt("escort", escortCount);
+            l.putBoolean("pave", paveNew);
+            t.put("lineAdd", l);
+        }));
+        create.active = !stops.isEmpty() && !stops.getCompound(stopIndex).getBoolean("war");
+        ListTag lines = view.getList("lines", Tag.TAG_COMPOUND);
+        int rows = (H - 42 - 66 - 28) / TRADE_ROW;
+        scroll = Mth.clamp(scroll, 0, Math.max(0, lines.size() - rows));
+        for (int i = scroll; i < lines.size() && i < scroll + rows; i++) {
+            CompoundTag l = lines.getCompound(i);
+            if (!l.getBoolean("mine")) continue;
+            UUID id = l.getUUID("id");
+            int ry = y0() + 66 + (i - scroll) * TRADE_ROW;
+            addRenderableWidget(Button.builder(Component.translatable(l.getBoolean("active") ? "crusadecraft.city.panel.trade.pause" : "crusadecraft.city.panel.trade.resume"), b -> send(t -> t.putUUID("lineToggle", id)))
+                    .bounds(x() + W - 24 - 16 - 16, ry, 15, 14).tooltip(Tooltip.create(Component.translatable("crusadecraft.city.panel.trade.pause.tip"))).build());
+            button("crusadecraft.city.panel.remove", x() + W - 24 - 15, ry, 14, b -> send(t -> t.putUUID("lineRemove", id)));
+        }
+    }
+
+    private void renderTrade(GuiGraphics g) {
+        int y = y0();
+        Ui.fitted(g, font, Component.translatable("crusadecraft.city.panel.trade.to"), x(), y + 3, 50, Ui.TEXT_MUTED);
+        y += TRADE_ROW;
+        Ui.fitted(g, font, Component.translatable("crusadecraft.city.panel.trade.sends"), x(), y + 3, 50, Ui.TEXT_MUTED);
+        Ui.fitted(g, font, Component.translatable("crusadecraft.city.panel.trade.amount"), x() + 214, y + 3, 52, Ui.TEXT_MUTED);
+        y += TRADE_ROW;
+        Ui.fitted(g, font, Component.translatable("crusadecraft.city.panel.trade.brings"), x(), y + 3, 50, Ui.TEXT_MUTED);
+        Ui.fitted(g, font, Component.translatable("crusadecraft.city.panel.trade.rhythm"), x() + 214, y + 3, 52, Ui.TEXT_MUTED);
+        y += TRADE_ROW;
+        Ui.fitted(g, font, Component.translatable("crusadecraft.city.panel.trade.escort"), x(), y + 3, 50, Ui.TEXT_MUTED);
+        ListTag lines = view.getList("lines", Tag.TAG_COMPOUND);
+        int rows = (H - 42 - 66 - 28) / TRADE_ROW, ly = y0() + 66;
+        if (lines.isEmpty()) Ui.wrapped(g, font, Component.translatable("crusadecraft.city.panel.trade.empty"), x(), ly + 3, W - 24, Ui.TEXT_MUTED);
+        for (int i = scroll; i < lines.size() && i < scroll + rows; i++) {
+            CompoundTag l = lines.getCompound(i);
+            int ry = ly + (i - scroll) * TRADE_ROW;
+            boolean out = l.getBoolean("outgoing");
+            String good = l.getString("good");
+            Component what = good.isEmpty() ? Component.translatable("crusadecraft.city.panel.trade.auto") : Component.translatable(CityGood.valueOf(good).key());
+            Component row = Component.literal((out ? "→ " + l.getString("toName") : "← " + l.getString("fromName")) + " · ").append(what).append(" · ")
+                    .append(Component.translatable("crusadecraft.city.panel.trade.row", l.getInt("trips"), l.getLong("moved"), l.getLong("earned")));
+            int color = !l.getBoolean("active") ? Ui.TEXT_MUTED : l.getBoolean("ai") ? Ui.TEXT : Ui.TEXT_TITLE;
+            Ui.fitted(g, font, row, x(), ry + 3, W - 24 - 88, color);
+            String status = l.getBoolean("active") ? l.getString("status") : "paused";
+            if (!status.isEmpty()) Ui.fitted(g, font, Component.translatable("crusadecraft.city.line.status." + status), x() + W - 24 - 88, ry + 3, 54, Ui.TEXT_MUTED);
+        }
+    }
+
     private void initStock() {
         CityGood[] goods = CityGood.values();
         for (int i = 0; i < goods.length; i++) {
@@ -497,6 +610,7 @@ public class CityPanelScreen extends Screen {
             case BUILDINGS -> renderBuildings(g);
             case PEOPLE -> renderPeople(g);
             case LOOKS -> renderLooks(g, mx, my);
+            case TRADE -> renderTrade(g);
             case STOCK -> renderStock(g);
         }
         super.render(g, mx, my, partial);
@@ -716,7 +830,7 @@ public class CityPanelScreen extends Screen {
             liveScroll = Math.max(0, liveScroll - (int) Math.signum(delta));
             return true;
         }
-        if (tab == Tab.BUILDINGS || tab == Tab.PEOPLE) {
+        if (tab == Tab.BUILDINGS || tab == Tab.PEOPLE || tab == Tab.TRADE) {
             scroll = Math.max(0, scroll - (int) Math.signum(delta));
             rebuildWidgets();
             return true;

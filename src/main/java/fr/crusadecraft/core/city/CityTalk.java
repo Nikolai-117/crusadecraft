@@ -181,6 +181,8 @@ public final class CityTalk {
         Optional<Site> site = siteOf(server, p.get());
         if (site.isEmpty()) return;
         p.get().addOpinion(player.getUUID(), -15);
+        // P53 : ses gardes l'ont vu, ou l'apprendront.
+        CityGuards.provoke(server, player, p.get().trip() != null ? p.get().trip().home() : site.get().id());
         for (Person w : witnesses(server, victim, site.get())) w.addOpinion(player.getUUID(), -5);
         if (victim instanceof Villager v) v.getGossips().add(player.getUUID(), net.minecraft.world.entity.ai.gossip.GossipType.MINOR_NEGATIVE, 25);
         CityRumors.add(server, site.get(), "frappe", player.getGameProfile().getName(), p.get().name());
@@ -196,6 +198,7 @@ public final class CityTalk {
         Optional<Site> site = siteOf(server, p.get());
         if (site.isEmpty()) return;
         LineageState state = data(server).lineage();
+        CityGuards.provoke(server, player, p.get().trip() != null ? p.get().trip().home() : site.get().id());
         // P50 : une caravane attaquée laisse sa charge sur la route ; toute sa ville l'apprend.
         Trip trip = p.get().trip();
         if (trip != null) {
