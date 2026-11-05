@@ -61,6 +61,18 @@ public final class TownPlan {
         this.extent = extent;
     }
 
+    /**
+     * P59 : ce que le chantier pose chaque seconde. La cadence réglée, ou davantage si elle ne suffit pas à finir dans le temps voulu : sur un vrai monde, une grande ville
+     * compte plus d'un million de blocs, soit cinq heures à 80 blocs par seconde. On plafonne : au-delà, le serveur le sentirait.
+     */
+    public static int blocksPerSecond(int base, int total, int maxMinutes) {
+        if (maxMinutes <= 0 || total <= 0) return base;
+        return Math.max(base, Math.min(MAX_BLOCKS_PER_SECOND, total / (maxMinutes * 60) + 1));
+    }
+
+    /** Cent cinquante blocs par tick : au-delà, un serveur modeste commence à ramer. */
+    static final int MAX_BLOCKS_PER_SECOND = 3000;
+
     public String style() { return style; }
     public TownSize size() { return size; }
     public List<Piece> pieces() { return pieces; }

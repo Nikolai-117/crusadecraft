@@ -1493,7 +1493,7 @@ final class WorldShotsV7 {
             look(p, at.getX() + 0.5, at.getY() + 8, at.getZ() + 8.5, 180f, 20f);
             clock("une escorte : {}", contract);
             fr.crusadecraft.core.city.WorldEconomy.send(p, false);
-        }, mc -> mc.setScreen(null), 30, null));
+        }, mc -> mc.setScreen(null), 30, null, () -> Minecraft.getInstance().screen instanceof fr.crusadecraft.client.screen.EconomyScreen));
         out.add(new Step("reel_escorte_onglet", null, mc -> click(mc, "Contrats"), 20, null));
         out.add(new Step("reel_escorte_accepte", null, mc -> click(mc, "Accepter"), 60, "v14_escorte_acceptee"));
         out.add(new Step("reel_escorte_route", server -> clock("en route"), mc -> mc.setScreen(null), 40, "v14_escorte_fin", onServer(server -> {

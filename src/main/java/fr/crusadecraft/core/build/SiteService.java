@@ -235,7 +235,7 @@ public final class SiteService {
             ServerLevel level = server.getLevel(ResourceKey.create(Registries.DIMENSION, site.dimension()));
             if (level == null || !level.hasChunkAt(site.anchor())) continue;
             if (town && fr.crusadecraft.core.build.plan.Journals.undoing(server, site.id())) continue;
-            int allowed = site.instant() ? budget : town ? CrusadeConfig.SERVER.townBlocksPerSecond.get() : CrusadeConfig.SERVER.buildBlocksPerStep.get();
+            int allowed = site.instant() ? budget : town ? fr.crusadecraft.core.build.plan.TownPlan.blocksPerSecond(CrusadeConfig.SERVER.townBlocksPerSecond.get(), site.town().total(), CrusadeConfig.SERVER.townMaxMinutes.get()) : CrusadeConfig.SERVER.buildBlocksPerStep.get();
             int used = advance(level, site, allowed);
             if (site.instant()) budget -= used;
             data.setDirty();

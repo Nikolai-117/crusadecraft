@@ -616,4 +616,13 @@ class NpcPanelLogicTest {
         assertArrayEquals(new int[]{0, 48}, CityCamps.post(2, 8, 48, 0));
         assertArrayEquals(new int[]{-48, 0}, CityCamps.post(4, 8, 48, 0));
     }
+
+    @Test
+    void aBigTownSiteSpeedsUpToFinishInTime() {
+        assertEquals(80, fr.crusadecraft.core.build.plan.TownPlan.blocksPerSecond(80, 100_000, 30), "une ville moyenne garde sa cadence");
+        assertEquals(792, fr.crusadecraft.core.build.plan.TownPlan.blocksPerSecond(80, 1_424_608, 30), "une très grande ville finit en une demi-heure");
+        assertEquals(3000, fr.crusadecraft.core.build.plan.TownPlan.blocksPerSecond(80, 90_000_000, 30), "jamais de quoi faire ramer le serveur");
+        assertEquals(80, fr.crusadecraft.core.build.plan.TownPlan.blocksPerSecond(80, 1_424_608, 0), "0 : jamais d'accélération");
+        assertEquals(80, fr.crusadecraft.core.build.plan.TownPlan.blocksPerSecond(80, 0, 30), "plan pas encore dressé");
+    }
 }

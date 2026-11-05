@@ -121,6 +121,7 @@ public final class CrusadeConfig {
         public final ForgeConfigSpec.BooleanValue marketsBuild;
         public final ForgeConfigSpec.IntValue marketGrowAt;
         public final ForgeConfigSpec.IntValue townBlocksPerSecond;
+        public final ForgeConfigSpec.IntValue townMaxMinutes;
         public final ForgeConfigSpec.IntValue claimCommandRadius;
         public final ForgeConfigSpec.BooleanValue coloniesJoinZone;
         public final ForgeConfigSpec.EnumValue<fr.crusadecraft.core.world.EntryTitles.Mode> entryMessages;
@@ -424,6 +425,8 @@ public final class CrusadeConfig {
                     .defineInRange("prosperiteRequise", 60, 1, 1000);
             townBlocksPerSecond = b.comment("Blocs posés chaque seconde par le chantier d'une ville (une ville moyenne en compte cent mille).")
                     .defineInRange("blocsParSeconde", 80, 1, 5000);
+            townMaxMinutes = b.comment("P59 : le chantier d'une ville ne dure pas plus de tant de minutes passées à côté : une très grande ville (plus d'un million de blocs) accélère d'autant. 0 : jamais d'accélération.")
+                    .defineInRange("dureeMaxMinutes", 30, 0, 600);
             b.pop();
 
             b.comment("Le commerce (P29) : caravanes sur les routes, marchandises des royaumes.").push("commerce");
