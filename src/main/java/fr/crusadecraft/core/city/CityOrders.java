@@ -112,7 +112,8 @@ public final class CityOrders {
             if (site.orders().size() >= OPEN_MAX) return;
             if (eco.stock(g) >= CityEconomy.LOW || random.nextInt(CHANCE) != 0) continue;
             if (site.orders().stream().anyMatch(o -> o.good() == g)) continue;
-            int count = amount(g, random), reward = reward(g, count);
+            // P56 : il n'en reste plus rien, ou l'on a faim : c'est urgent, et elle paie le double.
+            int count = amount(g, random), reward = reward(g, count) * (eco.stock(g) == 0 || eco.famine() > 0 ? 2 : 1);
             if (eco.purse() < reward) continue;
             Order order = new Order(UUID.randomUUID(), g, count, reward, today);
             site.orders().add(order);
@@ -147,19 +148,24 @@ public final class CityOrders {
         take(player.getInventory(), o.good(), o.count());
         eco.add(o.good(), o.count());
         eco.addPurse(-o.reward());
-        int left = o.reward();
-        while (left > 0) {
-            int n = Math.min(left, Items.EMERALD.getMaxStackSize());
-            ItemStack pay = new ItemStack(Items.EMERALD, n);
-            if (!player.getInventory().add(pay)) player.drop(pay, false);
-            left -= n;
-        }
+        pay(player, o.reward());
         site.orders().remove(o);
         for (Person p : CityLife.residents(player.server, site)) p.addOpinion(player.getUUID(), p == speaker ? THANKS * 2 : THANKS);
         CityRumors.add(player.server, site, "livraison", player.getGameProfile().getName());
         CityPost.thanks(player.server, site, speaker, player, o);
         data(player.server).setDirty();
         return Outcome.ok(Component.translatable("crusadecraft.city.order.done", describe(o.good(), o.count()), money(o.reward())));
+    }
+
+    /** Des émeraudes pour lui : dans son sac, ou à ses pieds s'il est plein. */
+    static void pay(ServerPlayer player, int amount) {
+        int left = amount;
+        while (left > 0) {
+            int n = Math.min(left, Items.EMERALD.getMaxStackSize());
+            ItemStack pay = new ItemStack(Items.EMERALD, n);
+            if (!player.getInventory().add(pay)) player.drop(pay, false);
+            left -= n;
+        }
     }
 
     private static void take(Inventory inv, CityGood g, int count) {

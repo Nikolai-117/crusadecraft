@@ -896,6 +896,102 @@ public final class PanelGameTests {
         }
     }
 
+    @GameTest(template = TestWorld.TEMPLATE, setupTicks = TestWorld.SETUP_TICKS, batch = "p56_contrats", timeoutTicks = 300)
+    public static void contratsDesVilles(GameTestHelper h) {
+        TestWorld w = TestWorld.realm(h, "ContratA");
+        var server = h.getLevel().getServer();
+        var level = h.getLevel();
+        var data = CrusadeSavedData.get(server);
+        WorldEditService.grantForTests(w.ruler.getUUID(), true);
+        double px = w.ruler.getX(), py = w.ruler.getY(), pz = w.ruler.getZ();
+        try {
+            data.world().clear();
+            data.world().markGenerated(RealmService.currentDay(server));
+            NationBook.setForTests(List.of(nation("essaia", "Essaia")));
+            NationService.ensure(server);
+            AiRealm a = NationService.realm(server, "essaia").orElseThrow();
+            Site home = city(w, server, level, a, "Condep", 0, BuildingFunction.MARCHE, BuildingFunction.CASERNE);
+            Site dest = city(w, server, level, a, "Conarr", 300, BuildingFunction.MARCHE);
+            home.economy().addPurse(500);
+            home.economy().add(CityGood.FER, 100);
+            long today = RealmService.currentDay(server);
+            // Un pli : la ville le propose ; de loin, on ne peut pas le signer.
+            var offer = fr.crusadecraft.core.city.CityContracts.post(server, home, new java.util.Random(3), today);
+            w.check(offer.isPresent(), "la ville ne propose rien");
+            fr.crusadecraft.core.city.CityContract c = offer.get();
+            w.check(c.kind == fr.crusadecraft.core.city.CityContract.Kind.COURIER && c.to.equals(dest.id()), "ce n'est pas le pli attendu : " + c.kind);
+            w.ruler.setPos(home.anchor().getX() + 800.5, home.anchor().getY(), home.anchor().getZ() + 0.5);
+            w.check(!fr.crusadecraft.core.city.CityContracts.accept(w.ruler, c.id).success(), "on signe de loin");
+            w.ruler.setPos(home.anchor().getX() + 0.5, home.anchor().getY(), home.anchor().getZ() + 0.5);
+            long purse = home.economy().purse();
+            Outcome out = fr.crusadecraft.core.city.CityContracts.accept(w.ruler, c.id);
+            w.check(out.success(), "le pli est refusé : " + out.message().getString());
+            w.check(home.economy().purse() == purse - c.reward, "la ville ne met pas la somme de côté");
+            w.check(w.ruler.getInventory().countItem(net.minecraft.world.item.Items.PAPER) == 1, "pas de pli dans le sac");
+            w.check(!fr.crusadecraft.core.city.CityContracts.accept(w.ruler, c.id).success(), "on signe deux fois");
+            CompoundTag view = fr.crusadecraft.core.city.WorldEconomy.view(w.ruler);
+            w.check(view.getList("contracts", 10).getCompound(0).getBoolean("mine"), "l'écran ne montre pas son contrat");
+            // Il n'est pas arrivé : rien ne se passe. Il arrive : il est payé, et le pli disparaît.
+            fr.crusadecraft.core.city.CityContracts.tickForTests(server, w.ruler);
+            w.check(data.world().contracts().contains(c), "le pli arrive tout seul");
+            w.ruler.setPos(dest.anchor().getX() + 0.5, dest.anchor().getY(), dest.anchor().getZ() + 0.5);
+            int before = w.ruler.getInventory().countItem(net.minecraft.world.item.Items.EMERALD);
+            fr.crusadecraft.core.city.CityContracts.tickForTests(server, w.ruler);
+            w.check(!data.world().contracts().contains(c), "le pli n'arrive pas");
+            w.check(w.ruler.getInventory().countItem(net.minecraft.world.item.Items.EMERALD) == before + c.reward, "il n'est pas payé");
+            w.check(w.ruler.getInventory().countItem(net.minecraft.world.item.Items.PAPER) == 0, "le pli reste dans le sac");
+            // Une escorte : il faut une ligne ; la caravane part dès qu'on signe, et il faut marcher à côté.
+            w.check(fr.crusadecraft.core.city.CityCommerce.create(server, home, dest.id(), CityGood.FER, 16, null, 1, 0, false).success(), "pas de ligne");
+            fr.crusadecraft.core.city.CityContract esc = null;
+            for (int seed = 0; seed < 32 && esc == null; seed++) {
+                var o = fr.crusadecraft.core.city.CityContracts.post(server, home, new java.util.Random(seed), today);
+                if (o.isPresent() && o.get().kind == fr.crusadecraft.core.city.CityContract.Kind.ESCORT) esc = o.get();
+            }
+            w.check(esc != null, "aucune escorte proposée");
+            w.ruler.setPos(home.anchor().getX() + 0.5, home.anchor().getY(), home.anchor().getZ() + 0.5);
+            out = fr.crusadecraft.core.city.CityContracts.accept(w.ruler, esc.id);
+            w.check(out.success(), "l'escorte est refusée : " + out.message().getString());
+            Person merchant = data.lineage().person(esc.merchant).orElseThrow();
+            w.check(merchant.trip() != null && merchant.trip().stage() == Trip.Stage.OUT, "la caravane ne part pas");
+            for (int i = 0; i < 3; i++) fr.crusadecraft.core.city.CityContracts.tickForTests(server, w.ruler);
+            w.check(esc.total == 3 && esc.near == 3, "on ne compte pas sa présence : " + esc.near + "/" + esc.total);
+            before = w.ruler.getInventory().countItem(net.minecraft.world.item.Items.EMERALD);
+            CityTravel.advanceForTests(server, merchant, level.getGameTime());
+            fr.crusadecraft.core.city.CityContracts.tickForTests(server, w.ruler);
+            w.check(!data.world().contracts().contains(esc), "l'escorte ne se termine pas");
+            w.check(w.ruler.getInventory().countItem(net.minecraft.world.item.Items.EMERALD) == before + esc.reward, "l'escorte n'est pas payée");
+            // Absent du voyage : pas de paie, et la ville reprend son argent.
+            while (merchant.trip() != null) CityTravel.advanceForTests(server, merchant, level.getGameTime());
+            fr.crusadecraft.core.city.CityLine line = data.world().lines().get(0);
+            data.world().contracts().removeIf(x -> x.taker == null);
+            fr.crusadecraft.core.city.CityContract absent = null;
+            for (int seed = 0; seed < 32 && absent == null; seed++) {
+                var o = fr.crusadecraft.core.city.CityContracts.post(server, home, new java.util.Random(seed), today);
+                if (o.isPresent() && o.get().kind == fr.crusadecraft.core.city.CityContract.Kind.ESCORT) absent = o.get();
+            }
+            w.check(absent != null, "plus d'escorte proposée : " + line.status);
+            w.check(fr.crusadecraft.core.city.CityContracts.accept(w.ruler, absent.id).success(), "la deuxième escorte est refusée");
+            merchant = data.lineage().person(absent.merchant).orElseThrow();
+            purse = home.economy().purse();
+            absent.total = 10;
+            CityTravel.advanceForTests(server, merchant, level.getGameTime());
+            fr.crusadecraft.core.city.CityContracts.tickForTests(server, w.ruler);
+            w.check(!data.world().contracts().contains(absent) && home.economy().purse() >= purse + absent.reward, "l'absent garde sa paie, ou la ville perd son argent");
+            // Une commande à livrer sur place : là-bas seulement.
+            w.check(!fr.crusadecraft.core.city.CityContracts.deliverHere(w.ruler, UUID.randomUUID()).success(), "on livre à une ville inconnue");
+            // Un contrat survit à l'enregistrement du monde.
+            data.world().contracts().add(new fr.crusadecraft.core.city.CityContract(UUID.randomUUID(), fr.crusadecraft.core.city.CityContract.Kind.COURIER, home.id(), dest.id(), 3, today, today + 3));
+            w.check(fr.crusadecraft.core.world.WorldState.load(data.world().save()).contracts().size() == data.world().contracts().size(), "un contrat ne s'enregistre pas");
+            h.succeed();
+        } finally {
+            w.ruler.setPos(px, py, pz);
+            WorldEditService.grantForTests(w.ruler.getUUID(), false);
+            NationBook.setForTests(null);
+            data.world().clear();
+            w.cleanup();
+        }
+    }
+
     @GameTest(template = TestWorld.TEMPLATE, setupTicks = TestWorld.SETUP_TICKS, batch = "p51_lignes", timeoutTicks = 300)
     public static void lignesDeCommerce(GameTestHelper h) {
         TestWorld w = TestWorld.realm(h, "CommerceA");

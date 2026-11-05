@@ -163,6 +163,7 @@ public final class ServerEvents {
         if (t % fr.crusadecraft.core.city.CityTravel.PULSE == 311) perf("voyages", () -> fr.crusadecraft.core.city.CityTravel.pulse(server));
         if (t % fr.crusadecraft.core.city.CityScenes.EVERY == 3) perf("scenes", () -> fr.crusadecraft.core.city.CityScenes.tick(server));
         if (t % fr.crusadecraft.core.city.CityGuards.EVERY == 6) perf("gardes", () -> fr.crusadecraft.core.city.CityGuards.tick(server));
+        if (t % 40 == 33) perf("contrats", () -> fr.crusadecraft.core.city.CityContracts.tick(server, t % 160 == 33));
         if (t % 600 == 0) perf("personnages", () -> CharacterService.periodic(server));
         if (t % 40 == 0) perf("conseil", () -> fr.crusadecraft.core.council.CouncilService.tick(server));
         if (t % 100 == 50) perf("requetes", () -> fr.crusadecraft.core.council.RequestService.deliver(server));

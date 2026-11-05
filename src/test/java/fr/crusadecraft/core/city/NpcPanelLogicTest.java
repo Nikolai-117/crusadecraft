@@ -437,4 +437,46 @@ class NpcPanelLogicTest {
         assertEquals(0, e.famine(), "le blocus levé, elle remange");
         assertTrue(e.purse() > purse, "et sa bourse remonte");
     }
+
+    @Test
+    void contractsPayForTheRoad() {
+        assertEquals(2, CityContracts.courierReward(10), "jamais moins de deux émeraudes");
+        assertEquals(24, CityContracts.courierReward(100000), "ni plus que ça");
+        assertTrue(CityContracts.escortReward(1000) > CityContracts.courierReward(1000), "une escorte vaut mieux qu'un pli");
+        assertEquals(1, CityContracts.courierDays(500));
+        assertEquals(2, CityContracts.courierDays(2500));
+    }
+
+    @Test
+    void anEscortMustWalkAlong() {
+        assertFalse(CityContracts.present(0, 0), "on ne l'a pas vu");
+        assertFalse(CityContracts.present(59, 100));
+        assertTrue(CityContracts.present(60, 100));
+    }
+
+    @Test
+    void compassPointsTheRightWay() {
+        assertTrue(CityContracts.directionKey(0, -100).endsWith(".north"), "le nord est en z négatif");
+        assertTrue(CityContracts.directionKey(100, 0).endsWith(".east"));
+        assertTrue(CityContracts.directionKey(0, 100).endsWith(".south"));
+        assertTrue(CityContracts.directionKey(-100, 0).endsWith(".west"));
+        assertTrue(CityContracts.directionKey(100, -100).endsWith(".northeast"));
+    }
+
+    @Test
+    void aContractSurvivesSaving() {
+        CityContract c = new CityContract(UUID.randomUUID(), CityContract.Kind.ESCORT, UUID.randomUUID(), UUID.randomUUID(), 12, 3, 6);
+        c.taker = UUID.randomUUID();
+        c.line = UUID.randomUUID();
+        c.merchant = UUID.randomUUID();
+        c.near = 4;
+        c.total = 9;
+        CityContract l = CityContract.load(c.save());
+        assertEquals(c.id, l.id);
+        assertEquals(CityContract.Kind.ESCORT, l.kind);
+        assertEquals(12, l.reward);
+        assertEquals(c.taker, l.taker);
+        assertEquals(c.merchant, l.merchant);
+        assertEquals(9, l.total);
+    }
 }

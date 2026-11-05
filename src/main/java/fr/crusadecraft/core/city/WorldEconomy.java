@@ -151,6 +151,9 @@ public final class WorldEconomy {
         }
         for (Realm r : data.realms()) realms.add(realm(server, data, r.id(), r.gold(), perRealm, mine));
         t.put("realms", realms);
+        // P56 : ce que les villes demandent aux joueurs.
+        t.put("contracts", CityContracts.view(player, all));
+        t.put("orders", CityContracts.orders(player, all));
         return t;
     }
 
@@ -162,6 +165,9 @@ public final class WorldEconomy {
 
     /** Ce qu'on fait depuis l'écran : mettre une ville en blocus, ou lever le sien. */
     public static fr.crusadecraft.core.council.CouncilActions.Outcome act(ServerPlayer player, CompoundTag c) {
+        if (c.hasUUID("accept")) return CityContracts.accept(player, c.getUUID("accept"));
+        if (c.hasUUID("abandon")) return CityContracts.abandon(player, c.getUUID("abandon"));
+        if (c.hasUUID("deliver")) return CityContracts.deliverHere(player, c.getUUID("deliver"));
         UUID me = myRealm(player);
         if (me == null) return fr.crusadecraft.core.council.CouncilActions.Outcome.no("crusadecraft.realm.none");
         if (!c.hasUUID("site")) return fr.crusadecraft.core.council.CouncilActions.Outcome.no("crusadecraft.city.unknown");

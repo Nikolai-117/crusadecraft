@@ -109,6 +109,11 @@ public final class WorldState {
     /** P52 : les routes tracées, par paire de villes. */
     private final Map<String, fr.crusadecraft.core.city.CityRoads.Route> roads = new java.util.HashMap<>();
 
+    /** P56 : ce que les villes demandent aux joueurs. */
+    private final List<fr.crusadecraft.core.city.CityContract> contracts = new ArrayList<>();
+
+    public List<fr.crusadecraft.core.city.CityContract> contracts() { return contracts; }
+
     /** P55 : les villes qu'un royaume a mises en blocus, et ce que chaque royaume a fixé pour ceux qui passent. */
     private final Map<UUID, fr.crusadecraft.core.city.CityBlockades.Blockade> blockades = new java.util.HashMap<>();
     private final Map<UUID, fr.crusadecraft.core.city.CityTolls.Rules> tradeRules = new java.util.HashMap<>();
@@ -190,6 +195,7 @@ public final class WorldState {
         roads.clear();
         blockades.clear();
         tradeRules.clear();
+        contracts.clear();
         tradeMoved = new long[16];
         tradeMoney = new long[16];
         generated = false;
@@ -219,6 +225,11 @@ public final class WorldState {
             ListTag mt = new ListTag();
             for (fr.crusadecraft.core.build.Site m : markets.values()) mt.add(m.save());
             t.put("markets", mt);
+        }
+        if (!contracts.isEmpty()) {
+            ListTag ct = new ListTag();
+            for (fr.crusadecraft.core.city.CityContract c : contracts) ct.add(c.save());
+            t.put("contracts", ct);
         }
         if (!blockades.isEmpty()) {
             CompoundTag bt = new CompoundTag();
@@ -289,6 +300,8 @@ public final class WorldState {
             fr.crusadecraft.core.build.Site m = fr.crusadecraft.core.build.Site.load(mt.getCompound(i));
             s.markets.put(m.id(), m);
         }
+        ListTag ct = t.getList("contracts", Tag.TAG_COMPOUND);
+        for (int i = 0; i < ct.size(); i++) s.contracts.add(fr.crusadecraft.core.city.CityContract.load(ct.getCompound(i)));
         CompoundTag bt = t.getCompound("blockades");
         for (String k : bt.getAllKeys()) s.blockades.put(UUID.fromString(k), fr.crusadecraft.core.city.CityBlockades.Blockade.load(bt.getCompound(k)));
         CompoundTag rr = t.getCompound("tradeRules");

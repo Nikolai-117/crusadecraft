@@ -73,6 +73,7 @@ public final class CityLife {
         // P51 : les villes de l'ordinateur vivent et commercent aussi.
         CityMarkets.onDay(server, random);
         CityCommerce.planAi(server, random);
+        CityContracts.onDay(server, random);
         data.setDirty();
     }
 

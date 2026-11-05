@@ -28,7 +28,7 @@ public class EconomyScreen extends Screen {
     /** Toutes les tant de ticks, on redemande les chiffres. */
     private static final int ASK_EVERY = 60;
 
-    private enum Tab { CITIES, PRICES, LINES, ROADS, REALMS }
+    private enum Tab { CITIES, PRICES, LINES, ROADS, REALMS, CONTRACTS }
 
     private enum Sort { RICH, NEED, NEAR, NAME }
 
@@ -116,6 +116,7 @@ public class EconomyScreen extends Screen {
             case LINES -> list("lines").size();
             case ROADS -> list("roads").size();
             case REALMS -> list("realms").size();
+            case CONTRACTS -> offers().size();
         };
     }
 
@@ -137,6 +138,7 @@ public class EconomyScreen extends Screen {
         }
         addRenderableWidget(Button.builder(Component.translatable("gui.done"), b -> onClose()).bounds(left + W - 66, top + H - 22, 54, 16).build());
         if (tab == Tab.CITIES) initBlockades();
+        if (tab == Tab.CONTRACTS) initContracts();
         if (tab == Tab.CITIES) {
             addRenderableWidget(Button.builder(Component.translatable("crusadecraft.economy.sort", Component.translatable("crusadecraft.economy.sort." + sort.name().toLowerCase(Locale.ROOT))), b -> {
                 sort = Sort.values()[(sort.ordinal() + 1) % Sort.values().length];
@@ -160,6 +162,87 @@ public class EconomyScreen extends Screen {
                 scroll = 0;
                 rebuildWidgets();
             }).bounds(x() + 106, y0(), 14, 14).build());
+        }
+    }
+
+    // ------------------------------------------------------------------ les contrats
+
+    private static final int BIG_ROW = 24;
+
+    /** Ce qu'on a accepté d'abord, puis les offres, puis les commandes, du plus près au plus loin. */
+    private List<CompoundTag> offers() {
+        List<CompoundTag> mine = new ArrayList<>(), open = new ArrayList<>(), orders = list("orders");
+        for (CompoundTag c : list("contracts")) (c.getBoolean("mine") ? mine : open).add(c);
+        Comparator<CompoundTag> near = Comparator.comparingInt(c -> c.getInt("near"));
+        open.sort(near);
+        orders.sort(near);
+        List<CompoundTag> out = new ArrayList<>(mine);
+        out.addAll(open);
+        out.addAll(orders);
+        return out;
+    }
+
+    private void act(java.util.function.Consumer<CompoundTag> fill) {
+        CompoundTag t = new CompoundTag();
+        fill.accept(t);
+        CrusadeNetwork.toServer(new WorldEconomyPackets.Action(t));
+    }
+
+    private void initContracts() {
+        List<CompoundTag> list = offers();
+        int rows = (H - 42 - 28) / BIG_ROW;
+        scroll = Mth.clamp(scroll, 0, Math.max(0, list.size() - rows));
+        for (int i = scroll; i < list.size() && i < scroll + rows; i++) {
+            CompoundTag c = list.get(i);
+            int ry = y0() + (i - scroll) * BIG_ROW + 3, bx = x() + W - 24 - 62;
+            if (c.hasUUID("site")) {
+                java.util.UUID site = c.getUUID("site");
+                Button b = Button.builder(Component.translatable("crusadecraft.economy.contract.deliver"), x -> act(t -> t.putUUID("deliver", site))).bounds(bx, ry, 62, 14)
+                        .tooltip(net.minecraft.client.gui.components.Tooltip.create(Component.translatable("crusadecraft.economy.contract.deliver.tip"))).build();
+                b.active = c.getBoolean("can");
+                addRenderableWidget(b);
+            } else {
+                java.util.UUID id = c.getUUID("id");
+                boolean mine = c.getBoolean("mine");
+                Button b = Button.builder(Component.translatable(mine ? "crusadecraft.economy.contract.abandon" : "crusadecraft.economy.contract.accept"), x -> act(t -> t.putUUID(mine ? "abandon" : "accept", id))).bounds(bx, ry, 62, 14)
+                        .tooltip(net.minecraft.client.gui.components.Tooltip.create(Component.translatable(mine ? "crusadecraft.economy.contract.abandon.tip" : "crusadecraft.economy.contract.accept.tip", fr.crusadecraft.core.city.CityContracts.SIGN_RANGE))).build();
+                addRenderableWidget(b);
+            }
+        }
+    }
+
+    private String blocks(int near) {
+        return near == Integer.MAX_VALUE ? "?" : Integer.toString(near);
+    }
+
+    private void renderContracts(GuiGraphics g) {
+        List<CompoundTag> list = offers();
+        if (list.isEmpty()) {
+            empty(g, "crusadecraft.economy.contract.empty", y0());
+            return;
+        }
+        int rows = (H - 42 - 28) / BIG_ROW, tw = W - 24 - 62 - 40;
+        for (int i = scroll; i < list.size() && i < scroll + rows; i++) {
+            CompoundTag c = list.get(i);
+            int ry = y0() + (i - scroll) * BIG_ROW;
+            Component head, line;
+            int color = Ui.TEXT;
+            if (c.hasUUID("site")) {
+                boolean urgent = c.getBoolean("urgent");
+                head = Component.translatable(urgent ? "crusadecraft.economy.contract.order.urgent" : "crusadecraft.economy.contract.order", c.getString("city"), c.getString("what"));
+                line = Component.translatable("crusadecraft.economy.contract.order.line", blocks(c.getInt("near")), c.getLong("days"));
+                if (urgent) color = Ui.RED;
+            } else {
+                boolean mine = c.getBoolean("mine");
+                head = Component.translatable("crusadecraft.economy.contract." + c.getString("kind").toLowerCase(Locale.ROOT), c.getString("to"));
+                line = mine && c.contains("presence") ? Component.translatable("crusadecraft.economy.contract.presence", c.getInt("presence"), fr.crusadecraft.core.city.CityContracts.PRESENCE)
+                        : mine ? Component.translatable("crusadecraft.economy.contract.mine", blocks(c.getInt("near")), c.getLong("days"))
+                        : Component.translatable("crusadecraft.economy.contract.line", c.getString("from"), c.getInt("route"), blocks(c.getInt("near")), c.getLong("days"));
+                if (mine) color = Ui.TEXT_TITLE;
+            }
+            Ui.fitted(g, font, head, x(), ry + 2, tw, color);
+            Ui.fitted(g, font, line, x(), ry + 12, tw, Ui.TEXT_MUTED);
+            Ui.fitted(g, font, Component.translatable("crusadecraft.economy.contract.reward", c.getInt("reward")), x() + tw + 2, ry + 7, 38, Ui.GOLD);
         }
     }
 
@@ -196,6 +279,7 @@ public class EconomyScreen extends Screen {
             case LINES -> renderLines(g);
             case ROADS -> renderRoads(g);
             case REALMS -> renderRealms(g);
+            case CONTRACTS -> renderContracts(g);
         }
         super.render(g, mx, my, partial);
         if (tab == Tab.CITIES) cityTooltip(g, mx, my);
@@ -409,7 +493,7 @@ public class EconomyScreen extends Screen {
         if (super.mouseScrolled(mx, my, delta)) return true;
         scroll = Mth.clamp(scroll - (int) Math.signum(delta), 0, Math.max(0, size() - 1));
         // Les boutons d'une ligne la suivent.
-        if (tab == Tab.CITIES) rebuildWidgets();
+        if (tab == Tab.CITIES || tab == Tab.CONTRACTS) rebuildWidgets();
         return true;
     }
 
