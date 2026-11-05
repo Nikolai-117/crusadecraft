@@ -319,6 +319,12 @@ public class MapScreen extends Screen {
                     .bounds(mapX + mapW - 56, top + h - 21, 56, 16).build();
             lieux.setTooltip(Tooltip.create(Component.translatable("crusadecraft.lieu.open.tip")));
             addRenderableWidget(lieux);
+            // P54 : l'économie du monde, à gauche de ce qui tient déjà le coin.
+            int economyX = mapX + mapW - 56 - 4 - (view.war().enabled() ? 84 + 4 : 0) - 58;
+            Button economy = Button.builder(Component.translatable("crusadecraft.economy.open"), b -> CrusadeNetwork.toServer(new fr.crusadecraft.network.packet.WorldEconomyPackets.Request(false)))
+                    .bounds(economyX, top + h - 21, 58, 16).build();
+            economy.setTooltip(Tooltip.create(Component.translatable("crusadecraft.economy.open.tip")));
+            addRenderableWidget(economy);
             if (view.war().enabled()) {
                 Button warButton = Button.builder(Component.translatable(warMode() ? "crusadecraft.warmap.leave" : "crusadecraft.warmap.open"), b -> {
                     war = !warMode();
@@ -781,7 +787,7 @@ public class MapScreen extends Screen {
         int hintColor = status != null && Util.getMillis() < statusUntil ? (statusOk ? 0xFF9FD07A : 0xFFE0796E) : Ui.TEXT_MUTED;
         // Le mode d'emploi à droite, réduit s'il le faut, jamais par-dessus l'échelle.
         // Hors de l'éditeur, le bouton « Lieux » tient le coin droit du pied.
-        int reserved = editing() ? 0 : view.war().enabled() ? 60 + 88 : 60;
+        int reserved = editing() ? 0 : (view.war().enabled() ? 60 + 88 : 60) + 62;
         int room = mapW - font.width(foot) - 16 - reserved;
         float k = Math.min(1f, room / (float) Math.max(1, font.width(hint)));
         if (k >= 0.55f) {

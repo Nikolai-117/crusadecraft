@@ -511,6 +511,8 @@ public class CityPanelScreen extends Screen {
             t.put("lineAdd", l);
         }));
         create.active = !stops.isEmpty() && !stops.getCompound(stopIndex).getBoolean("war");
+        addRenderableWidget(Button.builder(Component.translatable("crusadecraft.economy.title"), b -> CrusadeNetwork.toServer(new fr.crusadecraft.network.packet.WorldEconomyPackets.Request(false)))
+                .bounds(x(), top + H - 22, 130, 16).tooltip(Tooltip.create(Component.translatable("crusadecraft.economy.open.tip"))).build());
         ListTag lines = view.getList("lines", Tag.TAG_COMPOUND);
         int rows = (H - 42 - 66 - 28) / TRADE_ROW;
         scroll = Mth.clamp(scroll, 0, Math.max(0, lines.size() - rows));

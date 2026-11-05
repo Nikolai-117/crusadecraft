@@ -63,6 +63,7 @@ public final class CityLife {
     public static void onNewDay(MinecraftServer server, long day) {
         CrusadeSavedData data = data(server);
         Random random = new Random(day * 6151L + server.getWorldData().worldGenOptions().seed());
+        CityCommerce.rollHistory(server);
         for (Site site : new ArrayList<>(data.world().sites())) {
             if (site.buildings().isEmpty() || !CityService.city(site)) continue;
             day(server, site, random);

@@ -33,7 +33,7 @@ import net.minecraftforge.network.simple.SimpleChannel;
  * (distance, droits, état) avant d'agir.
  */
 public final class CrusadeNetwork {
-    private static final String VERSION = "29";
+    private static final String VERSION = "30";
 
     public static final SimpleChannel CHANNEL = NetworkRegistry.newSimpleChannel(
             ResourceLocation.tryParse(CrusadeCraft.MOD_ID + ":main"),
@@ -305,6 +305,12 @@ public final class CrusadeNetwork {
         CHANNEL.messageBuilder(fr.crusadecraft.network.packet.CityPanelPackets.AskLive.class, nextId++, NetworkDirection.PLAY_TO_SERVER)
                 .encoder(fr.crusadecraft.network.packet.CityPanelPackets.AskLive::encode).decoder(fr.crusadecraft.network.packet.CityPanelPackets.AskLive::decode)
                 .consumerMainThread(fr.crusadecraft.network.packet.CityPanelPackets.AskLive::handle).add();
+        CHANNEL.messageBuilder(fr.crusadecraft.network.packet.WorldEconomyPackets.Open.class, nextId++, NetworkDirection.PLAY_TO_CLIENT)
+                .encoder(fr.crusadecraft.network.packet.WorldEconomyPackets.Open::encode).decoder(fr.crusadecraft.network.packet.WorldEconomyPackets.Open::decode)
+                .consumerMainThread(fr.crusadecraft.network.packet.WorldEconomyPackets.Open::handle).add();
+        CHANNEL.messageBuilder(fr.crusadecraft.network.packet.WorldEconomyPackets.Request.class, nextId++, NetworkDirection.PLAY_TO_SERVER)
+                .encoder(fr.crusadecraft.network.packet.WorldEconomyPackets.Request::encode).decoder(fr.crusadecraft.network.packet.WorldEconomyPackets.Request::decode)
+                .consumerMainThread(fr.crusadecraft.network.packet.WorldEconomyPackets.Request::handle).add();
         CHANNEL.messageBuilder(fr.crusadecraft.network.packet.CityPostPackets.Open.class, nextId++, NetworkDirection.PLAY_TO_CLIENT)
                 .encoder(fr.crusadecraft.network.packet.CityPostPackets.Open::encode).decoder(fr.crusadecraft.network.packet.CityPostPackets.Open::decode)
                 .consumerMainThread(fr.crusadecraft.network.packet.CityPostPackets.Open::handle).add();

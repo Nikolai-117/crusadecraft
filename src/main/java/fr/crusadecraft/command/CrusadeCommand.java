@@ -185,6 +185,11 @@ public final class CrusadeCommand {
                         // P39 : relire les fichiers de plans et la table des équivalences (après les avoir changés).
                         .then(Commands.literal("recharger").requires(src -> src.hasPermission(2))
                                 .executes(ctx -> say(ctx, fr.crusadecraft.core.city.CityCommands.reload()))))
+                // P54 : l'économie du monde.
+                .then(Commands.literal("economie").executes(ctx -> {
+                    fr.crusadecraft.core.city.WorldEconomy.send(ctx.getSource().getPlayerOrException(), false);
+                    return 1;
+                }))
                 // L'écran des réglages du monde (P30) ; il dit lui-même s'il est réservé.
                 .then(Commands.literal("reglages").executes(ctx -> {
                     fr.crusadecraft.network.packet.SettingsPackets.send(ctx.getSource().getPlayerOrException(), true);

@@ -242,7 +242,6 @@ class NpcPanelLogicTest {
     @Test
     void pricesFollowScarcityAndTreaties() {
         CityEconomy full = CityEconomy.fresh(), empty = CityEconomy.fresh();
-        full.add(CityGood.PAIN, 100);
         empty.take(CityGood.PAIN, 1000);
         int normal = CityCommerce.price(CityGood.PAIN, full, true), rare = CityCommerce.price(CityGood.PAIN, empty, true);
         assertEquals(2, normal);
@@ -374,5 +373,27 @@ class NpcPanelLogicTest {
         assertEquals("levanzia", NationFile.keyOf("Levànzia"));
         assertEquals("royaume_du_nord", NationFile.keyOf("  Royaume du Nord! "));
         assertEquals("nation", NationFile.keyOf("???"));
+    }
+
+    @Test
+    void demandFollowsWhatIsLeft() {
+        CityEconomy e = new CityEconomy();
+        assertEquals(200, e.demand(CityGood.FER), "rien en stock : le double");
+        e.add(CityGood.FER, 32);
+        assertEquals(100, e.demand(CityGood.FER), "assez : le prix normal");
+        e.add(CityGood.FER, CityEconomy.CAP);
+        assertEquals(50, e.demand(CityGood.FER), "ses réserves débordent : la moitié");
+        e.take(CityGood.FER, 32 + CityEconomy.CAP - 16);
+        assertTrue(e.demand(CityGood.FER) > 100, "il en reste peu : plus cher");
+    }
+
+    @Test
+    void aLoadIsWorthMoreWhereItLacks() {
+        CityEconomy poor = new CityEconomy(), rich = new CityEconomy();
+        rich.add(CityGood.BLE, CityEconomy.CAP);
+        assertEquals(48, CityCommerce.quote(CityGood.BLE, poor, true, 24), "24 blés là où il n'y en a plus");
+        assertEquals(12, CityCommerce.quote(CityGood.BLE, rich, true, 24), "24 blés là où ils débordent");
+        assertEquals(24, CityCommerce.quote(CityGood.BLE, poor, false, 24), "sans traité : la moitié");
+        assertTrue(CityCommerce.price(CityGood.BLE, rich, false) >= 1, "rien ne se vend pour rien");
     }
 }

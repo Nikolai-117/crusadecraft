@@ -63,8 +63,27 @@ public final class CityCommerce {
 
     /** Son prix dans cette ville : plus elle en manque, plus elle paie. Sans traité avec elle, on n'en tire que la moitié. */
     public static int price(CityGood g, CityEconomy where, boolean fair) {
-        int p = Math.max(1, Math.round(basePrice(g) * (100 + where.scarcity(g)) / 100f));
-        return fair ? p : Math.max(1, p / 2);
+        return Math.max(1, quote(g, where, fair, 1));
+    }
+
+    /** P54 : ce que rapporte une charge entière : à l'unité, les petites marchandises arrondies au même prix partout ne diraient rien. */
+    public static int quote(CityGood g, CityEconomy where, boolean fair, int amount) {
+        return Math.round(amount * basePrice(g) * where.demand(g) * (fair ? 1f : 0.5f) / 100f);
+    }
+
+    /** P54 : ce qui vient de se vendre dans le monde, pour le graphique de l'écran d'économie. */
+    static void recordSale(MinecraftServer server, int amount, long money) {
+        long[] moved = data(server).world().tradeMoved(), paid = data(server).world().tradeMoney();
+        moved[moved.length - 1] += amount;
+        paid[paid.length - 1] += money;
+    }
+
+    /** P54 : un jour de plus au graphique. */
+    static void rollHistory(MinecraftServer server) {
+        for (long[] a : List.of(data(server).world().tradeMoved(), data(server).world().tradeMoney())) {
+            System.arraycopy(a, 1, a, 0, a.length - 1);
+            a[a.length - 1] = 0;
+        }
     }
 
     /** Même royaume, ou traité de commerce : le juste prix. */

@@ -182,7 +182,7 @@ public final class CityTravel {
         Site best = null;
         double top = Double.NEGATIVE_INFINITY;
         for (Site s : out) {
-            double profit = CityCommerce.price(good, s.economy(), CityCommerce.fair(server, home, s)) * LOAD - Math.sqrt(home.anchor().distSqr(s.anchor())) / 100 + random.nextDouble() * 4;
+            double profit = CityCommerce.quote(good, s.economy(), CityCommerce.fair(server, home, s), LOAD) - Math.sqrt(home.anchor().distSqr(s.anchor())) / 100 + random.nextDouble() * 4;
             if (profit > top) {
                 top = profit;
                 best = s;
@@ -575,7 +575,7 @@ public final class CityTravel {
         boolean fair = CityCommerce.fair(server, home, dest);
         if (t.good() != null) {
             // Le prix est celui de cette ville, aujourd'hui : plus elle en manque, plus elle paie.
-            int want = Math.min(t.amount() * CityCommerce.price(t.good(), dest.economy(), fair), (int) Math.min(Integer.MAX_VALUE, dest.economy().purse()));
+            int want = Math.min(CityCommerce.quote(t.good(), dest.economy(), fair, t.amount()), (int) Math.min(Integer.MAX_VALUE, dest.economy().purse()));
             earned += want;
             dest.economy().addPurse(-want);
             dest.economy().add(t.good(), t.amount());
@@ -584,6 +584,7 @@ public final class CityTravel {
             CityJournal.add(server, dest, CityJournal.Kind.ROAD, Fr.key("crusadecraft.city.journal.sold", p.name(), from(home), goods, t.amount(), CityOrders.money(want)));
             CityPost.saleNews(server, home, dest, p, t.good(), t.amount(), want);
             if (t.line() != null) CityCommerce.onSold(server, t.line(), t.amount(), want);
+            CityCommerce.recordSale(server, t.amount(), want);
             rapprochement(server, home, dest);
         } else if (earned == 0) {
             CityRumors.add(server, dest, "passage", p.name(), from(home));

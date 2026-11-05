@@ -490,7 +490,7 @@ public final class WorldService {
         return Component.translatable("crusadecraft.trade.goods", Component.translatable(r.goodA().key()), Component.translatable(r.goodB().key()));
     }
 
-    private static boolean known(CrusadeSavedData data, UUID realm, ServerPlayer player) {
+    public static boolean known(CrusadeSavedData data, UUID realm, ServerPlayer player) {
         Optional<AiRealm> ai = data.world().realm(realm);
         return ai.map(a -> a.discoveredBy(player.getUUID())).orElse(data.realm(realm).isPresent());
     }

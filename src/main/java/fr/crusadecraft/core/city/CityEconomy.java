@@ -99,6 +99,16 @@ public final class CityEconomy {
         return (LOW * 2 - s) * 40 / (LOW * 2);
     }
 
+    /**
+     * P54 : ce qu'elle est prête à payer, en pour cent du prix normal, selon ce qu'il lui reste : jusqu'au double de ce qui vient à
+     * manquer, la moitié de ce qui déborde de ses réserves. C'est cet écart qui donne une raison de transporter les choses.
+     */
+    public int demand(CityGood g) {
+        int s = stock(g), enough = LOW * 2;
+        if (s < enough) return 200 - s * 100 / enough;
+        return s >= CAP ? 50 : 100 - (s - enough) * 50 / (CAP - enough);
+    }
+
     /** Une journée de la ville. */
     public Day simulate(Census c, boolean warehouse, boolean market, java.util.Random random) {
         produce(c);

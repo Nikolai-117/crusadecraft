@@ -447,7 +447,7 @@ public final class PanelGameTests {
             CityService.populate(level, home);
             w.check(!p.inWorld(), "il reparaît chez lui alors qu'il est parti");
             // Il arrive : il vend, et achète ce qui manque chez lui, aux prix de là-bas.
-            int sell = fr.crusadecraft.core.city.CityCommerce.price(CityGood.PAIN, dest.economy(), true), buy = fr.crusadecraft.core.city.CityCommerce.price(CityGood.FER, dest.economy(), true);
+            int sell = fr.crusadecraft.core.city.CityCommerce.quote(CityGood.PAIN, dest.economy(), true, p.trip().amount()), buy = fr.crusadecraft.core.city.CityCommerce.price(CityGood.FER, dest.economy(), true);
             long now = level.getGameTime();
             CityTravel.advanceForTests(server, p, now);
             t = p.trip();
@@ -455,7 +455,7 @@ public final class PanelGameTests {
             w.check(dest.economy().stock(CityGood.PAIN) == stockDest + t.amount(), "la ville visitée n'a pas reçu la marchandise");
             w.check(t.back() == CityGood.FER && t.backAmount() > 0, "il ne rapporte pas ce qui manque chez lui");
             w.check(dest.economy().stock(CityGood.FER) == ironDest - t.backAmount(), "ce qu'il rapporte n'a pas quitté la ville visitée");
-            w.check(t.earned() >= 0 && dest.economy().purse() == purseDest - (long) t.amount() * sell + (long) t.backAmount() * buy, "les comptes de la vente ne tombent pas juste : " + dest.economy().purse());
+            w.check(t.earned() >= 0 && dest.economy().purse() == purseDest - (long) sell + (long) t.backAmount() * buy, "les comptes de la vente ne tombent pas juste : " + dest.economy().purse());
             w.check(dest.rumors().stream().anyMatch(r -> r.text().contains("Depart")), "personne n'en parle là-bas");
             w.check(Trip.load(t.save()).equals(t), "un voyage ne s'enregistre pas");
             w.check(Person.load(p.save()).trip() != null, "un voyageur enregistré oublie son voyage");
@@ -731,11 +731,12 @@ public final class PanelGameTests {
             var pawns = CityTravel.pawns(server);
             w.check(pawns.size() == 1 && pawns.get(0).caravan() && pawns.get(0).cargo().contains("pain"), "la carte ne montre pas la caravane : " + pawns);
             // Elle arrive : d'un autre royaume, sans traité, on lui paie moitié moins.
+            int saleForeign = fr.crusadecraft.core.city.CityCommerce.quote(CityGood.PAIN, dest.economy(), false, t.amount());
             long now = level.getGameTime();
             CityTravel.advanceForTests(server, p, now);
             t = p.trip();
             w.check(t.stage() == Trip.Stage.STAY, "elle n'arrive pas");
-            w.check(dest.economy().purse() == purseDest - t.amount(), "sans traité, le prix devrait être d'une pièce : " + dest.economy().purse());
+            w.check(dest.economy().purse() == purseDest - saleForeign, "sans traité, on ne touche que la moitié : " + dest.economy().purse() + " au lieu de " + (purseDest - saleForeign));
             CityTravel.tick(server);
             for (Person g : guards) w.check(g.trip().stage() == Trip.Stage.STAY, "un garde reste sur la route");
             // Elle rentre, et l'escorte avec elle.
@@ -774,6 +775,47 @@ public final class PanelGameTests {
     }
 
     /** Une ligne de commerce, telle que le panneau la crée : elle part, vend, rapporte, et se suspend. */
+    @GameTest(template = TestWorld.TEMPLATE, setupTicks = TestWorld.SETUP_TICKS, batch = "p54_economie", timeoutTicks = 300)
+    public static void ecranDEconomie(GameTestHelper h) {
+        TestWorld w = TestWorld.realm(h, "EconomieA");
+        var server = h.getLevel().getServer();
+        var level = h.getLevel();
+        var data = CrusadeSavedData.get(server);
+        WorldEditService.grantForTests(w.ruler.getUUID(), true);
+        try {
+            data.world().clear();
+            data.world().markGenerated(RealmService.currentDay(server));
+            NationBook.setForTests(List.of(nation("essaia", "Essaia")));
+            NationService.ensure(server);
+            AiRealm a = NationService.realm(server, "essaia").orElseThrow();
+            Site home = city(w, server, level, a, "Ecodep", 0, BuildingFunction.MARCHE);
+            Site dest = city(w, server, level, a, "Ecoarr", 200, BuildingFunction.MARCHE);
+            home.economy().add(CityGood.FER, 100);
+            w.check(fr.crusadecraft.core.city.CityCommerce.create(server, home, dest.id(), CityGood.FER, 16, null, 1, 0, false).success(), "pas de ligne");
+            CompoundTag view = fr.crusadecraft.core.city.WorldEconomy.view(w.ruler);
+            w.check(view.getList("cities", 10).size() == 2, "l'écran ne montre pas les deux villes : " + view.getList("cities", 10).size());
+            w.check(view.getList("lines", 10).size() == 1, "l'écran ne montre pas la ligne");
+            w.check(view.getList("realms", 10).size() >= 1, "l'écran ne montre pas les royaumes");
+            CompoundTag first = view.getList("cities", 10).getCompound(0);
+            w.check(first.getCompound("quote").getInt("FER") > 0, "pas de prix");
+            // Un joueur qui ne connaît rien ne voit rien des royaumes de l'ordinateur.
+            WorldEditService.grantForTests(w.ruler.getUUID(), false);
+            if (!fr.crusadecraft.core.build.plan.PlanTool.allowed(w.ruler) && !a.discoveredBy(w.ruler.getUUID())) {
+                w.check(fr.crusadecraft.core.city.WorldEconomy.view(w.ruler).getList("cities", 10).isEmpty(), "on voit les villes d'un royaume inconnu");
+            }
+            // Le graphique avance d'un jour, et garde sa longueur.
+            data.world().tradeMoved()[15] = 7;
+            fr.crusadecraft.core.city.CityLife.onNewDay(server, RealmService.currentDay(server));
+            w.check(data.world().tradeMoved()[14] == 7 && data.world().tradeMoved()[15] >= 0, "le graphique ne passe pas au jour suivant");
+            h.succeed();
+        } finally {
+            WorldEditService.grantForTests(w.ruler.getUUID(), false);
+            NationBook.setForTests(null);
+            data.world().clear();
+            w.cleanup();
+        }
+    }
+
     @GameTest(template = TestWorld.TEMPLATE, setupTicks = TestWorld.SETUP_TICKS, batch = "p51_lignes", timeoutTicks = 300)
     public static void lignesDeCommerce(GameTestHelper h) {
         TestWorld w = TestWorld.realm(h, "CommerceA");
@@ -836,15 +878,15 @@ public final class PanelGameTests {
             w.check(running == 1, "deux caravanes sur la même ligne");
             // Elle arrive sans qu'aucun joueur ne soit là : elle vend, au prix de là-bas, et prend ce qu'on a demandé.
             long purse = dest.economy().purse();
-            int unit = fr.crusadecraft.core.city.CityCommerce.price(CityGood.FER, dest.economy(), true);
+            int sale = fr.crusadecraft.core.city.CityCommerce.quote(CityGood.FER, dest.economy(), true, 16);
             long now = level.getGameTime();
             CityTravel.advanceForTests(server, merchant, now);
             Trip t = merchant.trip();
             w.check(t.stage() == Trip.Stage.STAY, "elle n'arrive pas");
             w.check(t.back() == CityGood.PAIN && t.backAmount() > 0, "elle ne rapporte pas ce qu'on a demandé");
             int unitBack = fr.crusadecraft.core.city.CityCommerce.price(CityGood.PAIN, dest.economy(), true);
-            w.check(dest.economy().purse() == purse - 16L * unit + (long) t.backAmount() * unitBack, "les comptes ne tombent pas juste : " + dest.economy().purse());
-            w.check(line.trips == 1 && line.moved == 16 && line.earned == 16L * unit, "la ligne ne tient pas ses comptes");
+            w.check(dest.economy().purse() == purse - (long) sale + (long) t.backAmount() * unitBack, "les comptes ne tombent pas juste : " + dest.economy().purse());
+            w.check(line.trips == 1 && line.moved == 16 && line.earned == sale, "la ligne ne tient pas ses comptes");
             // Elle rentre.
             CityTravel.advanceForTests(server, merchant, now);
             CityTravel.advanceForTests(server, merchant, now);

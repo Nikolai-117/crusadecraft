@@ -109,6 +109,11 @@ public final class WorldState {
     /** P52 : les routes tracées, par paire de villes. */
     private final Map<String, fr.crusadecraft.core.city.CityRoads.Route> roads = new java.util.HashMap<>();
 
+    /** P54 : ce qui s'est vendu dans le monde, jour par jour, le dernier étant aujourd'hui. */
+    private long[] tradeMoved = new long[16], tradeMoney = new long[16];
+
+    public long[] tradeMoved() { return tradeMoved; }
+    public long[] tradeMoney() { return tradeMoney; }
     public Collection<fr.crusadecraft.core.build.Site> markets() { return markets.values(); }
     public void addMarket(fr.crusadecraft.core.build.Site m) { markets.put(m.id(), m); }
     public void removeMarket(UUID id) { markets.remove(id); }
@@ -176,6 +181,8 @@ public final class WorldState {
         markets.clear();
         lines.clear();
         roads.clear();
+        tradeMoved = new long[16];
+        tradeMoney = new long[16];
         generated = false;
     }
 
@@ -204,6 +211,8 @@ public final class WorldState {
             for (fr.crusadecraft.core.build.Site m : markets.values()) mt.add(m.save());
             t.put("markets", mt);
         }
+        t.putLongArray("tradeMoved", tradeMoved);
+        t.putLongArray("tradeMoney", tradeMoney);
         if (!lines.isEmpty()) {
             ListTag lt = new ListTag();
             for (fr.crusadecraft.core.city.CityLine l : lines) lt.add(l.save());
@@ -261,6 +270,8 @@ public final class WorldState {
             fr.crusadecraft.core.build.Site m = fr.crusadecraft.core.build.Site.load(mt.getCompound(i));
             s.markets.put(m.id(), m);
         }
+        if (t.getLongArray("tradeMoved").length == s.tradeMoved.length) s.tradeMoved = t.getLongArray("tradeMoved");
+        if (t.getLongArray("tradeMoney").length == s.tradeMoney.length) s.tradeMoney = t.getLongArray("tradeMoney");
         ListTag lt = t.getList("cityLines", Tag.TAG_COMPOUND);
         for (int i = 0; i < lt.size(); i++) s.lines.add(fr.crusadecraft.core.city.CityLine.load(lt.getCompound(i)));
         CompoundTag rt = t.getCompound("roads");
