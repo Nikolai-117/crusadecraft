@@ -405,7 +405,21 @@ public final class WorldService {
                 CrusadeConfig.SERVER.colonyRadius.get(), territories, seats, dejure, canEdit, editing, borders(world, dim, index),
                 fr.crusadecraft.core.place.PlaceService.mapPlaces(server, dim),
                 editing ? MapView.War.NONE : fr.crusadecraft.core.war.WarMapService.view(player, dim), editing ? List.of() : tradeLines(player, dim),
-                editing ? List.of() : armyPawns(player, dim));
+                editing ? List.of() : armyPawns(player, dim), editing ? List.of() : travellers(player, dim));
+    }
+
+    /** P50 : ceux qui sont sur les routes : d'un royaume qu'on connaît, on sait qui marche, et où. */
+    static List<MapView.Traveller> travellers(ServerPlayer player, ResourceLocation dim) {
+        CrusadeSavedData data = CrusadeSavedData.get(player.server);
+        List<MapView.Traveller> out = new ArrayList<>();
+        for (fr.crusadecraft.core.city.CityTravel.Pawn p : fr.crusadecraft.core.city.CityTravel.pawns(player.server)) {
+            if (!p.dim().equals(dim.toString())) continue;
+            UUID owner = data.world().site(p.home()).map(fr.crusadecraft.core.build.Site::owner).orElse(null);
+            boolean mine = owner != null && RealmService.realmOf(player.server, player.getUUID()).map(Realm::id).map(owner::equals).orElse(false);
+            if (owner == null || (!mine && !known(data, owner, player) && !fr.crusadecraft.core.build.plan.PlanTool.allowed(player))) continue;
+            out.add(new MapView.Traveller(p.x(), p.z(), p.toX(), p.toZ(), p.name(), p.homeName(), p.destName(), p.percent(), p.caravan(), p.cargo()));
+        }
+        return out;
     }
 
     /**

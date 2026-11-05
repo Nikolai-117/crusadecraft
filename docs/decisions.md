@@ -1124,3 +1124,26 @@ veux la voir comme le bâton de construction de MineColonies », des commandes, 
 - **Charme** : la ville est parcourue par petits morceaux (6 000 blocs par passage, soit au plus une minute et quelque pour une
   ville de 100 blocs de côté, davantage pour Grunbach), jamais d'un coup. Il n'y a de mesure que là où un joueur est passé.
 
+**P46 à P50 (5 novembre 2026) — le panneau, l'éditeur, les skins, les caravanes, de vrais échanges, 3.13.0**
+
+- **Demande** : « un HUD où tout modifier » quand une ville est créée, créer des royaumes et des villes indépendantes, des skins « comme le
+  truc de NPC custom », puis « de vrais échanges, des caravanes, des gens qui se déplacent, une vraie vie ».
+- **Tout en NBT sur le réseau** : l'écran n'envoie que les clés qui changent, et le serveur revérifie chacune. Ajouter un réglage ne demande
+  ni paquet ni version de protocole de plus.
+- **Skins dans la bibliothèque du serveur** : c'est le client de celui qui importe qui télécharge (le serveur Hosterfy n'a pas à sortir sur
+  internet), puis envoie l'image par morceaux ; le serveur la garde par empreinte et la sert aux autres. On n'exécute rien, on ne suit que
+  http(s), et une image doit être un PNG de 64 à 512 pixels.
+- **Dessinés comme des joueurs** : le dessin de Comes Alive compose des couches et ne sait pas afficher un skin entier. On prend sa place au
+  rendu, sans toucher à ses classes. Les vieux skins passent par le même traitement que Minecraft (le chapeau noir de Notch).
+- **Ce qui est vu est ce qui est compté** : une scène d'échange n'est pas une décoration posée sur les comptes ; les réserves et les pièces
+  bougent à l'instant où l'objet change de mains. La vente ne se perd jamais : sans témoin, l'acheteur bloqué rejoint le vendeur, et sous
+  les yeux du joueur l'affaire se conclut sans la scène plutôt que de disparaître.
+- **Une caravane est un voyage dans le temps, pas une entité** : sa position se calcule (le temps écoulé sur la route) ; le villageois n'est
+  qu'une incarnation près d'un joueur. C'est ce qui permet au commerce de continuer sur un serveur vide. Les lamas ne s'enregistrent pas
+  comme bien : on les balaie s'ils n'ont plus de marchand.
+- **Les marchands sans traité** vont quand même chez les voisins en paix, à moitié prix : sinon, deux nations sans traité n'auraient
+  jamais eu une seule caravane, et le monde serait resté vide.
+- **Limites assumées** : routes en ligne droite, escortes qui ne combattent pas. Ni l'un ni l'autre n'est demandé pour l'instant, et un
+  réseau de routes serait une phase à part entière.
+- **Trouvé en route** : la carte plantait si la toute première tuile de terrain calculée était celle de l'origine du monde (une clé nulle
+  confondue avec « rien de calculé ») : le bug datait de la carte en terrain, il est corrigé.

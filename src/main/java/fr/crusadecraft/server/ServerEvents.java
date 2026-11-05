@@ -96,6 +96,11 @@ public final class ServerEvents {
         fr.crusadecraft.core.city.CityTalk.onServerStopped();
         fr.crusadecraft.core.city.CityBubbles.onServerStopped();
         fr.crusadecraft.core.city.CityWork.onServerStopped();
+        fr.crusadecraft.core.city.SkinService.onServerStopped();
+        fr.crusadecraft.core.city.CityScenes.onServerStopped();
+        fr.crusadecraft.core.city.CityJournal.onServerStopped();
+        fr.crusadecraft.core.city.CityTravel.onServerStopped();
+        fr.crusadecraft.core.city.CityPost.onServerStopped();
         fr.crusadecraft.core.city.CityFurniture.onServerStopped();
         fr.crusadecraft.core.city.CitySeats.onServerStopped();
         fr.crusadecraft.core.city.CityStaff.onServerStopped();
@@ -121,6 +126,8 @@ public final class ServerEvents {
         if (event.getEntity() instanceof ServerPlayer player) {
             RealmService.onLogin(player);
             fr.crusadecraft.core.nation.NationService.onLogin(player);
+            fr.crusadecraft.core.city.SkinService.onLogin(player);
+            fr.crusadecraft.core.city.CityPost.onLogin(player);
             CharacterService.syncTitles(player);
             ConflictDetector.warnPlayer(player);
         }
@@ -149,6 +156,9 @@ public final class ServerEvents {
         perf("bulles", () -> fr.crusadecraft.core.city.CityBubbles.tick(server));
         if (t % 20 == 3) perf("sieges", fr.crusadecraft.core.city.CitySeats::tick);
         if (t % fr.crusadecraft.core.city.CityWork.EVERY == 7) perf("travail", () -> fr.crusadecraft.core.city.CityWork.tick(server));
+        if (t % fr.crusadecraft.core.city.CityWork.EVERY == 23) perf("voyages", () -> fr.crusadecraft.core.city.CityTravel.tick(server));
+        if (t % fr.crusadecraft.core.city.CityTravel.PULSE == 311) perf("voyages", () -> fr.crusadecraft.core.city.CityTravel.pulse(server));
+        if (t % fr.crusadecraft.core.city.CityScenes.EVERY == 3) perf("scenes", () -> fr.crusadecraft.core.city.CityScenes.tick(server));
         if (t % 600 == 0) perf("personnages", () -> CharacterService.periodic(server));
         if (t % 40 == 0) perf("conseil", () -> fr.crusadecraft.core.council.CouncilService.tick(server));
         if (t % 100 == 50) perf("requetes", () -> fr.crusadecraft.core.council.RequestService.deliver(server));
@@ -288,6 +298,13 @@ public final class ServerEvents {
     @SubscribeEvent
     public static void onEntityInteract(PlayerInteractEvent.EntityInteract event) {
         if (event.getLevel().isClientSide() || !(event.getEntity() instanceof ServerPlayer player)) return;
+        // P47 : le bâton d'intendant en main, sur un habitant : son éditeur.
+        if (fr.crusadecraft.core.city.CityTalk.person(player.server, event.getTarget()).isPresent() && player.getMainHandItem().getItem() == fr.crusadecraft.registry.ModItems.INTENDANT.get()) {
+            if (event.getHand() == net.minecraft.world.InteractionHand.MAIN_HAND) fr.crusadecraft.core.city.CityNpc.open(player, event.getTarget().getUUID());
+            event.setCanceled(true);
+            event.setCancellationResult(InteractionResult.SUCCESS);
+            return;
+        }
         // P42 : accroupi, clic droit sur un habitant d'une ville : sa fiche et la conversation.
         if (player.isShiftKeyDown() && fr.crusadecraft.core.city.CityTalk.person(player.server, event.getTarget()).isPresent()) {
             if (event.getHand() == net.minecraft.world.InteractionHand.MAIN_HAND) fr.crusadecraft.core.city.CityTalk.open(player, event.getTarget());

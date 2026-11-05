@@ -1,0 +1,13 @@
+{
+ "moment": "echange_reponse",
+ "metiers": [
+  "FERME",
+  "MOULIN"
+ ],
+ "lines": [
+  "De mon champ à ta main. {prix}.",
+  "La récolte n'est pas mauvaise, cette fois. Prends.",
+  "Tu vois cette couleur ? Ça, c'est du travail. {prix}.",
+  "La terre a donné ce qu'elle a voulu. Voilà ta part."
+ ]
+}

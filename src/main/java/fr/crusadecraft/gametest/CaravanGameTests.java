@@ -71,7 +71,8 @@ public final class CaravanGameTests {
             CaravanService.watchForTests(w.ruler, true);
             final AiRealm partner = ai;
             final int[] chunks = forced;
-            h.runAfterDelay(10, () -> {
+            // Dix ticks ne suffisaient pas quand le serveur d'essai était chargé : le chunk n'était pas encore actif.
+            h.runAfterDelay(40, () -> {
                 try {
                     CaravanService.placeForTests(r.a(), r.b(), 30.0 / r.distance());
                     CaravanService.tick(server);
@@ -98,7 +99,9 @@ public final class CaravanGameTests {
             if (e instanceof WanderingTrader t) trader = t;
             else llamas++;
         }
-        w.check(trader != null, "la caravane ne paraît pas près du joueur (" + CaravanService.describeForTests(level, r.a(), r.b())
+        net.minecraft.core.BlockPos near = w.ruler.blockPosition();
+        w.check(trader != null, "la caravane ne paraît pas près du joueur (actif " + level.isPositionEntityTicking(near) + ", statut " + level.getChunkAt(near).getFullStatus()
+                + ", marchands dans le monde " + level.getEntities(net.minecraft.world.entity.EntityType.WANDERING_TRADER, e -> true).size() + ", " + CaravanService.describeForTests(level, r.a(), r.b())
                 + ", joueur en " + (int) w.ruler.getX() + "," + (int) w.ruler.getZ() + ")");
         w.check(llamas >= 1, "la caravane n'a pas de lamas (" + CaravanService.describeForTests(level, r.a(), r.b()) + ")");
         MapView map = WorldService.mapView(w.ruler, false);

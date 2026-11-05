@@ -101,7 +101,8 @@ public final class ClientTerrain {
 
     /** Les teintes ombrées d'une tuile présente. */
     private static int[] shaded(long key, TerrainTile t) {
-        if (key == lastShadedKey) return lastShaded;
+        // La clé de la toute première tuile du monde vaut zéro, comme lastShadedKey au départ : sans ce garde-fou, la carte plantait.
+        if (key == lastShadedKey && lastShaded != null) return lastShaded;
         int[] out = SHADED.get(key);
         if (out == null) {
             out = new int[TerrainTile.SIZE * TerrainTile.SIZE];

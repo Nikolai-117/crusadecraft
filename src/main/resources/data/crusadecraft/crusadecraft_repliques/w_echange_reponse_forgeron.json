@@ -1,0 +1,12 @@
+{
+ "moment": "echange_reponse",
+ "metiers": [
+  "FORGE"
+ ],
+ "lines": [
+  "Il tiendra plus longtemps que toi. {prix}.",
+  "Du bon fer. Ne l'abîme pas, je ne fais pas crédit deux fois.",
+  "Attention, c'est encore chaud. {prix}.",
+  "Je l'ai fait de mes mains, {autre}. Ça se paie."
+ ]
+}

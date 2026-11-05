@@ -1,0 +1,248 @@
+package fr.crusadecraft.core.city;
+
+import static org.junit.jupiter.api.Assertions.assertEquals;
+import static org.junit.jupiter.api.Assertions.assertFalse;
+import static org.junit.jupiter.api.Assertions.assertNotNull;
+import static org.junit.jupiter.api.Assertions.assertNull;
+import static org.junit.jupiter.api.Assertions.assertTrue;
+
+import fr.crusadecraft.core.nation.NationFile;
+import net.minecraft.nbt.CompoundTag;
+import org.junit.jupiter.api.Test;
+
+import javax.imageio.ImageIO;
+import java.awt.image.BufferedImage;
+import java.io.ByteArrayOutputStream;
+import java.io.IOException;
+import java.util.ArrayList;
+import java.util.List;
+import java.util.Random;
+import java.util.UUID;
+
+/** P46 à P49 : ce qui se vérifie sans monde : les réglages, les liens de skins, les durées, les commandes, le courrier. */
+class NpcPanelLogicTest {
+    private static byte[] png(int w, int h, boolean thin) throws IOException {
+        BufferedImage img = new BufferedImage(w, h, BufferedImage.TYPE_INT_ARGB);
+        int s = w / 64;
+        for (int y = 20 * s; y < 32 * s; y++) {
+            // Le bras en entier ; un bras fin s'arrête deux colonnes avant le bord.
+            for (int x = 40 * s; x < 56 * s; x++) if (!thin || x < 54 * s) img.setRGB(x, y, 0xFFAA8866);
+        }
+        ByteArrayOutputStream out = new ByteArrayOutputStream();
+        ImageIO.write(img, "png", out);
+        return out.toByteArray();
+    }
+
+    @Test
+    void npcSettingsStartEmptyAndSurviveSaving() {
+        NpcSettings s = new NpcSettings();
+        assertTrue(s.isDefault(), "rien de réglé : rien à enregistrer");
+        s.title = "la Boulangère";
+        s.look = "skin:abc";
+        s.hair = "mca:skins/hair/female/3.png";
+        s.size = 0.25f;
+        s.showName = false;
+        s.maxHealth = 40;
+        s.speed = 0.6;
+        s.damage = 5;
+        s.invincible = true;
+        s.behavior = NpcSettings.Behavior.PATROL;
+        s.workStart = 1000;
+        s.workEnd = 9000;
+        s.canTravel = false;
+        s.canMarry = false;
+        s.canLeave = false;
+        s.chatty = 2;
+        s.lines.computeIfAbsent("ACCUEIL", k -> new ArrayList<>()).add("Bonjour, {joueur}.");
+        s.offers = new CompoundTag();
+        assertFalse(s.isDefault());
+        NpcSettings r = NpcSettings.load(s.save());
+        assertEquals("la Boulangère", r.title);
+        assertEquals("skin:abc", r.look);
+        assertEquals("mca:skins/hair/female/3.png", r.hair);
+        assertEquals(0.25f, r.size);
+        assertFalse(r.showName);
+        assertEquals(40, r.maxHealth);
+        assertEquals(0.6, r.speed);
+        assertEquals(5, r.damage);
+        assertTrue(r.invincible);
+        assertEquals(NpcSettings.Behavior.PATROL, r.behavior);
+        assertEquals(1000, r.workStart);
+        assertEquals(9000, r.workEnd);
+        assertFalse(r.canTravel || r.canMarry || r.canLeave);
+        assertEquals(2, r.chatty);
+        assertEquals(List.of("Bonjour, {joueur}."), r.lines.get("ACCUEIL"));
+        assertNotNull(r.offers);
+        assertTrue(NpcSettings.load(new CompoundTag()).isDefault(), "un habitant d'avant cette version n'a rien de réglé");
+    }
+
+    @Test
+    void citySettingsPoolsFallBackOnTheWholeCity() {
+        CitySettings s = new CitySettings();
+        assertTrue(s.isDefault());
+        assertTrue(s.poolFor("FORGE").isEmpty());
+        s.pools.put(CitySettings.ALL, new ArrayList<>(List.of("skin:toutlemonde")));
+        s.pools.put("FORGE", new ArrayList<>(List.of("skin:forgeron")));
+        assertEquals(List.of("skin:forgeron"), s.poolFor("FORGE"));
+        assertEquals(List.of("skin:toutlemonde"), s.poolFor("TEMPLE"));
+        assertEquals(List.of("skin:toutlemonde"), s.poolFor(""));
+        s.canTravel = false;
+        s.peopleMax = 12;
+        s.men.add("Elio");
+        s.women.add("Bianca");
+        s.families.add("Corsi");
+        CitySettings r = CitySettings.load(s.save());
+        assertFalse(r.canTravel);
+        assertTrue(r.canMarry);
+        assertEquals(12, r.peopleMax);
+        assertEquals(List.of("Elio"), r.men);
+        assertEquals(List.of("Bianca"), r.women);
+        assertEquals(List.of("Corsi"), r.families);
+        assertEquals(List.of("skin:forgeron"), r.poolFor("FORGE"));
+    }
+
+    @Test
+    void clothesFitTheirOwnSex() {
+        assertTrue(CityPeople.fits("mca:skins/clothing/normal/female/guard/3.png", true));
+        assertFalse(CityPeople.fits("mca:skins/clothing/normal/female/guard/3.png", false));
+        assertTrue(CityPeople.fits("mca:skins/clothing/normal/male/guard/3.png", false));
+        assertFalse(CityPeople.fits("mca:skins/clothing/normal/male/guard/3.png", true));
+        assertTrue(CityPeople.fits("skin:abc", true), "un skin importé va à tout le monde");
+        assertTrue(CityPeople.fits("skin:abc", false));
+    }
+
+    @Test
+    void skinLinksAreRecognized() {
+        assertTrue(SkinSources.isName("Notch"));
+        assertTrue(SkinSources.isName("a_b_c"));
+        assertFalse(SkinSources.isName("ab"), "trop court pour un pseudo");
+        assertFalse(SkinSources.isName("https://x.y/z.png"));
+        assertTrue(SkinSources.isUrl("https://x.y/z.png"));
+        assertFalse(SkinSources.isUrl("file:///c:/windows/x.png"), "on ne suit que du web");
+        assertFalse(SkinSources.isUrl("ftp://x.y/z.png"));
+        assertEquals("https://s.namemc.com/i/0123456789abcdef.png", SkinSources.directUrl("https://namemc.com/skin/0123456789abcdef"));
+        assertEquals("https://www.minecraftskins.com/skin/download/12345/", SkinSources.directUrl("https://www.minecraftskins.com/skin/12345/un-beau-skin/"));
+        assertEquals("https://novask.in/999.png", SkinSources.directUrl("https://minecraft.novaskin.me/skin/999/truc"));
+        assertEquals("https://x.y/z.png", SkinSources.directUrl("  https://x.y/z.png "), "un lien direct reste tel quel");
+    }
+
+    @Test
+    void onlyRealSkinsPass() throws IOException {
+        SkinSources.Checked wide = SkinSources.check(png(64, 64, false));
+        assertNotNull(wide);
+        assertEquals(64, wide.width());
+        assertFalse(wide.slim());
+        assertTrue(SkinSources.check(png(64, 64, true)).slim(), "le modèle fin se reconnaît à son bras");
+        assertNotNull(SkinSources.check(png(64, 32, false)), "l'ancien format reste accepté");
+        assertNotNull(SkinSources.check(png(128, 128, false)), "un skin en haute définition aussi");
+        assertNull(SkinSources.check(png(100, 100, false)));
+        assertNull(SkinSources.check(png(64, 128, false)));
+        assertNull(SkinSources.check(new byte[64]), "ce n'est pas une image");
+        assertNull(SkinSources.check(null));
+        assertNull(SkinSources.check(new byte[SkinSources.MAX_BYTES + 1]));
+    }
+
+    @Test
+    void hoursOfWorkWrapAroundMidnight() {
+        assertEquals(CityRules.Activity.LEISURE, CityRules.withHours(CityRules.Activity.LEISURE, 500, -1, -1), "sans réglage, rien ne change");
+        assertEquals(CityRules.Activity.WORK, CityRules.withHours(CityRules.Activity.LEISURE, 2000, 1000, 9000));
+        assertEquals(CityRules.Activity.LEISURE, CityRules.withHours(CityRules.Activity.WORK, 10000, 1000, 9000), "hors de ses heures, il ne travaille pas");
+        assertEquals(CityRules.Activity.SLEEP, CityRules.withHours(CityRules.Activity.SLEEP, 18000, 1000, 9000), "il dort quand même");
+        assertEquals(CityRules.Activity.WORK, CityRules.withHours(CityRules.Activity.SLEEP, 20000, 18000, 2000), "un veilleur de nuit travaille à cheval sur minuit");
+        assertEquals(CityRules.Activity.WORK, CityRules.withHours(CityRules.Activity.SLEEP, 1000, 18000, 2000));
+    }
+
+    @Test
+    void roadsLastAsLongAsTheirLength() {
+        assertEquals(CityTravel.ROAD_MIN, CityTravel.roadTicks(10), "jamais moins d'une minute");
+        assertEquals(800 * CityTravel.TICKS_PER_BLOCK, CityTravel.roadTicks(800));
+        assertEquals(CityTravel.ROAD_MAX, CityTravel.roadTicks(100000), "jamais plus d'une journée");
+    }
+
+    @Test
+    void tripSurvivesSaving() {
+        UUID a = new UUID(1, 2), b = new UUID(3, 4);
+        Trip t = new Trip(a, b, Trip.Stage.OUT, 100, 300, CityGood.PAIN, 24, null, 0, 0);
+        assertEquals(0.5, t.progress(200));
+        assertEquals(0, t.progress(50));
+        assertEquals(1, t.progress(900));
+        Trip r = Trip.load(t.save());
+        assertEquals(t, r);
+        Trip later = t.next(Trip.Stage.STAY, 300, 900, CityGood.FER, 8, 40);
+        assertEquals(later, Trip.load(later.save()));
+        assertEquals(CityGood.PAIN, later.good(), "ce qu'il a emporté reste su");
+    }
+
+    @Test
+    void ordersPayFairly() {
+        Random r = new Random(3);
+        for (CityGood g : CityGood.values()) {
+            for (int i = 0; i < 40; i++) {
+                int n = CityOrders.amount(g, r);
+                assertTrue(n >= 1 && n <= 64, g + " demande " + n);
+                assertTrue(CityOrders.reward(g, n) >= 1, "une commande paie au moins une émeraude");
+            }
+        }
+        assertEquals(6, CityOrders.reward(CityGood.OUTILS, 2), "un outil vaut plus qu'un sac de blé");
+        assertEquals(3, CityOrders.reward(CityGood.BLE, 24));
+        assertEquals("1 émeraude", CityOrders.money(1));
+        assertEquals("3 émeraudes", CityOrders.money(3));
+        CityOrders.Order o = new CityOrders.Order(new UUID(5, 6), CityGood.CUIR, 12, 3, 7);
+        assertEquals(o, CityOrders.Order.load(o.save()));
+    }
+
+    @Test
+    void theMailboxKeepsWhatIsUnread() {
+        List<CityPost.Letter> box = new ArrayList<>();
+        for (int i = 0; i < CityPost.KEPT; i++) box.add(new CityPost.Letter(CityPost.Kind.AMI, "A", "V", "t" + i, i, i >= 3));
+        box.add(new CityPost.Letter(CityPost.Kind.COMMANDE, "B", "V", "neuve", 99, false));
+        CityPost.trim(box);
+        assertEquals(CityPost.KEPT, box.size());
+        assertEquals("t0", box.get(0).text(), "les lettres non lues restent");
+        assertFalse(box.stream().anyMatch(l -> l.text().equals("t3")), "la plus vieille lettre lue s'en va");
+        assertEquals("neuve", box.get(box.size() - 1).text());
+        CityPost.Letter l = new CityPost.Letter(CityPost.Kind.VENTE, "Ana", "Dol", "texte", 12, false);
+        assertEquals(l, CityPost.Letter.load(l.save()));
+        assertTrue(l.asRead().read());
+    }
+
+    @Test
+    void everyGoodHasSomeoneToSellIt() {
+        for (CityGood g : CityGood.values()) {
+            assertFalse(CityScenes.shops(g).isEmpty(), g + " n'a pas de boutique");
+            assertTrue(CityScenes.price(g) >= 1);
+            for (BuildingFunction f : CityScenes.shops(g)) assertFalse(f.dwelling(), "on n'achète rien dans une maison");
+        }
+        assertEquals(BuildingFunction.BOULANGERIE, CityScenes.shops(CityGood.PAIN).get(0));
+        assertEquals(CityGood.BLE, CityScenes.supply(BuildingFunction.BOULANGERIE, true));
+        assertEquals(CityGood.PAIN, CityScenes.supply(BuildingFunction.TAVERNE, true));
+        assertEquals(CityGood.VIANDE, CityScenes.supply(BuildingFunction.TAVERNE, false));
+        assertNull(CityScenes.supply(BuildingFunction.MAISON, true));
+    }
+
+    @Test
+    void theJournalTellsTheHour() {
+        assertEquals("06h00", CityJournal.clock(0));
+        assertEquals("12h00", CityJournal.clock(6000));
+        assertEquals("18h00", CityJournal.clock(12000));
+        assertEquals("00h00", CityJournal.clock(18000));
+        assertEquals("06h00", CityJournal.clock(24000));
+        assertEquals("07h30", CityJournal.clock(1500));
+    }
+
+    @Test
+    void anEscortRemembersItsMerchant() {
+        UUID a = new UUID(1, 2), b = new UUID(3, 4), lead = new UUID(5, 6);
+        Trip t = new Trip(a, b, Trip.Stage.OUT, 10, 20, null, 0, null, 0, 0, lead);
+        assertEquals(t, Trip.load(t.save()));
+        assertEquals(lead, t.next(Trip.Stage.STAY, 20, 30, null, 0, 0).leader());
+        assertNull(new Trip(a, b, Trip.Stage.OUT, 10, 20, null, 0, null, 0, 0).leader(), "un voyage à son compte ne suit personne");
+    }
+
+    @Test
+    void nationKeysAreClean() {
+        assertEquals("levanzia", NationFile.keyOf("Levànzia"));
+        assertEquals("royaume_du_nord", NationFile.keyOf("  Royaume du Nord! "));
+        assertEquals("nation", NationFile.keyOf("???"));
+    }
+}

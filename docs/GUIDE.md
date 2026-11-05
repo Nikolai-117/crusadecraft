@@ -385,6 +385,68 @@ données du mod (fichier `crusadecraft.dat` du monde) restent sur place, sans ef
     Une maison dont toute la famille est morte accueille une nouvelle famille le lendemain ; quand tu nommes un marché ou
     une mairie, les familles vont désormais passer la journée autour.
 
+### Le panneau d'une ville
+
+Le **bâton d'intendant tourné vers le ciel**, ou `/crusade ville panneau`, ouvre le panneau de la ville où tu es, si elle est à toi
+(ou si tu es en créatif, ou éditeur de la carte). Il s'ouvre aussi tout seul quand tu fondes une ville ou qu'une ville finit d'être posée.
+
+- **En direct** : ce qui vient de se passer dans la ville (qui vend quoi à qui, qui livre, qui part, qui arrive), mis à jour toutes les
+  deux secondes, et ceux qui sont sur les routes, avec leur avancement. En créatif, le bouton **Voir** t'emmène à côté d'eux.
+- **Général** : son nom, le plafond d'habitants, ce qui est permis (mariages, voyages, départs, parole), ses propres listes de noms.
+- **Son camp** : la rendre indépendante, lui faire rejoindre un royaume, ou fonder un royaume autour d'elle. Un royaume fondé ainsi
+  est une vraie nation, avec son fichier dans `crusadecraft/nations`. « Pour moi » te donne sa couronne, sauf si tu en portes déjà une :
+  il reste alors à l'ordinateur, et le message te le dit.
+- **Bâtiments**, **Habitants** : la fonction de chaque bâtiment ; la liste des gens, et le bouton qui ouvre l'éditeur de chacun.
+- **Apparence** : les tenues et les skins que peuvent porter les gens de la ville, par métier ou pour tout le monde. Ceux qui
+  arrivent en reçoivent une ; « Habiller tout le monde » les distribue tout de suite (les personnages écrits à la main gardent la leur).
+- **Réserves** : stocks, bourse, commandes en attente, et une rumeur à faire courir.
+
+### L'éditeur d'un habitant
+
+**Le bâton d'intendant en main, clic droit sur un habitant**, ou le bouton **Modifier** de sa fiche, ou le panneau. Comme dans un mod de PNJ :
+
+- **Fiche** : nom, titre, sexe, âge, vie, traits. **Allure** : un skin importé, une tenue, une coiffure, une taille.
+- **Stats** : points de vie, vitesse, dégâts, invincible, nom affiché. **Conduite** : sa journée, à son poste ou en ronde ; ses heures de
+  travail ; s'il peut voyager, se marier, partir ; muet, normal ou bavard.
+- **Métier** : il passe au bâtiment de ce métier, avec ses échanges. **Répliques** : ce qu'il dit, moment par moment. **Échanges** : ce
+  qu'il vend et achète, composé avec les objets de ton sac.
+
+### Les skins depuis internet
+
+Dans l'onglet Allure, colle l'une de ces choses et clique sur **Importer** :
+
+- le **pseudo** d'un joueur (`Notch`) ;
+- une **page NameMC** (`https://namemc.com/skin/…`) ;
+- le **lien direct d'une image** de skin, de n'importe quel site ;
+- le **nom d'un fichier** déposé dans le dossier des skins (bouton **Dossier**).
+
+**minecraftskins.com refuse les téléchargements automatiques** (vérifié : réponse 403) ; PlanetMinecraft refuse aussi l'accès automatique
+à ses pages. Pour ces sites, enregistre l'image depuis ton navigateur dans le dossier, puis tape son nom. Le skin est envoyé au serveur
+et distribué à tous les joueurs : rien à installer chez eux. Un habitant qui porte un skin est dessiné comme un joueur.
+
+### La vie des habitants : échanges, caravanes, courrier
+
+Tant qu'un joueur est à moins de 48 blocs de la ville, **ce qui se compte se voit** :
+
+- **Les achats** : l'acheteur va jusqu'au vendeur, ils s'arrêtent, se parlent, et l'objet passe de main en main contre une pièce. Les
+  réserves et les bourses bougent à cet instant-là.
+- **Les livraisons et les approvisionnements** : le boulanger remet son pain au tavernier ; l'artisan va chercher ce qu'il lui faut.
+- **Les causettes** : deux voisins s'arrêtent pour parler, surtout le soir.
+
+Loin de tout joueur, la ville continue en comptes, une fois par jour.
+
+**Les caravanes** partent toutes seules, jusqu'à quatre fois par jour de jeu : un marchand, ses lamas bâtés et, si la ville a une caserne,
+une escorte. Elles emportent le surplus, le vendent là-bas à quelqu'un, et rapportent ce qui manque. Sans traité de commerce avec l'autre
+royaume, on leur paie moitié moins ; en guerre, elles n'y vont pas. Sur la route, elles marchent vraiment, et **paraissent à moins de
+64 blocs d'un joueur**. Elles sont sur **ta carte du royaume** (un chariot, et le trait de ce qu'il leur reste à faire) et dans l'onglet
+En direct. D'autres habitants vont voir du pays. Tuer un marchand fait tomber sa cargaison, et toute sa ville le sait.
+
+**Le courrier** (touche **J**, ou `/crusade courrier`) : un ami donne des nouvelles, un voyageur dit où il part, un marchand rend compte de
+ses ventes, celui à qui tu as fait du tort te le dit. Une lettre t'attend si tu n'es pas là.
+
+**Les commandes** : une ville qui manque de quelque chose t'écrit, et paie en émeraudes. Va parler à n'importe lequel de ses habitants
+avec ce qu'il faut sur toi : le bouton **Livrer** s'allume.
+
 ### La carte de guerre
 50. Ouvre la carte du royaume (touche **virgule**) et clique sur **⚔ Guerre**, en bas à droite. Une barre d'outils
     apparaît sous la carte : **Offensive**, **Défense**, **Objectif** (trois pinceaux qui peignent chunk par chunk,
@@ -612,4 +674,12 @@ Pour accélérer le temps pendant un test : `/time add 24000` fait passer un jou
 - Les caravanes ne marchent dans le monde que près d'un joueur ; loin de tout, elles avancent sur la carte. Après un
   redémarrage, elles repartent de leur première capitale, et un pillage en cours est oublié.
 - Une marchandise par royaume, pas de stocks ni de marché : le commerce reste une affaire de revenus.
+- Les caravanes des villes marchent en ligne droite d'une ville à l'autre : il n'y a pas de réseau de routes. Une rivière ou une falaise les
+  arrête ; au bout de trente secondes, elles franchissent l'obstacle d'un coup, même sous tes yeux.
+- Les gardes d'escorte ne se battent pas : ils marchent avec la caravane, l'épée à la main, mais ne la défendent pas si on l'attaque.
+- Les échanges face à face ne se jouent que près d'un joueur ; loin, tout passe en comptes. Si l'acheteur n'arrive pas jusqu'au vendeur en
+  quarante secondes sous tes yeux, la vente se fait quand même, sans la scène ; sans témoin, il se retrouve à côté de lui.
+- Les habitants suivent des règles et des textes écrits d'avance : ils ne pensent pas.
+- Un skin importé remplace tout le dessin de Comes Alive sur ce villageois : il n'a plus les vêtements ni les traits de Comes Alive.
+- minecraftskins.com et PlanetMinecraft refusent les téléchargements automatiques : passer par le dossier des skins.
 - Usage personnel : ce mod n'est pas fait pour être redistribué.

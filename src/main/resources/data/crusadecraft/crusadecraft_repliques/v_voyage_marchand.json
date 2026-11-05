@@ -1,0 +1,18 @@
+{
+ "moment": "voyage",
+ "metiers": ["MARCHE", "ENTREPOT"],
+ "lines": [
+  "J'ai vendu ma cargaison au prix que je voulais. Enfin, presque.",
+  "Chez moi, ça pourrit dans les réserves ; ici, ça s'arrache. Voilà tout le métier.",
+  "Je ne fais que passer. Mais si vous avez quelque chose à vendre…",
+  "On achète où ça abonde, on vend où ça manque. Le reste, c'est de la marche.",
+  "Tenir un étal, c'est bien. Le porter sur son dos, c'est autre chose.",
+  "Le prix ? Ça dépend de qui demande. Et vous, vous demandez ?",
+  "Mes comptes sont bons. Mes pieds, moins.",
+  "Je rapporterai ce qui manque chez moi, si on veut bien me le céder.",
+  "Une bonne route, c'est une route où l'on revient plus riche.",
+  "Ne dites pas à mes clients d'ici combien je vends là-bas.",
+  "Chaque ville croit faire une affaire avec moi. C'est ce qui rend mon métier agréable.",
+  "J'ai les bras chargés et la bourse légère. Ce soir, ce sera l'inverse."
+ ]
+}

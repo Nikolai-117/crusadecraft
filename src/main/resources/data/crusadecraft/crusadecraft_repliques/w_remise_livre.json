@@ -1,0 +1,15 @@
+{
+ "moment": "remise_livre",
+ "lines": [
+  "{autre}, voilà {marchandise}, comme prévu.",
+  "Je t'apporte {marchandise}. Où est-ce que je pose ça ?",
+  "Attrape, {autre} : {marchandise}. C'est lourd.",
+  "Livraison ! {marchandise}, tout y est, tu peux compter.",
+  "On m'a dit de te remettre ça : {marchandise}.",
+  "Tu l'attendais, {autre} ? Voilà {marchandise}.",
+  "C'est pour toi. {marchandise}. Signe où tu veux, je ne sais pas lire.",
+  "Encore {marchandise}. Tu en fais quoi, à la fin ?",
+  "Te voilà enfin. J'ai {marchandise} pour toi.",
+  "Je ne repasse pas deux fois, {autre} : {marchandise}, et je file."
+ ]
+}

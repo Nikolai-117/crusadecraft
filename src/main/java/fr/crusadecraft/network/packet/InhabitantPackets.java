@@ -20,12 +20,14 @@ import java.util.function.Supplier;
 /** Parler à un habitant, et faire naître un habitant d'un œuf (P42). */
 public final class InhabitantPackets {
     private static final int TEXT_MAX = 2048, LIST_MAX = 64;
+    /** Dans {@code Say}, au lieu d'un sujet : livrer une commande, ouvrir l'éditeur. */
+    public static final int DELIVER = -2, EDIT = -3;
 
     private InhabitantPackets() {}
 
     /** La fiche d'un habitant et ce qu'il vient de dire. */
     public record View(UUID id, int entity, String name, String job, String city, String realm, int age, List<Integer> traits, String bio,
-                       List<String> family, int opinion, String line, boolean trades, int hunger) {}
+                       List<String> family, int opinion, String line, boolean trades, int hunger, List<String> orders, boolean canDeliver, boolean canEdit) {}
 
     public record Open(View view) {
         public static void encode(Open p, FriendlyByteBuf b) {
@@ -46,6 +48,10 @@ public final class InhabitantPackets {
             b.writeUtf(v.line(), TEXT_MAX);
             b.writeBoolean(v.trades());
             b.writeVarInt(v.hunger());
+            b.writeVarInt(v.orders().size());
+            for (String s : v.orders()) b.writeUtf(s);
+            b.writeBoolean(v.canDeliver());
+            b.writeBoolean(v.canEdit());
         }
 
         public static Open decode(FriendlyByteBuf b) {
@@ -64,7 +70,11 @@ public final class InhabitantPackets {
             String line = b.readUtf(TEXT_MAX);
             boolean trades = b.readBoolean();
             int hunger = b.readVarInt();
-            return new Open(new View(id, entity, name, job, city, realm, age, traits, bio, family, opinion, line, trades, hunger));
+            n = Math.min(b.readVarInt(), LIST_MAX);
+            List<String> orders = new ArrayList<>(n);
+            for (int i = 0; i < n; i++) orders.add(b.readUtf());
+            boolean canDeliver = b.readBoolean(), canEdit = b.readBoolean();
+            return new Open(new View(id, entity, name, job, city, realm, age, traits, bio, family, opinion, line, trades, hunger, orders, canDeliver, canEdit));
         }
 
         public static void handle(Open p, Supplier<NetworkEvent.Context> ctx) {
@@ -76,18 +86,20 @@ public final class InhabitantPackets {
     public record Say(UUID id, int topic) {
         public static void encode(Say p, FriendlyByteBuf b) {
             b.writeUUID(p.id);
-            b.writeVarInt(p.topic + 1);
+            b.writeVarInt(p.topic + 8);
         }
 
         public static Say decode(FriendlyByteBuf b) {
-            return new Say(b.readUUID(), b.readVarInt() - 1);
+            return new Say(b.readUUID(), b.readVarInt() - 8);
         }
 
         public static void handle(Say p, Supplier<NetworkEvent.Context> ctx) {
             ServerPlayer player = ctx.get().getSender();
             if (player == null) return;
             CityTalk.Topic[] all = CityTalk.Topic.values();
-            if (p.topic < 0) CityTalk.trade(player, p.id);
+            if (p.topic == EDIT) fr.crusadecraft.core.city.CityNpc.open(player, p.id);
+            else if (p.topic == DELIVER) CityTalk.deliver(player, p.id);
+            else if (p.topic < 0) CityTalk.trade(player, p.id);
             else if (p.topic < all.length) CityTalk.say(player, p.id, all[p.topic]);
         }
     }

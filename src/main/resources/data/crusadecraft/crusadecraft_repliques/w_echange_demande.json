@@ -1,0 +1,21 @@
+{
+ "moment": "echange_demande",
+ "lines": [
+  "Bonjour, {autre}. Il me faudrait {marchandise}.",
+  "{autre}, tu as encore {marchandise} ?",
+  "Mets-moi {marchandise}, s'il te plaît.",
+  "Je viens pour {marchandise}. Et ne me dis pas que c'est le prix.",
+  "Dis, {autre}, il t'en reste, {marchandise} ?",
+  "Comme d'habitude : {marchandise}.",
+  "Je n'ai que {prix} sur moi. Ça ira pour {marchandise} ?",
+  "J'ai fait tout ce chemin pour {marchandise}.",
+  "Ah, {autre}, te voilà. Il me faudrait {marchandise}.",
+  "Tu me fais un prix sur {marchandise} ? Non ? Bon.",
+  "Il paraît que tu as {marchandise}. C'est vrai ?",
+  "Vite, {autre}, on m'attend : {marchandise}, et je file.",
+  "Je prendrais bien {marchandise}, si ce n'est pas trop te demander.",
+  "C'est pour la maison : {marchandise}.",
+  "Ma femme m'a dit de ne pas revenir sans {marchandise}.",
+  "Tu n'as pas augmenté, au moins ? Il me faut {marchandise}."
+ ]
+}

@@ -106,9 +106,21 @@ des packs), `docs/etape-2-plan.md` (le plan des phases).
   demande son modèle, son `blockstate`, sa table de butin, sa recette et ses clés de langue (voir ceux d'une autre).
 - `core/city/Furnishing` (ce qu'est un meuble, d'après son nom), `CitySeats` (s'asseoir), `CityFurniture` (recompter les meubles,
   le charme, la cloche, le comptoir, les lits). `Furnishing` est en logique pure et testé ; ajoute des mots là, pas ailleurs.
+- `core/city/CityPanel` + `client/screen/CityPanelScreen` : le panneau d'une ville ; `CityNpc` + `NpcEditorScreen` : l'éditeur d'un habitant. Tout
+  passe en NBT : une clé présente est une chose à changer, le serveur revérifie. `NpcSettings` et `CitySettings` ne s'enregistrent que s'ils
+  diffèrent du défaut. `CityAdmin` : renommer, changer de camp, fonder ; `core/nation/NationFile` écrit le fichier d'une nation.
+- `core/city/SkinService`, `SkinSources`, `client/skin/` : les skins. Le client télécharge, le serveur garde et redistribue.
+- `core/city/CityScenes` : deux habitants face à face ; les comptes bougent dans `settle`, pas avant. `CityJournal` : l'onglet En direct, rien
+  n'y est enregistré. `CityTravel` + `Trip` : voyages et caravanes, positions calculées ; une escorte a un `Trip.leader`. `CityPost` et
+  `CityOrders` : le courrier, les commandes.
 - Pas de modèle de langage : Romain l'a écarté. Ne pas en ajouter sans qu'il le demande.
 
 ## Pièges déjà rencontrés
+
+- **GameTests qui durent plusieurs ticks** : après `world().clear()`, appeler `markGenerated`, sinon le monde se regénère pendant l'essai et remplace
+  ce qu'on observe. Ne pas programmer une tâche depuis une tâche programmée (`runAfterDelay`, `onEachTick`) : tout planifier d'avance. Hors du gabarit, le
+  sol du monde d'essai est plus haut que `w.center` : un villageois posé là étouffe. Regarder le journal (`died`) avant d'accuser le code.
+- **Le tchat masqué** (une ancienne étape de `WorldShots`) fait refuser les commandes sans bruit : `Tchat désactivé`.
 
 - **MineColonies** : n'appeler son API que depuis `compat/minecolonies`. Certaines méthodes des entités de bâtiment ne
   compilent pas (classe de Domum absente du classpath de compilation) : passer par `IBuilding`. Un `Blueprint` de

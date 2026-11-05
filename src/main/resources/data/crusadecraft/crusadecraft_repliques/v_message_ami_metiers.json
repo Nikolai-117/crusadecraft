@@ -1,0 +1,11 @@
+{
+ "moment": "message_ami",
+ "metiers": ["BOULANGERIE", "TAVERNE", "BOUCHERIE", "MOULIN"],
+ "lines": [
+  "Il reste toujours quelque chose à manger pour vous ici, {joueur}. Ne tardez pas : ça ne se conserve pas.",
+  "Ma table vous attend. Elle n'est pas grande, mais on y mange mieux qu'ailleurs, je vous le garantis.",
+  "J'ai pensé à vous en allumant le feu ce matin. Je ne sais pas pourquoi. Sans doute la faim.",
+  "Venez goûter ce que je prépare ces jours-ci. Vous me direz ce que vous en pensez, et je ferai semblant d'écouter.",
+  "Les gens ne savent plus manger, {joueur}. Vous, si. C'est pour ça que je vous écris."
+ ]
+}

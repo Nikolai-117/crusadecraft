@@ -50,6 +50,21 @@ public final class Person {
     private int coins;
     private int hunger;
 
+    /** P47 : ce qu'on a réglé sur lui dans l'éditeur ; rien tant que rien n'a été changé. */
+    private fr.crusadecraft.core.city.NpcSettings settings;
+    /** P48 : le voyage qu'il est en train de faire, s'il est parti. */
+    private fr.crusadecraft.core.city.Trip trip;
+
+    public boolean hasSettings() { return settings != null; }
+    public fr.crusadecraft.core.city.NpcSettings settings() {
+        if (settings == null) settings = new fr.crusadecraft.core.city.NpcSettings();
+        return settings;
+    }
+    public fr.crusadecraft.core.city.Trip trip() { return trip; }
+    public void setTrip(fr.crusadecraft.core.city.Trip trip) { this.trip = trip; }
+    /** Les joueurs dont il a un avis. */
+    public java.util.Set<UUID> knownPlayers() { return java.util.Set.copyOf(opinions.keySet()); }
+
     public String job() { return job; }
     public void setJob(String job) { this.job = job == null ? "" : job; }
     public UUID site() { return site; }
@@ -183,6 +198,8 @@ public final class Person {
         put(t, "site", site);
         if (!notable.isEmpty()) t.putString("notable", notable);
         if (coins != 0) t.putInt("coins", coins);
+        if (settings != null && !settings.isDefault()) t.put("npc", settings.save());
+        if (trip != null) t.put("trip", trip.save());
         if (hunger != 0) t.putInt("hunger", hunger);
         if (!opinions.isEmpty()) {
             CompoundTag o = new CompoundTag();
@@ -222,6 +239,8 @@ public final class Person {
         }
         p.setTraits(wanted, MAX_TRAITS);
         p.bio = t.getString("bio");
+        if (t.contains("npc")) p.settings = fr.crusadecraft.core.city.NpcSettings.load(t.getCompound("npc"));
+        if (t.contains("trip")) p.trip = fr.crusadecraft.core.city.Trip.load(t.getCompound("trip"));
         if (t.contains("worldPos")) {
             p.worldDim = ResourceLocation.tryParse(t.getString("worldDim"));
             p.worldPos = NbtUtils.readBlockPos(t.getCompound("worldPos"));

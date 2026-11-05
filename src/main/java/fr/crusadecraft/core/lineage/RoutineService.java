@@ -80,7 +80,7 @@ public final class RoutineService {
         CrusadeSavedData data = CrusadeSavedData.get(server);
         int moved = 0;
         for (Person p : data.lineage().persons()) {
-            if (!p.alive() || !p.inWorld() || p.realm() == null) continue;
+            if (!p.alive() || !p.inWorld() || p.realm() == null || p.trip() != null) continue;
             ServerLevel level = server.getLevel(ResourceKey.create(Registries.DIMENSION, p.worldDim()));
             if (level == null) continue;
             Entity e = level.getEntity(p.id());

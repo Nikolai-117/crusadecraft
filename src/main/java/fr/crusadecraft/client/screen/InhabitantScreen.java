@@ -31,6 +31,8 @@ public class InhabitantScreen extends Screen {
         Minecraft mc = Minecraft.getInstance();
         if (mc.screen instanceof InhabitantScreen s && s.view.id().equals(view.id())) {
             s.view = view;
+            // Ses commandes ont pu changer : les boutons aussi.
+            s.rebuildWidgets();
             return;
         }
         mc.setScreen(new InhabitantScreen(view));
@@ -53,6 +55,19 @@ public class InhabitantScreen extends Screen {
         }).bounds(left + 10 + 3 * (bw + 2), y + 18, bw, 16).build();
         trade.active = view.trades();
         addRenderableWidget(trade);
+        // P49 : ce que la ville a commandé ; P47 : l'éditeur, pour qui a la main sur la ville.
+        if (!view.orders().isEmpty()) {
+            net.minecraft.network.chat.MutableComponent tip = Component.translatable("crusadecraft.city.order.tip");
+            for (String s : view.orders()) tip.append(Component.literal((char) 10 + "· " + s));
+            Button deliver = Button.builder(Component.translatable("crusadecraft.city.order.deliver"), b -> CrusadeNetwork.toServer(new InhabitantPackets.Say(view.id(), InhabitantPackets.DELIVER)))
+                    .bounds(left + W - 10 - 64, top + 10, 64, 14).tooltip(net.minecraft.client.gui.components.Tooltip.create(tip)).build();
+            deliver.active = view.canDeliver();
+            addRenderableWidget(deliver);
+        }
+        if (view.canEdit()) {
+            addRenderableWidget(Button.builder(Component.translatable("crusadecraft.city.npc.open"), b -> CrusadeNetwork.toServer(new InhabitantPackets.Say(view.id(), InhabitantPackets.EDIT)))
+                    .bounds(left + W - 10 - 64, top + 26, 64, 14).build());
+        }
     }
 
     @Override

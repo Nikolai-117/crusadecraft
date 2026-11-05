@@ -1,0 +1,17 @@
+{
+ "moment": "message_voyage",
+ "lines": [
+  "{joueur}, je pars pour {destination}. Si vous passez par {ville}, ne me cherchez pas, je n'y serai pas.",
+  "Je prends la route de {destination} dès demain. Je vous écrirai si j'en reviens, et même si je n'en reviens pas.",
+  "On m'envoie à {destination}. C'est loin, paraît-il. On m'a dit ça en riant.",
+  "Je vous préviens, puisque vous êtes de ceux qu'on prévient : je pars à {destination}. Rien de grave, je reviendrai.",
+  "Il fallait bien que je voie {destination} un jour. C'est le jour. Portez-vous bien.",
+  "Direction {destination}. Si nos chemins se croisent, je vous offrirai à boire, si j'ai encore de quoi.",
+  "Je m'absente quelque temps : {destination} m'attend, enfin, personne ne m'y attend, mais j'y vais quand même.",
+  "Vous me trouverez sur la route de {destination} ces prochains jours. Saluez-moi si vous me croisez.",
+  "Ne vous inquiétez pas si vous ne me voyez pas à {ville} : je suis parti{|e} à {destination}. Mon absence ne devrait pas durer.",
+  "Je pars voir {destination} de mes yeux. On m'en a tant dit que je n'en crois plus un mot.",
+  "Les pieds me démangeaient. Je vais les user du côté de {destination}.",
+  "Je laisse {ville} quelques jours pour {destination}. J'ai promis de rapporter des nouvelles. Je vous en garderai une."
+ ]
+}

@@ -1,0 +1,20 @@
+{
+ "moment": "message_commande",
+ "lines": [
+  "{joueur}, {ville} manque de tout, et surtout de ceci : {commande}. Nous paierons {recompense} à qui l'apportera.",
+  "Nos réserves baissent. Si vous pouvez nous apporter {commande}, la ville vous versera {recompense}, et moi je vous dirai merci.",
+  "Je vous écris au nom de {ville} : il nous faudrait {commande}. Il y a {recompense} pour qui nous tirera de là.",
+  "On compte sur vous, {joueur}. Apportez {commande}, contre {recompense}. Remettez le tout à n'importe qui ici, on saura à quoi ça sert.",
+  "Une commande, si vous êtes d'accord : {commande}. Nous n'avons pas beaucoup d'argent, mais nous avons {recompense}.",
+  "Ce n'est pas encore la famine, mais ça en prend le chemin. Avec {commande}, on se remettrait d'aplomb. La ville offre {recompense}.",
+  "{ville} a besoin d'un service. Apportez {commande} à qui vous voudrez ici, et {recompense} sont à vous.",
+  "Personne ici n'en produit assez, et le marché n'en a plus : il nous faut {commande}. Ça vaut {recompense}, pas une de moins.",
+  "Je fais la liste de ce qui manque, et votre nom est venu à côté : {commande}, pour {recompense}. Vous nous rendriez bien service.",
+  "Si la route vous mène par ici, pensez à nous apporter {commande}. On vous en donnera {recompense}. Faites vite, ça ne s'arrange pas.",
+  "On dit que vous savez trouver ce qu'on cherche. Nous cherchons {commande}. Il y a {recompense} qui vous attendent à {ville}.",
+  "Mauvaise saison pour nos réserves. Il nous faudrait {commande}, contre {recompense} : c'est une offre honnête, et je n'en ai pas d'autre.",
+  "On a compté et recompté : il manque {commande}. Nous avons de quoi payer {recompense}. Dites à quelqu'un d'ici que vous venez pour ça.",
+  "La ville vous demande un service, {joueur}, et elle paie : {recompense} pour {commande}.",
+  "J'ai promis qu'on trouverait {commande} avant la fin de la semaine. Je n'ai pas dit qui s'en chargerait. Pour {recompense}, ça vous dit ?"
+ ]
+}

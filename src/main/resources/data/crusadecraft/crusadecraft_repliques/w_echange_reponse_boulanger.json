@@ -1,0 +1,13 @@
+{
+ "moment": "echange_reponse",
+ "metiers": [
+  "BOULANGERIE"
+ ],
+ "lines": [
+  "Il sort du four, attention, c'est chaud.",
+  "Encore tiède. {prix}, {autre}.",
+  "Levé avant l'aube pour que tu manges : {prix}.",
+  "Du pain d'hier ? Jamais de la vie. Enfin, presque jamais.",
+  "Avec ce blé-là, je fais ce que je peux. {prix}."
+ ]
+}

@@ -67,6 +67,7 @@ public final class CityBubbles {
         CompoundTag t = new CompoundTag();
         t.putString("text", Component.Serializer.toJson(Component.literal(text)));
         t.putString("billboard", "center");
+        t.putString("alignment", "center");
         t.putInt("line_width", 160);
         t.putInt("background", 0x90201814);
         t.putByte("shadow", (byte) 1);

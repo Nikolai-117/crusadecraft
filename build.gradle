@@ -69,6 +69,8 @@ minecraft {
             property 'crusadecraft.worldshots.v5only', (project.findProperty('shots_only') ?: '').toString()
             // -Pshots_v6=true : les nations, les habitants et leur journée (P41 à P43).
             property 'crusadecraft.worldshots.v6', (project.findProperty('shots_v6') == 'true').toString()
+            // -Pshots_v7=true : le panneau, l'éditeur, les skins, les voyages, le courrier (P46 à P49).
+            property 'crusadecraft.worldshots.v7', (project.findProperty('shots_v7') == 'true').toString()
         }
 
         server {

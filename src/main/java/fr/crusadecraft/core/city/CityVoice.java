@@ -52,8 +52,14 @@ public final class CityVoice {
     public static Optional<String> text(MinecraftServer server, Site site, Person p, Repliques.Moment asked, ServerPlayer listener, Random random) {
         Repliques.Moment moment = forAge(p, asked);
         Component line = null;
+        // P47 : ce qu'on a écrit pour lui dans l'éditeur passe avant tout, deux fois sur trois.
+        if (p.hasSettings() && random.nextInt(3) != 0) {
+            List<String> own = p.settings().lines.get(asked.name());
+            if (own == null || own.isEmpty()) own = p.settings().lines.get(NpcSettings.ANY);
+            if (own != null && !own.isEmpty()) line = Component.literal(own.get(random.nextInt(own.size())));
+        }
         // Un personnage écrit d'avance parle d'abord avec ses propres mots, à l'accueil.
-        if (moment == Repliques.Moment.ACCUEIL || moment == Repliques.Moment.TRAVAIL) {
+        if (line == null && (moment == Repliques.Moment.ACCUEIL || moment == Repliques.Moment.TRAVAIL)) {
             List<String> own = CityPeople.notable(server, site, p).map(NationDef.Notable::lines).orElse(List.of());
             if (!own.isEmpty() && random.nextInt(3) != 0) line = Component.literal(own.get(random.nextInt(own.size())));
         }
@@ -70,10 +76,27 @@ public final class CityVoice {
 
     /** Un bébé babille, un enfant répond comme un enfant, quel que soit le sujet. La douleur, elle, n'a pas d'âge. */
     static Repliques.Moment forAge(Person p, Repliques.Moment m) {
-        if (m == Repliques.Moment.DOULEUR || m.name().startsWith("VIE_")) return m;
+        if (m == Repliques.Moment.DOULEUR || m.name().startsWith("VIE_") || m.name().startsWith("MESSAGE_")) return m;
         if (p.age() < 3) return Repliques.Moment.BEBE;
         if (p.age() < CityRules.CHILD && m != Repliques.Moment.ECOLE) return Repliques.Moment.ENFANT;
         return m;
+    }
+
+    /** P50 : ce qu'il dit à un autre habitant, avec quelques trous de plus. */
+    public static Optional<String> line(MinecraftServer server, Site site, Person p, Repliques.Moment moment, Map<String, String> extra, Random random) {
+        Component line = Repliques.pick(Repliques.entries(), moment, who(server, site, p, null), random);
+        if (line == null) return Optional.empty();
+        return Optional.of(fill(server, site, p, NationRules.fill(Fr.of(line), extra), null, random));
+    }
+
+    /** P49 : une lettre, pour un joueur qui n'est peut-être pas là, avec quelques trous de plus. */
+    public static Optional<String> letter(MinecraftServer server, Site site, Person p, Repliques.Moment moment, UUID to, String toName, Map<String, String> extra, Random random) {
+        Repliques.Who who = who(server, site, p, to);
+        Component line = Repliques.pick(Repliques.entries(), moment, who, random);
+        if (line == null) return Optional.empty();
+        Map<String, String> all = new HashMap<>(extra);
+        all.put("joueur", toName.isEmpty() ? Fr.key("crusadecraft.city.post.stranger") : toName);
+        return Optional.of(fill(server, site, p, NationRules.fill(Fr.of(line), all), null, random));
     }
 
     /** Les trous et les accords d'un texte. */

@@ -108,8 +108,10 @@ public final class CityTalk {
         state.person(p.father()).ifPresent(f -> family.add(Fr.key("crusadecraft.city.talk.family.father", state.fullName(f))));
         state.person(p.mother()).ifPresent(m -> family.add(Fr.key("crusadecraft.city.talk.family.mother", state.fullName(m))));
         boolean trades = entity instanceof Villager v && !v.getOffers().isEmpty();
+        List<String> orders = new ArrayList<>();
+        for (CityOrders.Order o : site.orders()) orders.add(Fr.key("crusadecraft.city.order.line", CityOrders.describe(o.good(), o.count()), CityOrders.money(o.reward())));
         return new InhabitantPackets.View(p.id(), entity.getId(), state.fullName(p), jobTitle(p), site.name(), realm, p.age(), traits, p.bio(), family,
-                p.opinionOf(player.getUUID()), line, trades, p.hunger());
+                p.opinionOf(player.getUUID()), line, trades, p.hunger(), orders, CityOrders.deliverable(player, site).isPresent(), CityService.allowed(player, site));
     }
 
     /** Son titre, accordé : « boulangère », « garde ». */
@@ -155,6 +157,20 @@ public final class CityTalk {
         v.openTradingScreen(player, v.getDisplayName(), v.getVillagerData().getLevel());
     }
 
+    /** P49 : on lui remet ce que la ville a commandé. */
+    public static void deliver(ServerPlayer player, UUID id) {
+        MinecraftServer server = player.server;
+        Optional<Person> p = data(server).lineage().person(id).filter(Person::alive);
+        if (p.isEmpty()) return;
+        Optional<Site> site = siteOf(server, p.get());
+        Entity e = player.serverLevel().getEntity(id);
+        if (site.isEmpty() || e == null || e.distanceToSqr(player) > REACH * REACH * 4) return;
+        fr.crusadecraft.core.council.CouncilActions.Outcome out = CityOrders.deliver(player, site.get(), p.get());
+        player.displayClientMessage(out.message().copy().withStyle(out.success() ? net.minecraft.ChatFormatting.GOLD : net.minecraft.ChatFormatting.RED), false);
+        String line = CityVoice.text(server, site.get(), p.get(), out.success() ? Repliques.Moment.MERCI : Repliques.Moment.ACCUEIL, player, RANDOM).orElse("…");
+        CrusadeNetwork.toPlayer(player, new InhabitantPackets.Open(view(player, e, site.get(), p.get(), line)));
+    }
+
     // ------------------------------------------------------------------ ce dont ils se souviennent
 
     /** Un joueur frappe un habitant : celui-ci et ceux qui l'ont vu s'en souviennent, et la ville en parle. */
@@ -180,6 +196,16 @@ public final class CityTalk {
         Optional<Site> site = siteOf(server, p.get());
         if (site.isEmpty()) return;
         LineageState state = data(server).lineage();
+        // P50 : une caravane attaquée laisse sa charge sur la route ; toute sa ville l'apprend.
+        Trip trip = p.get().trip();
+        if (trip != null) {
+            CityGood cargo = trip.stage() == Trip.Stage.BACK ? trip.back() : trip.good();
+            int load = trip.stage() == Trip.Stage.BACK ? trip.backAmount() : trip.amount();
+            if (cargo != null && load > 0) {
+                victim.spawnAtLocation(new net.minecraft.world.item.ItemStack(CityScenes.item(cargo), Math.min(load, 64)));
+                CityRumors.add(server, site.get(), "pillage", player.getGameProfile().getName(), p.get().name());
+            }
+        }
         for (CityBuilding b : site.get().buildings()) for (UUID id : b.occupants()) state.person(id).ifPresent(x -> x.addOpinion(player.getUUID(), -10));
         for (Person kin : kin(state, p.get())) kin.addOpinion(player.getUUID(), -40);
         CityRumors.add(server, site.get(), "tue", player.getGameProfile().getName(), p.get().name());

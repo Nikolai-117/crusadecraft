@@ -33,7 +33,7 @@ import net.minecraftforge.network.simple.SimpleChannel;
  * (distance, droits, état) avant d'agir.
  */
 public final class CrusadeNetwork {
-    private static final String VERSION = "27";
+    private static final String VERSION = "28";
 
     public static final SimpleChannel CHANNEL = NetworkRegistry.newSimpleChannel(
             ResourceLocation.tryParse(CrusadeCraft.MOD_ID + ":main"),
@@ -269,6 +269,48 @@ public final class CrusadeNetwork {
         CHANNEL.messageBuilder(fr.crusadecraft.network.packet.InhabitantPackets.ChooseEgg.class, nextId++, NetworkDirection.PLAY_TO_SERVER)
                 .encoder(fr.crusadecraft.network.packet.InhabitantPackets.ChooseEgg::encode).decoder(fr.crusadecraft.network.packet.InhabitantPackets.ChooseEgg::decode)
                 .consumerMainThread(fr.crusadecraft.network.packet.InhabitantPackets.ChooseEgg::handle).add();
+        CHANNEL.messageBuilder(fr.crusadecraft.network.packet.SkinPackets.Upload.class, nextId++, NetworkDirection.PLAY_TO_SERVER)
+                .encoder(fr.crusadecraft.network.packet.SkinPackets.Upload::encode).decoder(fr.crusadecraft.network.packet.SkinPackets.Upload::decode)
+                .consumerMainThread(fr.crusadecraft.network.packet.SkinPackets.Upload::handle).add();
+        CHANNEL.messageBuilder(fr.crusadecraft.network.packet.SkinPackets.Request.class, nextId++, NetworkDirection.PLAY_TO_SERVER)
+                .encoder(fr.crusadecraft.network.packet.SkinPackets.Request::encode).decoder(fr.crusadecraft.network.packet.SkinPackets.Request::decode)
+                .consumerMainThread(fr.crusadecraft.network.packet.SkinPackets.Request::handle).add();
+        CHANNEL.messageBuilder(fr.crusadecraft.network.packet.SkinPackets.Library.class, nextId++, NetworkDirection.PLAY_TO_CLIENT)
+                .encoder(fr.crusadecraft.network.packet.SkinPackets.Library::encode).decoder(fr.crusadecraft.network.packet.SkinPackets.Library::decode)
+                .consumerMainThread(fr.crusadecraft.network.packet.SkinPackets.Library::handle).add();
+        CHANNEL.messageBuilder(fr.crusadecraft.network.packet.SkinPackets.Data.class, nextId++, NetworkDirection.PLAY_TO_CLIENT)
+                .encoder(fr.crusadecraft.network.packet.SkinPackets.Data::encode).decoder(fr.crusadecraft.network.packet.SkinPackets.Data::decode)
+                .consumerMainThread(fr.crusadecraft.network.packet.SkinPackets.Data::handle).add();
+        CHANNEL.messageBuilder(fr.crusadecraft.network.packet.SkinPackets.Assign.class, nextId++, NetworkDirection.PLAY_TO_CLIENT)
+                .encoder(fr.crusadecraft.network.packet.SkinPackets.Assign::encode).decoder(fr.crusadecraft.network.packet.SkinPackets.Assign::decode)
+                .consumerMainThread(fr.crusadecraft.network.packet.SkinPackets.Assign::handle).add();
+        CHANNEL.messageBuilder(fr.crusadecraft.network.packet.NpcPackets.Open.class, nextId++, NetworkDirection.PLAY_TO_CLIENT)
+                .encoder(fr.crusadecraft.network.packet.NpcPackets.Open::encode).decoder(fr.crusadecraft.network.packet.NpcPackets.Open::decode)
+                .consumerMainThread(fr.crusadecraft.network.packet.NpcPackets.Open::handle).add();
+        CHANNEL.messageBuilder(fr.crusadecraft.network.packet.NpcPackets.Request.class, nextId++, NetworkDirection.PLAY_TO_SERVER)
+                .encoder(fr.crusadecraft.network.packet.NpcPackets.Request::encode).decoder(fr.crusadecraft.network.packet.NpcPackets.Request::decode)
+                .consumerMainThread(fr.crusadecraft.network.packet.NpcPackets.Request::handle).add();
+        CHANNEL.messageBuilder(fr.crusadecraft.network.packet.NpcPackets.Edit.class, nextId++, NetworkDirection.PLAY_TO_SERVER)
+                .encoder(fr.crusadecraft.network.packet.NpcPackets.Edit::encode).decoder(fr.crusadecraft.network.packet.NpcPackets.Edit::decode)
+                .consumerMainThread(fr.crusadecraft.network.packet.NpcPackets.Edit::handle).add();
+        CHANNEL.messageBuilder(fr.crusadecraft.network.packet.CityPanelPackets.Open.class, nextId++, NetworkDirection.PLAY_TO_CLIENT)
+                .encoder(fr.crusadecraft.network.packet.CityPanelPackets.Open::encode).decoder(fr.crusadecraft.network.packet.CityPanelPackets.Open::decode)
+                .consumerMainThread(fr.crusadecraft.network.packet.CityPanelPackets.Open::handle).add();
+        CHANNEL.messageBuilder(fr.crusadecraft.network.packet.CityPanelPackets.Edit.class, nextId++, NetworkDirection.PLAY_TO_SERVER)
+                .encoder(fr.crusadecraft.network.packet.CityPanelPackets.Edit::encode).decoder(fr.crusadecraft.network.packet.CityPanelPackets.Edit::decode)
+                .consumerMainThread(fr.crusadecraft.network.packet.CityPanelPackets.Edit::handle).add();
+        CHANNEL.messageBuilder(fr.crusadecraft.network.packet.CityPanelPackets.Live.class, nextId++, NetworkDirection.PLAY_TO_CLIENT)
+                .encoder(fr.crusadecraft.network.packet.CityPanelPackets.Live::encode).decoder(fr.crusadecraft.network.packet.CityPanelPackets.Live::decode)
+                .consumerMainThread(fr.crusadecraft.network.packet.CityPanelPackets.Live::handle).add();
+        CHANNEL.messageBuilder(fr.crusadecraft.network.packet.CityPanelPackets.AskLive.class, nextId++, NetworkDirection.PLAY_TO_SERVER)
+                .encoder(fr.crusadecraft.network.packet.CityPanelPackets.AskLive::encode).decoder(fr.crusadecraft.network.packet.CityPanelPackets.AskLive::decode)
+                .consumerMainThread(fr.crusadecraft.network.packet.CityPanelPackets.AskLive::handle).add();
+        CHANNEL.messageBuilder(fr.crusadecraft.network.packet.CityPostPackets.Open.class, nextId++, NetworkDirection.PLAY_TO_CLIENT)
+                .encoder(fr.crusadecraft.network.packet.CityPostPackets.Open::encode).decoder(fr.crusadecraft.network.packet.CityPostPackets.Open::decode)
+                .consumerMainThread(fr.crusadecraft.network.packet.CityPostPackets.Open::handle).add();
+        CHANNEL.messageBuilder(fr.crusadecraft.network.packet.CityPostPackets.Act.class, nextId++, NetworkDirection.PLAY_TO_SERVER)
+                .encoder(fr.crusadecraft.network.packet.CityPostPackets.Act::encode).decoder(fr.crusadecraft.network.packet.CityPostPackets.Act::decode)
+                .consumerMainThread(fr.crusadecraft.network.packet.CityPostPackets.Act::handle).add();
         CHANNEL.messageBuilder(fr.crusadecraft.network.packet.NationPackets.Request.class, nextId++, NetworkDirection.PLAY_TO_SERVER)
                 .encoder(fr.crusadecraft.network.packet.NationPackets.Request::encode).decoder(fr.crusadecraft.network.packet.NationPackets.Request::decode)
                 .consumerMainThread(fr.crusadecraft.network.packet.NationPackets.Request::handle).add();

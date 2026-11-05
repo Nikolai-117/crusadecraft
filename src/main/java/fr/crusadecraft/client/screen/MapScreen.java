@@ -760,6 +760,7 @@ public class MapScreen extends Screen {
         g.enableScissor(mapX, mapY, mapX + mapW, mapY + mapH);
         if (warMode()) renderWarZones(g);
         if (!editing()) renderTrade(g);
+        renderTravellers(g);
         renderPlaces(g);
         renderSeats(g);
         if (!editing()) renderArmies(g);
@@ -798,6 +799,7 @@ public class MapScreen extends Screen {
         if (Ui.inside(mouseX, mouseY, mapX, mapY, mapW, mapH) && !dragging && !painting && !arrowing && !overPanel(mouseX, mouseY)) {
             List<Component> tip = warMode() ? warTooltip(mouseX, mouseY) : List.of();
             if (tip.isEmpty() && !editing()) tip = armyTooltip(mouseX, mouseY);
+            if (tip.isEmpty() && !editing()) tip = travellerTooltip(mouseX, mouseY);
             if (tip.isEmpty() && !editing()) tip = tradeTooltip(mouseX, mouseY);
             if (tip.isEmpty()) tip = tooltip(rasterOwner(mouseX, mouseY));
             if (!tip.isEmpty()) g.renderComponentTooltip(font, tip, mouseX, mouseY);
@@ -1339,6 +1341,43 @@ public class MapScreen extends Screen {
                 g.fill(cx + 1, cy + 1, cx + 3, cy + 3, INK);
             }
         }
+    }
+
+    /** P50 : les voyageurs : un chariot pour une caravane, un point pour celui qui marche seul, et le trait de ce qu'il lui reste à faire. */
+    private void renderTravellers(GuiGraphics g) {
+        for (MapView.Traveller t : view.travellers()) {
+            int x = screenX(t.x()), y = screenY(t.z()), tx = screenX(t.toX()), ty = screenY(t.toZ());
+            double len = Math.hypot(tx - x, ty - y);
+            if (len >= 4) {
+                double angle = Math.atan2(ty - y, tx - x);
+                for (double d = 4; d < len; d += 7) {
+                    int sx = (int) Math.round(x + Math.cos(angle) * d), sy = (int) Math.round(y + Math.sin(angle) * d);
+                    if (sx < mapX - 10 || sx > mapX + mapW + 10 || sy < mapY - 10 || sy > mapY + mapH + 10) continue;
+                    bar(g, sx, sy, angle, (int) Math.min(3, len - d), 1, t.caravan() ? 0xC0E7BD55 : 0xA0EDE3CC);
+                }
+            }
+            if (t.caravan()) {
+                g.fill(x - 4, y - 3, x + 4, y + 1, INK);
+                g.fill(x - 3, y - 2, x + 3, y, 0xFFE7BD55);
+                g.fill(x - 3, y + 1, x - 1, y + 3, INK);
+                g.fill(x + 1, y + 1, x + 3, y + 3, INK);
+            } else {
+                g.fill(x - 2, y - 2, x + 2, y + 2, INK);
+                g.fill(x - 1, y - 1, x + 1, y + 1, 0xFFEDE3CC);
+            }
+        }
+    }
+
+    private List<Component> travellerTooltip(double mouseX, double mouseY) {
+        for (MapView.Traveller t : view.travellers()) {
+            if (Math.abs(mouseX - screenX(t.x())) > 5 || Math.abs(mouseY - screenY(t.z())) > 5) continue;
+            List<Component> tip = new ArrayList<>();
+            tip.add(Component.literal(t.name()).withStyle(ChatFormatting.GOLD));
+            tip.add(Component.translatable("crusadecraft.city.travel.road", t.from(), t.to(), t.percent()).withStyle(ChatFormatting.WHITE));
+            if (!t.cargo().isEmpty()) tip.add(Component.translatable("crusadecraft.city.travel.cargo", t.cargo()).withStyle(ChatFormatting.YELLOW));
+            return tip;
+        }
+        return List.of();
     }
 
     private List<Component> tradeTooltip(double mouseX, double mouseY) {

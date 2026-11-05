@@ -58,6 +58,17 @@ public final class Site {
     public int charm() { return charm; }
     public void setCharm(int charm) { this.charm = charm; }
 
+    /** P46 : ce qu'on a réglé pour toute la ville dans son panneau. */
+    private fr.crusadecraft.core.city.CitySettings settings;
+    /** P49 : ce que la ville a commandé et attend qu'on lui livre. */
+    private final java.util.List<fr.crusadecraft.core.city.CityOrders.Order> orders = new java.util.ArrayList<>();
+
+    public fr.crusadecraft.core.city.CitySettings settings() {
+        if (settings == null) settings = new fr.crusadecraft.core.city.CitySettings();
+        return settings;
+    }
+    public java.util.List<fr.crusadecraft.core.city.CityOrders.Order> orders() { return orders; }
+
     /** P43 : ses réserves et sa bourse. Une ville d'avant cette version reçoit de quoi commencer. */
     private fr.crusadecraft.core.city.CityEconomy economy;
 
@@ -184,6 +195,12 @@ public final class Site {
             t.put("rumors", l);
         }
         if (economy != null) t.put("economy", economy.save());
+        if (settings != null && !settings.isDefault()) t.put("settings", settings.save());
+        if (!orders.isEmpty()) {
+            net.minecraft.nbt.ListTag ol = new net.minecraft.nbt.ListTag();
+            for (fr.crusadecraft.core.city.CityOrders.Order o : orders) ol.add(o.save());
+            t.put("orders", ol);
+        }
         if (charm != 0) t.putInt("charm", charm);
         return t;
     }
@@ -209,6 +226,9 @@ public final class Site {
         net.minecraft.nbt.ListTag ru = t.getList("rumors", net.minecraft.nbt.Tag.TAG_COMPOUND);
         for (int k = 0; k < ru.size(); k++) s.rumors.add(new Rumor(ru.getCompound(k).getString("text"), ru.getCompound(k).getLong("day")));
         if (t.contains("economy")) s.economy = fr.crusadecraft.core.city.CityEconomy.load(t.getCompound("economy"));
+        if (t.contains("settings")) s.settings = fr.crusadecraft.core.city.CitySettings.load(t.getCompound("settings"));
+        net.minecraft.nbt.ListTag ol = t.getList("orders", net.minecraft.nbt.Tag.TAG_COMPOUND);
+        for (int k = 0; k < ol.size(); k++) s.orders.add(fr.crusadecraft.core.city.CityOrders.Order.load(ol.getCompound(k)));
         s.charm = t.getInt("charm");
         return s;
     }

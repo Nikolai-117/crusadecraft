@@ -46,6 +46,9 @@ public final class CityPeople {
     static LineageGenerator generator(MinecraftServer server, Site site, long seed) {
         LineageGenerator gen = new LineageGenerator(seed);
         nation(server, site).map(NationDef::culture).ifPresent(c -> gen.withNames(c.men(), c.women(), c.families()));
+        // P46 : ses propres noms, s'il lui en a été donné, passent avant ceux de sa culture.
+        CitySettings s = site.settings();
+        if (!s.men.isEmpty() || !s.women.isEmpty() || !s.families.isEmpty()) gen.withNames(s.men, s.women, s.families);
         return gen;
     }
 
@@ -55,6 +58,26 @@ public final class CityPeople {
         if (f != null && !f.dwelling() && p.age() >= 16) p.setJob(f.name());
         if (p.traits().isEmpty()) p.setTraits(traits(random, p.age()), Person.MAX_TRAITS);
         if (p.bio().isEmpty()) p.setBio(life(server, site, p, random));
+        wardrobe(site, p, random);
+    }
+
+    /** P46 : s'il n'a pas d'allure à lui et que la ville a ses tenues, il en reçoit une ; celles qui ne sont pas de son sexe ne lui vont pas. */
+    static boolean wardrobe(Site site, Person p, Random random) {
+        List<String> pool = site.settings().poolFor(p.job());
+        if (pool.isEmpty()) return false;
+        List<String> fit = new ArrayList<>();
+        for (String look : pool) if (fits(look, p.female())) fit.add(look);
+        if (fit.isEmpty()) return false;
+        p.settings().look = fit.get(random.nextInt(fit.size()));
+        return true;
+    }
+
+    /** Une tenue de Comes Alive est rangée par sexe, dans son chemin ; un skin importé va à tout le monde. */
+    static boolean fits(String look, boolean female) {
+        if (look.startsWith(SkinService.PREFIX)) return true;
+        if (look.contains("/female/")) return female;
+        if (look.contains("/male/")) return !female;
+        return true;
     }
 
     /** Deux ou trois traits de caractère, jamais contraires ; un enfant n'en a qu'un. */

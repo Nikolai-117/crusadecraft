@@ -1,0 +1,17 @@
+{
+ "moment": "message_merci",
+ "lines": [
+  "{joueur}, nous avons bien reçu {commande}. Toute la ville vous en sait gré, à commencer par ceux qui en avaient besoin.",
+  "Merci pour votre livraison. Je ne le dirai qu'une fois, mais je le pense.",
+  "Vous avez tenu parole, et ce n'est pas si courant. On s'en souviendra à {ville}.",
+  "Les réserves respirent, grâce à vous. Passez quand vous voudrez : vous serez chez vous.",
+  "Vous nous avez apporté {commande}, et à temps. {ville} ne l'oubliera pas de sitôt.",
+  "Vous avez eu vos {recompense}, mais ce n'était pas tout ce qu'on vous devait. Merci, {joueur}.",
+  "Je voulais vous l'écrire : votre livraison a évité bien des disputes. Et ici, ce n'est pas rien.",
+  "Tout le monde parle de vous depuis votre passage. Pour une fois, c'est en bien.",
+  "Si {ville} tient encore debout, c'est un peu grâce à vous. Pas beaucoup, mais un peu. Merci.",
+  "J'ai rangé moi-même ce que vous nous avez apporté. C'était beau à voir. Merci.",
+  "Rien ne vous y obligeait. Enfin, si : le paiement. Mais rien ne vous obligeait à tant d'amabilité.",
+  "Une ville n'a pas de mémoire, dit-on. Celle-ci en a, quand on la nourrit."
+ ]
+}

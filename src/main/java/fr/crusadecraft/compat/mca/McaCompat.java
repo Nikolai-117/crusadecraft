@@ -133,6 +133,18 @@ final class McaCompat {
         return true;
     }
 
+    static void setClothes(Entity entity, String clothes) {
+        if (entity instanceof VillagerEntityMCA v) v.setClothes(clothes);
+    }
+
+    static void setHair(Entity entity, String hair) {
+        if (entity instanceof VillagerEntityMCA v) v.setHair(hair);
+    }
+
+    static void setSize(Entity entity, float size) {
+        if (entity instanceof VillagerEntityMCA v) v.getGenetics().setGene(forge.net.mca.entity.ai.Genetics.SIZE, size);
+    }
+
     static void rename(Entity entity, String fullName) {
         if (entity instanceof VillagerEntityMCA v) v.setName(fullName);
         if (entity.level() instanceof ServerLevel level) {

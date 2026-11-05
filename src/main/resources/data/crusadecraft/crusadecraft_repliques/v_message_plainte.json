@@ -1,0 +1,23 @@
+{
+ "moment": "message_plainte",
+ "lines": [
+  "{joueur}, on se souvient de ce que vous avez fait à {ville}. On n'a pas fini de s'en souvenir.",
+  "Je vous écris pour que vous sachiez une chose : ici, votre nom n'est pas le bienvenu.",
+  "Vous n'êtes pas des nôtres, et vous le montrez bien. Restez donc loin de {ville}.",
+  "Certains vous ont déjà pardonné. Je n'en fais pas partie.",
+  "Il paraît que vous dormez bien. C'est dommage.",
+  "Je ne suis que {metier}, mais je sais reconnaître quelqu'un qui ne mérite pas qu'on lui ouvre sa porte.",
+  "La prochaine fois que vous passerez par {ville}, baissez les yeux. Ça nous fera plaisir.",
+  "Vous pensez qu'on oublie vite, à {ville}. Vous pensez mal.",
+  "Ne comptez sur personne ici, {joueur}. On a la mémoire longue et la porte étroite.",
+  "On parle de vous à table. Pas pour vous féliciter.",
+  "Je n'ai pas la force de vous le dire en face, alors je l'écris : vous avez mal agi, et vous le savez.",
+  "Si vous cherchez de l'amitié, cherchez ailleurs. {voisin} est d'accord avec moi, pour une fois.",
+  "Vous avez le talent de vous faire détester. J'espère au moins que ça vous rapporte.",
+  "Il y a des gens qu'on salue parce qu'on y est obligé. Vous n'êtes même pas de ceux-là.",
+  "Que votre route soit longue, {joueur}, et qu'elle ne passe pas par ici.",
+  "Ma lettre ne vous fera rien, je le sais bien. Mais moi, ça me fait du bien.",
+  "Payez ce que vous devez à cette ville, en excuses ou en autre chose. Après, on verra.",
+  "Personne ne m'a demandé de vous écrire. Ça vous montre à quel point on vous déteste : c'est spontané."
+ ]
+}

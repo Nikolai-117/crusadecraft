@@ -1,0 +1,15 @@
+{
+ "moment": "message_vente",
+ "lines": [
+  "Affaire faite à {destination} : j'ai vendu {commande} pour {recompense}. Je rapporte la bourse à {ville} dès que possible.",
+  "Compte rendu : j'ai placé {commande} à {destination}, pour {recompense}. On m'y a bien {reçu|reçue}, pour {un étranger|une étrangère}.",
+  "{joueur}, la cargaison est vendue. J'ai cédé {commande} à {destination} pour {recompense} : on ne trouvera pas mieux.",
+  "Je vous écris depuis {destination}. J'ai écoulé {commande}, à {recompense}. Le voyage aura servi à quelque chose.",
+  "Bonne vente : {recompense} pour {commande}. Ils en manquaient, ici, et je ne le leur ai pas fait remarquer.",
+  "Il y avait preneur à {destination} pour {commande}. La ville y gagne {recompense}, moi des ampoules.",
+  "J'ai tiré {recompense} de {commande}. Je sais, on aurait pu en tirer davantage. Vous n'étiez pas là pour négocier.",
+  "Il fallait écouler le surplus : c'est fait. J'ai vendu {commande} à {destination}, {recompense} à la clé.",
+  "Tout est vendu à {destination}. J'ai {recompense} en poche, et je reprends la route. Prévenez la ville qu'elle ne s'inquiète pas.",
+  "Je ne me plains pas : j'ai vendu {commande} pour {recompense}, et personne ne m'a volé. Une bonne journée, à {destination}."
+ ]
+}

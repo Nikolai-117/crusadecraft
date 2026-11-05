@@ -1,0 +1,11 @@
+{
+ "moment": "message_ami",
+ "metiers": ["FORGE", "ATELIER", "ECURIE", "FERME"],
+ "lines": [
+  "J'ai les mains pleines d'ouvrage, {joueur}, mais j'ai trouvé un moment pour vous écrire. N'en concluez pas que je m'ennuie.",
+  "Le travail avance. Il avance toujours, c'est bien son défaut. Passez, si vous avez besoin de quelque chose de solide.",
+  "Quand vous aurez besoin d'un service, demandez-moi d'abord. Je le ferai mal payé, mais je le ferai bien.",
+  "Le métier va, la saison aussi. Il manque seulement quelqu'un à qui en parler. Venez donc.",
+  "On reconnaît un bon ouvrage à ce qu'on n'y pense plus. Vous, on y pense encore : c'est sans doute autre chose."
+ ]
+}

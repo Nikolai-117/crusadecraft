@@ -109,6 +109,36 @@ public final class McaBridge {
         }
     }
 
+    /** Sa tenue de Comes Alive (un chemin de texture). */
+    public static void setClothes(Entity entity, String clothes) {
+        if (!isReady()) return;
+        try {
+            McaCompat.setClothes(entity, clothes);
+        } catch (RuntimeException | LinkageError e) {
+            fail(e);
+        }
+    }
+
+    /** Sa coiffure de Comes Alive (un chemin de texture). */
+    public static void setHair(Entity entity, String hair) {
+        if (!isReady()) return;
+        try {
+            McaCompat.setHair(entity, hair);
+        } catch (RuntimeException | LinkageError e) {
+            fail(e);
+        }
+    }
+
+    /** Sa taille, de 0 à 1. */
+    public static void setSize(Entity entity, float size) {
+        if (!isReady()) return;
+        try {
+            McaCompat.setSize(entity, size);
+        } catch (RuntimeException | LinkageError e) {
+            fail(e);
+        }
+    }
+
     /** Renomme le villageois qui incarne une personne (et son nom dans l'arbre). */
     public static void rename(Entity entity, String fullName) {
         if (!isReady()) return;

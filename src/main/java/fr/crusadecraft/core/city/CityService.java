@@ -245,7 +245,22 @@ public final class CityService {
     /** Qui peut tenir le bâton : le créatif, l'éditeur de la carte, ou le maître des lieux. */
     public static boolean allowed(ServerPlayer player, Site site) {
         if (PlanTool.allowed(player)) return true;
-        return data(player.server).realm(site.owner()).map(r -> player.getUUID().equals(r.ruler())).orElse(false);
+        if (data(player.server).realm(site.owner()).map(r -> player.getUUID().equals(r.ruler())).orElse(false)) return true;
+        // P46 : le souverain d'une nation règne aussi sur ses villes.
+        return data(player.server).world().realm(site.owner()).map(r -> player.getUUID().equals(r.sovereign())).orElse(false);
+    }
+
+    /** Peut-il toucher à au moins une ville ? Ce qu'il faut pour importer un skin. */
+    public static boolean mayEditAnything(ServerPlayer player) {
+        if (PlanTool.allowed(player)) return true;
+        for (Site s : data(player.server).world().sites()) if (city(s) && allowed(player, s)) return true;
+        return false;
+    }
+
+    /** Combien de gens elle accueille au plus : son réglage, sinon le plafond du mod. */
+    public static int max(Site site) {
+        int own = site.settings().peopleMax;
+        return own > 0 ? Math.min(own, PEOPLE_MAX) : PEOPLE_MAX;
     }
 
     /**
@@ -338,7 +353,7 @@ public final class CityService {
     }
 
     static boolean full(MinecraftServer server, Site site) {
-        return people(server, site) >= PEOPLE_MAX;
+        return people(server, site) >= max(site);
     }
 
     /** La communauté de la ville au registre (créée au besoin, vide). */
@@ -436,6 +451,8 @@ public final class CityService {
                     UUID id = b.occupants().get(i);
                     Optional<Person> p = state.person(id);
                     if (p.isEmpty()) continue;
+                    // P48 : il est sur les routes, ou en visite ailleurs : le voyage s'occupe de lui.
+                    if (p.get().alive() && p.get().trip() != null) continue;
                     if (!p.get().alive()) {
                         if (b.function().dwelling()) continue;
                         long seen = DEAD_SINCE.computeIfAbsent(id, k -> day);
@@ -499,7 +516,7 @@ public final class CityService {
             if (b.function() == null || !level.isLoaded(b.spot())) continue;
             for (int i = 0; i < b.occupants().size(); i++) {
                 Optional<Person> p = state.person(b.occupants().get(i));
-                if (p.isEmpty() || !p.get().alive() || p.get().inWorld()) continue;
+                if (p.isEmpty() || !p.get().alive() || p.get().inWorld() || p.get().trip() != null) continue;
                 spawn(level, state, p.get(), b, i).ifPresent(out::add);
             }
         }
@@ -562,7 +579,16 @@ public final class CityService {
         SPAWNED.put(p.id(), new java.lang.ref.WeakReference<>(e.get()));
         if (!function.dwelling() && p.age() >= 16) CityTrades.apply(e.get(), function, post, level.random);
         p.setInWorld(level.dimension().location(), at);
+        // P47 : ce qu'on a réglé sur lui dans l'éditeur.
+        CityNpc.apply(level.getServer(), e.get(), p);
         return e;
+    }
+
+    /** P48 : un voyageur paraît là où il en est sur sa route, ou sur la place de la ville qu'il visite. */
+    static Optional<Entity> spawnTraveller(ServerLevel level, LineageState state, Person p, BlockPos at) {
+        BuildingFunction f = BuildingFunction.byName(p.job());
+        if (f == null) f = BuildingFunction.MAISON;
+        return spawnAt(level, state, p, at, f, f.posts().isEmpty() ? "minecraft:none" : f.posts().get(0));
     }
 
     /** Un villageois d'une ville dont la personne n'est plus au registre (son bâtiment a changé de fonction). */
@@ -590,6 +616,8 @@ public final class CityService {
         Optional<Site> site = cityAt(player.server, player.level().dimension().location(), at);
         if (site.isEmpty()) return new Outcome(false, joined);
         int n = recognize(player.serverLevel(), site.get());
+        // P46 : on la règle tout de suite : son nom, son camp, ses habitants, son allure.
+        CityPanel.open(player, site.get());
         return Outcome.ok(Component.translatable("crusadecraft.city.found.done", joined, n));
     }
 
@@ -617,6 +645,10 @@ public final class CityService {
         if (level == null) return;
         int n = recognize(level, site);
         CrusadeCraft.LOGGER.info("CrusadeCraft : ville {} posée, {} bâtiments reconnus", site.name(), n);
-        if (placer != null) placer.sendSystemMessage(Component.translatable("crusadecraft.city.pasted", site.name(), n));
+        if (placer != null) {
+            placer.sendSystemMessage(Component.translatable("crusadecraft.city.pasted", site.name(), n));
+            // P46 : la ville posée, son panneau s'ouvre : tout s'y règle.
+            CityPanel.open(placer, site);
+        }
     }
 }

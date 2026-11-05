@@ -167,7 +167,10 @@ public final class InhabitantGameTests {
                         if (b.occupants().isEmpty()) continue;
                         Person p = state.person(b.occupants().get(0)).orElseThrow();
                         String text = CityVoice.fill(server, s, p, fr.crusadecraft.core.logic.Fr.of(line), null, new Random(1));
-                        boolean letter = e.moment().name().startsWith("LETTRE");
+                        // Les lettres ont leurs trous à elles, remplis par ceux qui les écrivent (voir leurs propres essais).
+                        String kind = e.moment().name();
+                        boolean letter = kind.startsWith("LETTRE") || kind.startsWith("MESSAGE_") || kind.startsWith("ECHANGE_") || kind.startsWith("REMISE_")
+                                || kind.startsWith("GROS_") || kind.startsWith("CAUSETTE");
                         w.check(letter || (!text.contains("{") && !text.contains("}")), "un texte garde un trou : " + text);
                         checked++;
                         break;

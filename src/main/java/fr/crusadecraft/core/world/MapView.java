@@ -23,7 +23,16 @@ import java.util.UUID;
 public record MapView(ResourceLocation dimension, int focusX, int focusZ, int playerX, int playerZ, int territoryRadius,
                       int colonyRadius, List<Territory> territories, List<Seat> seats, List<Dejure> dejure,
                       boolean canEdit, boolean editing, Borders borders, List<Place> places, War war, List<TradeLine> routes,
-                      List<ArmyPawn> armies) {
+                      List<ArmyPawn> armies, List<Traveller> travellers) {
+
+    /** P50 : un voyageur sur la route, une caravane s'il porte quelque chose. */
+    public record Traveller(int x, int z, int toX, int toZ, String name, String from, String to, int percent, boolean caravan, String cargo) {}
+
+    public MapView(ResourceLocation dimension, int focusX, int focusZ, int playerX, int playerZ, int territoryRadius,
+                   int colonyRadius, List<Territory> territories, List<Seat> seats, List<Dejure> dejure,
+                   boolean canEdit, boolean editing, Borders borders, List<Place> places, War war, List<TradeLine> routes, List<ArmyPawn> armies) {
+        this(dimension, focusX, focusZ, playerX, playerZ, territoryRadius, colonyRadius, territories, seats, dejure, canEdit, editing, borders, places, war, routes, armies, List.of());
+    }
 
     public MapView(ResourceLocation dimension, int focusX, int focusZ, int playerX, int playerZ, int territoryRadius,
                    int colonyRadius, List<Territory> territories, List<Seat> seats, List<Dejure> dejure,
@@ -284,6 +293,19 @@ public record MapView(ResourceLocation dimension, int focusX, int focusZ, int pl
             buf.writeInt(a.targetX());
             buf.writeInt(a.targetZ());
         }
+        buf.writeVarInt(travellers.size());
+        for (Traveller t : travellers) {
+            buf.writeInt(t.x());
+            buf.writeInt(t.z());
+            buf.writeInt(t.toX());
+            buf.writeInt(t.toZ());
+            buf.writeUtf(t.name());
+            buf.writeUtf(t.from());
+            buf.writeUtf(t.to());
+            buf.writeVarInt(t.percent());
+            buf.writeBoolean(t.caravan());
+            buf.writeUtf(t.cargo());
+        }
     }
 
     private static void writeWar(FriendlyByteBuf buf, War war) {
@@ -434,7 +456,12 @@ public record MapView(ResourceLocation dimension, int focusX, int focusZ, int pl
             armies.add(new ArmyPawn(buf.readInt(), buf.readInt(), buf.readVarInt(), buf.readVarInt(), buf.readInt(), buf.readComponent(), buf.readBoolean(),
                     buf.readBoolean(), buf.readBoolean(), buf.readInt(), buf.readInt()));
         }
+        n = buf.readVarInt();
+        List<Traveller> travellers = new ArrayList<>(n);
+        for (int i = 0; i < n; i++) {
+            travellers.add(new Traveller(buf.readInt(), buf.readInt(), buf.readInt(), buf.readInt(), buf.readUtf(), buf.readUtf(), buf.readUtf(), buf.readVarInt(), buf.readBoolean(), buf.readUtf()));
+        }
         return new MapView(dim, fx, fz, px, pz, radius, colonyRadius, territories, seats, dejure, canEdit, editing, new Borders(keys, owners), places,
-                war, routes, armies);
+                war, routes, armies, travellers);
     }
 }

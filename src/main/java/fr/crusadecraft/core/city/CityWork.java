@@ -65,6 +65,9 @@ public final class CityWork {
     /** Le rayon où un fermier cherche ses champs. */
     static final int FIELD_RADIUS = 24, FIELD_DY = 5;
 
+    /** Ce qu'un habitant va acheter quand ce n'est pas pour manger. */
+    private static final CityGood[] SHOPPING = {CityGood.OUTILS, CityGood.CUIR, CityGood.LIVRE, CityGood.BOIS, CityGood.PAIN, CityGood.VIANDE};
+
     /** Ce qu'il est en train de faire : où il va, jusqu'à quand, et ce qu'il porte s'il livre. */
     private static final class State {
         BlockPos target;
@@ -121,7 +124,7 @@ public final class CityWork {
                 if (b.function() == null) continue;
                 for (UUID id : b.occupants()) {
                     Person p = state.person(id).orElse(null);
-                    if (p == null || !p.alive() || !p.inWorld()) continue;
+                    if (p == null || !p.alive() || !p.inWorld() || p.trip() != null) continue;
                     Entity e = level.getEntity(id);
                     if (e instanceof PathfinderMob mob && mob.isAlive()) live(server, level, site, b, p, mob);
                 }
@@ -133,9 +136,11 @@ public final class CityWork {
     /** Une personne, à ce moment de sa journée. */
     public static void live(MinecraftServer server, ServerLevel level, Site site, CityBuilding b, Person p, PathfinderMob mob) {
         if (mob instanceof Villager v && v.isTrading()) return;
+        // P50 : il est en train de traiter avec quelqu'un.
+        if (CityScenes.busy(p.id())) return;
         State s = STATES.computeIfAbsent(p.id(), k -> new State());
         long now = level.getGameTime();
-        CityRules.Activity a = CityRules.activity(level.getDayTime(), p.job(), p.age(), p.traits(), p.id());
+        CityRules.Activity a = activity(level.getDayTime(), p);
         if (a != s.activity) {
             s.activity = a;
             s.until = 0;
@@ -163,6 +168,18 @@ public final class CityWork {
         }
         // Un joueur tout près : on le regarde, et il arrive qu'on lui dise quelque chose.
         listen(server, level, site, p, mob, s, a, now);
+        // P47 : celui qu'on a réglé pour rester à son poste, ou pour faire des rondes, le fait.
+        NpcSettings.Behavior behavior = p.hasSettings() ? p.settings().behavior : NpcSettings.Behavior.SCHEDULE;
+        if (behavior == NpcSettings.Behavior.STATIONARY) {
+            BlockPos post = p.work() == null ? b.spot() : p.work();
+            s.target = post;
+            toward(mob, post, 1);
+            return;
+        }
+        if (behavior == NpcSettings.Behavior.PATROL && a != CityRules.Activity.SLEEP) {
+            patrol(level, site, b, p, mob, s, now);
+            return;
+        }
         switch (a) {
             case SLEEP -> sleep(level, b, p, mob);
             case WORK -> work(server, level, site, b, p, mob, s, now);
@@ -170,6 +187,13 @@ public final class CityWork {
             case LEISURE -> leisure(server, level, site, b, p, mob, s, now);
             case PLAY -> play(level, site, p, mob, s, now);
         }
+    }
+
+    /** Ce qu'il fait à cette heure ; ses heures de travail à lui, s'il en a. */
+    static CityRules.Activity activity(long dayTime, Person p) {
+        CityRules.Activity a = CityRules.activity(dayTime, p.job(), p.age(), p.traits(), p.id());
+        if (!p.hasSettings()) return a;
+        return CityRules.withHours(a, dayTime, p.settings().workStart, p.settings().workEnd);
     }
 
     /**
@@ -241,6 +265,9 @@ public final class CityWork {
     /** Il va d'un meuble à l'autre de son atelier, et y travaille : gestes, bruits, fumée. De temps en temps, il part livrer. */
     private static void atPoints(MinecraftServer server, ServerLevel level, Site site, CityBuilding b, Person p, PathfinderMob mob, State s, long now) {
         if (s.target == null || now >= s.until) {
+            // P50 : l'artisan va chercher ce qu'il lui faut chez celui qui le produit.
+            CityGood need = RANDOM.nextInt(8) == 0 ? CityScenes.supply(b.function(), RANDOM.nextBoolean()) : null;
+            if (need != null && CityScenes.supplyRun(server, level, site, p, mob, need)) return;
             if (s.target != null && RANDOM.nextInt(5) == 0) {
                 Optional<Errand> e = errand(site, b.function());
                 if (e.isPresent()) {
@@ -287,6 +314,13 @@ public final class CityWork {
     private static void deliver(MinecraftServer server, ServerLevel level, Site site, Person p, PathfinderMob mob, State s, CityBuilding home) {
         Errand e = s.errand;
         if (toward(mob, e.to(), 3)) return;
+        // P50 : il le remet à quelqu'un, s'il y a quelqu'un ; la scène le comptera en réserve au moment où ça change de mains.
+        if (e.amount() > 0 && CityScenes.delivery(server, level, site, p, mob, e.to(), e.good(), e.amount())) {
+            s.errand = null;
+            s.target = null;
+            s.until = 0;
+            return;
+        }
         site.economy().add(e.good(), e.amount());
         mob.swing(InteractionHand.MAIN_HAND);
         level.playSound(null, mob.blockPosition(), SoundEvents.BUNDLE_DROP_CONTENTS, SoundSource.NEUTRAL, 0.5f, 1f);
@@ -385,7 +419,17 @@ public final class CityWork {
         if (market != null && s.target.equals(market) && now - s.lastMeal > 6000) {
             s.lastMeal = now;
             buy(server, level, site, p, mob, s, Repliques.Moment.MARCHE, now);
+            return;
         }
+        // P50 : il arrive qu'on ait besoin d'autre chose que de pain, et qu'on s'arrête pour causer.
+        if (RANDOM.nextInt(30) == 0 && now - s.lastMeal > 3000) {
+            CityGood want = SHOPPING[RANDOM.nextInt(SHOPPING.length)];
+            if (CityScenes.sale(server, level, site, p, mob, want, false)) {
+                s.lastMeal = now;
+                return;
+            }
+        }
+        if (RANDOM.nextInt(6) == 0) CityScenes.chat(server, level, site, p, mob);
     }
 
     // ------------------------------------------------------------------ le reste de la journée
@@ -418,6 +462,8 @@ public final class CityWork {
             CityRumors.add(server, site, "famine");
             return;
         }
+        // P50 : il va le chercher auprès de celui qui le vend, s'il est là ; sinon, il se sert au marché comme avant.
+        if (CityScenes.sale(server, level, site, p, mob, food, true)) return;
         eco.take(food, 1);
         if (p.coins() > 0) {
             p.setCoins(p.coins() - 1);
@@ -447,6 +493,8 @@ public final class CityWork {
             s.until = now + TASK_MIN * 2 + RANDOM.nextInt(TASK_SPREAD);
         }
         if (CitySeats.seated(mob) || toward(mob, s.target, 4)) return;
+        // P50 : le soir, on s'arrête pour causer avec le voisin.
+        if (RANDOM.nextInt(4) == 0 && CityScenes.chat(server, level, site, p, mob)) return;
         sitDown(level, mob, s);
     }
 
@@ -483,7 +531,9 @@ public final class CityWork {
         }
         if (nearest == null) return;
         if (best < 16) mob.getLookControl().setLookAt(nearest, 30f, 30f);
-        if (now - s.lastSpoke < SPEAK_PERSON || RANDOM.nextInt(6) != 0) return;
+        // P47 : un bavard parle trois fois plus souvent, un muet jamais.
+        boolean chatty = p.hasSettings() && p.settings().chatty == 2;
+        if (now - s.lastSpoke < (chatty ? SPEAK_PERSON / 3 : SPEAK_PERSON) || RANDOM.nextInt(chatty ? 2 : 6) != 0) return;
         Repliques.Moment m;
         boolean thunder = level.isThundering(), rain = level.isRaining() && level.canSeeSky(mob.blockPosition());
         if (thunder && level.canSeeSky(mob.blockPosition())) m = Repliques.Moment.ORAGE;
@@ -511,6 +561,7 @@ public final class CityWork {
     }
 
     private static void speak(MinecraftServer server, ServerLevel level, Site site, Person p, PathfinderMob mob, State s, Repliques.Moment m, ServerPlayer to, long now) {
+        if (!site.settings().canSpeak || (p.hasSettings() && p.settings().chatty == 0)) return;
         Long last = CITY_SPOKE.get(site.id());
         if (last != null && now - last < SPEAK_CITY) return;
         Optional<String> line = CityVoice.text(server, site, p, m, to, RANDOM);
@@ -520,10 +571,79 @@ public final class CityWork {
         CityBubbles.say(level, mob, line.get());
     }
 
+    // ------------------------------------------------------------------ les voyageurs
+
+    /** P50 : la scène est finie : il reprend ce qu'il faisait, comme s'il venait de changer de tâche. */
+    static void afterScene(UUID id) {
+        State s = STATES.get(id);
+        if (s == null) return;
+        s.activity = null;
+        s.target = null;
+        s.errand = null;
+        s.until = 0;
+    }
+
+    /** P48 : un voyageur sur place : il va d'un lieu à l'autre, s'assied à la taverne, achète au marché, et parle. */
+    static void visit(MinecraftServer server, ServerLevel level, Site site, Site home, Person p, PathfinderMob mob) {
+        if ((mob instanceof Villager v && v.isTrading()) || CityScenes.busy(p.id())) return;
+        State s = STATES.computeIfAbsent(p.id(), k -> new State());
+        long now = level.getGameTime();
+        unstick(level, mob, s, now);
+        CityFurniture.Gathering called = CityFurniture.gathering(site, now);
+        if (called != null) {
+            if (CitySeats.seated(mob)) mob.stopRiding();
+            s.target = called.at();
+            s.until = 0;
+            toward(mob, called.at(), 6);
+            return;
+        }
+        speakAsVisitor(server, level, site, p, mob, s, now);
+        if (s.target == null || now >= s.until) {
+            if (CitySeats.seated(mob)) mob.stopRiding();
+            s.seatTried = false;
+            BlockPos tavern = building(site, BuildingFunction.TAVERNE), market = building(site, BuildingFunction.MARCHE);
+            int roll = RANDOM.nextInt(3);
+            if (roll == 0 && tavern != null) s.target = tavern;
+            else if (roll == 1 && market != null) s.target = market;
+            else {
+                List<BlockPos> spots = CityService.outdoorSpots(level, site);
+                s.target = spots.isEmpty() ? CityService.plaza(site) : spots.get(RANDOM.nextInt(spots.size()));
+            }
+            s.until = now + TASK_MIN * 2 + RANDOM.nextInt(TASK_SPREAD);
+        }
+        if (CitySeats.seated(mob) || toward(mob, s.target, 4)) return;
+        sitDown(level, mob, s);
+    }
+
+    private static void speakAsVisitor(MinecraftServer server, ServerLevel level, Site site, Person p, PathfinderMob mob, State s, long now) {
+        if (!CrusadeConfig.SERVER.repliques.get() || now - s.lastSpoke < SPEAK_PERSON || RANDOM.nextInt(6) != 0) return;
+        ServerPlayer nearest = null;
+        double best = HEARING * HEARING;
+        for (ServerPlayer pl : level.players()) {
+            double d = pl.distanceToSqr(mob);
+            if (d < best) {
+                best = d;
+                nearest = pl;
+            }
+        }
+        if (nearest != null) speak(server, level, site, p, mob, s, Repliques.Moment.VOYAGE, nearest, now);
+    }
+
+    /** P48 : sur la route, il salue celui qu'il croise. */
+    static void roadTalk(MinecraftServer server, ServerLevel level, Site home, Person p, PathfinderMob mob, long now) {
+        State s = STATES.computeIfAbsent(p.id(), k -> new State());
+        speakAsVisitor(server, level, home, p, mob, s, now);
+    }
+
     // ------------------------------------------------------------------ outils
 
     /** Un but de marche, renouvelé à chaque passage ; vrai tant qu'il n'est pas arrivé. */
     static boolean toward(PathfinderMob mob, BlockPos target, int close) {
+        return toward(mob, target, close, 0.55f);
+    }
+
+    /** La même chose, à cette allure. */
+    static boolean toward(PathfinderMob mob, BlockPos target, int close, float speed) {
         double d = mob.blockPosition().distSqr(target);
         if (d <= close * close) return false;
         // Un villageois ne trouve pas son chemin au-delà d'une trentaine de blocs : de loin, il y va par étapes, comme ceux de
@@ -534,7 +654,7 @@ public final class CityWork {
             if (step != null) target = BlockPos.containing(step);
         }
         if (mob instanceof Villager villager && villager.getBrain().checkMemory(MemoryModuleType.WALK_TARGET, MemoryStatus.REGISTERED)) {
-            villager.getBrain().setMemory(MemoryModuleType.WALK_TARGET, new WalkTarget(new BlockPosTracker(target), 0.55f, Math.max(0, close - 1)));
+            villager.getBrain().setMemory(MemoryModuleType.WALK_TARGET, new WalkTarget(new BlockPosTracker(target), speed, Math.max(0, close - 1)));
         } else {
             mob.getNavigation().moveTo(target.getX() + 0.5, target.getY(), target.getZ() + 0.5, 0.7);
         }
@@ -548,7 +668,8 @@ public final class CityWork {
 
     /** L'outil de son métier, en main ; rien hors de ses heures. Il ne le lâche pas en mourant. */
     private static void hold(PathfinderMob mob, State s, Item item) {
-        if (s.held == item) return;
+        // On regarde ce qu'il a vraiment en main : une scène ou un redémarrage ont pu y laisser autre chose.
+        if (mob.getMainHandItem().getItem() == (item == null ? Items.AIR : item)) return;
         s.held = item;
         mob.setItemSlot(EquipmentSlot.MAINHAND, item == null ? ItemStack.EMPTY : new ItemStack(item));
         mob.setDropChance(EquipmentSlot.MAINHAND, 0f);

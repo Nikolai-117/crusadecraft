@@ -1,0 +1,15 @@
+{
+ "moment": "gros_achete",
+ "lines": [
+  "Un marchand ! On n'attendait plus que toi. Marché conclu.",
+  "Montre un peu. C'est du bon. Je te prends tout.",
+  "Tu arrives à point, {autre}. Tiens, voilà ton dû.",
+  "À ce prix-là, je prends. Mais ne le répète pas.",
+  "Bon voyage ? On compte, et je t'offre à boire.",
+  "D'où ça vient, tout ça ? Non, ne me dis rien. Je prends.",
+  "C'est plus cher qu'à la dernière saison. Tant pis, j'en ai besoin.",
+  "Voilà ta bourse. Tes bêtes peuvent boire à la fontaine.",
+  "Ça fera marcher le commerce. Marché conclu, {autre}.",
+  "Tu reviendras, j'espère. On en manque toujours."
+ ]
+}

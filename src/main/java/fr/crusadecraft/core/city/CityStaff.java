@@ -97,7 +97,8 @@ public final class CityStaff {
             else say(player, Component.translatable("crusadecraft.city.none"));
             return;
         }
-        sendCity(player, city.get());
+        // P46 : qui a la main sur la ville ouvre son panneau ; les autres, l'écran qui la présente.
+        if (!CityPanel.open(player, city.get())) sendCity(player, city.get());
     }
 
     /** Le joueur a nommé la ville qu'il fonde là où il est. */

@@ -1,0 +1,12 @@
+{
+ "moment": "echange_reponse",
+ "metiers": [
+  "BOUCHERIE"
+ ],
+ "lines": [
+  "Abattue ce matin. {prix}.",
+  "Du beau morceau, {autre}. Ne le fais pas trop cuire.",
+  "Je t'ai gardé le meilleur. Enfin, ce qu'il reste.",
+  "Tiens, et n'oublie pas de me rapporter ton couteau."
+ ]
+}

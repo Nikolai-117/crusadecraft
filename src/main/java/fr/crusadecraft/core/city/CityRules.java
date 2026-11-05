@@ -8,6 +8,15 @@ import java.util.UUID;
 
 /** Ce que fait un habitant à telle heure, et ce qui décide de sa vie (P43), en logique pure. */
 public final class CityRules {
+    /** P47 : ses heures à lui, de {@code start} à {@code end} : il travaille, et hors de ces heures il ne travaille pas. Sans réglage, rien ne change. */
+    public static Activity withHours(Activity a, long dayTime, int start, int end) {
+        if (start < 0 || end < 0) return a;
+        long t = Math.floorMod(dayTime, 24000L);
+        boolean working = start <= end ? t >= start && t < end : t >= start || t < end;
+        if (working) return Activity.WORK;
+        return a == Activity.WORK ? Activity.LEISURE : a;
+    }
+
     private CityRules() {}
 
     /** Ce qui l'occupe. */

@@ -32,6 +32,9 @@ public final class ClientEvents {
         while (KeyBindings.REALM_MENU.consumeClick()) {
             CrusadeNetwork.toServer(new RequestRealmPacket(OpenRealmScreenPacket.Target.MENU));
         }
+        while (KeyBindings.POST.consumeClick()) {
+            CrusadeNetwork.toServer(new fr.crusadecraft.network.packet.CityPostPackets.Act(fr.crusadecraft.network.packet.CityPostPackets.OPEN, 0));
+        }
         while (KeyBindings.MAP.consumeClick()) {
             CrusadeNetwork.toServer(new fr.crusadecraft.network.packet.WorldPackets.RequestMap(true));
         }
@@ -68,6 +71,7 @@ public final class ClientEvents {
     @SubscribeEvent
     public static void onLogout(net.minecraftforge.client.event.ClientPlayerNetworkEvent.LoggingOut event) {
         fr.crusadecraft.client.map.ClientMapData.clear();
+        fr.crusadecraft.client.skin.SkinClient.onLeave();
         fr.crusadecraft.client.map.PaperMapOverlay.clear();
         fr.crusadecraft.client.map.ClientTerritory.clear();
         fr.crusadecraft.client.map.ClientTerrain.clear(null);

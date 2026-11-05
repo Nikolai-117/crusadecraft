@@ -1,0 +1,11 @@
+{
+ "moment": "message_ami",
+ "metiers": ["CASERNE", "TOUR", "CHATEAU"],
+ "lines": [
+  "La garde se porte bien, {joueur}. Rien à signaler, et c'est ce qu'on aime. Passez nous voir, ça fera un peu d'animation.",
+  "Si quelqu'un vous cherche des ennuis du côté de {ville}, dites que vous me connaissez. Ça ne l'arrêtera pas, mais ça l'amusera.",
+  "J'ai fait ma ronde en pensant à vous : c'est dire si la ronde était longue.",
+  "On veille, ici. Vous pouvez dormir tranquille. Du moins à {ville}.",
+  "Quelques mots entre deux tours de garde : votre nom est bien vu à la caserne. C'est rare."
+ ]
+}

@@ -1,0 +1,14 @@
+{
+ "moment": "echange_reponse",
+ "metiers": [
+  "MARCHE",
+  "ENTREPOT"
+ ],
+ "lines": [
+  "C'est arrivé hier, ça part vite. {prix}.",
+  "Pour toi, c'est {prix}. Pour un autre, ce serait le double.",
+  "Regarde-moi cette qualité. Non, ne touche pas : regarde.",
+  "Je ne gagne rien là-dessus, tu sais. {prix}.",
+  "On ne trouve ça nulle part ailleurs. Enfin, pas ici."
+ ]
+}

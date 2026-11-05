@@ -1,0 +1,21 @@
+{
+ "moment": "echange_reponse",
+ "lines": [
+  "Voilà pour toi, {autre}. Ça fera {prix}.",
+  "Tiens, {autre}. {prix}, et ne discute pas.",
+  "C'est du bon. {prix}.",
+  "Tu tombes bien, il m'en reste. {prix}.",
+  "Pour toi, {autre}, le même prix que pour les autres : {prix}.",
+  "Prends. Tu me paieras {prix}, comme tout le monde.",
+  "Il était temps que tu passes. Voilà.",
+  "Tiens donc, {autre}. Oui, j'en ai. {prix}.",
+  "Tu me dois {prix}. Tout de suite, si possible.",
+  "C'est le dernier prix, {autre} : {prix}.",
+  "Voilà. Et salue les tiens de ma part.",
+  "On n'en fait plus du comme ça. {prix}.",
+  "Doucement, doucement, j'arrive. Voilà.",
+  "C'est {prix}. Non, pas moins.",
+  "Bon choix. Enfin, il n'y en a pas d'autre.",
+  "Tiens, et reviens quand tu veux. Avec de quoi payer."
+ ]
+}

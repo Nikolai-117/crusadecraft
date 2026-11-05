@@ -45,6 +45,13 @@ public final class WorldState {
     /** P41 : les nations déjà nées. Effacée dans l'éditeur, une nation ne revient pas au démarrage suivant. */
     private final java.util.Set<String> nationsBorn = new java.util.LinkedHashSet<>();
 
+    /** P49 : le courrier que les habitants envoient aux joueurs. */
+    private final java.util.Map<UUID, List<fr.crusadecraft.core.city.CityPost.Letter>> post = new java.util.HashMap<>();
+
+    public List<fr.crusadecraft.core.city.CityPost.Letter> post(UUID player) {
+        return post.computeIfAbsent(player, k -> new ArrayList<>());
+    }
+
     public boolean nationBorn(String key) { return nationsBorn.contains(key); }
     public void markNationBorn(String key) { nationsBorn.add(key); }
     /** Les coalitions formées contre des joueurs (P8). */
@@ -171,6 +178,16 @@ public final class WorldState {
     public CompoundTag save() {
         CompoundTag t = new CompoundTag();
         t.putBoolean("generated", generated);
+        if (!post.isEmpty()) {
+            CompoundTag pt = new CompoundTag();
+            post.forEach((player, letters) -> {
+                if (letters.isEmpty()) return;
+                ListTag l = new ListTag();
+                for (fr.crusadecraft.core.city.CityPost.Letter x : letters) l.add(x.save());
+                pt.put(player.toString(), l);
+            });
+            t.put("post", pt);
+        }
         if (!nationsBorn.isEmpty()) {
             ListTag nb = new ListTag();
             for (String k : nationsBorn) nb.add(net.minecraft.nbt.StringTag.valueOf(k));
@@ -203,6 +220,17 @@ public final class WorldState {
     public static WorldState load(CompoundTag t) {
         WorldState s = new WorldState();
         s.generated = t.getBoolean("generated");
+        CompoundTag pt = t.getCompound("post");
+        for (String k : pt.getAllKeys()) {
+            try {
+                List<fr.crusadecraft.core.city.CityPost.Letter> letters = new ArrayList<>();
+                ListTag l = pt.getList(k, Tag.TAG_COMPOUND);
+                for (int i = 0; i < l.size(); i++) letters.add(fr.crusadecraft.core.city.CityPost.Letter.load(l.getCompound(i)));
+                s.post.put(UUID.fromString(k), letters);
+            } catch (IllegalArgumentException ignored) {
+                // Une clé illisible : ce courrier-là est perdu, pas la sauvegarde.
+            }
+        }
         ListTag nb = t.getList("nationsBorn", Tag.TAG_STRING);
         for (int i = 0; i < nb.size(); i++) s.nationsBorn.add(nb.getString(i));
         s.version = t.contains("version") ? t.getInt("version") : 1;

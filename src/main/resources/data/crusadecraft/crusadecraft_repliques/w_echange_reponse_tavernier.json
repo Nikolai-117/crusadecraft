@@ -1,0 +1,13 @@
+{
+ "moment": "echange_reponse",
+ "metiers": [
+  "TAVERNE"
+ ],
+ "lines": [
+  "Assieds-toi, {autre}, ça vient. {prix}.",
+  "C'est chaud, et c'est {prix}. Tu ne trouveras pas mieux, ni autre chose.",
+  "Encore toi. Tu vas finir par habiter ici.",
+  "Je t'en sers un bol, et tu me racontes.",
+  "Ne demande pas ce qu'il y a dedans. {prix}."
+ ]
+}

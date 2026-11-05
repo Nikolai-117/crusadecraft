@@ -39,6 +39,7 @@ public final class ClientSetup {
         event.register(KeyBindings.REALM_MENU);
         event.register(KeyBindings.UNDO_BORNAGE);
         event.register(KeyBindings.MAP);
+        event.register(KeyBindings.POST);
         for (var k : fr.crusadecraft.client.map.PlanControl.ALL) event.register(k);
     }
 }

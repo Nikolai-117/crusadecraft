@@ -131,6 +131,11 @@ public final class CrusadeCommand {
                                 .executes(ctx -> say(ctx, fr.crusadecraft.core.nation.NationCommands.reload(ctx.getSource().getServer()))))
                         .then(Commands.literal("restaurer").requires(s -> s.hasPermission(2))
                                 .executes(ctx -> say(ctx, fr.crusadecraft.core.nation.NationCommands.restore(ctx.getSource().getServer())))))
+                // P49 : ce que les habitants lui ont écrit.
+                .then(Commands.literal("courrier").executes(ctx -> {
+                    fr.crusadecraft.core.city.CityPost.open(ctx.getSource().getPlayerOrException());
+                    return 1;
+                }))
                 // P35 : faire sienne une ville posée — colonie MineColonies, ou capitale d'un royaume à fonder.
                 .then(Commands.literal("ville")
                         .then(Commands.literal("colonie")
@@ -145,6 +150,7 @@ public final class CrusadeCommand {
                                                 net.minecraft.commands.arguments.UuidArgument.getUuid(ctx, "ville"), true)))))
                         // P39 : la ville où l'on est, ses bâtiments et ses gens, sans le bâton.
                         .then(Commands.literal("info").executes(ctx -> lines(ctx, fr.crusadecraft.core.city.CityCommands.info(ctx.getSource().getPlayerOrException()))))
+                        .then(Commands.literal("panneau").executes(ctx -> say(ctx, fr.crusadecraft.core.city.CityPanel.openHere(ctx.getSource().getPlayerOrException()))))
                         .then(Commands.literal("ecran").executes(ctx -> say(ctx, fr.crusadecraft.core.city.CityCommands.screen(ctx.getSource().getPlayerOrException()))))
                         .then(Commands.literal("reconnaitre").executes(ctx -> say(ctx, fr.crusadecraft.core.city.CityCommands.recognize(ctx.getSource().getPlayerOrException()))))
                         .then(Commands.literal("accepter").executes(ctx -> say(ctx, fr.crusadecraft.core.city.CityCommands.acceptAll(ctx.getSource().getPlayerOrException()))))

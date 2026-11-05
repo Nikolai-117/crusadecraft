@@ -46,6 +46,8 @@ import java.util.UUID;
 public final class CityLife {
     /** Ce qu'on gagne par jour de la bourse de la ville : un poste, un adulte sans poste (il vit de ses bras, ailleurs). */
     static final int WAGE = 1, ODD_JOBS = 0;
+    /** Au-delà de ces économies, le reste retourne à la bourse de la ville. */
+    static final int SAVINGS = 40;
     /** Tant de jours de faim, et une famille s'en va. */
     static final int FAMINE_LEAVE = 4;
     /** Chances par jour, sur cent : un mariage, une naissance, quelqu'un qui part pour une autre ville, une arrivée dans une maison vide. */
@@ -108,10 +110,16 @@ public final class CityLife {
                     }
                     // La faim vient quand la ville n'a pas pu nourrir tout le monde, et s'en va quand elle le peut.
                     p.setHunger(today.hungry() > 0 ? p.hunger() + 34 : Math.max(0, p.hunger() - 34));
+                    // P50 : ce que les boutiques encaissent revient à la ville : sans quoi les pièces finiraient toutes chez elles.
+                    if (p.coins() > SAVINGS) {
+                        eco.addPurse(p.coins() - SAVINGS);
+                        p.setCoins(SAVINGS);
+                    }
                     p.forgetABit();
                 });
             }
         }
+        CityJournal.add(server, site, CityJournal.Kind.LIFE, Fr.key("crusadecraft.city.journal.day", today.hungry(), today.imported(), today.exported(), today.tax()));
         for (CityGood g : today.missing()) CityRumors.add(server, site, "penurie", Fr.of(Component.translatable(g.key())).toLowerCase(java.util.Locale.ROOT));
         if (eco.famine() > 0) CityRumors.add(server, site, "famine");
         marriages(server, site, random);
@@ -120,6 +128,10 @@ public final class CityLife {
         if (eco.famine() >= FAMINE_LEAVE) leave(server, site, random);
         else arrivals(server, site, random);
         move(server, site, random);
+        // P48 et P49 : on part en voyage, on commande ce qui manque, on écrit aux joueurs.
+        CityOrders.onDay(server, site, random);
+        CityTravel.onDay(server, site, random);
+        CityPost.onDay(server, site, random);
         return today;
     }
 
@@ -169,7 +181,7 @@ public final class CityLife {
     }
 
     private static void marriages(MinecraftServer server, Site site, Random random) {
-        if (random.nextInt(100) >= MARRY) return;
+        if (!site.settings().canMarry || random.nextInt(100) >= MARRY) return;
         LineageState state = data(server).lineage();
         List<Person> people = residents(server, site);
         java.util.Collections.shuffle(people, random);
@@ -178,6 +190,7 @@ public final class CityLife {
             for (Person b : people) {
                 boolean freeB = state.person(b.spouse()).filter(Person::alive).isEmpty();
                 if (a == b || !CityRules.canMarry(a.age(), a.female(), freeA, b.age(), b.female(), freeB)) continue;
+                if ((a.hasSettings() && !a.settings().canMarry) || (b.hasSettings() && !b.settings().canMarry)) continue;
                 // Les personnages écrits d'avance ont leur histoire : on ne la leur change pas au hasard.
                 if (!a.notable().isEmpty() || !b.notable().isEmpty()) continue;
                 if (a.isChildOf(b.id()) || b.isChildOf(a.id()) || sameParents(a, b)) continue;
@@ -269,6 +282,7 @@ public final class CityLife {
 
     /** Une famille qui a trop faim s'en va : du monde et du registre. Les autres resteront plus nourris. */
     private static void leave(MinecraftServer server, Site site, Random random) {
+        if (!site.settings().canLeave) return;
         List<CityBuilding> houses = new ArrayList<>();
         for (CityBuilding b : site.buildings()) if (b.function() == BuildingFunction.MAISON && !b.occupants().isEmpty()) houses.add(b);
         if (houses.isEmpty()) return;
@@ -277,7 +291,7 @@ public final class CityLife {
         Person head = null;
         for (UUID id : b.occupants()) {
             Person p = state.person(id).orElse(null);
-            if (p != null && p.alive() && !p.notable().isEmpty()) return;
+            if (p != null && p.alive() && (!p.notable().isEmpty() || (p.hasSettings() && !p.settings().canLeave))) return;
             if (p != null && p.alive() && head == null) head = p;
         }
         if (head != null) CityRumors.add(server, site, "depart", head.name());
@@ -299,9 +313,10 @@ public final class CityLife {
 
     /** Il arrive qu'un inconstant s'en aille vivre dans une autre ville du royaume. */
     private static void move(MinecraftServer server, Site site, Random random) {
-        if (random.nextInt(100) >= MOVE) return;
+        if (!site.settings().canLeave || random.nextInt(100) >= MOVE) return;
         List<Person> candidates = new ArrayList<>();
         for (Person p : residents(server, site)) {
+            if ((p.hasSettings() && !p.settings().canLeave) || p.trip() != null) continue;
             if (p.age() >= 18 && p.job().isEmpty() && p.notable().isEmpty() && p.spouse() == null && p.traits().contains(Trait.INCONSTANT)) candidates.add(p);
         }
         if (candidates.isEmpty()) return;

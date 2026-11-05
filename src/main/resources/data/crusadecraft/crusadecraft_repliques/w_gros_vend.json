@@ -1,0 +1,15 @@
+{
+ "moment": "gros_vend",
+ "lines": [
+  "Je viens de loin, {autre}. J'ai {marchandise}, et de la bonne.",
+  "Bien le bonjour. {marchandise}, toute une charge. Ça t'intéresse ?",
+  "Mes bêtes sont fatiguées, et moi aussi. On traite vite : {marchandise}.",
+  "Regarde-moi ça, {autre} : {marchandise}. Chez nous, on en a trop.",
+  "J'ai fait la route pour toi : {marchandise}. À un bon prix, j'espère.",
+  "C'est toi qui tiens le marché ici ? J'ai {marchandise}.",
+  "Tu ne trouveras pas meilleur que ce que j'apporte : {marchandise}.",
+  "La route a été longue, mais tout est là : {marchandise}.",
+  "Je t'apporte {marchandise}. On compte ensemble ?",
+  "Tiens, voilà la cargaison. {marchandise}, comme promis."
+ ]
+}

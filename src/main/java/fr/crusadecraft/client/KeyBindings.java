@@ -23,5 +23,9 @@ public final class KeyBindings {
     public static final KeyMapping UNDO_BORNAGE = new KeyMapping("key.crusadecraft.undo_bornage",
             KeyConflictContext.IN_GAME, net.minecraftforge.client.settings.KeyModifier.CONTROL, InputConstants.Type.KEYSYM, GLFW.GLFW_KEY_Z, CATEGORY);
 
+    /** P49 : ce que les habitants vous ont écrit. */
+    public static final KeyMapping POST = new KeyMapping("key.crusadecraft.post",
+            KeyConflictContext.IN_GAME, InputConstants.Type.KEYSYM, GLFW.GLFW_KEY_J, CATEGORY);
+
     private KeyBindings() {}
 }
