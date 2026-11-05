@@ -158,7 +158,9 @@ public final class CityEconomy {
     }
 
     private void produce(Census c) {
-        add(CityGood.BLE, c.output(BuildingFunction.FERME, 12 * c.of(BuildingFunction.FERME)));
+        // P55 : les champs sont hors les murs : coupée du monde, elle n'en tire presque plus rien. Sans ça, une ville à fermes ne connaîtrait jamais la faim.
+        int harvest = c.output(BuildingFunction.FERME, 12 * c.of(BuildingFunction.FERME));
+        add(CityGood.BLE, c.besieged() ? harvest / 4 : harvest);
         int bakers = c.of(BuildingFunction.BOULANGERIE);
         if (bakers > 0) {
             // Un moulin : la même farine fait plus de pain.

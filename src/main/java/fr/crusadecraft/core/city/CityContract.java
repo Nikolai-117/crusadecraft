@@ -10,7 +10,9 @@ public final class CityContract {
 
     public final UUID id;
     public final Kind kind;
-    public final UUID from, to;
+    public final UUID from;
+    /** P58 : un marché devenu ville reçoit le pli à sa place. */
+    public UUID to;
     public final int reward;
     public final long createdDay;
     /** Le dernier jour : pour une offre, celui où elle tombe ; pour un pli accepté, celui où il doit être arrivé. */

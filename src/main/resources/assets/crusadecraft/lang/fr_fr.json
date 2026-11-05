@@ -3199,5 +3199,11 @@
   "crusadecraft.city.dock.no_warehouse": "Bâtis un entrepôt : le quai s'y videra",
   "crusadecraft.city.dock.no_realm": "Cette colonie n'appartient à aucun royaume : son commerce n'aurait pas de trésor où aller.",
   "crusadecraft.city.dock.stock": "Voici ce que l'entrepôt peut céder : tout ce qui dépasse %s de chaque marchandise, en plus de ce qui attend d'y être rangé. Les objets enchantés ou nommés ne se vendent jamais.",
-  "crusadecraft.city.panel.trade.stop.dock": "%s, colonie (%s blocs)"
+  "crusadecraft.city.panel.trade.stop.dock": "%s, colonie (%s blocs)",
+  "crusadecraft.economy.dock": "Le quai d'une colonie : ses réserves sont celles de son entrepôt",
+  "crusadecraft.economy.prosperity": "Prospérité : %s sur %s. Vends-y, et elle montera",
+  "crusadecraft.economy.prosperity.ready": "Prospérité : %s sur %s. Elle bâtira sa ville quand un joueur s'en approchera",
+  "crusadecraft.city.rumor.prospere": "Les marchands d'ici parlent de bâtir de vraies maisons : l'argent ne manque plus",
+  "crusadecraft.city.journal.grown": "%s est une vraie ville désormais : %s bâtiments se peuplent",
+  "crusadecraft.economy.sort.enemy": "les ennemies d'abord"
 }

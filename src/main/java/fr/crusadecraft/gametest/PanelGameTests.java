@@ -1072,6 +1072,68 @@ public final class PanelGameTests {
         }
     }
 
+    @GameTest(template = TestWorld.TEMPLATE, setupTicks = TestWorld.SETUP_TICKS, batch = "p58_marches", timeoutTicks = 300)
+    public static void unMarcheDevientUneVille(GameTestHelper h) {
+        TestWorld w = TestWorld.realm(h, "MarcheA");
+        var server = h.getLevel().getServer();
+        var level = h.getLevel();
+        var data = CrusadeSavedData.get(server);
+        WorldEditService.grantForTests(w.ruler.getUUID(), true);
+        try {
+            data.world().clear();
+            data.world().markGenerated(RealmService.currentDay(server));
+            NationBook.setForTests(List.of(nation("essaia", "Essaia")));
+            NationService.ensure(server);
+            AiRealm a = NationService.realm(server, "essaia").orElseThrow();
+            // Sa province, et son marché.
+            var seat = w.center.offset(500, 0, 0);
+            fr.crusadecraft.core.world.AiProvince province = new fr.crusadecraft.core.world.AiProvince(987654, "Hautemer", level.dimension().location(), seat, fr.crusadecraft.core.world.AiProvince.Anchor.values()[0], false, 0, 500, 30);
+            a.provinces().add(province);
+            Site market = fr.crusadecraft.core.city.CityMarkets.ensure(server, a, province);
+            w.check(data.world().isMarket(market.id()), "pas de marché");
+            // Il prospère, à chaque caravane.
+            Site other = city(w, server, level, a, "Marchevoisine", 200, BuildingFunction.MARCHE);
+            other.economy().add(CityGood.FER, 100);
+            w.check(fr.crusadecraft.core.city.CityCommerce.create(server, other, market.id(), CityGood.FER, 16, null, 1, 0, false).success(), "pas de ligne vers le marché");
+            fr.crusadecraft.core.city.CityLine line = data.world().lines().get(0);
+            fr.crusadecraft.core.city.CityCommerce.pulse(server);
+            Person merchant = null;
+            for (Person x : data.lineage().persons()) if (x.trip() != null && line.id.equals(x.trip().line())) merchant = x;
+            w.check(merchant != null, "pas de caravane : " + line.status);
+            CityTravel.advanceForTests(server, merchant, level.getGameTime());
+            w.check(market.prosperity() > 0, "une caravane n'enrichit pas le marché");
+            // La prospérité s'enregistre.
+            w.check(Site.load(market.save()).prosperity() == market.prosperity(), "la prospérité ne s'enregistre pas");
+            CompoundTag view = fr.crusadecraft.core.city.WorldEconomy.view(w.ruler);
+            boolean shown = false;
+            for (int i = 0; i < view.getList("cities", 10).size(); i++) shown |= view.getList("cities", 10).getCompound(i).getString("name").equals("Hautemer") && view.getList("cities", 10).getCompound(i).contains("prosperity");
+            w.check(shown, "l'écran ne montre pas sa prospérité");
+            // Il prend corps : la vraie ville reprend ses réserves, sa bourse et ses lignes.
+            market.economy().addPurse(777);
+            int fer = market.economy().stock(CityGood.FER);
+            long purse = market.economy().purse();
+            Site real = city(w, server, level, a, "Hautemer", 500, BuildingFunction.MARCHE);
+            real.setProvince(province.id());
+            int ferBefore = real.economy().stock(CityGood.FER);
+            long purseBefore = real.economy().purse();
+            UUID marketId = market.id();
+            fr.crusadecraft.core.city.CityMarkets.onDay(server, new java.util.Random(1));
+            w.check(!data.world().isMarket(marketId), "le marché reste à côté de sa ville");
+            w.check(real.economy().stock(CityGood.FER) >= ferBefore + fer, "la ville ne reprend pas ses réserves");
+            w.check(real.economy().purse() >= purseBefore + purse, "la ville ne reprend pas sa bourse");
+            w.check(line.to.equals(real.id()), "la ligne ne suit pas");
+            // Un chantier de marché ne s'ouvre pas sur les terres d'un joueur : la province est tenue par son royaume.
+            province.setHolder(w.realm.id());
+            w.check(fr.crusadecraft.core.city.CityGrowth.tick(server) == 0, "un chantier s'ouvre chez un joueur");
+            h.succeed();
+        } finally {
+            WorldEditService.grantForTests(w.ruler.getUUID(), false);
+            NationBook.setForTests(null);
+            data.world().clear();
+            w.cleanup();
+        }
+    }
+
     @GameTest(template = TestWorld.TEMPLATE, setupTicks = TestWorld.SETUP_TICKS, batch = "p51_lignes", timeoutTicks = 300)
     public static void lignesDeCommerce(GameTestHelper h) {
         TestWorld w = TestWorld.realm(h, "CommerceA");
@@ -1337,7 +1399,11 @@ public final class PanelGameTests {
                 Entity e = level.getEntity(guard.id());
                 w.check(e instanceof net.minecraft.world.entity.LivingEntity l && l.getMaxHealth() >= 40, "le garde n'est pas plus solide qu'un autre");
                 w.check(e instanceof net.minecraft.world.entity.LivingEntity l2 && l2.getMainHandItem().is(Items.IRON_SWORD), "le garde n'a pas d'épée");
-                w.check(!zombie[0].isAlive() || zombie[0].getHealth() < zombie[0].getMaxHealth(), "le garde n'a pas touché le monstre : " + zombie[0].getHealth() + ", à " + e.distanceTo(zombie[0]) + " blocs, cible " + fr.crusadecraft.core.city.CityGuards.targetOf(guard.id()));
+                // Un monstre sauvage a pu passer le premier : ce qui compte, c'est qu'il frappe ce qu'il vise.
+                UUID aim = fr.crusadecraft.core.city.CityGuards.targetOf(guard.id());
+                Entity held = aim == null ? null : level.getEntity(aim);
+                boolean struck = !zombie[0].isAlive() || zombie[0].getHealth() < zombie[0].getMaxHealth() || (held instanceof net.minecraft.world.entity.LivingEntity l3 && l3.getHealth() < l3.getMaxHealth());
+                w.check(struck, "le garde n'a touché personne : monstre " + zombie[0].getHealth() + ", à " + e.distanceTo(zombie[0]) + " blocs ; cible " + (held == null ? "aucune" : held.getType() + " à " + e.distanceTo(held) + " blocs, vue : " + (e instanceof net.minecraft.world.entity.LivingEntity l4 && l4.hasLineOfSight(held))));
                 h.succeed();
             } finally {
                 once.run();

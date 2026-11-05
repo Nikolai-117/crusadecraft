@@ -54,6 +54,8 @@ public final class CityGuards {
     static final int COOLDOWN = 25;
     /** Ce que fait un coup d'épée, une flèche. */
     static final float SWORD = 3f;
+    /** À cette distance, on se touche : pas besoin de se voir. */
+    static final double POINT_BLANK = 2;
     static final double ARROW = 2.5;
     /** Celui qui frappe un habitant reste un ennemi pendant tant de ticks. */
     static final int GRUDGE = 1800;
@@ -247,7 +249,8 @@ public final class CityGuards {
             mob.getNavigation().moveTo(target, 0.95);
         }
         mob.getLookControl().setLookAt(target, 30f, 30f);
-        if (d > reach || !mob.hasLineOfSight(target)) return;
+        // Collés l'un à l'autre, il frappe même si la vue passe mal (un muret, une marche, une clôture à hauteur des yeux) : sans quoi ils resteraient plantés face à face.
+        if (d > reach || (d > POINT_BLANK && !mob.hasLineOfSight(target))) return;
         Long last = LAST_HIT.get(p.id());
         if (last != null && now - last < COOLDOWN * (archer ? 2 : 1)) return;
         LAST_HIT.put(p.id(), now);

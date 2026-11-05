@@ -1,0 +1,8 @@
+{
+  "crusadecraft.economy.sort.enemy": "enemies first",
+  "crusadecraft.economy.dock": "A colony's dock: its reserves are those of its warehouse",
+  "crusadecraft.economy.prosperity": "Prosperity: %s of %s. Sell there, and it will rise",
+  "crusadecraft.economy.prosperity.ready": "Prosperity: %s of %s. It will build its town when a player comes near",
+  "crusadecraft.city.rumor.prospere": "The merchants here talk of building real houses: money is no longer lacking",
+  "crusadecraft.city.journal.grown": "%s is a real town now: %s buildings are filling up"
+}

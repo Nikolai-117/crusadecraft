@@ -1164,3 +1164,15 @@ veux la voir comme le bâton de construction de MineColonies », des commandes, 
 - **Une ville ne se vide pas** : une caravane ne part plus si la moitié des adultes sont déjà en route, et il reste toujours un garde. Sans ça, le premier passage a vidé Dolhimluith.
 - **Les gardes frappent eux-mêmes** (`target.hurt`), au lieu de compter sur l'intelligence de Comes Alive, qui fuit plus qu'elle ne combat. On efface leur peur à chaque passage.
   Rien ne se déclenche en créatif, comme les monstres de Minecraft.
+
+**P54 à P58 (5 novembre 2026) — l'économie du monde, la guerre et le commerce, les contrats, les colonies, les marchés qui bâtissent, 3.15.0**
+
+- **Demande** : « fait tout sauf les bandits » : l'écran d'économie, blocus et péages, contrats pour le joueur, colonies reliées, villes de l'ordinateur qui se construisent.
+- **Les prix se comptent par charge** : à l'unité, un blé valait une pièce partout, et aucun écart ne donnait de raison de transporter quoi que ce soit. La demande va de 50 % (réserves pleines) à 200 % (plus rien).
+- **Le blocus passe par le trésor** : il coûte par jour, et tombe si on ne paie plus ou à la paix. L'ordinateur s'arrête au bout de huit jours : sinon, une guerre longue affamerait définitivement une ville de joueur.
+- **Un contrat met l'argent de côté à la signature** : on ne peut pas se faire payer par une ville ruinée entre-temps, et un échec rembourse la ville.
+- **L'escorte se mesure à la présence** : deux secondes par deux secondes, on regarde s'il est à côté. C'est simple, et ça survit à un redémarrage.
+- **Le quai plutôt qu'un second commerce** : une colonie reçoit un `Site` rangé avec les marchés, tout le commerce marche tel quel. Ce que le commerce fait se lit dans l'écart aux réserves au passage suivant : aucun code de vente n'a besoin de savoir qu'il s'agit d'une colonie. C'est aussi ce qui permet aux caravanes de tourner sans que son chunk soit chargé.
+- **Pas d'objet avec des données sur un quai** : un rayonnage contient l'épée enchantée d'un garde ; le commerce n'a pas à y toucher.
+- **L'ordinateur ne livre pas une colonie** : remplir un entrepôt de blé sans qu'on le demande gênerait les ouvriers de MineColonies.
+- **Un marché mûr attend un joueur** pour bâtir, sous les mêmes précautions que `batirEnApprochant`, mais activé par défaut : Romain l'a demandé, et le chantier se défait depuis l'éditeur. Chaque bloc remplacé est noté.

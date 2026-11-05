@@ -103,6 +103,7 @@ public final class ServerEvents {
         fr.crusadecraft.core.city.CityRoads.onServerStopped();
         fr.crusadecraft.core.city.CityGuards.onServerStopped();
         fr.crusadecraft.core.city.CityBlockades.onServerStopped();
+        fr.crusadecraft.core.city.CityGrowth.onServerStopped();
         fr.crusadecraft.core.city.CityPost.onServerStopped();
         fr.crusadecraft.core.city.CityFurniture.onServerStopped();
         fr.crusadecraft.core.city.CitySeats.onServerStopped();
@@ -180,6 +181,7 @@ public final class ServerEvents {
         perf("chantiers", () -> fr.crusadecraft.core.build.SiteService.tick(server, t));
         perf("plans", () -> fr.crusadecraft.core.build.plan.Journals.tick(server));
         if (t % 200 == 173) perf("villes IA", () -> fr.crusadecraft.core.build.plan.AiTowns.tick(server));
+        if (t % 200 == 181) perf("marches", () -> fr.crusadecraft.core.city.CityGrowth.tick(server));
         // Les lieux suivent le monde (une ville renommée, un royaume disparu) : toutes les vingt secondes suffisent.
         if (t % 400 == 200) perf("lieux", () -> fr.crusadecraft.core.place.PlaceService.sync(server));
         // Le passage d'une frontière de chunk à l'autre : une vérification par seconde suffit.

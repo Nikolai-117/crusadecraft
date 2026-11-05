@@ -78,6 +78,9 @@ final class WorldShotsV7 {
     private static String notchHash = "";
     private static volatile int imports;
     private static UUID founded, caravanner, guardian, monster;
+    private static UUID blockaded, contract, market;
+    private static int emeralds, province;
+    private static fr.crusadecraft.core.ColonyRef colony;
     private static int[] field;
     private static final int PLATFORM = 180;
     private static BlockPos origin;
@@ -94,7 +97,21 @@ final class WorldShotsV7 {
     static boolean tick(Minecraft mc, BiConsumer<Minecraft, String> grab) {
         if (steps == null) {
             steps = build();
-            if (Boolean.getBoolean("crusadecraft.worldshots.v7gardes")) {
+            if (Boolean.getBoolean("crusadecraft.worldshots.v7civ")) {
+                // P54 à P58 : les villes, ce qu'il faut de commerce et d'ordinateur, puis la suite.
+                int depart = 0, founding = 0, lines = 0, eco = 0, end = steps.size();
+                for (int i = 0; i < steps.size(); i++) {
+                    String n = steps.get(i).name();
+                    if (n.equals("depart")) depart = i + 1;
+                    if (n.equals("fonder_ville")) founding = i;
+                    if (n.equals("carte_lignes")) lines = i + 1;
+                    if (n.equals("eco_ouvre")) eco = i;
+                }
+                List<Step> short_ = new ArrayList<>(steps.subList(0, depart));
+                short_.addAll(steps.subList(founding, lines));
+                short_.addAll(steps.subList(eco, end));
+                steps = short_;
+            } else if (Boolean.getBoolean("crusadecraft.worldshots.v7gardes")) {
                 int from = 0, to = 0;
                 for (int i = 0; i < steps.size(); i++) {
                     if (steps.get(i).name().equals("depart")) to = i + 1;
@@ -953,6 +970,285 @@ final class WorldShotsV7 {
             p.setHealth(p.getMaxHealth());
             fr.crusadecraft.core.city.CityGuards.onServerStopped();
         }, null, 40, null));
+        // ------------------------------------------------------------ P54 : l'économie du monde
+        out.add(new Step("eco_ouvre", server -> fr.crusadecraft.core.city.WorldEconomy.send(player(server), false), mc -> mc.setScreen(null), 30, "v13_eco_villes"));
+        for (String[] t : new String[][]{{"Prix", "v13_eco_prix"}, {"Lignes", "v13_eco_lignes"}, {"Routes", "v13_eco_routes"}, {"Royaumes", "v13_eco_royaumes"}}) {
+            out.add(new Step("eco_" + t[1], null, mc -> click(mc, t[0]), 20, t[1]));
+        }
+        // ------------------------------------------------------------ P55 : la guerre, le blocus, la famine, le péage
+        out.add(new Step("blocus_prepare", server -> {
+            ServerPlayer p = player(server);
+            CrusadeSavedData data = CrusadeSavedData.get(server);
+            java.util.UUID me = fr.crusadecraft.core.city.WorldEconomy.myRealm(p);
+            Site h = site(server, dest);
+            log("je dirige : {} ; on déclare la guerre au royaume de {}", me, h.name());
+            if (me != null) {
+                data.diplomacy().between(me, h.owner()).setWar(true);
+                data.world().realm(me).ifPresent(r -> r.setGold(500));
+            }
+            fr.crusadecraft.core.city.WorldEconomy.send(p, false);
+        }, mc -> mc.setScreen(null), 30, null));
+        out.add(new Step("blocus_onglet", null, mc -> {
+            click(mc, "Villes");
+            // Jusqu'à ce que les ennemies passent en tête.
+            for (int i = 0; i < 4; i++) click(mc, "Trier");
+        }, 20, "v13_blocus_avant"));
+        out.add(new Step("blocus_bloque", null, mc -> click(mc, "Bloquer"), 30, "v13_blocus_ecran"));
+        out.add(new Step("blocus_famine", server -> {
+            CrusadeSavedData data = CrusadeSavedData.get(server);
+            log("{} blocus ; villes coupées : {}", data.world().blockades().size(), fr.crusadecraft.core.city.CityBlockades.blocked(server).size());
+            Random r = new Random(7);
+            for (java.util.UUID id : new ArrayList<>(data.world().blockades().keySet())) {
+                Site s = site(server, id);
+                if (s == null) continue;
+                blockaded = id;
+                log("{} : {} ; avant : {}", s.name(), fr.crusadecraft.core.city.CityBlockades.explain(server, s), CityLife.summary(s));
+                for (int i = 0; i < 8; i++) {
+                    var day = CityLife.day(server, s, r);
+                    log("jour {} : {} ont faim, famine {}, blé {}, pain {}", i + 1, day.hungry(), s.economy().famine(), s.economy().stock(CityGood.BLE), s.economy().stock(CityGood.PAIN));
+                }
+            }
+            for (fr.crusadecraft.core.city.CityLine l : data.world().lines()) l.waited = 99;
+            fr.crusadecraft.core.city.CityCommerce.pulse(server);
+            for (fr.crusadecraft.core.city.CityLine l : data.world().lines()) log("ligne {} : {}", data.world().site(l.from).map(Site::name).orElse("?"), l.status);
+            fr.crusadecraft.core.city.WorldEconomy.send(player(server), true);
+        }, null, 40, "v13_blocus_famine"));
+        // On se place loin d'elle : la carte se centre sur le joueur, et la bulle sous la souris cacherait l'anneau.
+        out.add(new Step("blocus_carte_place", server -> {
+            ServerPlayer p = player(server);
+            Site s = blockaded == null ? site(server, dest) : site(server, blockaded);
+            if (s != null) look(p, s.anchor().getX() - 1400.5, 200, s.anchor().getZ() + 0.5, 0f, 20f);
+        }, mc -> mc.setScreen(null), 20, null));
+        out.add(new Step("blocus_carte", null, mc -> fr.crusadecraft.network.CrusadeNetwork.toServer(new fr.crusadecraft.network.packet.WorldPackets.RequestMap(true)), 60, "v13_blocus_carte"));
+        out.add(new Step("blocus_panneau", server -> {
+            Site s = blockaded == null ? site(server, home) : site(server, blockaded);
+            if (s != null) CityPanel.open(player(server), s);
+        }, mc -> mc.setScreen(null), 30, null));
+        out.add(new Step("peage_onglet", null, mc -> click(mc, "Commerce"), 20, "v13_peage_avant"));
+        out.add(new Step("peage_clic", null, mc -> click(mc, "Péage"), 20, null));
+        out.add(new Step("douane_clic", null, mc -> click(mc, "Douane"), 20, "v13_peage_apres"));
+        out.add(new Step("paix", server -> {
+            CrusadeSavedData data = CrusadeSavedData.get(server);
+            Site s = blockaded == null ? null : site(server, blockaded);
+            if (s != null) log("péage et douane de son royaume : {}", fr.crusadecraft.core.city.CityTolls.rules(server, s.owner()));
+            java.util.UUID me = fr.crusadecraft.core.city.WorldEconomy.myRealm(player(server));
+            if (me != null) data.diplomacy().between(me, site(server, dest).owner()).setWar(false);
+            fr.crusadecraft.core.city.CityBlockades.onDay(server, new Random(1));
+            log("la paix : {} blocus restent", data.world().blockades().size());
+            if (s != null) s.economy().add(CityGood.BLE, 200);
+        }, mc -> mc.setScreen(null), 10, null));
+        // ------------------------------------------------------------ P56 : les contrats
+        out.add(new Step("contrat_offre", server -> {
+            ServerPlayer p = player(server);
+            CrusadeSavedData data = CrusadeSavedData.get(server);
+            Site h = site(server, home);
+            h.economy().addPurse(800);
+            data.world().contracts().clear();
+            long today = fr.crusadecraft.core.realm.RealmService.currentDay(server);
+            Random r = new Random(4);
+            for (int i = 0; i < 40 && contract == null; i++) {
+                var o = fr.crusadecraft.core.city.CityContracts.post(server, h, r, today);
+                if (o.isPresent() && o.get().kind == fr.crusadecraft.core.city.CityContract.Kind.COURIER) contract = o.get().id;
+                else o.ifPresent(c -> data.world().contracts().remove(c));
+            }
+            BlockPos at = CityService.plazaOf(h);
+            look(p, at.getX() + 0.5, at.getY() + 8, at.getZ() + 8.5, 180f, 20f);
+            log("un pli à porter : {}", contract);
+            fr.crusadecraft.core.city.WorldEconomy.send(p, false);
+        }, mc -> mc.setScreen(null), 30, null));
+        out.add(new Step("contrat_onglet", null, mc -> click(mc, "Contrats"), 20, "v13_contrats"));
+        out.add(new Step("contrat_accepte", null, mc -> click(mc, "Accepter"), 30, "v13_contrat_accepte"));
+        out.add(new Step("contrat_route", server -> {
+            ServerPlayer p = player(server);
+            log("un pli dans le sac : {}", p.getInventory().countItem(Items.PAPER));
+        }, mc -> mc.setScreen(null), 200, "v13_contrat_indice"));
+        out.add(new Step("contrat_arrive", server -> {
+            ServerPlayer p = player(server);
+            var c = fr.crusadecraft.core.city.CityContracts.find(server, contract).orElse(null);
+            Site to = c == null ? null : site(server, c.to);
+            emeralds = p.getInventory().countItem(Items.EMERALD);
+            if (to == null) {
+                log("le contrat n'est plus là");
+                return;
+            }
+            log("on court à {}", to.name());
+            ServerLevel level = p.serverLevel();
+            level.getChunk(to.anchor().getX() >> 4, to.anchor().getZ() >> 4);
+            int y = level.getHeight(Heightmap.Types.MOTION_BLOCKING_NO_LEAVES, to.anchor().getX(), to.anchor().getZ());
+            look(p, to.anchor().getX() + 4.5, y + 3, to.anchor().getZ() + 4.5, 135f, 20f);
+        }, null, 120, "v13_contrat_paye"));
+        out.add(new Step("contrat_bilan", server -> {
+            ServerPlayer p = player(server);
+            log("émeraudes : {} puis {} ; contrat encore là : {}", emeralds, p.getInventory().countItem(Items.EMERALD), fr.crusadecraft.core.city.CityContracts.find(server, contract).isPresent());
+        }, null, 5, null));
+        out.add(new Step("escorte_offre", server -> {
+            ServerPlayer p = player(server);
+            CrusadeSavedData data = CrusadeSavedData.get(server);
+            Site h = site(server, home), d = site(server, dest);
+            data.world().contracts().clear();
+            h.economy().add(CityGood.PAIN, 200);
+            h.economy().addPurse(500);
+            // Une ligne libre, sans caravane en route.
+            data.world().lines().removeIf(l -> l.from.equals(home));
+            for (Person x : data.lineage().persons()) if (x.trip() != null && x.trip().line() != null) x.setTrip(null);
+            var created = fr.crusadecraft.core.city.CityCommerce.create(server, h, d.id(), CityGood.PAIN, 24, null, 4, 1, false);
+            log("ligne pour l'escorte : {}", created.message().getString());
+            Random r = new Random(9);
+            long today = fr.crusadecraft.core.realm.RealmService.currentDay(server);
+            contract = null;
+            for (int i = 0; i < 60 && contract == null; i++) {
+                var o = fr.crusadecraft.core.city.CityContracts.post(server, h, r, today);
+                if (o.isPresent() && o.get().kind == fr.crusadecraft.core.city.CityContract.Kind.ESCORT) contract = o.get().id;
+                else o.ifPresent(c -> data.world().contracts().remove(c));
+            }
+            BlockPos at = CityService.plazaOf(h);
+            look(p, at.getX() + 0.5, at.getY() + 8, at.getZ() + 8.5, 180f, 20f);
+            log("une escorte : {}", contract);
+            fr.crusadecraft.core.city.WorldEconomy.send(p, false);
+        }, mc -> mc.setScreen(null), 30, "v13_escorte_offre"));
+        out.add(new Step("escorte_accepte", null, mc -> click(mc, "Accepter"), 60, null));
+        for (int i = 1; i <= 3; i++) {
+            int n = i;
+            out.add(new Step("escorte_vue_" + n, server -> {
+                ServerPlayer p = player(server);
+                var c = fr.crusadecraft.core.city.CityContracts.find(server, contract).orElse(null);
+                Entity e = c == null || c.merchant == null ? null : p.serverLevel().getEntity(c.merchant);
+                if (e != null) overlook(p, e);
+                else if (c != null && c.merchant != null) {
+                    for (CityTravel.Pawn pawn : CityTravel.pawns(server)) {
+                        if (!pawn.id().equals(c.merchant)) continue;
+                        p.serverLevel().getChunk(pawn.x() >> 4, pawn.z() >> 4);
+                        look(p, pawn.x() + 6.5, p.serverLevel().getHeight(Heightmap.Types.MOTION_BLOCKING_NO_LEAVES, pawn.x(), pawn.z()) + 8, pawn.z() + 6.5, 135f, 35f);
+                    }
+                }
+                log("escorte {} : marchand {} ; présence {}/{}", n, e == null ? "pas encore là" : e.blockPosition().toShortString(), c == null ? -1 : c.near, c == null ? -1 : c.total);
+            }, mc -> mc.setScreen(null), 240, "v13_escorte_" + n));
+        }
+        out.add(new Step("escorte_fin", server -> {
+            ServerPlayer p = player(server);
+            var c = fr.crusadecraft.core.city.CityContracts.find(server, contract).orElse(null);
+            if (c == null || c.merchant == null) return;
+            emeralds = p.getInventory().countItem(Items.EMERALD);
+            Entity e = p.serverLevel().getEntity(c.merchant);
+            if (e != null) e.discard();
+            Person m = person(server, c.merchant);
+            if (m != null) CityTravel.advanceForTests(server, m, p.serverLevel().getGameTime());
+            log("il arrive ; stade {} ; présence {}/{}", m == null || m.trip() == null ? "?" : m.trip().stage(), c.near, c.total);
+        }, null, 100, "v13_escorte_payee"));
+        out.add(new Step("escorte_bilan", server -> log("émeraudes : {} puis {}", emeralds, player(server).getInventory().countItem(Items.EMERALD)), null, 5, null));
+        // ------------------------------------------------------------ P57 : le quai d'une colonie, et son vrai entrepôt
+        out.add(new Step("quai_colonie", server -> {
+            ServerPlayer p = player(server);
+            ServerLevel level = p.serverLevel();
+            fr.crusadecraft.core.nation.NationService.abdicate(p);
+            Site h = site(server, home);
+            int cx = h.anchor().getX(), cz = h.anchor().getZ() + 700, ground = PLATFORM + 1;
+            for (int dx = -3; dx <= 3; dx++) for (int dz = -3; dz <= 3; dz++) level.getChunk((cx >> 4) + dx, (cz >> 4) + dz);
+            for (BlockPos q : BlockPos.betweenClosed(new BlockPos(cx - 20, PLATFORM, cz - 20), new BlockPos(cx + 20, PLATFORM, cz + 20))) level.setBlock(q, net.minecraft.world.level.block.Blocks.SMOOTH_STONE.defaultBlockState(), 2);
+            BlockPos at = new BlockPos(cx, ground, cz);
+            fr.crusadecraft.config.CrusadeConfig.SERVER.throneMustBeInTownHall.set(false);
+            look(p, cx + 2.5, ground + 2, cz + 5.5, 180f, 15f);
+            colony = fr.crusadecraft.compat.minecolonies.MineColoniesTestKit.createColony(level, at, p, "Port-Royal", 2);
+            var realm = fr.crusadecraft.core.realm.RealmService.found(p, new fr.crusadecraft.core.realm.RealmService.FoundingRequest(at.east(), "Royaume du Port", "", "", 0, false));
+            log("colonie {} ; royaume : {}", colony, realm.map(fr.crusadecraft.core.realm.Realm::name).orElse("refusé"));
+            fr.crusadecraft.compat.minecolonies.MineColoniesTestKit.addWarehouse(level, colony, at.offset(6, 0, 0), 1);
+            var handler = fr.crusadecraft.compat.minecolonies.MineColoniesBridge.warehouse(colony).orElse(null);
+            log("entrepôt : {} cases", handler == null ? -1 : handler.getSlots());
+            if (handler != null) for (int i = 0; i < 2; i++) net.minecraftforge.items.ItemHandlerHelper.insertItemStacked(handler, new ItemStack(Items.IRON_INGOT, 64), false);
+            realm.ifPresent(r -> r.setGold(2000));
+            log("panneau : {}", CityPanel.openHere(p).message().getString());
+        }, mc -> mc.setScreen(null), 40, "v13_quai_panneau"));
+        out.add(new Step("quai_reserves", null, mc -> click(mc, "Réserves"), 20, "v13_quai_reserves"));
+        out.add(new Step("quai_ligne", server -> {
+            var dock = fr.crusadecraft.core.city.CityDocks.ensure(server, colony).orElse(null);
+            Site d = site(server, dest);
+            if (dock == null || d == null) {
+                log("pas de quai");
+                return;
+            }
+            log("ligne : {}", fr.crusadecraft.core.city.CityCommerce.create(server, dock, d.id(), CityGood.FER, 32, CityGood.PAIN, 1, 1, false).message().getString());
+            d.economy().add(CityGood.PAIN, 100);
+            fr.crusadecraft.core.city.CityCommerce.pulse(server);
+            fr.crusadecraft.core.city.CityDocks.pass(server, dock);
+            logShelf("après le départ");
+            for (fr.crusadecraft.core.city.CityLine l : CrusadeSavedData.get(server).world().lines()) if (l.from.equals(dock.id())) log("statut de la ligne : {}", l.status);
+            CityPanel.open(player(server), dock);
+        }, mc -> mc.setScreen(null), 40, null));
+        out.add(new Step("quai_commerce", null, mc -> click(mc, "Commerce"), 20, "v13_quai_commerce"));
+        out.add(new Step("quai_caravane", server -> {
+            var dock = fr.crusadecraft.core.city.CityDocks.ensure(server, colony).orElse(null);
+            for (Person x : CrusadeSavedData.get(server).lineage().persons()) {
+                if (x.trip() != null && dock != null && dock.id().equals(x.trip().home()) && x.trip().leader() == null) caravanner = x.id();
+            }
+            log("le marchand de la colonie : {}", caravanner == null ? "aucun" : person(server, caravanner).name());
+        }, mc -> mc.setScreen(null), 120, "v13_quai_caravane"));
+        out.add(new Step("quai_retour", server -> {
+            ServerPlayer p = player(server);
+            var dock = fr.crusadecraft.core.city.CityDocks.ensure(server, colony).orElse(null);
+            Person m = caravanner == null ? null : person(server, caravanner);
+            Entity e = m == null ? null : p.serverLevel().getEntity(m.id());
+            if (e != null) e.discard();
+            long now = p.serverLevel().getGameTime();
+            for (int i = 0; i < 3 && m != null && m.trip() != null; i++) {
+                CityTravel.advanceForTests(server, m, now);
+                log("étape : {}", m.trip() == null ? "rentré" : m.trip().stage() + ", rapporte " + m.trip().back() + " " + m.trip().backAmount());
+            }
+            if (dock != null) {
+                log("sur le quai : pain {}, bourse {}", dock.economy().stock(CityGood.PAIN), dock.economy().purse());
+                fr.crusadecraft.core.city.CityDocks.pass(server, dock);
+            }
+            logShelf("au retour");
+            if (dock != null) CityPanel.open(p, dock);
+        }, mc -> mc.setScreen(null), 40, null));
+        out.add(new Step("quai_reserves_apres", null, mc -> click(mc, "Réserves"), 20, "v13_quai_apres"));
+        // ------------------------------------------------------------ P58 : un marché devient une ville
+        out.add(new Step("marche_mur", server -> {
+            ServerPlayer p = player(server);
+            CrusadeSavedData data = CrusadeSavedData.get(server);
+            Site pick = null;
+            for (Site m : data.world().markets()) {
+                if (fr.crusadecraft.core.city.CityDocks.isDockId(m.id())) continue;
+                pick = m;
+            }
+            if (pick == null) {
+                log("aucun marché");
+                return;
+            }
+            pick.setProsperity(fr.crusadecraft.core.city.CityGrowth.required());
+            pick.economy().add(CityGood.FER, 77);
+            market = pick.id();
+            province = pick.province();
+            log("{} est mûr ; bourse {}", pick.name(), pick.economy().purse());
+            fr.crusadecraft.config.CrusadeConfig.SERVER.townBlocksPerSecond.set(3000);
+            ServerLevel level = p.serverLevel();
+            BlockPos seat = pick.anchor();
+            level.getChunk(seat.getX() >> 4, seat.getZ() >> 4);
+            int y = level.getHeight(Heightmap.Types.MOTION_BLOCKING_NO_LEAVES, seat.getX(), seat.getZ());
+            look(p, seat.getX() + 50.5, y + 70, seat.getZ() + 50.5, 135f, 40f);
+            fr.crusadecraft.core.city.WorldEconomy.send(p, false);
+        }, mc -> mc.setScreen(null), 60, null));
+        out.add(new Step("marche_ouvre", server -> {
+            int opened = fr.crusadecraft.core.city.CityGrowth.tick(server);
+            log("chantiers ouverts : {}", opened);
+            for (Site s : CrusadeSavedData.get(server).world().sites()) if (s.grown()) log("{} : {} blocs à poser", s.name(), s.town() == null ? -1 : s.town().total());
+        }, mc -> mc.setScreen(null), 200, "v13_marche_chantier"));
+        out.add(new Step("marche_fini", null, null, 20, "v13_marche_ville", () -> {
+            MinecraftServer server = Minecraft.getInstance().getSingleplayerServer();
+            if (server == null) return true;
+            for (Site s : CrusadeSavedData.get(server).world().sites()) if (s.grown()) return s.built() && !s.buildings().isEmpty();
+            return true;
+        }));
+        out.add(new Step("marche_bilan", server -> {
+            CrusadeSavedData data = CrusadeSavedData.get(server);
+            for (Site s : data.world().sites()) {
+                if (!s.grown()) continue;
+                log("{} : finie {} ; {} bâtiments, {} habitants", s.name(), s.built(), s.buildings().size(), CityService.people(server, s));
+                int before = s.economy().stock(CityGood.FER);
+                fr.crusadecraft.core.city.CityMarkets.onDay(server, new Random(3));
+                log("le marché a passé la main : encore là {} ; fer {} puis {}", market != null && data.world().isMarket(market), before, s.economy().stock(CityGood.FER));
+            }
+            fr.crusadecraft.config.CrusadeConfig.SERVER.townBlocksPerSecond.set(80);
+        }, null, 40, "v13_marche_habitee"));
         out.add(new Step("fin", server -> {
             ServerPlayer p = player(server);
             fr.crusadecraft.core.nation.NationService.abdicate(p);
@@ -964,6 +1260,22 @@ final class WorldShotsV7 {
             log("terminé, sans plantage si cette ligne s'affiche");
         }, mc -> mc.setScreen(null), 10, null));
         return out;
+    }
+
+    /** Ce que contient vraiment l'entrepôt de la colonie. */
+    private static void logShelf(String when) {
+        var handler = colony == null ? null : fr.crusadecraft.compat.minecolonies.MineColoniesBridge.warehouse(colony).orElse(null);
+        if (handler == null) {
+            log("{} : pas d'entrepôt chargé", when);
+            return;
+        }
+        int iron = 0, bread = 0;
+        for (int i = 0; i < handler.getSlots(); i++) {
+            ItemStack x = handler.getStackInSlot(i);
+            if (x.is(Items.IRON_INGOT)) iron += x.getCount();
+            if (x.is(Items.BREAD)) bread += x.getCount();
+        }
+        log("{} : dans l'entrepôt, {} fer et {} pain", when, iron, bread);
     }
 
     private static Site byRef(MinecraftServer server, String ref) {

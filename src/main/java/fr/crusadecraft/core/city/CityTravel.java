@@ -618,6 +618,8 @@ public final class CityTravel {
             CityPost.saleNews(server, home, dest, p, t.good(), t.amount(), want);
             if (t.line() != null) CityCommerce.onSold(server, t.line(), t.amount(), want - duty);
             CityCommerce.recordSale(server, t.amount(), want);
+            // P58 : un marché qui vend et qui reçoit prospère.
+            CityGrowth.onSale(server, dest);
             rapprochement(server, home, dest);
         } else if (earned == 0) {
             CityRumors.add(server, dest, "passage", p.name(), from(home));
@@ -694,6 +696,7 @@ public final class CityTravel {
     private static void comeHome(MinecraftServer server, ServerLevel level, Person p, Site home, Site dest, Trip t) {
         home.economy().addPurse(t.earned());
         if (t.back() != null) home.economy().add(t.back(), t.backAmount());
+        if (t.earned() > 0) CityGrowth.onSale(server, home);
         CityRumors.add(server, home, "retour", p.name(), dest.name());
         comeBack(level, p, home);
         // Il remet ce qu'il rapporte à quelqu'un, s'il est là pour ça.

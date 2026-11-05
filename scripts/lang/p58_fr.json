@@ -1,0 +1,8 @@
+{
+  "crusadecraft.economy.sort.enemy": "les ennemies d'abord",
+  "crusadecraft.economy.dock": "Le quai d'une colonie : ses réserves sont celles de son entrepôt",
+  "crusadecraft.economy.prosperity": "Prospérité : %s sur %s. Vends-y, et elle montera",
+  "crusadecraft.economy.prosperity.ready": "Prospérité : %s sur %s. Elle bâtira sa ville quand un joueur s'en approchera",
+  "crusadecraft.city.rumor.prospere": "Les marchands d'ici parlent de bâtir de vraies maisons : l'argent ne manque plus",
+  "crusadecraft.city.journal.grown": "%s est une vraie ville désormais : %s bâtiments se peuplent"
+}

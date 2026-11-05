@@ -115,7 +115,10 @@ des packs), `docs/etape-2-plan.md` (le plan des phases).
   `CityOrders` : le courrier, les commandes.
 - `core/city/CityCommerce` (lignes, prix, plan de l'ordinateur), `CityLine`, `CityMarkets` (les villes sans murs : des `Site` hors de `sites()`, dans `world().markets()`),
   `CityRoads` (A* en logique pure, tracés dans `world().roads()`), `CityGuards` (les gardes se battent, rancune par ville).
+- `core/city/WorldEconomy` et `client/screen/EconomyScreen` (l'écran d'économie, `WorldEconomyPackets` : `EconomyPackets` est celui du trésor), `CityTolls` (péage, douane), `CityBlockades` (villes coupées du monde),
+  `CityContracts` + `CityContract`, `CityDocks` (le quai d'une colonie : un `Site` rangé avec les marchés, identifiant `idOf(ColonyRef)`), `CityGrowth` (la prospérité d'un marché).
 - Pas de modèle de langage : Romain l'a écarté. Ne pas en ajouter sans qu'il le demande.
+- Pas de bandits : Romain n'en veut pas.
 
 ## Pièges déjà rencontrés
 
@@ -124,6 +127,7 @@ des packs), `docs/etape-2-plan.md` (le plan des phases).
   sol du monde d'essai est plus haut que `w.center` : un villageois posé là étouffe. Regarder le journal (`died`) avant d'accuser le code.
 - **Le tchat masqué** (une ancienne étape de `WorldShots`) fait refuser les commandes sans bruit : `Tchat désactivé`.
 - **Le monde d'essai du vrai client est en paisible** : les monstres s'y effacent aussitôt, et un coup n'y fait aucun dégât. Passer en normal avant de juger un combat.
+- **Un essai en jeu doit toujours finir par `w.cleanup()`** : sinon sa colonie et son royaume restent, et les essais suivants échouent en cascade, avec des messages qui n'ont rien à voir (« fondation impossible »).
 - **Avant l'aube, tout le monde dort** : au début d'une série d'essais, l'heure du monde est tôt, et personne ne vend rien. Fixer l'heure dans l'essai.
 
 - **MineColonies** : n'appeler son API que depuis `compat/minecolonies`. Certaines méthodes des entités de bâtiment ne

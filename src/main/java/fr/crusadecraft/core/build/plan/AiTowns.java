@@ -60,7 +60,7 @@ public final class AiTowns {
         return false;
     }
 
-    static boolean playerNear(ServerLevel level, BlockPos seat, int range) {
+    public static boolean playerNear(ServerLevel level, BlockPos seat, int range) {
         for (ServerPlayer pl : level.players()) {
             double dx = pl.getX() - seat.getX(), dz = pl.getZ() - seat.getZ();
             if (dx * dx + dz * dz <= (double) range * range) return true;
@@ -69,7 +69,7 @@ public final class AiTowns {
     }
 
     /** Des joueurs ont-ils longtemps vécu autour (les neuf chunks chargés autour du siège) ? */
-    static boolean lived(ServerLevel level, BlockPos seat) {
+    public static boolean lived(ServerLevel level, BlockPos seat) {
         int cx = seat.getX() >> 4, cz = seat.getZ() >> 4;
         for (int dx = -1; dx <= 1; dx++) {
             for (int dz = -1; dz <= 1; dz++) {
@@ -80,7 +80,7 @@ public final class AiTowns {
         return false;
     }
 
-    static boolean colonyNear(ServerLevel level, BlockPos seat) {
+    public static boolean colonyNear(ServerLevel level, BlockPos seat) {
         for (int[] c : MineColoniesBridge.colonyCenters(level)) {
             double dx = c[0] - seat.getX(), dz = c[1] - seat.getZ();
             if (dx * dx + dz * dz < (double) COLONY_RANGE * COLONY_RANGE) return true;

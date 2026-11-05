@@ -583,4 +583,25 @@ class NpcPanelLogicTest {
         CityDocks.Dock d = new CityDocks.Dock(a);
         assertEquals(a, CityDocks.Dock.load(d.save()).colony);
     }
+
+    @Test
+    void aMarketProspersWhenItsPurseIsFull() {
+        assertEquals(0, CityGrowth.next(0, 50, 0, false, 60), "une bourse maigre ne fait rien");
+        assertEquals(1, CityGrowth.next(0, 200, 0, false, 60), "une bourse honnête : doucement");
+        assertEquals(2, CityGrowth.next(0, 500, 0, false, 60), "une bourse pleine : plus vite");
+        assertEquals(7, CityGrowth.next(10, 500, 2, false, 60), "la faim fait reculer, bourse pleine ou non");
+        assertEquals(7, CityGrowth.next(10, 500, 0, true, 60), "le blocus aussi");
+        assertEquals(0, CityGrowth.next(1, 0, 3, false, 60), "jamais sous zéro");
+        assertEquals(60, CityGrowth.next(60, 500, 0, false, 60), "ni au-dessus de ce qu'il faut");
+    }
+
+    @Test
+    void aBesiegedCityLosesItsFields() {
+        CityEconomy free = new CityEconomy(), shut = new CityEconomy();
+        var farmers = java.util.Map.of(BuildingFunction.FERME, 4);
+        free.simulate(new CityEconomy.Census(farmers, 0, false, java.util.Map.of(), 0, 0, false), false, false, new Random(1));
+        shut.simulate(new CityEconomy.Census(farmers, 0, true, java.util.Map.of(), 0, 0, true), false, false, new Random(1));
+        assertEquals(48, free.stock(CityGood.BLE), "quatre fermiers libres");
+        assertEquals(12, shut.stock(CityGood.BLE), "les champs sont hors les murs");
+    }
 }

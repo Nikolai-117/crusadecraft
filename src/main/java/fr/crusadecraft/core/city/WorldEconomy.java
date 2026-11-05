@@ -75,6 +75,10 @@ public final class WorldEconomy {
             x.putBoolean("mine", s.owner().equals(mine));
             x.putBoolean("market", data.world().isMarket(s.id()));
             x.putBoolean("dock", CityDocks.isDockId(s.id()));
+            if (data.world().isMarket(s.id()) && !CityDocks.isDockId(s.id())) {
+                x.putInt("prosperity", s.prosperity());
+                x.putInt("prosperityMax", CityGrowth.required());
+            }
             x.putInt("people", people);
             x.putLong("purse", e.purse());
             x.putInt("famine", e.famine());

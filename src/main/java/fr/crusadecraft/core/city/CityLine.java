@@ -10,7 +10,8 @@ import java.util.UUID;
  */
 public final class CityLine {
     public final UUID id;
-    public final UUID from, to;
+    /** P58 : un marché devenu ville lui passe ses lignes : elles changent de bout. */
+    public UUID from, to;
     /** Ce qu'elle emporte ; {@code null} : le surplus du moment. */
     public CityGood good;
     public int amount = 24;

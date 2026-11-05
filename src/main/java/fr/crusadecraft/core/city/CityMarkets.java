@@ -154,6 +154,8 @@ public final class CityMarkets {
             }
             // Sa province a disparu, ou elle a pris corps en vraie ville : le marché n'a plus lieu d'être.
             boolean built = province != null && realCity(server, province.id()).isPresent();
+            // P58 : la ville reprend ce qu'il avait.
+            if (built) CityGrowth.absorb(server, m, realCity(server, province.id()).orElseThrow());
             if (province == null || built) {
                 for (CityBuilding b : m.buildings()) CityService.dismiss(server, b);
                 data.world().removeMarket(m.id());
@@ -162,6 +164,7 @@ public final class CityMarkets {
             if (!owner.id().equals(m.owner())) m.setOwner(owner.id());
             if (!province.name().equals(m.name())) m.setName(province.name());
             boolean besieged = CityBlockades.blocked(server, m);
+            CityGrowth.onDay(server, m, besieged);
             simulate(m.economy(), specialty(TradeService.good(server, owner.id())), province.development(), besieged);
             // La faim vide la province, et ce qu'elle avait bâti se défait.
             if (m.economy().famine() >= CityLife.FAMINE_LEAVE) {

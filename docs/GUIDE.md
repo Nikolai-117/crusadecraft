@@ -470,6 +470,47 @@ Ceux des casernes, des tours et des châteaux, et ceux des escortes : épée en 
 habitant, un garde ou un lama de caravane, les gardes de sa ville te tombent dessus** pendant une minute et demie, et te tapent vraiment, jusqu'à te tuer. Mort, tu es quitte. Pareil si ton royaume est en
 guerre contre le leur. En créatif, ils t'ignorent. Une ville garde toujours au moins un garde chez elle.
 
+### L'économie du monde
+
+`/crusade economie`, le bouton **Économie** de la carte, ou celui de l'onglet Commerce d'une ville. On n'y voit que ce qu'on connaît : ses terres, et les royaumes découverts.
+
+- **Villes** : leur royaume, leurs habitants, leur bourse, ce qui leur manque. Passe la souris sur une ligne : tout leur stock, et la prospérité d'un marché.
+- **Prix** : choisis une marchandise : ce que paie chaque ville pour une charge de caravane, et où elle se vend le mieux. Une ville paie jusqu'au double de ce qu'elle n'a plus, et la moitié de ce qui déborde de ses réserves.
+- **Lignes** : les plus rentables d'abord, avec leurs péages. **Routes** : ce qui s'est vendu ces seize derniers jours, et ceux qui marchent en ce moment. **Royaumes** : leur trésor, leurs villes, leur péage et leur douane.
+
+### La guerre et le commerce
+
+- **Une caravane surprise par la guerre fait demi-tour** avec sa charge.
+- **Une route qui passe chez l'ennemi est coupée.** Sur la carte, elle devient rouge, et sa ligne attend la paix.
+- **Le péage** : une caravane étrangère paie à chaque royaume qu'elle traverse, sauf traité de commerce, de passage ou alliance. **La douane** : le royaume prend sa part sur ce qu'un étranger vend chez lui, sauf traité de commerce. Les deux vont au trésor, et se règlent dans l'onglet Commerce de n'importe laquelle de ses villes. L'ordinateur fixe les siens selon son tempérament.
+- **Le blocus** : en guerre, le bouton **Bloquer** de l'écran d'économie (onglet Villes) coupe une ville ennemie du monde, pour 8 pièces par jour, 3 blocus au plus. Plus de grain de la campagne, plus d'importations, plus de caravanes : ses réserves baissent jusqu'à la famine, et chaque jour de famine compte pour toi dans la guerre. L'ordinateur en fait autant, à toi aussi, pour 8 jours au plus. Un siège, une occupation ou une armée à moins de 96 blocs ont le même effet, sans rien coûter. Un anneau rouge le montre sur la carte.
+
+### Les contrats
+
+Onglet **Contrats** de l'écran d'économie. Chaque jour, les villes proposent du travail, si elles ont de quoi payer. Il faut être à moins de 96 blocs de la ville pour signer ; elle met alors la somme de côté : tu es sûr d'être payé, en émeraudes, si tu tiens parole. Trois contrats à la fois.
+
+- **Porter un pli** : le pli scellé arrive dans ton sac, et le bas de l'écran te dit la distance et la direction. Il suffit d'arriver à moins de 32 blocs de la ville à temps.
+- **Escorter une caravane** : elle part dès que tu signes. Il faut marcher à moins de 64 blocs d'elle pendant au moins 60 % du trajet. Sinon, pas de paie, et la ville reprend son argent.
+- **Les commandes** : ce que les villes réclament, à apporter sur place : le bouton **Livrer** s'allume quand tu te tiens dans la ville, la marchandise sur toi. Celle qui n'en a plus du tout, ou qui a faim, paie le double.
+
+Tenir parole fait monter ton estime auprès de ses habitants ; renoncer ou échouer la fait baisser.
+
+### Le quai d'une colonie
+
+Une colonie MineColonies d'un de tes royaumes entre dans le commerce : **`/crusade ville panneau`, ou le bâton d'intendant tourné vers le ciel, en te tenant dans la colonie**, ouvre son quai. Toutes les villes la proposent aussi comme destination.
+
+- **Il lui faut un entrepôt bâti.** Ses réserves sont le reflet de ce qu'il contient, moins 32 de chaque marchandise, qu'on lui laisse pour vivre.
+- **Une ligne en part ou y arrive pour de vrai** : le fer part de ses rayonnages, le pain y entre. Quand personne n'est là et que son entrepôt n'est pas chargé, ça attend sur le quai, et s'y écrit à ton retour.
+- **Les objets enchantés, nommés ou usés ne se vendent jamais.**
+- **L'argent** : la bourse du quai est tenue par le trésor de ton royaume, entre 50 et 200 pièces.
+- L'ordinateur et les marchands libres ne livrent jamais une colonie d'office : seules les lignes que tu crées la touchent.
+
+### Un marché devient une ville
+
+Un marché de l'ordinateur gagne en prospérité : 2 points par caravane qui y vend ou qui y rentre, 1 ou 2 par jour si sa bourse est pleine, 3 de moins par jour de faim ou de blocus. À 60 (réglable), **il bâtit sa ville quand un joueur s'en approche à moins de 160 blocs** : son chantier s'ouvre, aux bâtiments du style de son royaume. Une fois finie, elle reçoit ses habitants d'elle-même, et reprend les réserves, la bourse et les lignes du marché. Commercer avec une ville de l'ordinateur la fait donc grandir pour de vrai.
+
+Cela change le monde, bloc par bloc : réglage `lesMarchesBatissent` (activé). C'est défaisable depuis l'éditeur de la carte, et jamais là où des joueurs ont longtemps vécu, ni près d'une colonie, ni sur les terres d'un joueur ou dans une nation qu'il dirige.
+
 ### La carte de guerre
 50. Ouvre la carte du royaume (touche **virgule**) et clique sur **⚔ Guerre**, en bas à droite. Une barre d'outils
     apparaît sous la carte : **Offensive**, **Défense**, **Objectif** (trois pinceaux qui peignent chunk par chunk,
@@ -697,8 +738,10 @@ Pour accélérer le temps pendant un test : `/time add 24000` fait passer un jou
 - Les caravanes ne marchent dans le monde que près d'un joueur ; loin de tout, elles avancent sur la carte. Après un
   redémarrage, elles repartent de leur première capitale, et un pillage en cours est oublié.
 - Une marchandise par royaume, pas de stocks ni de marché : le commerce reste une affaire de revenus.
-- Les colonies MineColonies ne sont pas des villes de commerce : une ligne relie des villes posées et des villes de la carte, pas une colonie. Son entrepôt ne se
-  remplit pas des caravanes.
+- Le quai d'une colonie lit son entrepôt au passage, quatre fois par jour : si la colonie consomme entre-temps ce qu'une caravane a déjà emporté, on ne le lui reprend pas. Seul le
+  premier entrepôt chargé compte, et il faut que quelqu'un soit assez près pour que son chunk soit chargé.
+- Une escorte ne se bat que contre ce qui s'en prend à elle : il n'y a pas de bandits sur les routes (Romain n'en veut pas), le danger vient des monstres et de la guerre.
+- Un blocus ne se voit pas dans le monde : pas de soldats autour de la ville. Il se lit sur la carte, dans l'écran d'économie, et dans ce que la ville endure.
 - Les routes sont tracées d'après le terrain que le générateur prévoit : elles ne savent rien de ce qu'on a bâti, et un obstacle réel fait franchir un ressaut d'un
   petit saut. Pas de ponts : une rivière trop large se traverse à pied, ou d'un saut.
 - Les marchés de l'ordinateur sont des comptes : pas de bâtiments, personne à y voir. Un voyageur qui y arrive se promène sur le siège de la ville.

@@ -55,6 +55,16 @@ public final class Site {
     /** P45 : son charme, de 0 à 100, mesuré en parcourant la ville : ce que valent ses fleurs, ses lanternes, ses tapis. */
     private int charm;
 
+    /** P58 : un marché qui réussit : quand elle est assez haute, il devient une ville. */
+    private int prosperity;
+    /** P58 : une ville née d'un marché : elle reçoit ses habitants d'elle-même, une fois finie. */
+    private boolean grown;
+
+    public int prosperity() { return prosperity; }
+    public void setProsperity(int prosperity) { this.prosperity = prosperity; }
+    public boolean grown() { return grown; }
+    public void setGrown(boolean grown) { this.grown = grown; }
+
     public int charm() { return charm; }
     public void setCharm(int charm) { this.charm = charm; }
 
@@ -202,6 +212,8 @@ public final class Site {
             t.put("orders", ol);
         }
         if (charm != 0) t.putInt("charm", charm);
+        if (prosperity != 0) t.putInt("prosperity", prosperity);
+        if (grown) t.putBoolean("grown", true);
         return t;
     }
 
@@ -230,6 +242,8 @@ public final class Site {
         net.minecraft.nbt.ListTag ol = t.getList("orders", net.minecraft.nbt.Tag.TAG_COMPOUND);
         for (int k = 0; k < ol.size(); k++) s.orders.add(fr.crusadecraft.core.city.CityOrders.Order.load(ol.getCompound(k)));
         s.charm = t.getInt("charm");
+        s.prosperity = t.getInt("prosperity");
+        s.grown = t.getBoolean("grown");
         return s;
     }
 }

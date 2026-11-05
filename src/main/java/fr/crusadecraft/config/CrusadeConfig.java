@@ -118,6 +118,8 @@ public final class CrusadeConfig {
         public final ForgeConfigSpec.BooleanValue aiTowns;
         public final ForgeConfigSpec.IntValue aiTownRange;
         public final ForgeConfigSpec.IntValue aiTownsAtOnce;
+        public final ForgeConfigSpec.BooleanValue marketsBuild;
+        public final ForgeConfigSpec.IntValue marketGrowAt;
         public final ForgeConfigSpec.IntValue townBlocksPerSecond;
         public final ForgeConfigSpec.IntValue claimCommandRadius;
         public final ForgeConfigSpec.BooleanValue coloniesJoinZone;
@@ -415,6 +417,11 @@ public final class CrusadeConfig {
                     .define("batirEnApprochant", false);
             aiTownRange = b.comment("Distance, en blocs, à laquelle un joueur réveille une ville.").defineInRange("distance", 160, 48, 512);
             aiTownsAtOnce = b.comment("Villes en chantier en même temps, au plus.").defineInRange("chantiersEnMemeTemps", 2, 1, 16);
+            marketsBuild = b.comment("Un marché de l'ordinateur qui a assez prospéré bâtit sa ville quand un joueur s'en approche : cela change le monde, bloc par bloc.",
+                    "Toujours défaisable depuis l'éditeur de la carte. Jamais là où des joueurs ont longtemps vécu, ni près d'une colonie, ni sur les terres d'un joueur.")
+                    .define("lesMarchesBatissent", true);
+            marketGrowAt = b.comment("La prospérité qu'il lui faut. Deux points par caravane, un ou deux par jour si sa bourse est pleine, trois de moins par jour de faim ou de blocus.")
+                    .defineInRange("prosperiteRequise", 60, 1, 1000);
             townBlocksPerSecond = b.comment("Blocs posés chaque seconde par le chantier d'une ville (une ville moyenne en compte cent mille).")
                     .defineInRange("blocsParSeconde", 80, 1, 5000);
             b.pop();

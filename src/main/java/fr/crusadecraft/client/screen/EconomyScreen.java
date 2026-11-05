@@ -30,7 +30,7 @@ public class EconomyScreen extends Screen {
 
     private enum Tab { CITIES, PRICES, LINES, ROADS, REALMS, CONTRACTS }
 
-    private enum Sort { RICH, NEED, NEAR, NAME }
+    private enum Sort { RICH, NEED, NEAR, NAME, ENEMY }
 
     /** On revient là où l'on était, d'une ouverture à l'autre. */
     private static Tab tab = Tab.CITIES;
@@ -97,6 +97,8 @@ public class EconomyScreen extends Screen {
             case NEED -> Comparator.comparingInt((CompoundTag c) -> -needs(c));
             case NEAR -> Comparator.comparingInt((CompoundTag c) -> c.getInt("distance") < 0 ? Integer.MAX_VALUE : c.getInt("distance"));
             case NAME -> Comparator.comparing((CompoundTag c) -> c.getString("name"), String.CASE_INSENSITIVE_ORDER);
+            // P55 : celles qu'on peut bloquer, puis celles qu'on bloque : sans quoi il faudrait les chercher dans toute la liste.
+            case ENEMY -> Comparator.comparingInt((CompoundTag c) -> c.getBoolean("byMe") ? 0 : c.getBoolean("canBlock") ? 1 : 2).thenComparingLong(c -> -c.getLong("purse"));
         };
         out.sort(order);
         return out;
@@ -345,6 +347,11 @@ public class EconomyScreen extends Screen {
             List<Component> tip = new ArrayList<>();
             tip.add(Component.literal(c.getString("name")));
             if (c.getInt("distance") >= 0) tip.add(Component.translatable("crusadecraft.economy.distance", c.getInt("distance")));
+            if (c.getBoolean("dock")) tip.add(Component.translatable("crusadecraft.economy.dock"));
+            if (c.contains("prosperity")) {
+                boolean ready = c.getInt("prosperity") >= c.getInt("prosperityMax");
+                tip.add(Component.translatable(ready ? "crusadecraft.economy.prosperity.ready" : "crusadecraft.economy.prosperity", c.getInt("prosperity"), c.getInt("prosperityMax")));
+            }
             for (CityGood good : CityGood.values()) tip.add(Component.translatable(good.key()).append(" : " + stock.getInt(good.name())));
             g.renderComponentTooltip(font, tip, mx, my);
             return;

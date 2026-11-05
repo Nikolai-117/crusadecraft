@@ -72,6 +72,7 @@ minecraft {
             // -Pshots_v7=true : le panneau, l'éditeur, les skins, les voyages, le courrier (P46 à P49).
             property 'crusadecraft.worldshots.v7', (project.findProperty('shots_v7') == 'true').toString()
             property 'crusadecraft.worldshots.v7gardes', (project.findProperty('shots_v7_gardes') == 'true').toString()
+            property 'crusadecraft.worldshots.v7civ', (project.findProperty('shots_v7_civ') == 'true').toString()
         }
 
         server {

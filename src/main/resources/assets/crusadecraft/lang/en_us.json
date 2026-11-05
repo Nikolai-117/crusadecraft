@@ -3199,5 +3199,11 @@
   "crusadecraft.city.dock.no_warehouse": "Build a warehouse: the dock will empty into it",
   "crusadecraft.city.dock.no_realm": "This colony belongs to no realm: its trade would have no treasury to go to.",
   "crusadecraft.city.dock.stock": "This is what the warehouse can spare: anything above %s of each good, plus what is waiting to be stored. Enchanted or named items are never sold.",
-  "crusadecraft.city.panel.trade.stop.dock": "%s, colony (%s blocks)"
+  "crusadecraft.city.panel.trade.stop.dock": "%s, colony (%s blocks)",
+  "crusadecraft.economy.dock": "A colony's dock: its reserves are those of its warehouse",
+  "crusadecraft.economy.prosperity": "Prosperity: %s of %s. Sell there, and it will rise",
+  "crusadecraft.economy.prosperity.ready": "Prosperity: %s of %s. It will build its town when a player comes near",
+  "crusadecraft.city.rumor.prospere": "The merchants here talk of building real houses: money is no longer lacking",
+  "crusadecraft.city.journal.grown": "%s is a real town now: %s buildings are filling up",
+  "crusadecraft.economy.sort.enemy": "enemies first"
 }
