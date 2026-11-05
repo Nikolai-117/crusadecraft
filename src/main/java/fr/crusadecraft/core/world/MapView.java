@@ -23,15 +23,18 @@ import java.util.UUID;
 public record MapView(ResourceLocation dimension, int focusX, int focusZ, int playerX, int playerZ, int territoryRadius,
                       int colonyRadius, List<Territory> territories, List<Seat> seats, List<Dejure> dejure,
                       boolean canEdit, boolean editing, Borders borders, List<Place> places, War war, List<TradeLine> routes,
-                      List<ArmyPawn> armies, List<Traveller> travellers, List<CommerceLine> commerce) {
+                      List<ArmyPawn> armies, List<Traveller> travellers, List<CommerceLine> commerce, List<Blocked> blocked) {
 
-    /** P51 : une ligne de commerce, et le tracé de sa route. */
-    public record CommerceLine(int[] xs, int[] zs, String from, String to, String what, int trips, boolean ai) {}
+    /** P51 : une ligne de commerce, et le tracé de sa route ; P55 : coupée, et pourquoi. */
+    public record CommerceLine(int[] xs, int[] zs, String from, String to, String what, int trips, boolean ai, String trouble) {}
+
+    /** P55 : une ville coupée du monde. */
+    public record Blocked(int x, int z, String name, String why) {}
 
     public MapView(ResourceLocation dimension, int focusX, int focusZ, int playerX, int playerZ, int territoryRadius,
                    int colonyRadius, List<Territory> territories, List<Seat> seats, List<Dejure> dejure,
                    boolean canEdit, boolean editing, Borders borders, List<Place> places, War war, List<TradeLine> routes, List<ArmyPawn> armies, List<Traveller> travellers) {
-        this(dimension, focusX, focusZ, playerX, playerZ, territoryRadius, colonyRadius, territories, seats, dejure, canEdit, editing, borders, places, war, routes, armies, travellers, List.of());
+        this(dimension, focusX, focusZ, playerX, playerZ, territoryRadius, colonyRadius, territories, seats, dejure, canEdit, editing, borders, places, war, routes, armies, travellers, List.of(), List.of());
     }
 
     /** P50 : un voyageur sur la route, une caravane s'il porte quelque chose. */
@@ -324,6 +327,14 @@ public record MapView(ResourceLocation dimension, int focusX, int focusZ, int pl
             buf.writeUtf(l.what());
             buf.writeVarInt(l.trips());
             buf.writeBoolean(l.ai());
+            buf.writeUtf(l.trouble());
+        }
+        buf.writeVarInt(blocked.size());
+        for (Blocked b : blocked) {
+            buf.writeInt(b.x());
+            buf.writeInt(b.z());
+            buf.writeUtf(b.name());
+            buf.writeUtf(b.why());
         }
     }
 
@@ -483,9 +494,12 @@ public record MapView(ResourceLocation dimension, int focusX, int focusZ, int pl
         n = buf.readVarInt();
         List<CommerceLine> commerce = new ArrayList<>(n);
         for (int i = 0; i < n; i++) {
-            commerce.add(new CommerceLine(buf.readVarIntArray(), buf.readVarIntArray(), buf.readUtf(), buf.readUtf(), buf.readUtf(), buf.readVarInt(), buf.readBoolean()));
+            commerce.add(new CommerceLine(buf.readVarIntArray(), buf.readVarIntArray(), buf.readUtf(), buf.readUtf(), buf.readUtf(), buf.readVarInt(), buf.readBoolean(), buf.readUtf()));
         }
+        n = buf.readVarInt();
+        List<Blocked> blocked = new ArrayList<>(n);
+        for (int i = 0; i < n; i++) blocked.add(new Blocked(buf.readInt(), buf.readInt(), buf.readUtf(), buf.readUtf()));
         return new MapView(dim, fx, fz, px, pz, radius, colonyRadius, territories, seats, dejure, canEdit, editing, new Borders(keys, owners), places,
-                war, routes, armies, travellers, commerce);
+                war, routes, armies, travellers, commerce, blocked);
     }
 }

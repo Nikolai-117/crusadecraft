@@ -28,6 +28,8 @@ public final class CityLine {
     public int waited;
     public int trips;
     public long moved, earned;
+    /** P55 : ce qu'elle a payé en péages. */
+    public long tolls;
     /** Ce qu'il en est, à montrer dans le panneau (une clé de langue). */
     public String status = "";
     /** Le jour où elle a servi pour la dernière fois, pour que l'ordinateur oublie celles qui ne servent plus. */
@@ -56,6 +58,7 @@ public final class CityLine {
         t.putInt("trips", trips);
         t.putLong("moved", moved);
         t.putLong("earned", earned);
+        t.putLong("tolls", tolls);
         t.putString("status", status);
         t.putLong("lastDay", lastDay);
         return t;
@@ -83,6 +86,7 @@ public final class CityLine {
         l.trips = t.getInt("trips");
         l.moved = t.getLong("moved");
         l.earned = t.getLong("earned");
+        l.tolls = t.getLong("tolls");
         l.status = t.getString("status");
         l.lastDay = t.getLong("lastDay");
         return l;

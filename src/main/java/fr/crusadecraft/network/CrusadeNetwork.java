@@ -308,6 +308,9 @@ public final class CrusadeNetwork {
         CHANNEL.messageBuilder(fr.crusadecraft.network.packet.WorldEconomyPackets.Open.class, nextId++, NetworkDirection.PLAY_TO_CLIENT)
                 .encoder(fr.crusadecraft.network.packet.WorldEconomyPackets.Open::encode).decoder(fr.crusadecraft.network.packet.WorldEconomyPackets.Open::decode)
                 .consumerMainThread(fr.crusadecraft.network.packet.WorldEconomyPackets.Open::handle).add();
+        CHANNEL.messageBuilder(fr.crusadecraft.network.packet.WorldEconomyPackets.Action.class, nextId++, NetworkDirection.PLAY_TO_SERVER)
+                .encoder(fr.crusadecraft.network.packet.WorldEconomyPackets.Action::encode).decoder(fr.crusadecraft.network.packet.WorldEconomyPackets.Action::decode)
+                .consumerMainThread(fr.crusadecraft.network.packet.WorldEconomyPackets.Action::handle).add();
         CHANNEL.messageBuilder(fr.crusadecraft.network.packet.WorldEconomyPackets.Request.class, nextId++, NetworkDirection.PLAY_TO_SERVER)
                 .encoder(fr.crusadecraft.network.packet.WorldEconomyPackets.Request::encode).decoder(fr.crusadecraft.network.packet.WorldEconomyPackets.Request::decode)
                 .consumerMainThread(fr.crusadecraft.network.packet.WorldEconomyPackets.Request::handle).add();

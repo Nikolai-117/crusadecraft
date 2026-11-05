@@ -56,7 +56,8 @@ public final class WorldEconomy {
         MinecraftServer server = player.server;
         CrusadeSavedData data = CrusadeSavedData.get(server);
         boolean all = PlanTool.allowed(player);
-        UUID mine = RealmService.realmOf(server, player.getUUID()).map(Realm::id).orElse(null);
+        UUID mine = myRealm(player);
+        java.util.Set<UUID> blocked = CityBlockades.blocked(server);
         CompoundTag t = new CompoundTag();
         t.putInt("quoteFor", QUOTE_FOR);
 
@@ -76,6 +77,11 @@ public final class WorldEconomy {
             x.putInt("people", people);
             x.putLong("purse", e.purse());
             x.putInt("famine", e.famine());
+            // P55 : coupée du monde, et ce qu'on peut y faire.
+            if (blocked.contains(s.id())) x.putString("blocked", CityBlockades.explain(server, s));
+            CityBlockades.Blockade held = data.world().blockades().get(s.id());
+            x.putBoolean("byMe", held != null && held.by().equals(mine));
+            x.putBoolean("canBlock", held == null && mine != null && CityCommerce.atWar(server, mine, s.owner()));
             x.putInt("distance", s.dimension().equals(player.level().dimension().location()) ? (int) Math.hypot(player.getX() - s.anchor().getX(), player.getZ() - s.anchor().getZ()) : -1);
             CompoundTag stock = new CompoundTag(), quote = new CompoundTag();
             for (CityGood g : CityGood.values()) {
@@ -111,6 +117,7 @@ public final class WorldEconomy {
             x.putInt("trips", l.trips);
             x.putLong("moved", l.moved);
             x.putLong("earned", l.earned);
+            x.putLong("tolls", l.tolls);
             x.putString("status", l.active ? l.status : "paused");
             x.putBoolean("ai", l.ai);
             x.putBoolean("mine", from.owner().equals(mine));
@@ -140,16 +147,35 @@ public final class WorldEconomy {
         // Les royaumes.
         ListTag realms = new ListTag();
         for (AiRealm r : data.world().realms()) {
-            if (visible(data, r.id(), player, all)) realms.add(realm(data, r.id(), r.gold(), perRealm, mine));
+            if (visible(data, r.id(), player, all)) realms.add(realm(server, data, r.id(), r.gold(), perRealm, mine));
         }
-        for (Realm r : data.realms()) realms.add(realm(data, r.id(), r.gold(), perRealm, mine));
+        for (Realm r : data.realms()) realms.add(realm(server, data, r.id(), r.gold(), perRealm, mine));
         t.put("realms", realms);
         return t;
     }
 
-    private static CompoundTag realm(CrusadeSavedData data, UUID id, long gold, Map<UUID, long[]> perRealm, UUID mine) {
+    /** Le royaume qu'il dirige : le sien, ou la nation dont il est le souverain. */
+    public static UUID myRealm(ServerPlayer player) {
+        return RealmService.realmOf(player.server, player.getUUID()).map(Realm::id)
+                .orElseGet(() -> fr.crusadecraft.core.nation.NationService.ruledBy(player.server, player.getUUID()).map(AiRealm::id).orElse(null));
+    }
+
+    /** Ce qu'on fait depuis l'écran : mettre une ville en blocus, ou lever le sien. */
+    public static fr.crusadecraft.core.council.CouncilActions.Outcome act(ServerPlayer player, CompoundTag c) {
+        UUID me = myRealm(player);
+        if (me == null) return fr.crusadecraft.core.council.CouncilActions.Outcome.no("crusadecraft.realm.none");
+        if (!c.hasUUID("site")) return fr.crusadecraft.core.council.CouncilActions.Outcome.no("crusadecraft.city.unknown");
+        Site s = CrusadeSavedData.get(player.server).world().site(c.getUUID("site")).orElse(null);
+        if (s == null) return fr.crusadecraft.core.council.CouncilActions.Outcome.no("crusadecraft.city.unknown");
+        return c.getBoolean("lift") ? CityBlockades.lift(player.server, me, s) : CityBlockades.declare(player.server, me, s);
+    }
+
+    private static CompoundTag realm(MinecraftServer server, CrusadeSavedData data, UUID id, long gold, Map<UUID, long[]> perRealm, UUID mine) {
         long[] r = perRealm.getOrDefault(id, new long[5]);
         CompoundTag x = new CompoundTag();
+        CityTolls.Rules rules = CityTolls.rules(server, id);
+        x.putInt("toll", rules.toll());
+        x.putInt("duty", rules.duty());
         x.put("name", StringTag.valueOf(Fr.of(WarMapService.name(data, id))));
         x.putInt("color", WarMapService.color(data, id));
         x.putBoolean("mine", id.equals(mine));

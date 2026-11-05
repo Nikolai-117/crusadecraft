@@ -126,7 +126,7 @@ public final class CityTravel {
     }
 
     private static void maybeDepart(MinecraftServer server, Site home, Random random) {
-        if (!CrusadeConfig.SERVER.routines.get() || !home.settings().canTravel) return;
+        if (!CrusadeConfig.SERVER.routines.get() || !home.settings().canTravel || CityBlockades.blocked(server, home)) return;
         LineageState state = data(server).lineage();
         int away = 0;
         List<Person> merchants = new ArrayList<>(), others = new ArrayList<>();
@@ -148,11 +148,22 @@ public final class CityTravel {
         if (!merchants.isEmpty() && random.nextInt(100) < MERCHANT) {
             Person p = merchants.get(random.nextInt(merchants.size()));
             // Un marchand va là où il vendra le mieux.
-            bestBuyer(server, home, richest(home.economy()), random).ifPresent(dest -> depart(server, home, dest, p, true));
+            bestBuyer(server, home, richest(home.economy()), random).filter(dest -> mayPass(server, home, dest, true)).ifPresent(dest -> depart(server, home, dest, p, true));
         } else if (!others.isEmpty() && random.nextInt(100) < OTHER) {
             Person p = others.get(random.nextInt(others.size()));
-            destination(server, home, random).ifPresent(dest -> depart(server, home, dest, p, false));
+            destination(server, home, random).filter(dest -> mayPass(server, home, dest, false)).ifPresent(dest -> depart(server, home, dest, p, false));
         }
+    }
+
+    /** P55 : la route est-elle ouverte ? Un marchand y paie son péage ; quelqu'un qui marche seul passe sans qu'on lui demande rien. */
+    private static boolean mayPass(MinecraftServer server, Site home, Site dest, boolean merchant) {
+        if (CityBlockades.blocked(server, dest)) return false;
+        CityTolls.Passage passage = CityTolls.passage(server, home, dest);
+        if (passage.cut()) return false;
+        if (!merchant) return true;
+        if (home.economy().purse() < passage.toll()) return false;
+        CityTolls.pay(server, passage, home);
+        return true;
     }
 
     /** Les villes où l'on peut aller d'ici : celles du même monde, qui ne sont pas en guerre avec la sienne, marchés de l'ordinateur compris. */
@@ -265,6 +276,7 @@ public final class CityTravel {
     /** Toutes les deux secondes, pour tous ceux qui sont en route ou en visite. */
     public static void tick(MinecraftServer server) {
         CrusadeSavedData data = data(server);
+        java.util.Set<UUID> blocked = CityBlockades.blocked(server);
         for (Person p : new ArrayList<>(data.lineage().persons())) {
             Trip t = p.trip();
             if (t == null) continue;
@@ -295,6 +307,14 @@ public final class CityTravel {
                 follow(server, level, p, home.get(), dest.get(), t, now);
                 continue;
             }
+            // P55 : la guerre a éclaté, ou la ville est tombée sous le blocus : on ne va pas plus loin, et qui y séjourne en repart.
+            if (t.stage() != Trip.Stage.BACK && (CityCommerce.atWar(server, home.get().owner(), dest.get().owner()) || blocked.contains(dest.get().id()))) {
+                if (t.stage() == Trip.Stage.OUT) {
+                    turnBack(server, p, home.get(), dest.get(), t, now);
+                    continue;
+                }
+                if (now < t.end()) p.setTrip(t = t.next(Trip.Stage.STAY, t.start(), now, t.back(), t.backAmount(), t.earned()));
+            }
             switch (t.stage()) {
                 case OUT -> {
                     road(server, level, p, home.get(), dest.get(), t, now);
@@ -311,6 +331,16 @@ public final class CityTravel {
             sweepIn = 5;
             sweepPacks(server);
         }
+    }
+
+    /** Il fait demi-tour où il en est, avec ce qu'il portait : il mettra pour rentrer le temps qu'il a mis à venir. */
+    private static void turnBack(MinecraftServer server, Person p, Site home, Site dest, Trip t, long now) {
+        long whole = roadTicks(CityRoads.between(server, dest, home).length());
+        long start = now - Math.round((1 - t.progress(now)) * whole);
+        p.setTrip(t.next(Trip.Stage.BACK, start, start + whole, t.good(), t.amount(), t.earned()));
+        CityJournal.add(server, home, CityJournal.Kind.ROAD, Fr.key("crusadecraft.city.journal.turned_back", p.name(), dest.name()));
+        if (t.line() != null) CityCommerce.line(server, t.line()).ifPresent(l -> l.status = "turned");
+        data(server).setDirty();
     }
 
     /** S'il marche sous les yeux de quelqu'un, il va jusqu'au bout avant d'être arrivé. Sinon, l'heure fait foi : il a marché sans qu'on le voie. */
@@ -576,14 +606,17 @@ public final class CityTravel {
         if (t.good() != null) {
             // Le prix est celui de cette ville, aujourd'hui : plus elle en manque, plus elle paie.
             int want = Math.min(CityCommerce.quote(t.good(), dest.economy(), fair, t.amount()), (int) Math.min(Integer.MAX_VALUE, dest.economy().purse()));
-            earned += want;
+            // P55 : sa douane revient au royaume qui reçoit.
+            int duty = CityTolls.duty(server, home, dest, want);
+            earned += want - duty;
             dest.economy().addPurse(-want);
+            CityTolls.credit(server, dest.owner(), duty);
             dest.economy().add(t.good(), t.amount());
             String goods = Fr.key(t.good().key() + ".du");
             CityRumors.add(server, dest, "marchand", p.name(), from(home), goods);
             CityJournal.add(server, dest, CityJournal.Kind.ROAD, Fr.key("crusadecraft.city.journal.sold", p.name(), from(home), goods, t.amount(), CityOrders.money(want)));
             CityPost.saleNews(server, home, dest, p, t.good(), t.amount(), want);
-            if (t.line() != null) CityCommerce.onSold(server, t.line(), t.amount(), want);
+            if (t.line() != null) CityCommerce.onSold(server, t.line(), t.amount(), want - duty);
             CityCommerce.recordSale(server, t.amount(), want);
             rapprochement(server, home, dest);
         } else if (earned == 0) {

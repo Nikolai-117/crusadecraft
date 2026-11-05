@@ -159,6 +159,11 @@ public final class CityPanel {
             stops.add(x);
         }
         t.put("stops", stops);
+        // P55 : ce qu'elle endure, et ce que son royaume demande à ceux qui passent.
+        t.putString("blocked", CityBlockades.explain(server, site));
+        CityTolls.Rules rules = CityTolls.rules(server, site.owner());
+        t.putInt("toll", rules.toll());
+        t.putInt("duty", rules.duty());
         return t;
     }
 
@@ -284,6 +289,10 @@ public final class CityPanel {
             if (c.hasUUID("lineToggle")) found.get().active = !found.get().active;
             if (c.hasUUID("linePave")) found.get().pave = !found.get().pave;
             if (c.hasUUID("lineRemove")) data(server).world().lines().remove(found.get());
+        }
+        if (c.contains("toll") || c.contains("duty")) {
+            CityTolls.Rules r = CityTolls.rules(server, site.owner());
+            CityTolls.set(server, site.owner(), c.contains("toll") ? c.getInt("toll") : r.toll(), c.contains("duty") ? c.getInt("duty") : r.duty());
         }
         // Son allure.
         if (c.contains("poolAdd")) {

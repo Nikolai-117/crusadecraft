@@ -816,6 +816,86 @@ public final class PanelGameTests {
         }
     }
 
+    @GameTest(template = TestWorld.TEMPLATE, setupTicks = TestWorld.SETUP_TICKS, batch = "p55_guerre", timeoutTicks = 300)
+    public static void laGuerreCoupeLeCommerce(GameTestHelper h) {
+        TestWorld w = TestWorld.realm(h, "GuerreA");
+        var server = h.getLevel().getServer();
+        var level = h.getLevel();
+        var data = CrusadeSavedData.get(server);
+        WorldEditService.grantForTests(w.ruler.getUUID(), true);
+        try {
+            data.world().clear();
+            data.world().markGenerated(RealmService.currentDay(server));
+            NationBook.setForTests(List.of(nation("essaia", "Essaia"), nation("essaib", "Essaib"), nation("essaic", "Essaic")));
+            NationService.ensure(server);
+            AiRealm a = NationService.realm(server, "essaia").orElseThrow(), b = NationService.realm(server, "essaib").orElseThrow(), c = NationService.realm(server, "essaic").orElseThrow();
+            Site home = city(w, server, level, a, "Guedep", 0, BuildingFunction.MARCHE, BuildingFunction.CASERNE);
+            Site dest = city(w, server, level, b, "Guearr", 200, BuildingFunction.MARCHE);
+            home.economy().add(CityGood.FER, 100);
+            home.economy().addPurse(500);
+            // Un péage sur le chemin, chez un tiers.
+            java.util.Set<UUID> crossed = new java.util.HashSet<>(List.of(a.id(), c.id(), b.id()));
+            var due = fr.crusadecraft.core.city.CityTolls.due(crossed, a.id(), b.id(), r -> 10, r -> false);
+            w.check(due.size() == 1 && due.get(0).realm().equals(c.id()), "le péage n'est pas dû au bon royaume");
+            long gold = c.gold();
+            long purse = home.economy().purse();
+            fr.crusadecraft.core.city.CityTolls.pay(server, new fr.crusadecraft.core.city.CityTolls.Passage(false, 10, due), home);
+            w.check(c.gold() == gold + 10 && home.economy().purse() == purse - 10, "le péage ne va pas au trésor");
+            // Une douane chez l'étranger, sans traité.
+            fr.crusadecraft.core.city.CityTolls.set(server, b.id(), 0, 20);
+            w.check(fr.crusadecraft.core.city.CityTolls.rules(server, b.id()).duty() == 20, "la douane n'est pas enregistrée");
+            w.check(fr.crusadecraft.core.city.CityTolls.duty(server, home, dest, 100) == 20, "pas de douane sans traité");
+            w.check(fr.crusadecraft.core.city.CityTolls.duty(server, home, home, 100) == 0, "une douane chez soi");
+            CompoundTag rules = new CompoundTag();
+            rules.putInt("toll", 5);
+            w.check(CityPanel.edit(w.ruler, home.id(), rules).success() && fr.crusadecraft.core.city.CityTolls.rules(server, a.id()).toll() == 5, "le panneau ne règle pas le péage");
+            // Une caravane en route, et la guerre éclate : demi-tour, avec ce qu'elle portait.
+            fr.crusadecraft.core.city.CityCommerce.create(server, home, dest.id(), CityGood.FER, 16, null, 1, 0, false);
+            fr.crusadecraft.core.city.CityLine line = data.world().lines().get(0);
+            fr.crusadecraft.core.city.CityCommerce.pulse(server);
+            Person merchant = null;
+            for (Person x : data.lineage().persons()) if (x.trip() != null && line.id.equals(x.trip().line())) merchant = x;
+            w.check(merchant != null, "elle ne part pas : " + line.status);
+            int fer = home.economy().stock(CityGood.FER);
+            data.diplomacy().between(a.id(), b.id()).setWar(true);
+            CityTravel.tick(server);
+            Trip back = merchant.trip();
+            w.check(back != null && back.stage() == Trip.Stage.BACK && back.back() == CityGood.FER && back.backAmount() == 16, "elle ne fait pas demi-tour avec sa charge : " + back);
+            CityTravel.advanceForTests(server, merchant, level.getGameTime());
+            w.check(merchant.trip() == null && home.economy().stock(CityGood.FER) == fer + 16, "sa charge ne revient pas : " + home.economy().stock(CityGood.FER));
+            line.waited = 99;
+            fr.crusadecraft.core.city.CityCommerce.pulse(server);
+            w.check(line.status.equals("war"), "elle repart en pleine guerre : " + line.status);
+            // Un blocus : il faut être en guerre, et de quoi le payer.
+            b.setGold(100);
+            c.setGold(100);
+            w.check(!fr.crusadecraft.core.city.CityBlockades.declare(server, c.id(), home).success(), "on bloque une ville sans être en guerre");
+            Outcome out = fr.crusadecraft.core.city.CityBlockades.declare(server, b.id(), home);
+            w.check(out.success(), "le blocus est refusé : " + out.message().getString());
+            w.check(b.gold() == 100 - fr.crusadecraft.core.city.CityBlockades.COST, "le blocus ne se paie pas");
+            w.check(fr.crusadecraft.core.city.CityBlockades.blocked(server, home), "la ville n'est pas coupée du monde");
+            w.check(!CityPanel.view(server, home).getString("blocked").isEmpty(), "le panneau ne le dit pas");
+            data.diplomacy().between(a.id(), b.id()).setWar(false);
+            line.waited = 99;
+            fr.crusadecraft.core.city.CityCommerce.pulse(server);
+            w.check(line.status.equals("blockade"), "elle sort d'une ville bloquée : " + line.status);
+            // La guerre finie, le blocus tombe au matin.
+            fr.crusadecraft.core.city.CityBlockades.onDay(server, new java.util.Random(1));
+            w.check(!fr.crusadecraft.core.city.CityBlockades.blocked(server, home), "le blocus survit à la paix");
+            // Les faits survivent à l'enregistrement.
+            data.world().blockades().put(dest.id(), new fr.crusadecraft.core.city.CityBlockades.Blockade(a.id(), 3));
+            var loaded = fr.crusadecraft.core.world.WorldState.load(data.world().save());
+            w.check(loaded.blockades().get(dest.id()).since() == 3 && loaded.tradeRules().get(b.id()).duty() == 20, "le blocus ou la douane ne s'enregistrent pas");
+            h.succeed();
+        } finally {
+            WorldEditService.grantForTests(w.ruler.getUUID(), false);
+            NationBook.setForTests(null);
+            fr.crusadecraft.core.city.CityBlockades.invalidate();
+            data.world().clear();
+            w.cleanup();
+        }
+    }
+
     @GameTest(template = TestWorld.TEMPLATE, setupTicks = TestWorld.SETUP_TICKS, batch = "p51_lignes", timeoutTicks = 300)
     public static void lignesDeCommerce(GameTestHelper h) {
         TestWorld w = TestWorld.realm(h, "CommerceA");

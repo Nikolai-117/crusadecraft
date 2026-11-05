@@ -396,4 +396,45 @@ class NpcPanelLogicTest {
         assertEquals(24, CityCommerce.quote(CityGood.BLE, poor, false, 24), "sans traité : la moitié");
         assertTrue(CityCommerce.price(CityGood.BLE, rich, false) >= 1, "rien ne se vend pour rien");
     }
+
+    @Test
+    void tollsArePaidOnlyWhereTheyAreDue() {
+        UUID home = new UUID(0, 1), dest = new UUID(0, 2), friend = new UUID(0, 3), stranger = new UUID(0, 4);
+        var due = CityTolls.due(List.of(home, friend, stranger, dest), home, dest, r -> 5, friend::equals);
+        assertEquals(1, due.size(), "ni chez soi, ni à destination, ni chez qui en dispense");
+        assertEquals(stranger, due.get(0).realm());
+        assertTrue(CityTolls.due(List.of(stranger), home, dest, r -> 0, r -> false).isEmpty(), "un péage à zéro ne se paie pas");
+        assertEquals(5, CityTolls.nearest(CityTolls.TOLLS, 6), "on ne garde que les valeurs proposées");
+        assertEquals(30, CityTolls.nearest(CityTolls.DUTIES, 999));
+        var rules = new CityTolls.Rules(10, 20);
+        assertEquals(rules, CityTolls.Rules.load(rules.save()));
+        assertTrue(CityTolls.byDefault(fr.crusadecraft.core.world.AiPersonality.FANATIQUE).toll() > CityTolls.byDefault(fr.crusadecraft.core.world.AiPersonality.MARCHAND).toll());
+    }
+
+    @Test
+    void aBesiegedCityStarves() {
+        CityEconomy free = CityEconomy.fresh(), shut = CityEconomy.fresh();
+        var workers = java.util.Map.<BuildingFunction, Integer>of();
+        CityEconomy.Census open = new CityEconomy.Census(workers, 40, false, java.util.Map.of(), 0, 0, false);
+        CityEconomy.Census closed = new CityEconomy.Census(workers, 40, true, java.util.Map.of(), 0, 0, true);
+        for (int i = 0; i < 8; i++) {
+            free.simulate(open, false, true, new Random(i));
+            shut.simulate(closed, false, true, new Random(i));
+        }
+        assertEquals(0, free.famine(), "une ville libre mange");
+        assertTrue(shut.famine() > 0, "coupée du monde, elle a faim");
+        assertTrue(free.stock(CityGood.BLE) > shut.stock(CityGood.BLE));
+    }
+
+    @Test
+    void aBesiegedMarketEatsItsReserves() {
+        CityEconomy e = CityEconomy.fresh();
+        for (int i = 0; i < 6; i++) CityMarkets.simulate(e, CityGood.FER, 30, true);
+        assertEquals(16, e.stock(CityGood.FER), "sa spécialité ne se produit plus");
+        assertTrue(e.famine() > 0, "plus de grain : la faim");
+        long purse = e.purse();
+        CityMarkets.simulate(e, CityGood.FER, 30, false);
+        assertEquals(0, e.famine(), "le blocus levé, elle remange");
+        assertTrue(e.purse() > purse, "et sa bourse remonte");
+    }
 }

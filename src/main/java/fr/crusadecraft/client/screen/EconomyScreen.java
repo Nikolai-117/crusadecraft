@@ -136,6 +136,7 @@ public class EconomyScreen extends Screen {
             addRenderableWidget(b);
         }
         addRenderableWidget(Button.builder(Component.translatable("gui.done"), b -> onClose()).bounds(left + W - 66, top + H - 22, 54, 16).build());
+        if (tab == Tab.CITIES) initBlockades();
         if (tab == Tab.CITIES) {
             addRenderableWidget(Button.builder(Component.translatable("crusadecraft.economy.sort", Component.translatable("crusadecraft.economy.sort." + sort.name().toLowerCase(Locale.ROOT))), b -> {
                 sort = Sort.values()[(sort.ordinal() + 1) % Sort.values().length];
@@ -159,6 +160,26 @@ public class EconomyScreen extends Screen {
                 scroll = 0;
                 rebuildWidgets();
             }).bounds(x() + 106, y0(), 14, 14).build());
+        }
+    }
+
+    /** P55 : en face d'une ville ennemie, de quoi la couper du monde ; en face de celle qu'on bloque, de quoi lever le blocus. */
+    private void initBlockades() {
+        List<CompoundTag> list = cities();
+        int rows = rows(14);
+        scroll = Mth.clamp(scroll, 0, Math.max(0, list.size() - rows));
+        for (int i = scroll; i < list.size() && i < scroll + rows; i++) {
+            CompoundTag c = list.get(i);
+            boolean mine = c.getBoolean("byMe");
+            if (!mine && !c.getBoolean("canBlock")) continue;
+            int ry = y0() + 13 + (i - scroll) * ROW;
+            java.util.UUID id = c.getUUID("id");
+            addRenderableWidget(Button.builder(Component.translatable(mine ? "crusadecraft.economy.blockade.lift" : "crusadecraft.economy.blockade"), b -> {
+                CompoundTag t = new CompoundTag();
+                t.putUUID("site", id);
+                t.putBoolean("lift", mine);
+                CrusadeNetwork.toServer(new WorldEconomyPackets.Action(t));
+            }).bounds(x() + W - 24 - 44, ry - 2, 44, 12).tooltip(net.minecraft.client.gui.components.Tooltip.create(Component.translatable("crusadecraft.economy.blockade.tip", fr.crusadecraft.core.city.CityBlockades.COST))).build());
         }
     }
 
@@ -215,8 +236,10 @@ public class EconomyScreen extends Screen {
             cell(g, c.getString("realm"), x() + 116, ry, 96, Ui.TEXT_MUTED);
             cell(g, c.getBoolean("market") ? "—" : Integer.toString(c.getInt("people")), x() + 214, ry, 28, Ui.TEXT);
             cell(g, Long.toString(c.getLong("purse")), x() + 246, ry, 34, Ui.TEXT);
-            if (c.getInt("famine") > 0) Ui.fitted(g, font, Component.translatable("crusadecraft.economy.famine", c.getInt("famine")), x() + 284, ry, 132, Ui.RED);
-            else cell(g, lacks(c), x() + 284, ry, 132, Ui.TEXT_MUTED);
+            int room = c.getBoolean("byMe") || c.getBoolean("canBlock") ? 86 : 132;
+            if (c.contains("blocked")) cell(g, c.getString("blocked"), x() + 284, ry, room, Ui.RED);
+            else if (c.getInt("famine") > 0) Ui.fitted(g, font, Component.translatable("crusadecraft.economy.famine", c.getInt("famine")), x() + 284, ry, room, Ui.RED);
+            else cell(g, lacks(c), x() + 284, ry, room, Ui.TEXT_MUTED);
         }
     }
 
@@ -276,12 +299,13 @@ public class EconomyScreen extends Screen {
     private void renderLines(GuiGraphics g) {
         List<CompoundTag> list = list("lines");
         int y = y0();
-        head(g, "route", x(), y, 176);
-        head(g, "what", x() + 180, y, 66);
-        head(g, "trips", x() + 248, y, 24);
-        head(g, "moved", x() + 274, y, 36);
-        head(g, "earned", x() + 312, y, 36);
-        head(g, "status", x() + 350, y, 66);
+        head(g, "route", x(), y, 146);
+        head(g, "what", x() + 150, y, 54);
+        head(g, "trips", x() + 206, y, 22);
+        head(g, "moved", x() + 230, y, 30);
+        head(g, "earned", x() + 262, y, 32);
+        head(g, "tolls", x() + 296, y, 30);
+        head(g, "status", x() + 328, y, 88);
         if (list.isEmpty()) {
             empty(g, "crusadecraft.economy.lines.empty", y + 14);
             return;
@@ -292,14 +316,15 @@ public class EconomyScreen extends Screen {
             CompoundTag l = list.get(i);
             int ry = y + 13 + (i - scroll) * ROW;
             int color = l.getBoolean("mine") ? Ui.TEXT_TITLE : Ui.TEXT;
-            cell(g, l.getString("from") + " → " + l.getString("to"), x(), ry, 176, color);
+            cell(g, l.getString("from") + " → " + l.getString("to"), x(), ry, 146, color);
             Component what = l.contains("good") ? Component.translatable(CityGood.valueOf(l.getString("good")).key()) : Component.translatable("crusadecraft.city.panel.trade.auto");
-            Ui.fitted(g, font, what, x() + 180, ry, 66, Ui.TEXT_MUTED);
-            cell(g, Integer.toString(l.getInt("trips")), x() + 248, ry, 24, Ui.TEXT);
-            cell(g, Long.toString(l.getLong("moved")), x() + 274, ry, 36, Ui.TEXT);
-            cell(g, Long.toString(l.getLong("earned")), x() + 312, ry, 36, Ui.GOLD);
+            Ui.fitted(g, font, what, x() + 150, ry, 54, Ui.TEXT_MUTED);
+            cell(g, Integer.toString(l.getInt("trips")), x() + 206, ry, 22, Ui.TEXT);
+            cell(g, Long.toString(l.getLong("moved")), x() + 230, ry, 30, Ui.TEXT);
+            cell(g, Long.toString(l.getLong("earned")), x() + 262, ry, 32, Ui.GOLD);
+            cell(g, Long.toString(l.getLong("tolls")), x() + 296, ry, 30, Ui.TEXT_MUTED);
             String status = l.getString("status");
-            if (!status.isEmpty()) Ui.fitted(g, font, Component.translatable("crusadecraft.city.line.status." + status), x() + 350, ry, 66, Ui.TEXT_MUTED);
+            if (!status.isEmpty()) Ui.fitted(g, font, Component.translatable("crusadecraft.city.line.status." + status), x() + 328, ry, 88, status.equals("cut") || status.equals("blockade") || status.equals("war") || status.equals("toll") ? Ui.RED : Ui.TEXT_MUTED);
         }
     }
 
@@ -348,13 +373,15 @@ public class EconomyScreen extends Screen {
         List<CompoundTag> list = list("realms");
         list.sort(Comparator.comparingLong((CompoundTag c) -> -c.getLong("gold")));
         int y = y0();
-        head(g, "realm", x() + 12, y, 150);
-        head(g, "gold", x() + 166, y, 44);
-        head(g, "cities", x() + 214, y, 36);
-        head(g, "people", x() + 252, y, 30);
-        head(g, "purses", x() + 284, y, 44);
-        head(g, "lines", x() + 330, y, 32);
-        head(g, "earned", x() + 364, y, 52);
+        head(g, "realm", x() + 12, y, 116);
+        head(g, "gold", x() + 130, y, 40);
+        head(g, "cities", x() + 172, y, 28);
+        head(g, "people", x() + 202, y, 26);
+        head(g, "purses", x() + 230, y, 38);
+        head(g, "lines", x() + 270, y, 26);
+        head(g, "earned", x() + 298, y, 40);
+        head(g, "toll", x() + 340, y, 34);
+        head(g, "duty", x() + 376, y, 40);
         if (list.isEmpty()) {
             empty(g, "crusadecraft.economy.realms.empty", y + 14);
             return;
@@ -365,13 +392,15 @@ public class EconomyScreen extends Screen {
             CompoundTag r = list.get(i);
             int ry = y + 13 + (i - scroll) * ROW;
             g.fill(x(), ry, x() + 8, ry + 8, 0xFF000000 | r.getInt("color"));
-            cell(g, r.getString("name"), x() + 12, ry, 150, r.getBoolean("mine") ? Ui.TEXT_TITLE : Ui.TEXT);
-            cell(g, Long.toString(r.getLong("gold")), x() + 166, ry, 44, Ui.GOLD);
-            cell(g, Long.toString(r.getLong("cities")), x() + 214, ry, 36, Ui.TEXT);
-            cell(g, Long.toString(r.getLong("people")), x() + 252, ry, 30, Ui.TEXT);
-            cell(g, Long.toString(r.getLong("purses")), x() + 284, ry, 44, Ui.TEXT);
-            cell(g, Long.toString(r.getLong("lines")), x() + 330, ry, 32, Ui.TEXT);
-            cell(g, Long.toString(r.getLong("earned")), x() + 364, ry, 52, Ui.TEXT);
+            cell(g, r.getString("name"), x() + 12, ry, 116, r.getBoolean("mine") ? Ui.TEXT_TITLE : Ui.TEXT);
+            cell(g, Long.toString(r.getLong("gold")), x() + 130, ry, 40, Ui.GOLD);
+            cell(g, Long.toString(r.getLong("cities")), x() + 172, ry, 28, Ui.TEXT);
+            cell(g, Long.toString(r.getLong("people")), x() + 202, ry, 26, Ui.TEXT);
+            cell(g, Long.toString(r.getLong("purses")), x() + 230, ry, 38, Ui.TEXT);
+            cell(g, Long.toString(r.getLong("lines")), x() + 270, ry, 26, Ui.TEXT);
+            cell(g, Long.toString(r.getLong("earned")), x() + 298, ry, 40, Ui.TEXT);
+            cell(g, Integer.toString(r.getInt("toll")), x() + 340, ry, 34, Ui.TEXT_MUTED);
+            cell(g, r.getInt("duty") + " %", x() + 376, ry, 40, Ui.TEXT_MUTED);
         }
     }
 
@@ -379,6 +408,8 @@ public class EconomyScreen extends Screen {
     public boolean mouseScrolled(double mx, double my, double delta) {
         if (super.mouseScrolled(mx, my, delta)) return true;
         scroll = Mth.clamp(scroll - (int) Math.signum(delta), 0, Math.max(0, size() - 1));
+        // Les boutons d'une ligne la suivent.
+        if (tab == Tab.CITIES) rebuildWidgets();
         return true;
     }
 

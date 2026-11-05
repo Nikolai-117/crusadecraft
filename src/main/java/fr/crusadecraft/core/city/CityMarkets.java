@@ -31,6 +31,8 @@ public final class CityMarkets {
     private static final long MARK = 0x4D41524348455F31L;
     /** Une bourse de marché ne monte pas au-delà : le surplus va au trésor de son royaume. */
     static final long PURSE_MAX = 800;
+    /** Coupée du monde, la campagne entière se replie sur le marché : il mange d'autant plus vite. */
+    static final int BESIEGED_MOUTHS = 3;
 
     private CityMarkets() {}
 
@@ -109,17 +111,26 @@ public final class CityMarkets {
 
     /** Une journée d'un marché : il produit sa spécialité, mange, et ce qui ne se renouvelle pas s'épuise. La logique est pure. */
     public static void simulate(CityEconomy eco, CityGood specialty, int development) {
-        eco.add(specialty, 10 + development / 2);
-        eco.add(CityGood.BLE, 6);
-        eco.add(CityGood.PAIN, 4);
-        eco.take(CityGood.BLE, 3);
-        eco.take(CityGood.PAIN, 4);
-        eco.take(CityGood.VIANDE, 2);
+        simulate(eco, specialty, development, false);
+    }
+
+    /** P55 : coupé du monde, il ne produit plus rien et toute la campagne vit sur ses réserves, jusqu'à la faim. */
+    public static void simulate(CityEconomy eco, CityGood specialty, int development, boolean besieged) {
+        int mouths = besieged ? BESIEGED_MOUTHS : 1;
+        if (!besieged) {
+            eco.add(specialty, 10 + development / 2);
+            eco.add(CityGood.BLE, 6);
+            eco.add(CityGood.PAIN, 4);
+        }
+        eco.take(CityGood.BLE, 3 * mouths);
+        eco.take(CityGood.PAIN, 4 * mouths);
+        eco.take(CityGood.VIANDE, 2 * mouths);
+        eco.setFamine(eco.stock(CityGood.BLE) + eco.stock(CityGood.PAIN) == 0 ? eco.famine() + 1 : 0);
         for (CityGood g : CityGood.values()) {
             if (g != specialty && g != CityGood.BLE && g != CityGood.PAIN && g != CityGood.VIANDE) eco.take(g, 1);
             if (eco.stock(g) > CityEconomy.CAP) eco.take(g, eco.stock(g) - CityEconomy.CAP);
         }
-        eco.addPurse(10 + development / 2);
+        if (!besieged) eco.addPurse(10 + development / 2);
     }
 
     /** Une fois par jour : chaque marché vit, suit le sort de sa province, et remplace ceux qu'il a perdus. */
@@ -145,7 +156,13 @@ public final class CityMarkets {
             }
             if (!owner.id().equals(m.owner())) m.setOwner(owner.id());
             if (!province.name().equals(m.name())) m.setName(province.name());
-            simulate(m.economy(), specialty(TradeService.good(server, owner.id())), province.development());
+            boolean besieged = CityBlockades.blocked(server, m);
+            simulate(m.economy(), specialty(TradeService.good(server, owner.id())), province.development(), besieged);
+            // La faim vide la province, et ce qu'elle avait bâti se défait.
+            if (m.economy().famine() >= CityLife.FAMINE_LEAVE) {
+                province.setPopulation(province.population() - Math.max(1, province.population() / 20));
+                province.setDevelopment(province.development() - 1);
+            }
             long over = m.economy().purse() - PURSE_MAX;
             if (over > 0) {
                 m.economy().addPurse(-over);

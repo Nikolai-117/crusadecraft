@@ -29,9 +29,13 @@ public final class CityEconomy {
     private int famine;
 
     /** Qui vit et travaille là : par fonction, les vivants qui y ont un poste. */
-    public record Census(Map<BuildingFunction, Integer> workers, int people, boolean atWar, Map<BuildingFunction, Integer> bonus, int storage, int charm) {
+    public record Census(Map<BuildingFunction, Integer> workers, int people, boolean atWar, Map<BuildingFunction, Integer> bonus, int storage, int charm, boolean besieged) {
         public Census(Map<BuildingFunction, Integer> workers, int people, boolean atWar) {
-            this(workers, people, atWar, Map.of(), 0, 0);
+            this(workers, people, atWar, Map.of(), 0, 0, false);
+        }
+
+        public Census(Map<BuildingFunction, Integer> workers, int people, boolean atWar, Map<BuildingFunction, Integer> bonus, int storage, int charm) {
+            this(workers, people, atWar, bonus, storage, charm, false);
         }
 
         int of(BuildingFunction f) {
@@ -88,6 +92,11 @@ public final class CityEconomy {
         return got;
     }
 
+    /** Un marché, qui n'a pas d'habitants à compter, tient lui-même ses jours de faim. */
+    void setFamine(int days) {
+        famine = Math.max(0, days);
+    }
+
     public void addPurse(long n) {
         purse = Math.max(0, purse + n);
     }
@@ -113,12 +122,13 @@ public final class CityEconomy {
     public Day simulate(Census c, boolean warehouse, boolean market, java.util.Random random) {
         produce(c);
         // La campagne alentour vend son grain ; la guerre coupe les routes.
-        int fromCountry = (int) Math.min(c.atWar() ? c.people() / 2 : c.people(), purse * 2);
+        // P55 : coupée du monde, elle ne reçoit plus rien du tout : c'est le blocus qui l'affame.
+        int fromCountry = c.besieged() ? 0 : (int) Math.min(c.atWar() ? c.people() / 2 : c.people(), purse * 2);
         if (fromCountry > 0) {
             purse -= (fromCountry + 1) / 2;
             add(CityGood.BLE, fromCountry);
         }
-        int imported = market ? imports(c) : 0;
+        int imported = market && !c.besieged() ? imports(c) : 0;
         int hungry = eat(c.people());
         // Ceux qui travaillent et ceux qui louent leurs bras font vivre la bourse.
         purse += c.people() + Furnishing.visitors(c.charm());
@@ -129,7 +139,7 @@ public final class CityEconomy {
             if (over <= 0) continue;
             stock.put(g, cap);
             // Le marché écoule le surplus ; sans lui, il se perd.
-            if (market) {
+            if (market && !c.besieged()) {
                 purse += over;
                 exported += over;
             }

@@ -31,6 +31,25 @@ public final class WorldEconomyPackets {
         }
     }
 
+    /** P55 : un geste depuis l'écran. Le serveur revérifie tout. */
+    public record Action(CompoundTag change) {
+        public static void encode(Action p, FriendlyByteBuf b) {
+            b.writeNbt(p.change);
+        }
+
+        public static Action decode(FriendlyByteBuf b) {
+            return new Action(b.readNbt());
+        }
+
+        public static void handle(Action p, Supplier<NetworkEvent.Context> ctx) {
+            ServerPlayer player = ctx.get().getSender();
+            if (player == null || p.change == null) return;
+            fr.crusadecraft.core.council.CouncilActions.Outcome out = WorldEconomy.act(player, p.change);
+            player.displayClientMessage(out.message().copy().withStyle(out.success() ? net.minecraft.ChatFormatting.GOLD : net.minecraft.ChatFormatting.RED), true);
+            WorldEconomy.send(player, true);
+        }
+    }
+
     public record Request(boolean refresh) {
         public static void encode(Request p, FriendlyByteBuf b) {
             b.writeBoolean(p.refresh);

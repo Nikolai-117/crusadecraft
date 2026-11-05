@@ -68,6 +68,8 @@ public final class CityLife {
             if (site.buildings().isEmpty() || !CityService.city(site)) continue;
             day(server, site, random);
         }
+        // P55 : les blocus se paient, ou tombent.
+        CityBlockades.onDay(server, random);
         // P51 : les villes de l'ordinateur vivent et commercent aussi.
         CityMarkets.onDay(server, random);
         CityCommerce.planAi(server, random);
@@ -92,7 +94,7 @@ public final class CityLife {
                 if (!b.function().dwelling() && p.age() >= 16 && !p.job().isEmpty()) workers.merge(b.function(), 1, Integer::sum);
             }
         }
-        return new CityEconomy.Census(workers, people, data(server).wars().atWar(site.owner()), bonus, storage, site.charm());
+        return new CityEconomy.Census(workers, people, data(server).wars().atWar(site.owner()), bonus, storage, site.charm(), CityBlockades.blocked(server, site));
     }
 
     /** Une journée pour cette ville. */
@@ -100,7 +102,7 @@ public final class CityLife {
         CityEconomy eco = site.economy();
         CityEconomy.Census census = census(server, site);
         boolean warehouse = has(site, BuildingFunction.ENTREPOT), market = has(site, BuildingFunction.MARCHE);
-        convoy(server, site, eco, market, random);
+        if (!census.besieged()) convoy(server, site, eco, market, random);
         CityEconomy.Day today = eco.simulate(census, warehouse, market, random);
         payTax(server, site, today.tax());
         LineageState state = data(server).lineage();
@@ -130,7 +132,7 @@ public final class CityLife {
         births(server, site, random);
         vacancies(server, site, random);
         if (eco.famine() >= FAMINE_LEAVE) leave(server, site, random);
-        else arrivals(server, site, random);
+        else if (!census.besieged()) arrivals(server, site, random);
         move(server, site, random);
         // P48 et P49 : on part en voyage, on commande ce qui manque, on écrit aux joueurs.
         CityOrders.onDay(server, site, random);

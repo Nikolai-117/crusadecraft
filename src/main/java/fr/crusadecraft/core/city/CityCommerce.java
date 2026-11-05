@@ -186,7 +186,25 @@ public final class CityCommerce {
                 l.status = "war";
                 continue;
             }
-            if (dispatch(server, l, home.get(), dest.get())) l.waited = 0;
+            // P55 : une ville coupée du monde, une route qui passe chez l'ennemi, un péage qu'on ne peut pas payer.
+            if (CityBlockades.blocked(server, home.get()) || CityBlockades.blocked(server, dest.get())) {
+                l.status = "blockade";
+                continue;
+            }
+            CityTolls.Passage passage = CityTolls.passage(server, home.get(), dest.get());
+            if (passage.cut()) {
+                l.status = "cut";
+                continue;
+            }
+            if (home.get().economy().purse() < passage.toll()) {
+                l.status = "toll";
+                continue;
+            }
+            if (dispatch(server, l, home.get(), dest.get())) {
+                l.waited = 0;
+                CityTolls.pay(server, passage, home.get());
+                l.tolls += passage.toll();
+            }
         }
     }
 
@@ -291,7 +309,7 @@ public final class CityCommerce {
         CrusadeSavedData data = data(server);
         for (CityLine l : data.world().lines()) if (l.from.equals(from.id())) return;
         List<Stop> near = new ArrayList<>();
-        for (Stop s : stops(server, from)) if (!s.war() && s.distance() <= AI_RANGE) near.add(s);
+        for (Stop s : stops(server, from)) if (!s.war() && s.distance() <= AI_RANGE && !CityBlockades.blocked(server).contains(s.id())) near.add(s);
         if (near.isEmpty()) return;
         // Les voisins d'abord, et de préférence une vraie ville : c'est là que le commerce se voit.
         Stop pick = null;

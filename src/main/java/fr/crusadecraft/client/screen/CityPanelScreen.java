@@ -513,6 +513,11 @@ public class CityPanelScreen extends Screen {
         create.active = !stops.isEmpty() && !stops.getCompound(stopIndex).getBoolean("war");
         addRenderableWidget(Button.builder(Component.translatable("crusadecraft.economy.title"), b -> CrusadeNetwork.toServer(new fr.crusadecraft.network.packet.WorldEconomyPackets.Request(false)))
                 .bounds(x(), top + H - 22, 130, 16).tooltip(Tooltip.create(Component.translatable("crusadecraft.economy.open.tip"))).build());
+        int toll = view.getInt("toll"), duty = view.getInt("duty");
+        addRenderableWidget(Button.builder(Component.translatable("crusadecraft.city.panel.trade.toll", toll), b -> send(t -> t.putInt("toll", following(fr.crusadecraft.core.city.CityTolls.TOLLS, toll))))
+                .bounds(x() + 134, top + H - 22, 92, 16).tooltip(Tooltip.create(Component.translatable("crusadecraft.city.panel.trade.toll.tip"))).build());
+        addRenderableWidget(Button.builder(Component.translatable("crusadecraft.city.panel.trade.duty", duty), b -> send(t -> t.putInt("duty", following(fr.crusadecraft.core.city.CityTolls.DUTIES, duty))))
+                .bounds(x() + 228, top + H - 22, 92, 16).tooltip(Tooltip.create(Component.translatable("crusadecraft.city.panel.trade.duty.tip"))).build());
         ListTag lines = view.getList("lines", Tag.TAG_COMPOUND);
         int rows = (H - 42 - 66 - 28) / TRADE_ROW;
         scroll = Mth.clamp(scroll, 0, Math.max(0, lines.size() - rows));
@@ -525,6 +530,12 @@ public class CityPanelScreen extends Screen {
                     .bounds(x() + W - 24 - 16 - 16, ry, 15, 14).tooltip(Tooltip.create(Component.translatable("crusadecraft.city.panel.trade.pause.tip"))).build());
             button("crusadecraft.city.panel.remove", x() + W - 24 - 15, ry, 14, b -> send(t -> t.putUUID("lineRemove", id)));
         }
+    }
+
+    /** La valeur suivante d'un réglage qu'on fait défiler. */
+    private static int following(int[] values, int current) {
+        for (int i = 0; i < values.length; i++) if (values[i] == current) return values[(i + 1) % values.length];
+        return values[0];
     }
 
     private void renderTrade(GuiGraphics g) {
@@ -605,6 +616,7 @@ public class CityPanelScreen extends Screen {
         Ui.panel(g, left, top, W, H);
         Ui.scaled(g, font, Component.literal(view.getString("name")), left + 12, top + 8, 1.25f, Ui.TEXT_TITLE, false);
         Ui.fitted(g, font, Component.translatable("crusadecraft.city.panel.people.count", view.getInt("people"), view.getInt("max")), left + W - 112, top + 10, 100, Ui.TEXT_MUTED);
+        if (!view.getString("blocked").isEmpty()) Ui.fitted(g, font, Component.literal(view.getString("blocked")), left + 140, top + 10, W - 140 - 116, Ui.RED);
         switch (tab) {
             case LIVE -> renderLive(g);
             case GENERAL -> renderGeneral(g);

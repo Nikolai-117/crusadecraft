@@ -102,6 +102,7 @@ public final class ServerEvents {
         fr.crusadecraft.core.city.CityTravel.onServerStopped();
         fr.crusadecraft.core.city.CityRoads.onServerStopped();
         fr.crusadecraft.core.city.CityGuards.onServerStopped();
+        fr.crusadecraft.core.city.CityBlockades.onServerStopped();
         fr.crusadecraft.core.city.CityPost.onServerStopped();
         fr.crusadecraft.core.city.CityFurniture.onServerStopped();
         fr.crusadecraft.core.city.CitySeats.onServerStopped();

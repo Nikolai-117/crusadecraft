@@ -1354,7 +1354,7 @@ public class MapScreen extends Screen {
     /** P51 : les lignes de commerce : le tracé de leur route, en or pour les tiennes, plus discret pour celles de l'ordinateur. */
     private void renderCommerce(GuiGraphics g) {
         for (MapView.CommerceLine l : view.commerce()) {
-            int color = l.ai() ? 0xB0B8A98C : 0xF0E7BD55;
+            int color = !l.trouble().isEmpty() ? 0xF0C8433A : l.ai() ? 0xB0B8A98C : 0xF0E7BD55;
             for (int i = 1; i < l.xs().length; i++) {
                 int x0 = screenX(l.xs()[i - 1]), y0 = screenY(l.zs()[i - 1]), x1 = screenX(l.xs()[i]), y1 = screenY(l.zs()[i]);
                 double len = Math.hypot(x1 - x0, y1 - y0);
@@ -1363,9 +1363,22 @@ public class MapScreen extends Screen {
                 bar(g, x0, y0, angle, (int) Math.round(len), l.ai() ? 1 : 2, color);
             }
         }
+        // P55 : une ville coupée du monde : un anneau rouge.
+        for (MapView.Blocked b : view.blocked()) {
+            int x = screenX(b.x()), y = screenY(b.z()), r = 6;
+            g.fill(x - r, y - r, x + r, y - r + 2, 0xFFC8433A);
+            g.fill(x - r, y + r - 2, x + r, y + r, 0xFFC8433A);
+            g.fill(x - r, y - r, x - r + 2, y + r, 0xFFC8433A);
+            g.fill(x + r - 2, y - r, x + r, y + r, 0xFFC8433A);
+        }
     }
 
     private List<Component> commerceTooltip(double mouseX, double mouseY) {
+        for (MapView.Blocked b : view.blocked()) {
+            if (Math.abs(mouseX - screenX(b.x())) <= 6 && Math.abs(mouseY - screenY(b.z())) <= 6) {
+                return List.of(Component.literal(b.name()).withStyle(ChatFormatting.WHITE), Component.literal(b.why()).withStyle(ChatFormatting.RED));
+            }
+        }
         for (MapView.CommerceLine l : view.commerce()) {
             for (int i = 1; i < l.xs().length; i++) {
                 if (segmentDistance(mouseX, mouseY, screenX(l.xs()[i - 1]), screenY(l.zs()[i - 1]), screenX(l.xs()[i]), screenY(l.zs()[i])) > 3) continue;
@@ -1374,6 +1387,7 @@ public class MapScreen extends Screen {
                 tip.add(Component.literal(l.from() + " → " + l.to()).withStyle(ChatFormatting.WHITE));
                 if (!l.what().isEmpty()) tip.add(Component.literal(l.what()).withStyle(ChatFormatting.YELLOW));
                 tip.add(Component.translatable("crusadecraft.city.line.map.trips", l.trips()).withStyle(ChatFormatting.GRAY));
+                if (!l.trouble().isEmpty()) tip.add(Component.translatable("crusadecraft.city.line.status." + l.trouble()).withStyle(ChatFormatting.RED));
                 return tip;
             }
         }

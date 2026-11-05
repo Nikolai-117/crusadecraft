@@ -405,7 +405,20 @@ public final class WorldService {
                 CrusadeConfig.SERVER.colonyRadius.get(), territories, seats, dejure, canEdit, editing, borders(world, dim, index),
                 fr.crusadecraft.core.place.PlaceService.mapPlaces(server, dim),
                 editing ? MapView.War.NONE : fr.crusadecraft.core.war.WarMapService.view(player, dim), editing ? List.of() : tradeLines(player, dim),
-                editing ? List.of() : armyPawns(player, dim), editing ? List.of() : travellers(player, dim), editing ? List.of() : commerce(player, dim));
+                editing ? List.of() : armyPawns(player, dim), editing ? List.of() : travellers(player, dim), editing ? List.of() : commerce(player, dim), editing ? List.of() : blockedCities(player, dim));
+    }
+
+    /** P55 : les villes coupées du monde, d'un royaume qu'on connaît. */
+    static List<MapView.Blocked> blockedCities(ServerPlayer player, ResourceLocation dim) {
+        CrusadeSavedData data = CrusadeSavedData.get(player.server);
+        boolean all = fr.crusadecraft.core.build.plan.PlanTool.allowed(player);
+        List<MapView.Blocked> out = new ArrayList<>();
+        for (UUID id : fr.crusadecraft.core.city.CityBlockades.blocked(player.server)) {
+            var s = data.world().site(id).orElse(null);
+            if (s == null || !s.dimension().equals(dim) || (!all && !known(data, s.owner(), player))) continue;
+            out.add(new MapView.Blocked(s.anchor().getX(), s.anchor().getZ(), s.name(), fr.crusadecraft.core.city.CityBlockades.explain(player.server, s)));
+        }
+        return out;
     }
 
     /** P51 : les lignes de commerce de cette dimension, du moins celles d'un royaume qu'on connaît. */
@@ -420,7 +433,8 @@ public final class WorldService {
             if (!all && !known(data, from.owner(), player) && !known(data, to.owner(), player)) continue;
             var route = fr.crusadecraft.core.city.CityRoads.between(player.server, from, to);
             String what = l.good == null ? "" : fr.crusadecraft.core.logic.Fr.key(l.good.key() + ".du");
-            out.add(new MapView.CommerceLine(route.xs(), route.zs(), from.name(), to.name(), what, l.trips, l.ai));
+            boolean trouble = l.status.equals("cut") || l.status.equals("blockade") || l.status.equals("war") || l.status.equals("toll");
+            out.add(new MapView.CommerceLine(route.xs(), route.zs(), from.name(), to.name(), what, l.trips, l.ai, trouble ? l.status : ""));
         }
         return out;
     }
