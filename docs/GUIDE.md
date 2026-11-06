@@ -413,7 +413,7 @@ Ce qu'il faut savoir :
 - **Les bâtiments viennent de tes packs**, comme toutes les villes du mod. Le nombre de modèles dépend de ce que le pack contient.
 - **Les rues peuvent serpenter, les bâtiments restent droits** : un plan de Minecraft ne se pose qu'à angle droit. Le long d'une rue en biais, chaque façade recule juste ce qu'il faut, avec un petit chemin jusqu'à la rue.
 - **L'enceinte en pièces du pack est toujours un rectangle**, pour la même raison, avec ses quatre portes au milieu des côtés. Les autres matières suivent la forme que tu veux, et le nombre de portes que tu veux.
-- **L'eau creusée suit le terrain par petits paliers**, comme une rivière en pente, avec de petites chutes là où le niveau change : elle est plus belle sur un terrain à peu près plat. Au-delà de 14 blocs à creuser, la colonne reste de la terre. Si tu poses la ville contre une vraie rivière ou une vraie mer, décoche « Creuser l'eau pour de vrai ».
+- **L'eau creusée suit le terrain par petits paliers**, comme une rivière en pente, avec de petites chutes là où le niveau change : elle est plus belle sur un terrain à peu près plat. Au-delà de 14 blocs à creuser, la colonne reste de la terre : sur un terrain très accidenté, des douves ne se creusent que par endroits. Si tu poses la ville contre une vraie rivière ou une vraie mer, décoche « Creuser l'eau pour de vrai ».
 - **Sur un monde plat**, il n'y a que trois blocs de terre : la rivière a un seul bloc d'eau.
 - **Une mer creusée s'arrête au bord du plan** : c'est un grand bassin, pas un océan. Pour une vraie cité portuaire, pose la ville contre ta vraie mer, sans creuser.
 

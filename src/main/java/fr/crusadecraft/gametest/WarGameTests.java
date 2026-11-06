@@ -63,7 +63,12 @@ public final class WarGameTests {
         var server = w.helper.getLevel().getServer();
         WorldService.generate(server, w.helper.getLevel(), w.center.getX(), w.center.getZ());
         AiRealm target = CrusadeSavedData.get(server).world().realms().stream().filter(r -> r.rank() == rank).findFirst()
-                .orElseThrow(() -> new IllegalStateException("aucun royaume IA de rang " + rank));
+                // Le monde d'essai est tiré au hasard : il arrive qu'aucun royaume n'ait ce rang. Ce n'est pas ce qu'on teste ici.
+                .orElseGet(() -> {
+                    AiRealm first = CrusadeSavedData.get(server).world().realms().iterator().next();
+                    first.setRank(rank);
+                    return first;
+                });
         target.discover(w.ruler.getUUID(), RealmService.currentDay(server));
         return target;
     }
