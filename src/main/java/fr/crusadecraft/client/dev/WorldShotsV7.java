@@ -118,7 +118,14 @@ final class WorldShotsV7 {
                 List<Step> short_ = new ArrayList<>(steps.subList(0, depart));
                 short_.addAll(steps.subList(lines, linesEnd));
                 short_.addAll(steps.subList(quay, quay + 2));
-                short_.addAll(steps.subList(real, steps.size()));
+                // -Pshots_only=suite : le blocus, le garde, la défense et la paix, sans refaire le reste.
+                if ("suite".equals(System.getProperty("crusadecraft.worldshots.v5only", ""))) {
+                    List<Step> rest = new ArrayList<>(steps.subList(real, steps.size()));
+                    rest.removeIf(s -> s.name().startsWith("reel_quai") || s.name().startsWith("reel_escorte") || s.name().startsWith("reel_chantier") || s.name().startsWith("reel_famine"));
+                    short_.addAll(rest);
+                } else {
+                    short_.addAll(steps.subList(real, steps.size()));
+                }
                 steps = short_;
             } else if (Boolean.getBoolean("crusadecraft.worldshots.v7civ")) {
                 // P54 à P58 : les villes, ce qu'il faut de commerce et d'ordinateur, puis la suite.
@@ -1719,7 +1726,10 @@ final class WorldShotsV7 {
             if (me != null) CrusadeSavedData.get(server).diplomacy().between(me, site(server, dest).owner()).setWar(false);
             clock("la paix ; {} soldats encore là", fr.crusadecraft.core.city.CityCamps.soldiers(server, blockaded).size());
         }, null, 20, null));
-        out.add(new Step("reel_paix_matin", null, null, 200, "v14_paix", onServer(server -> {
+        out.add(new Step("reel_paix_matin", server -> {
+            // Dans la version courte, on avance l'heure : ce qu'on regarde ici, c'est que le camp s'en va, pas la nuit qui passe.
+            if ("suite".equals(System.getProperty("crusadecraft.worldshots.v5only", ""))) server.overworld().setDayTime(server.overworld().getDayTime() / 24000L * 24000L + 23800);
+        }, null, 200, "v14_paix", onServer(server -> {
             if (CrusadeSavedData.get(server).world().blockades().containsKey(blockaded)) return false;
             clock("le matin : le blocus est levé");
             return true;

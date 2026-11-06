@@ -132,13 +132,17 @@ public final class CityCamps {
         CrusadeSavedData data = CrusadeSavedData.get(server);
         Map<UUID, CityBlockades.Blockade> blockades = data.world().blockades();
         Map<UUID, List<Mob>> present = new HashMap<>();
+        // D'abord la liste, ensuite les départs : retirer une entité pendant qu'on parcourt celles du monde en fait sauter d'autres, au hasard.
+        List<Mob> found = new ArrayList<>();
         for (ServerLevel level : server.getAllLevels()) {
             for (Entity e : level.getAllEntities()) {
-                if (!(e instanceof Mob m) || !e.getTags().contains(TAG)) continue;
-                UUID site = uuidIn(e, SITE);
-                if (site == null || !blockades.containsKey(site)) m.discard();
-                else if (m.isAlive()) present.computeIfAbsent(site, k -> new ArrayList<>()).add(m);
+                if (e instanceof Mob m && e.getTags().contains(TAG)) found.add(m);
             }
+        }
+        for (Mob m : found) {
+            UUID site = uuidIn(m, SITE);
+            if (site == null || !blockades.containsKey(site)) m.discard();
+            else if (m.isAlive()) present.computeIfAbsent(site, k -> new ArrayList<>()).add(m);
         }
         int raised = 0;
         for (Map.Entry<UUID, CityBlockades.Blockade> e : blockades.entrySet()) {

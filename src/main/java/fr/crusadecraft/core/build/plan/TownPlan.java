@@ -51,6 +51,8 @@ public final class TownPlan {
     private int rotation;
     private boolean surveyed;
     private int total;
+    /** P60 : ce qu'une ville de l'atelier pose de plus ; null pour toutes les autres. */
+    private UrbanExtras extras;
 
     public TownPlan(String style, TownSize size, List<Piece> pieces, long[] streets, int extent) {
         this.style = style;
@@ -84,6 +86,34 @@ public final class TownPlan {
     public int[] wallY() { return wallY; }
     public void setWalls(long[] walls) { this.walls = walls; }
     public int extent() { return extent; }
+    public UrbanExtras extras() { return extras; }
+
+    /**
+     * La même ville, sans ce que seul le chantier lit : son eau, ses champs, ses arbres. C'est elle que le monde garde : ces listes peuvent compter des centaines de milliers de
+     * cases, et se réécriraient à chaque sauvegarde. Le chantier a sa propre copie, qui disparaît avec lui. Le relevé du terrain, lui, lui revient par {@link #copySurvey}.
+     */
+    public TownPlan withoutExtras() {
+        if (extras == null) return this;
+        TownPlan lite = new TownPlan(style, size, pieces, streets, extent);
+        lite.streetY = streetY;
+        lite.walls = walls;
+        lite.wallY = wallY;
+        lite.surveyed = surveyed;
+        lite.total = total;
+        lite.rotation = rotation;
+        return lite;
+    }
+
+    /** Le relevé fait par le chantier, sur sa copie : la ville enregistrée s'en sert pour savoir où est sa place. */
+    public void copySurvey(TownPlan from) {
+        streetY = from.streetY;
+        wallY = from.wallY;
+        surveyed = from.surveyed;
+        total = from.total;
+        for (int i = 0; i < pieces.size() && i < from.pieces.size(); i++) pieces.get(i).setDy(from.pieces.get(i).dy());
+    }
+
+    public void setExtras(UrbanExtras extras) { this.extras = extras; }
     public boolean surveyed() { return surveyed; }
     /** Étapes du chantier, connues une fois le plan dressé (0 avant). */
     public int total() { return total; }
@@ -118,6 +148,7 @@ public final class TownPlan {
         t.putBoolean("surveyed", surveyed);
         t.putInt("total", total);
         if (rotation != 0) t.putInt("rotation", rotation);
+        if (extras != null) t.put("urban", extras.save());
         return t;
     }
 
@@ -141,6 +172,7 @@ public final class TownPlan {
         plan.surveyed = t.getBoolean("surveyed");
         plan.total = t.getInt("total");
         plan.rotation = Math.floorMod(t.getInt("rotation"), 4);
+        if (t.contains("urban", Tag.TAG_COMPOUND)) plan.extras = UrbanExtras.load(t.getCompound("urban"));
         return plan;
     }
 }

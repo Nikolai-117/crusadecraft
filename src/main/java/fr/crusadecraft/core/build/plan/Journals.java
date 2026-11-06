@@ -245,7 +245,9 @@ public final class Journals extends SavedData {
     private static List<Blueprints.Placement> compile(ServerLevel level, Job job) {
         if (job.town != null) {
             if (job.progress == 0) moveAside(level, job.anchor, job.town.extent() / 2 + 2, job.anchor.getY() - 8, job.anchor.getY() + 40);
-            TownPlanner.survey(level, job.anchor, job.town);
+            TownPlanner.survey(level, job.anchor, job.town, job.rotation);
+            // P60 : la ville enregistrée a son propre plan, allégé : c'est lui qui dit où est sa place.
+            fr.crusadecraft.data.CrusadeSavedData.get(level.getServer()).world().site(job.id).map(fr.crusadecraft.core.build.Site::town).filter(t -> t != job.town).ifPresent(t -> t.copySurvey(job.town));
             return TownPlanner.placements(job.town);
         }
         Optional<Plan> plan = PlanRef.decode(job.ref).flatMap(r -> PlanLibrary.load(r, true));

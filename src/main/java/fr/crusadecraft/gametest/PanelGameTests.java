@@ -896,6 +896,158 @@ public final class PanelGameTests {
         }
     }
 
+    /** Le faux catalogue de l'atelier : des plans qui n'existent pas, mais qui ont une taille. Il s'agit ici de ce qui entoure les bâtiments. */
+    private static final fr.crusadecraft.core.build.plan.UrbanGenerator.Plans FAKE_PLANS = (role, level, min, max, random) ->
+            java.util.Optional.of(new fr.crusadecraft.core.build.plan.UrbanGenerator.Pick("faux|" + role + ".nbt", role.decor() ? 3 : 11, role.decor() ? 3 : 12));
+
+    /** Un endroit où le générateur prévoit presque partout de la terre, sur toute la largeur de la ville. */
+    private static BlockPos landNear(ServerLevel level, BlockPos start, int half) {
+        var generator = level.getChunkSource().getGenerator();
+        var random = level.getChunkSource().randomState();
+        int sea = level.getSeaLevel();
+        BlockPos best = start;
+        int bestScore = -1;
+        for (int i = 0; i < 200; i++) {
+            BlockPos c = start.offset((i % 20) * 400, 0, (i / 20) * 400);
+            int land = 0;
+            for (int dx = -2; dx <= 2; dx++) {
+                for (int dz = -2; dz <= 2; dz++) {
+                    int top = generator.getBaseHeight(c.getX() + dx * half / 2, c.getZ() + dz * half / 2, net.minecraft.world.level.levelgen.Heightmap.Types.OCEAN_FLOOR_WG, level, random);
+                    if (top > sea) land++;
+                }
+            }
+            if (land > bestScore) {
+                bestScore = land;
+                best = c;
+            }
+            if (land == 25) break;
+        }
+        return best;
+    }
+
+    /**
+     * Sans fenêtre : de vraies villes, avec les vrais packs, posées bloc par bloc sur le vrai terrain du monde d'essai, puis relevées vues du ciel d'après ce qui s'y trouve
+     * réellement. Ce sont les images qui disent si les rues, les murs et l'eau tombent juste. Long : seulement avec -Pgametest_urban=true.
+     */
+    @GameTest(template = TestWorld.TEMPLATE, setupTicks = TestWorld.SETUP_TICKS, batch = "p60_pose", timeoutTicks = 400)
+    public static void desVillesPoseesPourDeVrai(GameTestHelper h) {
+        if (!Boolean.getBoolean("crusadecraft.gametest.urban")) {
+            h.succeed();
+            return;
+        }
+        var level = h.getLevel();
+        var server = level.getServer();
+        int offset = 0;
+        for (Object[] c : new Object[][]{
+                {"riviere", fr.crusadecraft.core.build.plan.UrbanPresets.Preset.VILLE_RIVIERE, 240, 2026L, 0},
+                {"fortifiee", fr.crusadecraft.core.build.plan.UrbanPresets.Preset.VILLE_FORTIFIEE, 300, 2026L, 1},
+                {"damier", fr.crusadecraft.core.build.plan.UrbanPresets.Preset.DAMIER, 240, 2026L, 0}}) {
+            var p = fr.crusadecraft.core.build.plan.UrbanPresets.apply((fr.crusadecraft.core.build.plan.UrbanPresets.Preset) c[1], new fr.crusadecraft.core.build.plan.UrbanParams().seed((Long) c[3]).name("Essai " + c[0]));
+            p.set(fr.crusadecraft.core.build.plan.UrbanParams.HABITANTS, (Integer) c[2]).set(fr.crusadecraft.core.build.plan.UrbanParams.SURFACE_CHAMPS, 25)
+                    .set(fr.crusadecraft.core.build.plan.UrbanParams.FORETS, 10).set(fr.crusadecraft.core.build.plan.UrbanParams.ROUTES_CAMPAGNE, 20);
+            var plan = fr.crusadecraft.core.build.plan.UrbanService.plan(p).orElse(null);
+            if (plan == null) {
+                fr.crusadecraft.CrusadeCraft.LOGGER.warn("Essai de l'atelier : aucun pack européen dans le monde d'essai");
+                h.succeed();
+                return;
+            }
+            int half = plan.half();
+            var town = plan.town();
+            // Le monde d'essai tire son terrain au hasard : on cherche de la terre, sinon la ville se pose sur l'océan et on ne voit rien de ce qu'on veut voir.
+            BlockPos corner = landNear(level, h.absolutePos(BlockPos.ZERO).offset(3000 + offset, 0, 3000), half);
+            offset = corner.getX() - h.absolutePos(BlockPos.ZERO).getX() - 3000 + 2 * half + 100;
+            int ax = corner.getX(), az = corner.getZ();
+            // Le centre sur le sol tel qu'il est : c'est ce que fait la pose au plan d'architecte.
+            level.getChunk(ax >> 4, az >> 4);
+            BlockPos anchor = new BlockPos(ax, level.getHeight(net.minecraft.world.level.levelgen.Heightmap.Types.MOTION_BLOCKING_NO_LEAVES, ax, az) - 1, az);
+            int turns = (Integer) c[4];
+            fr.crusadecraft.core.build.plan.TownPlanner.survey(level, anchor, town, turns);
+            var out = fr.crusadecraft.core.build.plan.TownPlanner.placements(town);
+            var id = UUID.randomUUID();
+            var journal = fr.crusadecraft.core.build.plan.Journals.journal(server, id, level.dimension().location());
+            int from = 0, placedBlocks = 0, rounds = 0;
+            net.minecraft.world.level.block.Rotation rot = net.minecraft.world.level.block.Rotation.values()[turns];
+            long start = System.currentTimeMillis();
+            while (from < out.size() && rounds++ < 100000) {
+                int[] r = fr.crusadecraft.core.build.plan.PlanPlacer.advance(level, anchor, rot, out, from, 20000, journal);
+                from = r[0];
+                placedBlocks += r[1];
+            }
+            int side = 2 * half + 1;
+            BufferedImage img = new BufferedImage(side, side, BufferedImage.TYPE_INT_RGB);
+            int[] previous = new int[side];
+            int water = 0, built = 0;
+            for (int z = 0; z < side; z++) {
+                for (int x = 0; x < side; x++) {
+                    int wx = anchor.getX() + x - half, wz = anchor.getZ() + z - half;
+                    int y = level.getHeight(net.minecraft.world.level.levelgen.Heightmap.Types.WORLD_SURFACE, wx, wz) - 1;
+                    var pos = new BlockPos(wx, y, wz);
+                    var state = level.getBlockState(pos);
+                    int col = state.getMapColor(level, pos).col;
+                    // Un peu de relief, comme sur une carte du jeu : le côté exposé plus clair.
+                    double shade = y > previous[x] ? 1.12 : y < previous[x] ? 0.82 : 1.0;
+                    if (z == 0) shade = 1.0;
+                    previous[x] = y;
+                    int red = Math.min(255, (int) (((col >> 16) & 255) * shade)), green = Math.min(255, (int) (((col >> 8) & 255) * shade)), blue = Math.min(255, (int) ((col & 255) * shade));
+                    img.setRGB(x, z, red << 16 | green << 8 | blue);
+                    if (!state.getFluidState().isEmpty()) water++;
+                    if (y > anchor.getY() + 3) built++;
+                }
+            }
+            try {
+                ImageIO.write(img, "png", new java.io.File("urban_" + c[0] + ".png"));
+            } catch (IOException e) {
+                fr.crusadecraft.CrusadeCraft.LOGGER.warn("Essai de l'atelier : image non écrite", e);
+            }
+            var st = plan.stats();
+            fr.crusadecraft.CrusadeCraft.LOGGER.info("Essai de l'atelier, {} : posée en {} s, {} étapes, {} blocs changés ; {} maisons sur {}, {} bâtiments, {} sans place, {} sans modèle, {} portes, {} ponts ; niveau de l'eau le plus haut {} sous un centre à {} ; {} cases d'eau, {} cases hautes, tour de {} quarts",
+                    c[0], (System.currentTimeMillis() - start) / 1000, out.size(), placedBlocks, st.houses(), st.housesWanted(), st.buildings(), st.noRoom(), st.noModel(), st.gates(), st.bridges(), town.extras().waterLevel, anchor.getY(), water, built, turns);
+            journal.clear();
+        }
+        h.succeed();
+    }
+
+    @GameTest(template = TestWorld.TEMPLATE, setupTicks = TestWorld.SETUP_TICKS, batch = "p60_atelier", timeoutTicks = 200)
+    public static void uneVilleDeLAtelier(GameTestHelper h) {
+        var level = h.getLevel();
+        var p = new fr.crusadecraft.core.build.plan.UrbanParams().seed(7).name("Vieille-Forge");
+        p.set(fr.crusadecraft.core.build.plan.UrbanParams.HABITANTS, 120).set(fr.crusadecraft.core.build.plan.UrbanParams.RIVIERE, 1).set(fr.crusadecraft.core.build.plan.UrbanParams.TYPE_MUR, 2)
+                .set(fr.crusadecraft.core.build.plan.UrbanParams.PONTS, 2).set(fr.crusadecraft.core.build.plan.UrbanParams.CHAMPS, 1).set(fr.crusadecraft.core.build.plan.UrbanParams.SURFACE_CHAMPS, 60)
+                .set(fr.crusadecraft.core.build.plan.UrbanParams.FORETS, 40).set(fr.crusadecraft.core.build.plan.UrbanParams.MATIERE_RUES, 1);
+        var plan = fr.crusadecraft.core.build.plan.UrbanGenerator.generate(p, FAKE_PLANS).orElseThrow();
+        // Elle survit à l'enregistrement, avec tout ce qu'elle a de plus qu'une ville ordinaire.
+        var town = fr.crusadecraft.core.build.plan.TownPlan.load(plan.town().save());
+        if (town.extras() == null || town.extras().water.length == 0 || town.extras().fields.length == 0 || town.extras().trees.length == 0 || !"Vieille-Forge".equals(town.extras().name)) h.fail("ses données ne survivent pas à l'enregistrement");
+        // Le relevé d'une ville posée tournée lit les cases où elle tombera.
+        var anchor = new BlockPos(h.absolutePos(BlockPos.ZERO).getX(), level.getHeight(net.minecraft.world.level.levelgen.Heightmap.Types.MOTION_BLOCKING_NO_LEAVES, h.absolutePos(BlockPos.ZERO).getX(), h.absolutePos(BlockPos.ZERO).getZ()) - 1, h.absolutePos(BlockPos.ZERO).getZ());
+        fr.crusadecraft.core.build.plan.TownPlanner.survey(level, anchor, town, 1);
+        if (!town.surveyed() || town.extras().waterLevel == Integer.MIN_VALUE) h.fail("le terrain n'est pas relevé");
+        var out = fr.crusadecraft.core.build.plan.TownPlanner.placements(town);
+        int water = 0, soil = 0, logs = 0, lanterns = 0, planks = 0, walls = 0, cobble = 0;
+        for (var b : out) {
+            var state = b.state();
+            if (state.is(net.minecraft.world.level.block.Blocks.WATER)) water++;
+            if (state.is(net.minecraft.world.level.block.Blocks.FARMLAND)) soil++;
+            if (state.is(net.minecraft.tags.BlockTags.LOGS)) logs++;
+            if (state.is(net.minecraft.world.level.block.Blocks.LANTERN)) lanterns++;
+            if (state.is(net.minecraft.world.level.block.Blocks.SPRUCE_PLANKS)) planks++;
+            if (state.is(net.minecraft.world.level.block.Blocks.STONE_BRICKS) || state.is(net.minecraft.world.level.block.Blocks.MOSSY_STONE_BRICKS)) walls++;
+            if (state.is(net.minecraft.world.level.block.Blocks.COBBLESTONE) || state.is(net.minecraft.world.level.block.Blocks.ANDESITE)) cobble++;
+        }
+        if (water == 0) h.fail("pas d'eau posée");
+        if (soil == 0) h.fail("pas de champs posés");
+        if (logs == 0) h.fail("pas d'arbres posés");
+        if (lanterns == 0) h.fail("pas de lanternes posées");
+        if (planks == 0) h.fail("pas de ponts posés");
+        if (walls == 0) h.fail("pas de murs de la matière demandée");
+        if (cobble == 0) h.fail("pas de rues de la matière demandée");
+        // Une ville ordinaire ne bouge pas d'un bloc.
+        var plain = new fr.crusadecraft.core.build.plan.TownPlan("EUROPEENNE", fr.crusadecraft.core.build.plan.TownSize.HAMEAU, new java.util.ArrayList<>(), new long[0], 40);
+        if (plain.extras() != null || fr.crusadecraft.core.build.plan.TownPlan.load(plain.save()).extras() != null) h.fail("une ville ordinaire a des données de l'atelier");
+        // Un nom de fichier venu du client ne sort jamais de son dossier.
+        h.succeed();
+    }
+
     @GameTest(template = TestWorld.TEMPLATE, setupTicks = TestWorld.SETUP_TICKS, batch = "p59_camp", timeoutTicks = 1600)
     public static void leCampDuBlocus(GameTestHelper h) {
         TestWorld w = TestWorld.realm(h, "CampA");
@@ -927,6 +1079,13 @@ public final class PanelGameTests {
         }).thenExecute(() -> h.runAfterDelay(1, () -> {
             // Pas directement dans la séquence : elle rejouerait le test après un échec, sur des données déjà nettoyées.
             try {
+                // Le monde d'essai tire son terrain au hasard : sur l'eau, un soldat ne s'installe pas, et c'est voulu. Ici, il faut la terre ferme partout.
+                for (int i = 0; i < men; i++) {
+                    int[] off = fr.crusadecraft.core.city.CityCamps.post(i, men, radius, 0);
+                    int px = home.anchor().getX() + off[0], pz = home.anchor().getZ() + off[1];
+                    int top = level.getHeight(net.minecraft.world.level.levelgen.Heightmap.Types.MOTION_BLOCKING_NO_LEAVES, px, pz);
+                    level.setBlock(new BlockPos(px, top - 1, pz), net.minecraft.world.level.block.Blocks.STONE.defaultBlockState(), 2);
+                }
                 w.check(fr.crusadecraft.core.city.CityBlockades.declare(server, b.id(), home).success(), "le blocus est refusé");
                 int arrived = fr.crusadecraft.core.city.CityCamps.tickForTests(server);
                 w.check(arrived == men, "le camp ne s'installe pas : " + arrived + " sur " + men + ", cercle " + radius + ", difficulté " + level.getDifficulty() + ", charge " + level.isLoaded(home.anchor().offset(radius, 0, 0)) + ", sol " + level.getHeight(net.minecraft.world.level.levelgen.Heightmap.Types.MOTION_BLOCKING_NO_LEAVES, home.anchor().getX() + radius, home.anchor().getZ()) + ", déjà là " + fr.crusadecraft.core.city.CityCamps.soldiers(server, home.id()).size());

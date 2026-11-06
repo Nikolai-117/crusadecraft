@@ -103,6 +103,9 @@ public class PlanCatalogScreen extends Screen {
         });
         addRenderableWidget(search);
         setInitialFocus(search);
+        // P60 : l'atelier des villes s'ouvre d'ici : c'est le plan d'architecte qui les pose.
+        addRenderableWidget(Button.builder(Component.translatable("crusadecraft.urban.open"), b -> UrbanScreen.request())
+                .bounds(dx, top + 5, dw, 14).build());
         take = addRenderableWidget(Button.builder(Component.translatable("crusadecraft.plan.take"), b -> chooseSelected())
                 .bounds(dx + 4, listBottom - 18, dw - 8, 16).build());
         reroll = addRenderableWidget(Button.builder(Component.translatable("crusadecraft.plan.reroll"), b -> rerollSelected())

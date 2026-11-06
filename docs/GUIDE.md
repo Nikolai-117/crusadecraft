@@ -17,7 +17,7 @@ Optionnels, déjà présents chez toi, donc activés automatiquement :
 
 ## 2. Installer
 
-1. Le fichier du mod est `E:\crusadecraft\build\libs\crusadecraft-3.6.1.jar`.
+1. Le fichier du mod est `E:\crusadecraft\build\libs\crusadecraft-3.16.0.jar`.
 2. Mets-le dans le dossier des mods de l'instance : `D:\MultiMC\instances\1.20.1\.minecraft\mods\`.
    Dans MultiMC, tu peux aussi faire clic droit sur l'instance → *Modifier* → *Mods* → *Ajouter un fichier*.
    **Retire l'ancien** (`crusadecraft-1.8.0.jar`, ou une version plus vieille) : deux versions du mod ensemble
@@ -385,6 +385,38 @@ données du mod (fichier `crusadecraft.dat` du monde) restent sur place, sans ef
     Une maison dont toute la famille est morte accueille une nouvelle famille le lendemain ; quand tu nommes un marché ou
     une mairie, les familles vont désormais passer la journée autour.
 
+### L'atelier des villes : ta ville, réglage par réglage
+
+Le plan d'architecte en main, ouvre le catalogue : le bouton **Atelier des villes…**, en haut à droite, ouvre un générateur de villes complet (ou tape `/crusade atelier`). À gauche, les réglages ; à droite, le plan de la ville, refait à chaque changement.
+
+**Sur le plan** : la molette zoome, glisser déplace. Un **clic sur un îlot** change sa nature (marché, artisans, parc…). Un **clic sur un bâtiment** en prend un autre modèle ; un **clic droit** le retire. Ces retouches valent pour ce tracé : toucher à un réglage du tracé les oublie, et le dit.
+
+Passe la souris sur un réglage : une bulle dit à quoi il sert.
+
+| Onglet | Ce qu'on y règle |
+|---|---|
+| **Général** | La civilisation, le nombre d'habitants, les habitants par maison, la richesse, les niveaux des plans |
+| **Tracé** | Le modèle (médiéval, tortueux, damier, anneaux…), les grandes routes (impasse, traversée, carrefour de 3 à 6), la sinuosité, la longueur des tronçons, la taille des pâtés et des îlots, la largeur des routes, rues et ruelles, la rue des remparts, le placement (mitoyens, serrés, espacés, isolés), le retrait, le remplissage, la matière des rues, les lanternes, les arbres |
+| **Quartiers** | La place, sa taille et ce qui se dresse au milieu, le temple, les espaces verts, le bidonville, et la part de chaque quartier : marché, beaux quartiers, marchands, artisans, habitations, religieux, administration, militaire, port, pauvres, parcs |
+| **Défenses** | L'enceinte, sa matière, sa forme, ses portes, ses tours, sa hauteur, son épaisseur, les douves, la citadelle et sa place, la part et la densité des faubourgs |
+| **Eau** | La rivière, sa largeur, ses méandres, ses ponts ; la côte ou l'île, la part de la mer et son côté ; les pontons ; creuser l'eau ou non |
+| **Campagne** | Les champs (autour de la ville, le long de la rivière, fermes isolées), leur surface, la culture, les forêts, le climat, les routes de campagne, le cimetière |
+| **Bâtiments** | Le nombre de chaque bâtiment : Auto, ou celui que tu veux |
+| **Réglages** | Onze villes toutes prêtes pour partir de quelque chose, et tes propres réglages enregistrés (ils servent d'un monde à l'autre) |
+
+**Nouveau tirage** garde les réglages et change la ville ; le numéro de tirage redonne toujours la même ville.
+
+**Prendre ce plan** le met dans ton plan d'architecte. Le fantôme montre sa forme et ses bâtiments à plat (pas le relief), R la tourne, un clic la pose : c'est un chantier comme un autre, qui se défait comme un autre. La ville posée prend le nom que tu lui as donné, et devient une ville du monde.
+
+Ce qu'il faut savoir :
+
+- **Les bâtiments viennent de tes packs**, comme toutes les villes du mod. Le nombre de modèles dépend de ce que le pack contient.
+- **Les rues peuvent serpenter, les bâtiments restent droits** : un plan de Minecraft ne se pose qu'à angle droit. Le long d'une rue en biais, chaque façade recule juste ce qu'il faut, avec un petit chemin jusqu'à la rue.
+- **L'enceinte en pièces du pack est toujours un rectangle**, pour la même raison, avec ses quatre portes au milieu des côtés. Les autres matières suivent la forme que tu veux, et le nombre de portes que tu veux.
+- **L'eau creusée suit le terrain par petits paliers**, comme une rivière en pente, avec de petites chutes là où le niveau change : elle est plus belle sur un terrain à peu près plat. Au-delà de 14 blocs à creuser, la colonne reste de la terre. Si tu poses la ville contre une vraie rivière ou une vraie mer, décoche « Creuser l'eau pour de vrai ».
+- **Sur un monde plat**, il n'y a que trois blocs de terre : la rivière a un seul bloc d'eau.
+- **Une mer creusée s'arrête au bord du plan** : c'est un grand bassin, pas un océan. Pour une vraie cité portuaire, pose la ville contre ta vraie mer, sans creuser.
+
 ### Le panneau d'une ville
 
 Le **bâton d'intendant tourné vers le ciel**, ou `/crusade ville panneau`, ouvre le panneau de la ville où tu es, si elle est à toi
@@ -510,7 +542,7 @@ Une colonie MineColonies d'un de tes royaumes entre dans le commerce : **`/crusa
 
 Un marché de l'ordinateur gagne en prospérité : 2 points par caravane qui y vend ou qui y rentre, 1 ou 2 par jour si sa bourse est pleine, 3 de moins par jour de faim ou de blocus. À 60 (réglable), **il bâtit sa ville quand un joueur s'en approche à moins de 160 blocs** : son chantier s'ouvre, aux bâtiments du style de son royaume. Une fois finie, elle reçoit ses habitants d'elle-même, et reprend les réserves, la bourse et les lignes du marché. Commercer avec une ville de l'ordinateur la fait donc grandir pour de vrai.
 
-Cela change le monde, bloc par bloc : réglage `lesMarchesBatissent` (activé). C'est défaisable depuis l'éditeur de la carte, et jamais là où des joueurs ont longtemps vécu, ni près d'une colonie, ni sur les terres d'un joueur ou dans une nation qu'il dirige.
+Le chantier dure au plus une demi-heure passée à côté, même pour une grande ville (réglage `dureeMaxMinutes`). Cela change le monde, bloc par bloc : réglage `lesMarchesBatissent` (activé). C'est défaisable depuis l'éditeur de la carte, et jamais là où des joueurs ont longtemps vécu, ni près d'une colonie, ni sur les terres d'un joueur ou dans une nation qu'il dirige.
 
 ### La carte de guerre
 50. Ouvre la carte du royaume (touche **virgule**) et clique sur **⚔ Guerre**, en bas à droite. Une barre d'outils
@@ -745,6 +777,7 @@ Pour accélérer le temps pendant un test : `/time add 24000` fait passer un jou
 - Les soldats d'un camp de blocus sont ceux des autres guerres du mod : les bandits de Hundred Years War s'il est là, sinon des pillards et des vindicateurs ; en mode paisible, où les monstres s'effacent, des golems. Il n'y a ni tentes ni feux de camp : le blocus ne pose aucun bloc dans le monde.
 - Les routes sont tracées d'après le terrain que le générateur prévoit : elles ne savent rien de ce qu'on a bâti, et un obstacle réel fait franchir un ressaut d'un
   petit saut. Pas de ponts : une rivière trop large se traverse à pied, ou d'un saut.
+- L'atelier des villes dessine l'eau et le relief sur le plan sans lire ton terrain : l'aperçu ne sait rien de tes collines ni de tes vraies rivières. Le fantôme montre les bâtiments à plat.
 - Les marchés de l'ordinateur sont des comptes : pas de bâtiments, personne à y voir. Un voyageur qui y arrive se promène sur le siège de la ville.
 - Les gardes frappent au corps à corps et tirent à l'arc, sans plus : pas de formation, pas de retraite. Ils ne se battent que près d'un joueur.
 - Les échanges face à face ne se jouent que près d'un joueur ; loin, tout passe en comptes. Si l'acheteur n'arrive pas jusqu'au vendeur en

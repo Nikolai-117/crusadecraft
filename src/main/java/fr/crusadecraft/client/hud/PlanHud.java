@@ -81,7 +81,7 @@ public final class PlanHud {
             if (choice.isPresent()) {
                 PlanItem.Choice c = choice.get();
                 lines.add(new Component[]{Component.literal(c.name()), null});
-                Component origin = c.town() ? Component.translatable("crusadecraft.plan.hud.town")
+                Component origin = fr.crusadecraft.core.build.plan.UrbanService.isDesign(c.ref()) ? Component.translatable("crusadecraft.urban.hud") : c.town() ? Component.translatable("crusadecraft.plan.hud.town")
                         : PlanRef.decode(c.ref()).map(r -> (Component) Component.literal(r.source() == PlanRef.Source.FILE
                         ? Component.translatable("crusadecraft.plan.source.files").getString() : r.pack())).orElse(Component.empty());
                 lines.add(new Component[]{Component.translatable("crusadecraft.plan.hud.from"), origin});

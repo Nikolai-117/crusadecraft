@@ -45,6 +45,7 @@ export JAVA_HOME="/chemin/vers/jdk-17"
 rm -rf run-gametest/world && ./gradlew runGameTestServer   # GameTests en monde réel (MineColonies, MCA…)
 ./gradlew runWorldShots -Pshots_v5=true -Pshots_world=normal   # client de développement scénarisé + captures
 ./gradlew runWorldShots -Pshots_v7=true -Pshots_v7_reel=true -Pshots_world=normal   # commerce, guerre, chantiers à vitesse réelle : une bonne heure
+./gradlew runWorldShots -Pshots_v8=true   # l'atelier des villes : ses onglets, ses préréglages, une ville posée pour de vrai
 ./gradlew runWorldShots -Pshots_open=dossier -Pshots_uuid=...   # une COPIE de monde posée dans run-worldshots/saves (level.dat neutre, voir decisions.md, P59)
 ```
 

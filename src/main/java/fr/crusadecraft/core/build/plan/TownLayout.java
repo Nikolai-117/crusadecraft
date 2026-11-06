@@ -41,7 +41,7 @@ public final class TownLayout {
     public enum Pattern { MARCHE, CASTRUM, KAOGONG, JOBO, KAHUN, TRELLEBORG, RUE }
 
     /** Un rectangle de blocs, bornes comprises. */
-    record Rect(int x0, int z0, int x1, int z1) {
+    public record Rect(int x0, int z0, int x1, int z1) {
         boolean overlaps(Rect o, int gap) {
             return x0 - gap <= o.x1 && o.x0 <= x1 + gap && z0 - gap <= o.z1 && o.z0 <= z1 + gap;
         }

@@ -185,6 +185,16 @@ public final class CrusadeCommand {
                         // P39 : relire les fichiers de plans et la table des équivalences (après les avoir changés).
                         .then(Commands.literal("recharger").requires(src -> src.hasPermission(2))
                                 .executes(ctx -> say(ctx, fr.crusadecraft.core.city.CityCommands.reload()))))
+                // P60 : l'atelier des villes.
+                .then(Commands.literal("atelier").executes(ctx -> {
+                    var player = ctx.getSource().getPlayerOrException();
+                    if (!fr.crusadecraft.core.build.plan.PlanTool.allowed(player)) {
+                        ctx.getSource().sendFailure(net.minecraft.network.chat.Component.translatable("crusadecraft.plan.denied"));
+                        return 0;
+                    }
+                    fr.crusadecraft.network.CrusadeNetwork.toPlayer(player, new fr.crusadecraft.network.packet.UrbanPackets.Saved(fr.crusadecraft.core.build.plan.UrbanService.savedNames(), true));
+                    return 1;
+                }))
                 // P54 : l'économie du monde.
                 .then(Commands.literal("economie").executes(ctx -> {
                     fr.crusadecraft.core.city.WorldEconomy.send(ctx.getSource().getPlayerOrException(), false);

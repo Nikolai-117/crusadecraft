@@ -51,7 +51,7 @@ public final class WorldShots {
     private static final boolean ENABLED = Boolean.getBoolean("crusadecraft.worldshots");
     private static final String WORLD = "crusadecraft-shots";
 
-    private enum Step { COPY_LOADING, COPY, BOOT, LOADING, SETUP, WALL, MAP, SHEET, HERALD, REALM, LETTER, SEAL, CHANCERY, COLOMBIER, TOWNHALL, TOWNHALL_CLICK, WAR, WAR_MAP_OPEN, WAR_MAP, WAR_MAP_SHOT, SIEGE, CAPTURE, CAPTURED, WAR_TABLE, RAID, EDITOR, EDITOR_REALM, EDITOR_PAINT, LINEAGE_OPEN, LINEAGE_HOUSE, LINEAGE_SPAWN, LINEAGE_SHOT, STAFF_MENU, STAFF_SHOT, FORT_SHOT, SITES_MAP, PAPER_SHOT, LIEU_FORM, LIEU_SCREEN, LIEU_MAP, CHAT_MAP, WALK_IN, TITLE_SHOT, XAERO_SHOT, TERRAIN_OPEN, TERRAIN_WAIT, TERRAIN_SHOT, TERRAIN_POLITICAL, V3, V4, V5, V6, V7, DONE }
+    private enum Step { V8, COPY_LOADING, COPY, BOOT, LOADING, SETUP, WALL, MAP, SHEET, HERALD, REALM, LETTER, SEAL, CHANCERY, COLOMBIER, TOWNHALL, TOWNHALL_CLICK, WAR, WAR_MAP_OPEN, WAR_MAP, WAR_MAP_SHOT, SIEGE, CAPTURE, CAPTURED, WAR_TABLE, RAID, EDITOR, EDITOR_REALM, EDITOR_PAINT, LINEAGE_OPEN, LINEAGE_HOUSE, LINEAGE_SPAWN, LINEAGE_SHOT, STAFF_MENU, STAFF_SHOT, FORT_SHOT, SITES_MAP, PAPER_SHOT, LIEU_FORM, LIEU_SCREEN, LIEU_MAP, CHAT_MAP, WALK_IN, TITLE_SHOT, XAERO_SHOT, TERRAIN_OPEN, TERRAIN_WAIT, TERRAIN_SHOT, TERRAIN_POLITICAL, V3, V4, V5, V6, V7, DONE }
 
     private static Step step = Step.BOOT;
     private static int wait;
@@ -99,6 +99,9 @@ public final class WorldShots {
             case COPY -> {
                 if (WorldShotsCopy.tick(mc, WorldShots::grab)) step = Step.DONE;
             }
+            case V8 -> {
+                if (WorldShotsV8.tick(mc, WorldShots::grab)) step = Step.DONE;
+            }
             case LOADING -> {
                 if (mc.level == null || mc.player == null || mc.getSingleplayerServer() == null) return;
                 step = Step.SETUP;
@@ -111,6 +114,11 @@ public final class WorldShots {
                 wait = 160;
             }
             case WALL -> {
+                // -Pshots_v8=true : l'atelier des villes (phase 60).
+                if (Boolean.getBoolean("crusadecraft.worldshots.v8")) {
+                    step = Step.V8;
+                    return;
+                }
                 // -Pshots_v3=true : le scénario des phases 26 à 30 à la place du reste.
                 if (Boolean.getBoolean("crusadecraft.worldshots.v3")) {
                     step = Step.V3;

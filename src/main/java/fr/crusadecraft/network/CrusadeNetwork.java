@@ -33,7 +33,7 @@ import net.minecraftforge.network.simple.SimpleChannel;
  * (distance, droits, état) avant d'agir.
  */
 public final class CrusadeNetwork {
-    private static final String VERSION = "30";
+    private static final String VERSION = "31";
 
     public static final SimpleChannel CHANNEL = NetworkRegistry.newSimpleChannel(
             ResourceLocation.tryParse(CrusadeCraft.MOD_ID + ":main"),
@@ -431,6 +431,22 @@ public final class CrusadeNetwork {
         CHANNEL.messageBuilder(fr.crusadecraft.network.packet.TerrainPackets.Tile.class, nextId++, NetworkDirection.PLAY_TO_CLIENT)
                 .encoder(fr.crusadecraft.network.packet.TerrainPackets.Tile::encode).decoder(fr.crusadecraft.network.packet.TerrainPackets.Tile::decode)
                 .consumerMainThread(fr.crusadecraft.network.packet.TerrainPackets.Tile::handle).add();
+        // P60 : l'atelier des villes
+        CHANNEL.messageBuilder(fr.crusadecraft.network.packet.UrbanPackets.Request.class, nextId++, NetworkDirection.PLAY_TO_SERVER)
+                .encoder(fr.crusadecraft.network.packet.UrbanPackets.Request::encode).decoder(fr.crusadecraft.network.packet.UrbanPackets.Request::decode)
+                .consumerMainThread(fr.crusadecraft.network.packet.UrbanPackets.Request::handle).add();
+        CHANNEL.messageBuilder(fr.crusadecraft.network.packet.UrbanPackets.Preview.class, nextId++, NetworkDirection.PLAY_TO_CLIENT)
+                .encoder(fr.crusadecraft.network.packet.UrbanPackets.Preview::encode).decoder(fr.crusadecraft.network.packet.UrbanPackets.Preview::decode)
+                .consumerMainThread(fr.crusadecraft.network.packet.UrbanPackets.Preview::handle).add();
+        CHANNEL.messageBuilder(fr.crusadecraft.network.packet.UrbanPackets.Saved.class, nextId++, NetworkDirection.PLAY_TO_CLIENT)
+                .encoder(fr.crusadecraft.network.packet.UrbanPackets.Saved::encode).decoder(fr.crusadecraft.network.packet.UrbanPackets.Saved::decode)
+                .consumerMainThread(fr.crusadecraft.network.packet.UrbanPackets.Saved::handle).add();
+        CHANNEL.messageBuilder(fr.crusadecraft.network.packet.UrbanPackets.Loaded.class, nextId++, NetworkDirection.PLAY_TO_CLIENT)
+                .encoder(fr.crusadecraft.network.packet.UrbanPackets.Loaded::encode).decoder(fr.crusadecraft.network.packet.UrbanPackets.Loaded::decode)
+                .consumerMainThread(fr.crusadecraft.network.packet.UrbanPackets.Loaded::handle).add();
+        CHANNEL.messageBuilder(fr.crusadecraft.network.packet.UrbanPackets.Taken.class, nextId++, NetworkDirection.PLAY_TO_CLIENT)
+                .encoder(fr.crusadecraft.network.packet.UrbanPackets.Taken::encode).decoder(fr.crusadecraft.network.packet.UrbanPackets.Taken::decode)
+                .consumerMainThread(fr.crusadecraft.network.packet.UrbanPackets.Taken::handle).add();
     }
 
     public static void toPlayer(ServerPlayer player, Object packet) {

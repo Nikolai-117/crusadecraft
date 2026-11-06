@@ -302,9 +302,13 @@ public final class TownPlanner {
 
     // ------------------------------------------------------------------ relever le terrain, poser
 
-    /** La hauteur du sol (le bloc solide le plus haut, feuillages exclus). */
+    /**
+     * La hauteur du sol (le bloc solide le plus haut, feuillages exclus). P60 : là où le monde n'est pas chargé, celle que le générateur prévoit. Une ville de l'atelier peut
+     * s'étendre bien au-delà de la distance de vue, et un chunk absent répondrait « au fond du monde » : le bâtiment s'y enterrerait.
+     */
     static int surface(ServerLevel level, int x, int z) {
-        return level.getHeight(Heightmap.Types.MOTION_BLOCKING_NO_LEAVES, x, z) - 1;
+        if (level.hasChunk(x >> 4, z >> 4)) return level.getHeight(Heightmap.Types.MOTION_BLOCKING_NO_LEAVES, x, z) - 1;
+        return level.getChunkSource().getGenerator().getBaseHeight(x, z, Heightmap.Types.WORLD_SURFACE_WG, level, level.getChunkSource().randomState()) - 1;
     }
 
     /**
@@ -312,14 +316,26 @@ public final class TownPlanner {
      * le sol. Une seule fois, au premier coup de pioche.
      */
     public static void survey(ServerLevel level, BlockPos anchor, TownPlan town) {
+        survey(level, anchor, town, 0);
+    }
+
+    /** P60 : la hauteur sous cette case d'une ville qui sera posée tournée. */
+    private static int surfaceTurned(ServerLevel level, BlockPos anchor, int x, int z, Rotation rot) {
+        int[] t = PlanBuilder.turn(x, z, rot);
+        return surface(level, anchor.getX() + t[0], anchor.getZ() + t[1]);
+    }
+
+    /** Le même, pour une ville posée tournée de tant de quarts de tour : on relève le terrain là où chaque case tombera vraiment. */
+    public static void survey(ServerLevel level, BlockPos anchor, TownPlan town, int turns) {
         if (town.surveyed()) return;
+        Rotation rot = Rotation.values()[Math.floorMod(turns, 4)];
         for (TownPlan.Piece piece : town.pieces()) {
             Optional<Plan> plan = PlanRef.decode(piece.ref()).flatMap(r -> PlanLibrary.load(r, false));
             if (plan.isEmpty()) continue;
             TownLayout.Rect r = TownLayout.rect(box(plan.get()), new TownLayout.Spot(piece.dx(), piece.dz(), Rotation.values()[piece.rotation()]));
             List<Integer> heights = new ArrayList<>();
             for (int x = r.x0(); x <= r.x1(); x += 2) {
-                for (int z = r.z0(); z <= r.z1(); z += 2) heights.add(surface(level, anchor.getX() + x, anchor.getZ() + z));
+                for (int z = r.z0(); z <= r.z1(); z += 2) heights.add(surfaceTurned(level, anchor, x, z, rot));
             }
             if (heights.isEmpty()) continue;
             Collections.sort(heights);
@@ -329,14 +345,16 @@ public final class TownPlanner {
         int[] ys = new int[streets.length];
         for (int i = 0; i < streets.length; i++) {
             int x = (int) (streets[i] >> 32), z = (int) streets[i];
-            ys[i] = surface(level, anchor.getX() + x, anchor.getZ() + z) - anchor.getY();
+            ys[i] = surfaceTurned(level, anchor, x, z, rot) - anchor.getY();
         }
         long[] walls = town.walls();
         int[] wy = new int[walls.length];
         for (int i = 0; i < walls.length; i++) {
             int x = (int) (walls[i] >> 32), z = (int) walls[i];
-            wy[i] = surface(level, anchor.getX() + x, anchor.getZ() + z) - anchor.getY();
+            wy[i] = surfaceTurned(level, anchor, x, z, rot) - anchor.getY();
         }
+        // P60 : l'eau, les ponts, les champs et les arbres d'une ville de l'atelier.
+        if (town.extras() != null) UrbanBuild.survey(level, anchor, town.extras(), rot);
         town.setSurvey(ys, wy);
     }
 
@@ -346,6 +364,8 @@ public final class TownPlanner {
      */
     public static List<Blueprints.Placement> placements(TownPlan town) {
         List<Blueprints.Placement> out = new ArrayList<>();
+        // P60 : l'eau d'abord, et ce qui pousse : les bâtiments se posent par-dessus.
+        if (town.extras() != null) UrbanBuild.before(town, out);
         for (TownPlan.Piece piece : town.pieces()) {
             Optional<Plan> plan = PlanRef.decode(piece.ref()).flatMap(r -> PlanLibrary.load(r, false));
             if (plan.isEmpty()) {
@@ -359,16 +379,18 @@ public final class TownPlanner {
             }
         }
         NationStyle style = NationStyle.byName(town.style(), NationStyle.EUROPEENNE);
-        walls(town, style, out);
+        if (town.extras() != null) UrbanBuild.walls(town, out);
+        else walls(town, style, out);
         BlockState street = style.street();
         long[] streets = town.streets();
         int[] ys = town.streetY();
         for (int i = 0; i < streets.length && i < ys.length; i++) {
             int x = (int) (streets[i] >> 32), z = (int) streets[i];
-            out.add(new Blueprints.Placement(x, ys[i], z, style.street(x, z), false));
+            out.add(new Blueprints.Placement(x, ys[i], z, town.extras() != null ? UrbanBuild.street(town.extras(), style, x, z) : style.street(x, z), false));
             out.add(new Blueprints.Placement(x, ys[i] + 1, z, Blocks.AIR.defaultBlockState(), false));
             out.add(new Blueprints.Placement(x, ys[i] + 2, z, Blocks.AIR.defaultBlockState(), false));
         }
+        if (town.extras() != null) UrbanBuild.after(town, out);
         return out;
     }
 

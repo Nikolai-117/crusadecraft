@@ -602,7 +602,9 @@ public final class SiteService {
         ServerLevel level = player.serverLevel();
         CrusadeSavedData data = data(server);
         long today = RealmService.currentDay(server);
-        String name = new LineageGenerator(ground.asLong() ^ today).placeName();
+        // P60 : une ville de l'atelier porte le nom qu'on lui a donné.
+        String wanted = town.extras() == null ? "" : town.extras().name;
+        String name = wanted != null && !wanted.isBlank() ? wanted : new LineageGenerator(ground.asLong() ^ today).placeName();
         WorldEditService.CitySize citySize = switch (size) {
             case HAMEAU, QUARTIER -> WorldEditService.CitySize.HAMEAU;
             case BOURG -> WorldEditService.CitySize.BOURG;
@@ -638,10 +640,11 @@ public final class SiteService {
         if (city.isEmpty()) return Component.translatable("crusadecraft.plan.town.no_city");
         Site site = new Site(id, SiteKind.VILLAGE, city.get().name(), owner, level.dimension().location(), ground, Direction.SOUTH, color, true, today);
         site.setProvince(city.get().id());
-        site.setTown(town);
+        site.setTown(town.withoutExtras());
         site.setBuilt(true);
-        Community c = new LineageGenerator(ground.asLong() * 31 + today).community(data.lineage(), city.get().name(), CommunityKind.VILLAGE, owner,
-                size.families());
+        // P60 : autant de familles qu'on en a demandé à l'atelier, sans faire exploser le registre.
+        int families = town.extras() == null ? size.families() : Math.min(120, Math.max(size.families() / 2, town.extras().families));
+        Community c = new LineageGenerator(ground.asLong() * 31 + today).community(data.lineage(), city.get().name(), CommunityKind.VILLAGE, owner, families);
         site.setCommunity(c.id());
         data.world().add(site);
         data.setDirty();

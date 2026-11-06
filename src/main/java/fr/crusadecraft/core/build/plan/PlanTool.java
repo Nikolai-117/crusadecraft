@@ -423,6 +423,11 @@ public final class PlanTool {
 
     /** Les poses d'un plan, ou d'une ville entière (« town:STYLE:TAILLE:tirage »). */
     public static java.util.List<fr.crusadecraft.core.build.Blueprints.Placement> ghostPlacements(String ref) {
+        // P60 : le fantôme d'une ville de l'atelier se fait sans relevé : ses bâtiments et ses murs, posés à plat.
+        if (UrbanService.isDesign(ref)) {
+            net.minecraft.server.MinecraftServer server = net.minecraftforge.server.ServerLifecycleHooks.getCurrentServer();
+            return server == null ? null : UrbanService.design(server, ref).map(PlanTool::flatGhost).orElse(null);
+        }
         if (ref.startsWith(TOWN_PREFIX)) {
             String[] parts = ref.substring(TOWN_PREFIX.length()).split(":");
             if (parts.length != 3) return null;
@@ -442,6 +447,29 @@ public final class PlanTool {
             return TownPlanner.plan(style, size, parseSeed(parts[2], 1)).map(TownPlanner::placements).orElse(null);
         }
         return PlanRef.decode(ref).flatMap(r -> PlanLibrary.load(r, true)).map(Plan::placements).orElse(null);
+    }
+
+    /** Sans relevé, tout est à la hauteur du sol visé : ce que le fantôme doit montrer, c'est la forme. */
+    private static java.util.List<fr.crusadecraft.core.build.Blueprints.Placement> flatGhost(TownPlan town) {
+        java.util.List<fr.crusadecraft.core.build.Blueprints.Placement> out = new java.util.ArrayList<>();
+        for (TownPlan.Piece piece : town.pieces()) {
+            Optional<Plan> plan = PlanRef.decode(piece.ref()).flatMap(r -> PlanLibrary.load(r, false));
+            if (plan.isEmpty()) continue;
+            net.minecraft.world.level.block.Rotation rot = net.minecraft.world.level.block.Rotation.values()[piece.rotation()];
+            for (fr.crusadecraft.core.build.Blueprints.Placement p : plan.get().placements()) {
+                int[] xz = PlanBuilder.turn(p.x(), p.z(), rot);
+                out.add(new fr.crusadecraft.core.build.Blueprints.Placement(piece.dx() + xz[0], p.y(), piece.dz() + xz[1], p.state().rotate(rot), p.foundation(), p.tag()));
+            }
+        }
+        long[] streets = town.streets();
+        net.minecraft.world.level.block.state.BlockState road = net.minecraft.world.level.block.Blocks.GRAVEL.defaultBlockState();
+        for (int i = 0; i < streets.length; i += 2) out.add(new fr.crusadecraft.core.build.Blueprints.Placement((int) (streets[i] >> 32), 0, (int) streets[i], road, false));
+        long[] walls = town.walls();
+        net.minecraft.world.level.block.state.BlockState wall = net.minecraft.world.level.block.Blocks.COBBLESTONE.defaultBlockState();
+        for (int i = 0; i < walls.length; i++) {
+            for (int y = 1; y <= 4; y += 3) out.add(new fr.crusadecraft.core.build.Blueprints.Placement((int) (walls[i] >> 32), y, (int) walls[i], wall, false));
+        }
+        return out;
     }
 
     private static void sendParts(ServerPlayer player, String ref, int[][] g) {
@@ -500,6 +528,19 @@ public final class PlanTool {
             player.sendSystemMessage(fr.crusadecraft.core.build.SiteService.registerToolTown(player, id, ground,
                     NationStyle.byOrdinal(choice.style()), TownSize.byOrdinal(choice.size()), town.get(), choice.rotation()));
             // P35 : la faire sienne, d'un clic dans le message.
+            player.sendSystemMessage(TownColony.offer(id));
+            return;
+        } else if (UrbanService.isDesign(choice.ref())) {
+            // P60 : une ville de l'atelier. On en reprend une copie : on peut la poser plusieurs fois, chacune sur son terrain.
+            Optional<TownPlan> town = UrbanService.design(player.server, choice.ref());
+            if (town.isEmpty()) {
+                player.displayClientMessage(Component.translatable("crusadecraft.plan.unreadable"), true);
+                return;
+            }
+            UUID id = Journals.paste(player, ground, choice.rotation(), null, town.get(), choice.name());
+            player.sendSystemMessage(Component.translatable("crusadecraft.plan.pasting", choice.name()));
+            NationStyle style = NationStyle.byName(town.get().style(), NationStyle.EUROPEENNE);
+            player.sendSystemMessage(fr.crusadecraft.core.build.SiteService.registerToolTown(player, id, ground, style, town.get().size(), town.get(), choice.rotation()));
             player.sendSystemMessage(TownColony.offer(id));
             return;
         } else {
