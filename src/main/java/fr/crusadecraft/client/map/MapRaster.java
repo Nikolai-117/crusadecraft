@@ -43,6 +43,11 @@ public final class MapRaster {
     @FunctionalInterface
     public interface TerrainSource {
         int color(double x, double z);
+
+        /** P63 : le joueur a-t-il vu ce point de ses yeux (la carte de Xaero l'a dessiné) ? Alors pas de brouillard. */
+        default boolean seen(double x, double z) {
+            return false;
+        }
     }
 
     /**
@@ -151,7 +156,7 @@ public final class MapRaster {
                 // Le fond : le paysage s'il est connu, sinon le parchemin.
                 int land = terrain == null ? 0 : terrain.color(wx, wz);
                 int ground = land != 0 ? land & 0xFFFFFF : shade(PARCHMENT, noise);
-                if (terrainOnly) revealed = true;
+                if (terrainOnly || (!revealed && terrain != null && terrain.seen(wx, wz))) revealed = true;
                 int paint = painted.isEmpty() ? UNPAINTED
                         : painted.get(TerritoryMap.key(TerritoryMap.cellOf(wx), TerritoryMap.cellOf(wz)));
                 if (paint != UNPAINTED) {

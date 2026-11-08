@@ -66,7 +66,7 @@ public class WarMapRenderer implements BlockEntityRenderer<WarMapBlockEntity> {
             double half = SIZE / 2.0 * scale;
             var dim = view.dimension();
             ClientTerrain.ensure(dim, lod, view.focusX() - half, view.focusZ() - half, view.focusX() + half, view.focusZ() + half);
-            MapRaster.Extras extras = new MapRaster.Extras((x, z) -> ClientTerrain.land(dim, x, z, lod, scale),
+            MapRaster.Extras extras = new MapRaster.Extras(ClientTerrain.source(dim, lod, scale),
                     new it.unimi.dsi.fastutil.ints.Int2IntOpenHashMap(), new it.unimi.dsi.fastutil.ints.IntOpenHashSet(),
                     new it.unimi.dsi.fastutil.ints.IntOpenHashSet());
             TEXTURE.upload(MapRaster.render(view, SIZE, SIZE, view.focusX(), view.focusZ(), scale, MapRaster.Mode.POLITICAL, null, extras));

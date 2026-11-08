@@ -1174,7 +1174,8 @@ veux la voir comme le bâton de construction de MineColonies », des commandes, 
 - **Ce que Xaero n'a pas vu reste au paysage du mod, assombri** : comme son noir, la différence entre exploré et deviné se voit.
 - **Les terres colorées par Xaero lui-même** (nos territoires, P17) sont dans ses images : le voile du mod s'y ajoute. C'est sa façon de dessiner ; on ne retouche pas ses images.
 - **Une autre version de Xaero** qui changerait ce format ne casse rien : ses fichiers ne se lisent plus et la carte garde le paysage du mod. Vérifié sur une région et sur tous les zooms lointains de son cache (une copie, en lecture seule).
-- **Pas vu en jeu** : Romain jouait ; la carte du menu, la carte et la Table de guerre sur sa carte Xaero restent à voir de ses yeux.
+- **Le brouillard se lève là où Xaero a dessiné** : le brouillard des terres inconnues recouvrait aussi ce qu'il avait parcouru en personne. Une source de paysage dit maintenant si le point a été vu (`TerrainSource.seen`).
+- **Vu en vrai client** (`-Pwith_xaero=true -Pshots_v9=true`), avec une copie de son cache Xaero posée sous le monde d'essai : la carte de près, le menu royal (Royaume, Chancellerie) et la Table de guerre montrent ses vrais blocs autour du point d'apparition, sans brouillard, le royaume en voile. La copie a été retirée ensuite.
 
 **P62 (8 novembre 2026) — la carte telle quelle, les titres en créatif, 3.18.0**
 

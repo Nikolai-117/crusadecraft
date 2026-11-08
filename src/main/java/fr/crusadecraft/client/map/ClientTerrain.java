@@ -78,6 +78,26 @@ public final class ClientTerrain {
         return 0xFF000000 | TerrainPalette.mix(c & 0xFFFFFF, 0x0B0D10, 0.55);
     }
 
+    /** P63 : le joueur est passé là (la carte de Xaero l'a dessiné) : le brouillard des terres inconnues ne s'y pose pas. */
+    public static boolean seen(ResourceLocation dim, double x, double z, double blocksPerPixel) {
+        return XaeroCache.color(dim, x, z, blocksPerPixel) != 0;
+    }
+
+    /** P63 : le paysage d'une carte, pour MapRaster : la carte de Xaero d'abord, et sans brouillard là où elle a dessiné. */
+    public static MapRaster.TerrainSource source(ResourceLocation dim, int lod, double blocksPerPixel) {
+        return new MapRaster.TerrainSource() {
+            @Override
+            public int color(double x, double z) {
+                return land(dim, x, z, lod, blocksPerPixel);
+            }
+
+            @Override
+            public boolean seen(double x, double z) {
+                return ClientTerrain.seen(dim, x, z, blocksPerPixel);
+            }
+        };
+    }
+
     /** Change à chaque tuile reçue : la carte ouverte sait qu'il faut se redessiner. */
     public static int version() {
         return version;

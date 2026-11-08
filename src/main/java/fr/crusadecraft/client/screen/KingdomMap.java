@@ -108,7 +108,7 @@ final class KingdomMap {
                     color = owner == MapRaster.NONE ? shade(r.pixels()[yy * w + xx]) : colorOf(v, owner);
                 } else if (owner >= 0) {
                     color = mix(land, colorOf(v, owner), VEIL);
-                } else if (owner == MapRaster.FOGGED) {
+                } else if (owner == MapRaster.FOGGED && !ClientTerrain.seen(dim, wx, wz, scale)) {
                     color = mix(land, FOG, 0.62);
                 } else {
                     color = mix(land, Kit.PUITS, 0.12);

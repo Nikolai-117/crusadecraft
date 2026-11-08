@@ -51,7 +51,7 @@ public final class WorldShots {
     private static final boolean ENABLED = Boolean.getBoolean("crusadecraft.worldshots");
     private static final String WORLD = "crusadecraft-shots";
 
-    private enum Step { V8, COPY_LOADING, COPY, BOOT, LOADING, SETUP, WALL, MAP, SHEET, HERALD, REALM, LETTER, SEAL, CHANCERY, COLOMBIER, TOWNHALL, TOWNHALL_CLICK, WAR, WAR_MAP_OPEN, WAR_MAP, WAR_MAP_SHOT, SIEGE, CAPTURE, CAPTURED, WAR_TABLE, RAID, EDITOR, EDITOR_REALM, EDITOR_PAINT, LINEAGE_OPEN, LINEAGE_HOUSE, LINEAGE_SPAWN, LINEAGE_SHOT, STAFF_MENU, STAFF_SHOT, FORT_SHOT, SITES_MAP, PAPER_SHOT, LIEU_FORM, LIEU_SCREEN, LIEU_MAP, CHAT_MAP, WALK_IN, TITLE_SHOT, XAERO_SHOT, TERRAIN_OPEN, TERRAIN_WAIT, TERRAIN_SHOT, TERRAIN_POLITICAL, V3, V4, V5, V6, V7, DONE }
+    private enum Step { V9_MAP, V9_ZOOM, V9_HUB, V9_CHANCERY, V9_TABLE, V8, COPY_LOADING, COPY, BOOT, LOADING, SETUP, WALL, MAP, SHEET, HERALD, REALM, LETTER, SEAL, CHANCERY, COLOMBIER, TOWNHALL, TOWNHALL_CLICK, WAR, WAR_MAP_OPEN, WAR_MAP, WAR_MAP_SHOT, SIEGE, CAPTURE, CAPTURED, WAR_TABLE, RAID, EDITOR, EDITOR_REALM, EDITOR_PAINT, LINEAGE_OPEN, LINEAGE_HOUSE, LINEAGE_SPAWN, LINEAGE_SHOT, STAFF_MENU, STAFF_SHOT, FORT_SHOT, SITES_MAP, PAPER_SHOT, LIEU_FORM, LIEU_SCREEN, LIEU_MAP, CHAT_MAP, WALK_IN, TITLE_SHOT, XAERO_SHOT, TERRAIN_OPEN, TERRAIN_WAIT, TERRAIN_SHOT, TERRAIN_POLITICAL, V3, V4, V5, V6, V7, DONE }
 
     private static Step step = Step.BOOT;
     private static int wait;
@@ -99,6 +99,39 @@ public final class WorldShots {
             case COPY -> {
                 if (WorldShotsCopy.tick(mc, WorldShots::grab)) step = Step.DONE;
             }
+            case V9_MAP -> {
+                grab(mc, "p63_carte");
+                // De près, autour de la capitale : là où la carte de Xaero a ses détails.
+                if (mc.screen != null) {
+                    double cx = mc.getWindow().getGuiScaledWidth() / 2.0, cy = mc.getWindow().getGuiScaledHeight() / 2.0;
+                    for (int i = 0; i < 6; i++) mc.screen.mouseScrolled(cx, cy, 1.0);
+                }
+                step = Step.V9_ZOOM;
+                wait = 160;
+            }
+            case V9_ZOOM -> {
+                grab(mc, "p63_carte_pres");
+                mc.setScreen(null);
+                CrusadeNetwork.toServer(new fr.crusadecraft.network.packet.RequestRealmPacket(fr.crusadecraft.network.packet.OpenRealmScreenPacket.Target.MENU));
+                step = Step.V9_HUB;
+                wait = 160;
+            }
+            case V9_HUB -> {
+                grab(mc, "p63_royaume");
+                if (mc.screen != null) mc.screen.keyPressed(org.lwjgl.glfw.GLFW.GLFW_KEY_4, 0, 0);
+                step = Step.V9_CHANCERY;
+                wait = 160;
+            }
+            case V9_CHANCERY -> {
+                grab(mc, "p63_chancellerie");
+                mc.setScreen(null);
+                step = Step.V9_TABLE;
+                wait = 200;
+            }
+            case V9_TABLE -> {
+                grab(mc, "p63_table_apres");
+                step = Step.DONE;
+            }
             case V8 -> {
                 if (WorldShotsV8.tick(mc, WorldShots::grab)) step = Step.DONE;
             }
@@ -114,6 +147,16 @@ public final class WorldShots {
                 wait = 160;
             }
             case WALL -> {
+                // -Pshots_v9=true (P63) : les cartes sur la carte de Xaero : la Table de guerre, la carte, le menu royal.
+                if (Boolean.getBoolean("crusadecraft.worldshots.v9")) {
+                    grab(mc, "p63_table");
+                    MinecraftServer server = mc.getSingleplayerServer();
+                    server.execute(() -> foundForMaps(server));
+                    CrusadeNetwork.toServer(new WorldPackets.RequestMap(true));
+                    step = Step.V9_MAP;
+                    wait = 200;
+                    return;
+                }
                 // -Pshots_v8=true : l'atelier des villes (phase 60).
                 if (Boolean.getBoolean("crusadecraft.worldshots.v8")) {
                     step = Step.V8;
@@ -602,6 +645,16 @@ public final class WorldShots {
         long today = fr.crusadecraft.core.realm.RealmService.currentDay(server);
         while (it.hasNext()) it.next().discover(player.getUUID(), today);
         player.connection.teleport(base.getX() + 0.5, base.getY(), base.getZ() + 0.5, 180f, -8f);
+    }
+
+    /** P63 : une colonie et un royaume au pied du joueur, pour ouvrir le menu royal sur la carte de Xaero. */
+    private static void foundForMaps(MinecraftServer server) {
+        ServerPlayer player = server.getPlayerList().getPlayers().get(0);
+        fr.crusadecraft.config.CrusadeConfig.SERVER.throneMustBeInTownHall.set(false);
+        BlockPos center = player.blockPosition().south(6);
+        fr.crusadecraft.compat.minecolonies.MineColoniesTestKit.createColony(player.serverLevel(), center, player, "Valbrume", 3);
+        fr.crusadecraft.core.realm.RealmService.found(player, new fr.crusadecraft.core.realm.RealmService.FoundingRequest(
+                center.east(), "Royaume de Valbrume", "Par le fer et la foi", "Aubépine", 1, false));
     }
 
     private static void visitHiddenRealm(MinecraftServer server) {

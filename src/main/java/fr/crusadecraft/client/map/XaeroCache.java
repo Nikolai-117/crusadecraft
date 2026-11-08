@@ -254,11 +254,13 @@ public final class XaeroCache {
         }
         Path found = null;
         String id = null;
-        if (ids != null && ids[0] != null && ids[1] != null && ids[2] != null) {
-            Path mw = Minecraft.getInstance().gameDirectory.toPath().resolve("xaero").resolve("world-map").resolve(ids[0]).resolve(ids[1]).resolve(ids[2]);
+        if (ids != null && ids[0] != null && ids[1] != null) {
+            // Un monde solo n'a pas de sous-monde : ses images sont dans le dossier de la dimension.
+            Path mw = Minecraft.getInstance().gameDirectory.toPath().resolve("xaero").resolve("world-map").resolve(ids[0]).resolve(ids[1]);
+            if (ids[2] != null && !ids[2].isEmpty()) mw = mw.resolve(ids[2]);
             if (Files.isDirectory(mw)) {
                 found = mw;
-                id = String.join("/", ids);
+                id = ids[0] + "/" + ids[1] + "/" + ids[2];
                 try {
                     leafVersion = Integer.parseInt(ids[3]);
                 } catch (NumberFormatException e) {
@@ -268,6 +270,8 @@ public final class XaeroCache {
         }
         if (!java.util.Objects.equals(id, identity)) {
             // Un autre monde : tout ce qu'on avait lu ne vaut plus.
+            if (found != null) CrusadeCraft.LOGGER.info("CrusadeCraft : la carte montre celle de Xaero, lue dans {}", found);
+            else if (ids != null) CrusadeCraft.LOGGER.info("CrusadeCraft : pas de carte de Xaero pour {}", String.join(" / ", java.util.Arrays.asList(ids)));
             identity = id;
             folder = found;
             synchronized (LOADED) {

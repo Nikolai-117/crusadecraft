@@ -80,6 +80,8 @@ minecraft {
             property 'crusadecraft.worldshots.v7reel', (project.findProperty('shots_v7_reel') == 'true').toString()
             // -Pshots_v8=true : l'atelier des villes (P60), ses onglets, ses préréglages, une ville posée pour de vrai.
             property 'crusadecraft.worldshots.v8', (project.findProperty('shots_v8') == 'true').toString()
+            // -Pshots_v9=true (P63) : la Table de guerre, la carte et le menu royal sur la carte de Xaero (avec -Pwith_xaero=true).
+            property 'crusadecraft.worldshots.v9', (project.findProperty('shots_v9') == 'true').toString()
             // -Pshots_open=dossier : ouvre une COPIE d'un monde, posée dans run-worldshots/saves, et la fait vivre (P59).
             property 'crusadecraft.worldshots.open', (project.findProperty('shots_open') ?: '').toString()
             // Un monde venu d'une instance a des blocs de mods absents ici : on accepte, c'est une copie.
