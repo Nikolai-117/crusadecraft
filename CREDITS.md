@@ -10,6 +10,7 @@ CrusadeCraft est un mod à **usage personnel**. Il ne doit pas être redistribu�
 | [War 'n Nobility](https://github.com/teamdemivfxfish-dev/war-n-nobility-wiki) | Barunn | GPL-3.0 (annoncée) | Concepts seulement, d'après le wiki public : échelle de titres pilotée par la configuration, serments, « pas de guerre contre un supérieur », domaines dessinés sur la carte |
 | [MineColonies](https://github.com/ldtteam/minecolonies) | LDT Team | GPL-3.0 | Dépendance : CrusadeCraft passe par son API publique |
 | Hundred Years Warfare | ydmsama | Tous droits réservés | Compatibilité optionnelle, par son registre d'unités et ses commandes. Aucun code repris |
+| Xaero's World Map | xaero96 | Tous droits réservés | Compatibilité optionnelle : nos terres sur sa carte, et ses images en cache lues sous nos cartes (P63). Aucun code repris |
 
 ## Polices
 

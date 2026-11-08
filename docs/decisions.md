@@ -1165,6 +1165,17 @@ veux la voir comme le bâton de construction de MineColonies », des commandes, 
 - **Les gardes frappent eux-mêmes** (`target.hurt`), au lieu de compter sur l'intelligence de Comes Alive, qui fuit plus qu'elle ne combat. On efface leur peur à chaque passage.
   Rien ne se déclenche en créatif, comme les monstres de Minecraft.
 
+**P63 (8 novembre 2026) — la carte de Xaero sous les royaumes, 3.19.0**
+
+- **Demande** : « pas ça encore, je veux ma vraie map » devant la carte en paysage estimé ; à la question posée, il a choisi « reprendre la carte Xaero » (ce que Xaero a déjà dessiné chez lui), et précisé que son monde n'a pas la géographie de Victorum.
+- **Les images en cache de Xaero, pas sa mécanique** : sa minicarte emprunte les régions de la grande carte par toute une machinerie interne (chargements, versions, textures OpenGL) ; l'imiter aurait été fragile. Xaero garde en revanche sur le disque ses images déjà calculées : `cache_<version>/x_z.xwmc` (un point par bloc) et `cache/1..3/` (deux, quatre, huit blocs par point). Ce sont des zips d'une entrée `cache.xaero` : un en-tête, la liste des images présentes, la palette des biomes, puis chaque image de 64 × 64 points en clair (GL_RGBA8). On lit l'en-tête pour la liste, puis chaque image par sa signature, sans dépendre de ce que Xaero range après (hauteurs, biomes). Format relevé dans Xaero's World Map 1.39.9 ; aucun code de Xaero n'est repris.
+- **On demande à Xaero où est son dossier** (`getCurrentWorldId`, `getCurrentDimId`, `getCurrentMWId`, `getGlobalVersion`) : ses noms dépendent du serveur, du sous-monde reconnu, et d'un échappement des noms de mondes solo (« byz^us^fantasize- »). Seules lectures, dans `compat/xaero`.
+- **Côté client seulement** : chacun voit sa propre carte de Xaero. Le serveur n'en sait rien et n'a pas besoin d'être mis à jour (canal réseau inchangé, 32).
+- **Ce que Xaero n'a pas vu reste au paysage du mod, assombri** : comme son noir, la différence entre exploré et deviné se voit.
+- **Les terres colorées par Xaero lui-même** (nos territoires, P17) sont dans ses images : le voile du mod s'y ajoute. C'est sa façon de dessiner ; on ne retouche pas ses images.
+- **Une autre version de Xaero** qui changerait ce format ne casse rien : ses fichiers ne se lisent plus et la carte garde le paysage du mod. Vérifié sur une région et sur tous les zooms lointains de son cache (une copie, en lecture seule).
+- **Pas vu en jeu** : Romain jouait ; la carte du menu, la carte et la Table de guerre sur sa carte Xaero restent à voir de ses yeux.
+
 **P62 (8 novembre 2026) — la carte telle quelle, les titres en créatif, 3.18.0**
 
 - **Demande** : « reprendre tel quel notre map », « qu'il s'adapte aux maps » ; puis, en jeu en créatif : « qu'on puisse s'auto-donner les titres ». Sa capture du menu montrait une carte presque toute noire, les noms entassés au centre.

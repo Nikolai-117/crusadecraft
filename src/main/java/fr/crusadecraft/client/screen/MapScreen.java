@@ -744,7 +744,7 @@ public class MapScreen extends Screen {
             int lod = ClientTerrain.lodFor(scale);
             ClientTerrain.ensure(view.dimension(), lod, worldX(mapX), worldZ(mapY), worldX(mapX + mapW), worldZ(mapY + mapH));
             terrainVersion = ClientTerrain.version();
-            raster = MapRaster.render(view, mapW, mapH, centerX, centerZ, scale, mode, overlay.isEmpty() ? null : overlay, extras(lod));
+            raster = MapRaster.render(view, mapW, mapH, centerX, centerZ, scale, mode, overlay.isEmpty() ? null : overlay, extras(lod, scale));
             texture.upload(raster);
             rasterX = centerX;
             rasterZ = centerZ;
@@ -1668,9 +1668,10 @@ public class MapScreen extends Screen {
     }
 
     /** Le paysage et l'état des guerres, pour le rendu. */
-    private MapRaster.Extras extras(int lod) {
+    private MapRaster.Extras extras(int lod, double blocksPerPixel) {
         var dim = view.dimension();
-        MapRaster.TerrainSource terrain = (x, z) -> ClientTerrain.color(dim, x, z, lod);
+        // P63 : la carte de Xaero d'abord, notre paysage ailleurs.
+        MapRaster.TerrainSource terrain = (x, z) -> ClientTerrain.land(dim, x, z, lod, blocksPerPixel);
         var occupied = new it.unimi.dsi.fastutil.ints.Int2IntOpenHashMap();
         for (MapView.Occupation o : view.war().occupied()) occupied.put(o.province(), o.color() & 0xFFFFFF);
         var friends = new it.unimi.dsi.fastutil.ints.IntOpenHashSet();

@@ -587,6 +587,10 @@ Le chantier dure au plus une demi-heure passée à côté, même pour une grande
     couleur (une centaine par seconde, en pause si le serveur peine), puis chaque chunk qui s'enregistre ensuite, même
     loin de tout joueur. Au-delà de ce qui a été généré, une **estimation** tirée du générateur. Ça marche avec n'importe
     quel monde : généré, prégénéré, ou une carte téléchargée. Réglage `monde.releveParSeconde` (0 pour s'en passer).
+54a. **Avec Xaero's World Map** (3.19) : les cartes du mod montrent **la carte de Xaero elle-même**, telle qu'il l'a
+    dessinée chez toi en explorant (ses images en cache, dans `xaero/world-map/`), avec ses détails : tes maisons, tes
+    routes, tes champs. Rien n'est recalculé ni écrit chez Xaero. Là où tu n'as jamais été, le paysage du mod reste,
+    assombri, comme le noir de Xaero. Ce que Xaero dessine de nouveau apparaît au plus tard deux minutes après.
 54b. Toutes les cartes posent les royaumes **en voile sur ce vrai monde** : la carte (touche **;**), la carte du menu
     royal (page Royaume et page Chancellerie, cadrées sur ton royaume, tes vassaux et tes revendications) et la Table de
     guerre. Ce que tu ne connais pas reste dans l'ombre.

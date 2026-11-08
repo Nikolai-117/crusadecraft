@@ -60,6 +60,24 @@ public final class ClientTerrain {
         version++;
     }
 
+    /** P63 : un autre morceau de paysage est arrivé (une région de Xaero) : les cartes ouvertes se redessinent. */
+    public static void touch() {
+        version++;
+    }
+
+    /**
+     * P63 : le paysage à montrer en ce point. D'abord la carte de Xaero, telle qu'il l'a dessinée chez le joueur ; ailleurs, notre
+     * paysage (le monde relevé par le serveur, ou ce que le générateur prévoit), assombri quand Xaero a une carte de ce monde :
+     * comme chez lui, ce qu'on n'a pas exploré se distingue.
+     */
+    public static int land(ResourceLocation dim, double x, double z, int lod, double blocksPerPixel) {
+        int xaero = XaeroCache.color(dim, x, z, blocksPerPixel);
+        if (xaero != 0) return xaero;
+        int c = color(dim, x, z, lod);
+        if (c == 0 || !XaeroCache.active(dim)) return c;
+        return 0xFF000000 | TerrainPalette.mix(c & 0xFFFFFF, 0x0B0D10, 0.55);
+    }
+
     /** Change à chaque tuile reçue : la carte ouverte sait qu'il faut se redessiner. */
     public static int version() {
         return version;

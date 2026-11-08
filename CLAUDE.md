@@ -113,7 +113,9 @@ des packs), `docs/etape-2-plan.md` (le plan des phases).
   `ChunkMap.read`), hors du fil du serveur ; ce qu'il trouve arrive dans `TerrainService` par une file. Les chunks qui
   s'enregistrent ensuite sont relevés par `ChunkDataEvent.Save`. `TerrainSampler.fromSaved` et `explored` doivent
   rester identiques (même points, mêmes couleurs) : l'essai `leReleveSurDisqueVoitCommeEnJeu` y veille.
-- Les cartes posent les royaumes sur `ClientTerrain` : `MapScreen`, `KingdomMap` (menu royal), `WarMapRenderer`.
+- Les cartes posent les royaumes sur `ClientTerrain.land` : `MapScreen`, `KingdomMap` (menu royal), `WarMapRenderer`.
+  P63 : `land` prend d'abord la carte de Xaero (`client/map/XaeroCache`, ses images en cache sur le disque, dossier donné
+  par `compat/xaero/XaeroWorldMapIds`), puis notre paysage, assombri là où Xaero n'a rien.
 - Les titres en créatif : `TitleService.freeHand` (créatif + `WorldEditService.canEdit`), `grant`, `setRank`.
 
 ## Nations et habitants (P41 à P43)

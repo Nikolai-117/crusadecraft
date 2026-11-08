@@ -101,7 +101,7 @@ final class KingdomMap {
                 double wx = centerX + (xx - w / 2.0) * scale;
                 int owner = r.ownerAt(xx, yy);
                 realm[yy * w + xx] = owner >= 0 && owner < v.seats().size() ? v.seats().get(owner).territory() : owner;
-                int land = ClientTerrain.color(dim, wx, wz, lod);
+                int land = ClientTerrain.land(dim, wx, wz, lod, scale);
                 int color;
                 if (land == 0) {
                     // Rien n'est encore arrivé du serveur : les aplats de la maquette, en attendant.
