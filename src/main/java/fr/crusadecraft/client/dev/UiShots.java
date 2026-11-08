@@ -792,6 +792,8 @@ public final class UiShots {
             mc.getToasts().clear();
             mc.setScreen(shot.screen().get());
             if (shot.before() != null) shot.before().run();
+            // La souris dans le coin bas droit : une infobulle d'un bouton survolé par hasard ne masque rien.
+            org.lwjgl.glfw.GLFW.glfwSetCursorPos(mc.getWindow().getWindow(), mc.getWindow().getScreenWidth() - 2, mc.getWindow().getScreenHeight() - 2);
             wait = SETTLE_TICKS;
         } else {
             CrusadeCraft.LOGGER.info("UiShots : terminé, fermeture du jeu");

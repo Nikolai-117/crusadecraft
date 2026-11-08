@@ -422,7 +422,7 @@ public class RealmScreen extends Screen {
         boolean big = Kit.titleWidth(font, title, 2) <= room;
         if (big) Kit.title(g, font, title, tx, y + 3, 2, Kit.OR, true);
         else Kit.title(g, font, fitGothic(title.getString(), room), tx, y + 5, 1, Kit.OR, true);
-        if (sub != null) text(g, fit(sub.getString(), room), tx, big ? y + 20 : y + 17, Kit.GRIS_PERLE);
+        if (sub != null) text(g, fit(sub.getString(), room), tx, big ? y + 22 : y + 17, Kit.GRIS_PERLE);
     }
 
     private record LegendItem(int color, Component label, boolean outline) {}
@@ -1530,7 +1530,8 @@ public class RealmScreen extends Screen {
             g.drawString(font, name, nameX, y + 12, i == 0 ? Kit.VALEUR : i == 1 ? Kit.OR : Kit.BLOQUE_TEXTE, false);
             Component when = hub(i == 0 ? "rank.current" : i == 1 ? "rank.next" : "rank.later");
             int whenX = Mth.clamp(cxs[i] - font.width(when) / 2, x, x + w - font.width(when));
-            if (font.width(when) <= slot - 4) g.drawString(font, when, whenX, y + 22, Kit.GRIS_DISCRET, false);
+            // « plus tard » une seule fois : deux de suite se touchent au bord du panneau.
+            if (i <= 2 && font.width(when) <= slot - 4) g.drawString(font, when, whenX, y + 22, Kit.GRIS_DISCRET, false);
         }
         y += 36;
         // L'acte du prochain titre, sur parchemin.
