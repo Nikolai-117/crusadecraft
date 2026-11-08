@@ -223,8 +223,12 @@ public final class TerrainService {
 
     // ------------------------------------------------------------------ chunks parcourus (fil du serveur)
 
+    /** Le serveur dont le relevé du monde (P62) a été lancé. */
+    private static MinecraftServer surveyed;
+
     /** Relève la vraie surface des chunks chargés autour de chaque joueur ; ceux qu'il foule sont relus à chaque fois. */
     public static void tick(MinecraftServer server) {
+        surveyTick(server);
         int budget = EXPLORE_BUDGET;
         for (ServerPlayer player : server.getPlayerList().getPlayers()) {
             ServerLevel level = player.serverLevel();
@@ -241,6 +245,44 @@ public final class TerrainService {
             }
         }
         if (server.getTickCount() % 6000 == 0) saveExplored(server);
+    }
+
+    /**
+     * Le relevé du monde (P62) : lancé une fois, une demi-minute après le démarrage, avec ce qu'on connaît déjà ; ce qu'il
+     * trouve arrive ici, sur le fil du serveur. Un chunk relevé entre-temps en jeu garde ce relevé-là, plus récent.
+     */
+    private static void surveyTick(MinecraftServer server) {
+        if (surveyed != server && server.getTickCount() > 600 && fr.crusadecraft.config.CrusadeConfig.SERVER.worldSurvey.get() > 0) {
+            surveyed = server;
+            Map<ResourceKey<Level>, it.unimi.dsi.fastutil.longs.LongSet> known = new HashMap<>();
+            for (ServerLevel level : server.getAllLevels()) {
+                if (!level.dimensionType().hasCeiling()) known.put(level.dimension(), new it.unimi.dsi.fastutil.longs.LongOpenHashSet(explored(level).keySet()));
+            }
+            TerrainSurvey.start(server, known);
+        }
+        int n = 0;
+        TerrainSurvey.Found f;
+        while (n++ < 20000 && (f = TerrainSurvey.FOUND.poll()) != null) {
+            ServerLevel level = server.getLevel(f.dim());
+            if (level == null) continue;
+            Long2LongOpenHashMap map = explored(level);
+            if (map.containsKey(f.chunk())) continue;
+            map.put(f.chunk(), f.packed());
+            EXPLORED_DIRTY.add(f.dim());
+        }
+    }
+
+    /**
+     * Relève un chunk au moment où il s'enregistre (P62) : ce qu'on bâtit loin des joueurs, une colonie, un chantier, se
+     * voit aussi sur la carte. Sur le fil du serveur seulement.
+     */
+    public static void exploreChunk(ServerLevel level, net.minecraft.world.level.chunk.LevelChunk chunk) {
+        if (level.dimensionType().hasCeiling() || !level.getServer().isSameThread()) return;
+        TerrainSampler.Sample s = TerrainSampler.explored(level, chunk);
+        if (s == null) return;
+        long packed = ((long) (s.color() & 0xFFFFFF) << 16) | (s.height() & 0xFFFFL);
+        long old = explored(level).put(chunk.getPos().toLong(), packed);
+        if (old != packed) EXPLORED_DIRTY.add(level.dimension());
     }
 
     /** Relève un chunk s'il est en mémoire ; vrai s'il l'a été. */
@@ -342,6 +384,8 @@ public final class TerrainService {
     }
 
     public static synchronized void onServerStopped() {
+        TerrainSurvey.stop();
+        surveyed = null;
         running = null;
         if (worker != null) worker.interrupt();
         worker = null;

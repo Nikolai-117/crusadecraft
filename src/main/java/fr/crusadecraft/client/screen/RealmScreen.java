@@ -135,6 +135,8 @@ public class RealmScreen extends Screen {
 
     public void setChancery(ChanceryView v) {
         this.chancery = v;
+        // Un titre vient de changer : la barre du haut et l'en-tête le suivent.
+        if (v.rank() != view.rank()) send(new fr.crusadecraft.network.packet.RequestRealmPacket(fr.crusadecraft.network.packet.OpenRealmScreenPacket.Target.MENU));
     }
 
     public void setNews(List<WorldPackets.NewsLine> lines, List<WorldPackets.NewsLine> chronicle) {
@@ -1516,6 +1518,15 @@ public class RealmScreen extends Screen {
         for (int i = 0; i + 1 < n; i++) g.fill(cxs[i] + 4, y + 3, cxs[i + 1] - 4, y + 5, i == 0 ? Kit.DORURE : Kit.FILET);
         for (int i = 0; i < n; i++) {
             int nx = cxs[i] - 4;
+            if (c.freeHand() && i > 0) {
+                // En créatif, chaque cran se clique : le titre est accordé tout de suite.
+                int slotW = n == 1 ? w : span / (n - 1);
+                TitleRank rank = ranks.get(i);
+                click(cxs[i] - slotW / 2, y - 2, slotW, 34, () -> send(new DiplomacyPackets.ChanceryAction(
+                        DiplomacyPackets.ChanceryAction.Kind.GRANT_TITLE, null, rank.ordinal(), 0, 0)));
+                tip(cxs[i] - slotW / 2, y - 2, slotW, 34, hub("chancery.grant", tr(rank.titleKey())), hub("chancery.free").withStyle(ChatFormatting.GRAY));
+                if (over(cxs[i] - slotW / 2, y - 2, slotW, 34)) g.fill(nx - 2, y - 2, nx + 10, y + 10, Kit.SURVOL);
+            }
             g.fill(nx, y, nx + 8, y + 8, Kit.CONTOUR);
             if (i == 0) {
                 g.fill(nx + 1, y + 1, nx + 7, y + 7, 0xFFC9A24A);
@@ -1559,12 +1570,12 @@ public class RealmScreen extends Screen {
             ry2 += 11;
         }
         ry2 += 3;
-        Component create = tr("crusadecraft.chancery.create", tr(c.nextRank().titleKey()));
+        Component create = c.freeHand() ? hub("chancery.grant", tr(c.nextRank().titleKey())) : tr("crusadecraft.chancery.create", tr(c.nextRank().titleKey()));
         button(g, x + 8, ry2, w - 16, 16, create, c.canRankUp(), true,
                 () -> send(new DiplomacyPackets.ChanceryAction(DiplomacyPackets.ChanceryAction.Kind.CREATE_TITLE, null, -1, 0, 0)),
                 tr(c.sealOk() ? "crusadecraft.chancery.create.tip" : "crusadecraft.chancery.seal_needed"));
         ry2 += 20;
-        if (ry2 + 9 <= y + dh) wrap(g, missing(c), x + 8, ry2, w - 16, INK_SOFT, Math.max(1, (y + dh - ry2) / 10));
+        if (ry2 + 9 <= y + dh) wrap(g, c.freeHand() ? hub("chancery.free") : missing(c), x + 8, ry2, w - 16, INK_SOFT, Math.max(1, (y + dh - ry2) / 10));
         renderChanceryRight(g);
     }
 

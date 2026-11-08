@@ -138,6 +138,14 @@ public final class ServerEvents {
         }
     }
 
+    /** P62 : un chunk qui s'enregistre donne sa surface à la carte, même loin de tout joueur. */
+    @SubscribeEvent
+    public static void onChunkSave(net.minecraftforge.event.level.ChunkDataEvent.Save event) {
+        if (event.getLevel() instanceof ServerLevel level && event.getChunk() instanceof net.minecraft.world.level.chunk.LevelChunk chunk) {
+            fr.crusadecraft.core.world.terrain.TerrainService.exploreChunk(level, chunk);
+        }
+    }
+
     /** Chaque citoyen chargé reçoit l'état « service » (réunions, bureau, audiences). */
     @SubscribeEvent
     public static void onEntityJoin(net.minecraftforge.event.entity.EntityJoinLevelEvent event) {

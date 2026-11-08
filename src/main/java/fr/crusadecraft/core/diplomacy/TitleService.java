@@ -63,6 +63,37 @@ public final class TitleService {
         return RealmService.realmOf(player.server, player.getUUID()).filter(r -> r.state().isActive());
     }
 
+    /**
+     * P62 : en créatif, l'hôte d'une partie solo ou un opérateur (ceux qui peuvent déjà dessiner le monde) s'accorde ses
+     * titres sans conditions, sans rien dépenser.
+     */
+    public static boolean freeHand(ServerPlayer player) {
+        return player.isCreative() && fr.crusadecraft.core.world.WorldEditService.canEdit(player);
+    }
+
+    /** P62 : accorde un titre, plus haut ou plus bas, en créatif ; rien n'est dépensé, la chronique le note comme un vrai. */
+    public static CouncilActions.Outcome grant(ServerPlayer player, TitleRank rank) {
+        if (!freeHand(player)) return CouncilActions.Outcome.no("crusadecraft.title.free_only");
+        Optional<Realm> found = ruler(player);
+        if (found.isEmpty()) return CouncilActions.Outcome.no("crusadecraft.realm.none");
+        if (found.get().rank() == rank) return CouncilActions.Outcome.no("crusadecraft.title.already", Component.translatable(rank.titleKey()));
+        setRank(player.server, found.get(), rank, player);
+        return CouncilActions.Outcome.ok(Component.translatable("crusadecraft.title.granted", Component.translatable(rank.titleKey())));
+    }
+
+    /** Change le rang d'un royaume (la commande des opérateurs, le créatif) : la chronique et la notification, comme un titre créé. */
+    public static void setRank(MinecraftServer server, Realm realm, TitleRank rank, ServerPlayer notify) {
+        realm.setRank(rank);
+        CrusadeSavedData.get(server).setDirty();
+        Component title = Component.translatable(rank.holderKey(realm.feminineTitle()));
+        fr.crusadecraft.core.intrigue.Chronicle.record(server, realm, "crusadecraft.chronicle.rank", Component.literal(realm.rulerName()), title,
+                Component.translatable(rank.titleKey()));
+        if (notify != null) {
+            CrusadeNetwork.toPlayer(notify, ToastPacket.of(ToastPacket.Kind.REALM, Component.translatable("crusadecraft.toast.title.title"),
+                    Component.translatable("crusadecraft.toast.title.body", title, Component.translatable(rank.titleKey()))));
+        }
+    }
+
     public static CouncilActions.Outcome createTitle(ServerPlayer player) {
         MinecraftServer server = player.server;
         Optional<Realm> found = ruler(player);
@@ -70,6 +101,7 @@ public final class TitleService {
         Realm realm = found.get();
         Optional<Requirement> req = next(realm);
         if (req.isEmpty()) return CouncilActions.Outcome.no("crusadecraft.title.highest");
+        if (freeHand(player)) return grant(player, req.get().rank());
         Optional<Component> seal = SealItem.problem(player, realm);
         if (seal.isPresent()) return new CouncilActions.Outcome(false, seal.get());
         Requirement r = req.get();
@@ -215,7 +247,8 @@ public final class TitleService {
         return new ChanceryView(realm.name(), realm.rank(), provinces(server, realm), req.map(Requirement::rank).orElse(null),
                 req.map(Requirement::provinces).orElse(0), req.map(Requirement::gold).orElse(0), req.map(Requirement::prestige).orElse(0),
                 realm.gold(), realm.prestige(), seal.isEmpty(), seal.map(Component::getString).orElse(""),
-                realm.council().get(Post.CHANCELIER) != null, vassals, claims, candidates, claimTarget, realm.court().claimProgress());
+                realm.council().get(Post.CHANCELIER) != null, vassals, claims, candidates, claimTarget, realm.court().claimProgress(),
+                freeHand(player));
     }
 
     /** Pour les messages : le nom d'un royaume IA. */

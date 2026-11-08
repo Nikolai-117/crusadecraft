@@ -65,8 +65,8 @@ public final class TerrainGameTests {
         List<BlockPos> wool = new ArrayList<>();
         List<BlockState> before = new ArrayList<>();
         try {
-            for (int dx = 4; dx < 16; dx += 8) {
-                for (int dz = 4; dz < 16; dz += 8) {
+            for (int dx : fr.crusadecraft.core.world.terrain.TerrainSampler.POINTS) {
+                for (int dz : fr.crusadecraft.core.world.terrain.TerrainSampler.POINTS) {
                     int x = (cx << 4) + dx, z = (cz << 4) + dz;
                     BlockPos p = new BlockPos(x, level.getHeight(Heightmap.Types.WORLD_SURFACE, x, z), z);
                     wool.add(p);
@@ -90,6 +90,66 @@ public final class TerrainGameTests {
         } finally {
             for (int k = 0; k < wool.size(); k++) level.setBlockAndUpdate(wool.get(k), before.get(k));
         }
+    }
+
+    /**
+     * P62 : un chunk lu sur le disque, sans être chargé dans le monde, donne la même surface que le même chunk en mémoire :
+     * des blocs de couleurs différentes, et un trou d'eau pour la profondeur.
+     */
+    @GameTest(template = TestWorld.TEMPLATE, setupTicks = TestWorld.SETUP_TICKS, batch = "p62_releve", timeoutTicks = 400)
+    public static void leReleveSurDisqueVoitCommeEnJeu(GameTestHelper h) {
+        ServerLevel level = h.getLevel();
+        BlockPos origin = h.absolutePos(BlockPos.ZERO);
+        int cx = (origin.getX() >> 4) - 40, cz = (origin.getZ() >> 4) + 40;
+        net.minecraft.world.level.chunk.LevelChunk chunk = level.getChunk(cx, cz);
+        List<BlockPos> changed = new ArrayList<>();
+        List<BlockState> before = new ArrayList<>();
+        int[] points = fr.crusadecraft.core.world.terrain.TerrainSampler.POINTS;
+        BlockState[] palette = {Blocks.LAPIS_BLOCK.defaultBlockState(), Blocks.GOLD_BLOCK.defaultBlockState(), Blocks.WATER.defaultBlockState(),
+                Blocks.OAK_PLANKS.defaultBlockState()};
+        for (int i = 0; i < points.length; i++) {
+            for (int j = 0; j < points.length; j++) {
+                int x = (cx << 4) + points[i], z = (cz << 4) + points[j];
+                // Le bloc du dessus lui-même : un trou d'eau entouré de terre ne coule pas.
+                BlockPos p = new BlockPos(x, level.getHeight(Heightmap.Types.WORLD_SURFACE, x, z) - 1, z);
+                changed.add(p);
+                before.add(level.getBlockState(p));
+                level.setBlock(p, palette[(i + j) % palette.length], 2);
+            }
+        }
+        fr.crusadecraft.core.world.terrain.TerrainSampler.Sample live = fr.crusadecraft.core.world.terrain.TerrainSampler.explored(level, chunk);
+        // Ce que Minecraft écrirait sur le disque pour ce chunk, à l'octet près : le lecteur doit y voir la même chose.
+        net.minecraft.nbt.CompoundTag written = net.minecraft.world.level.chunk.storage.ChunkSerializer.write(level, chunk);
+        fr.crusadecraft.core.world.terrain.TerrainSampler.Sample serialized = fr.crusadecraft.core.world.terrain.TerrainSampler.fromSaved(level, written);
+        // Confié à la file d'écriture de Minecraft (une sauvegarde ordinaire peut attendre son tour) : la relecture passe par le même chemin
+        // que le relevé du monde.
+        level.getChunkSource().chunkMap.write(chunk.getPos(), written);
+        long key = net.minecraft.world.level.ChunkPos.asLong(cx, cz);
+        h.runAfterDelay(5, () -> {
+            String why;
+            try {
+                var tag = level.getChunkSource().chunkMap.read(new net.minecraft.world.level.ChunkPos(key)).get(10, java.util.concurrent.TimeUnit.SECONDS);
+                why = tag.isEmpty() ? "rien sur le disque" : "état " + tag.get().getString("Status") + ", version " + tag.get().getInt("DataVersion")
+                        + ", hauteurs " + tag.get().getCompound("Heightmaps").getAllKeys();
+            } catch (Exception e) {
+                why = e.toString();
+            }
+            fr.crusadecraft.core.world.terrain.TerrainSampler.Sample disk = fr.crusadecraft.core.world.terrain.TerrainSurvey.read(level, key);
+            for (int k = 0; k < changed.size(); k++) level.setBlock(changed.get(k), before.get(k), 2);
+            if (live == null) h.fail("le chunk en mémoire n'a pas été relevé");
+            if (serialized == null) h.fail("le chunk tel que Minecraft l'enregistre n'a pas été lu (état " + written.getString("Status") + ", version "
+                    + written.getInt("DataVersion") + ", hauteurs " + written.getCompound("Heightmaps").getAllKeys() + ")");
+            if (serialized.color() != live.color() || serialized.height() != live.height()) {
+                h.fail("enregistrement et monde diffèrent : " + Integer.toHexString(serialized.color()) + "/" + serialized.height() + " contre "
+                        + Integer.toHexString(live.color()) + "/" + live.height());
+            }
+            if (disk == null) h.fail("le chunk enregistré n'a pas pu être lu sur le disque (" + why + ")");
+            if (disk.color() != live.color()) {
+                h.fail("couleurs différentes : disque " + Integer.toHexString(disk.color()) + ", en jeu " + Integer.toHexString(live.color()));
+            }
+            if (disk.height() != live.height()) h.fail("altitudes différentes : disque " + disk.height() + ", en jeu " + live.height());
+            h.succeed();
+        });
     }
 
     // Le serveur de tests enchaîne les ticks sans attendre : la marge doit couvrir quelques secondes de calcul réel.

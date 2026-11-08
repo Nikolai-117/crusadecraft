@@ -151,7 +151,7 @@ public final class DiplomacyPackets {
 
     /** Une action à la Chancery Table. */
     public record ChanceryAction(Kind kind, UUID target, int province, int tax, int levy) {
-        public enum Kind { REFRESH, CREATE_TITLE, SET_CONTRACT, RELEASE, CLAIM }
+        public enum Kind { REFRESH, CREATE_TITLE, SET_CONTRACT, RELEASE, CLAIM, GRANT_TITLE }
 
         public static void encode(ChanceryAction p, FriendlyByteBuf buf) {
             buf.writeEnum(p.kind);
@@ -171,7 +171,7 @@ public final class DiplomacyPackets {
             Optional<Realm> realm = RealmService.realmOf(player.server, player.getUUID());
             if (realm.isEmpty()) return;
             Optional<Component> lock = ChanceryBlock.locked(realm.get());
-            if (lock.isPresent() && p.kind != Kind.REFRESH) {
+            if (lock.isPresent() && p.kind != Kind.REFRESH && !TitleService.freeHand(player)) {
                 player.displayClientMessage(lock.get(), true);
                 return;
             }
@@ -180,6 +180,9 @@ public final class DiplomacyPackets {
                 case SET_CONTRACT -> TitleService.setContract(player, p.target, p.tax, p.levy);
                 case RELEASE -> TitleService.release(player, p.target);
                 case CLAIM -> TitleService.fabricateClaim(player, p.province);
+                // P62 : en créatif, un cran de la frise des titres ; le rang voyage par son rang dans l'énumération.
+                case GRANT_TITLE -> TitleService.grant(player, fr.crusadecraft.core.realm.TitleRank.values()[
+                        Math.max(0, Math.min(fr.crusadecraft.core.realm.TitleRank.values().length - 1, p.province))]);
                 case REFRESH -> null;
             };
             if (out != null) CourtPackets.reply(player, out);

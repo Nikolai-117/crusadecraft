@@ -1,0 +1,9 @@
+{
+  "crusadecraft.hub.chancery.grant": "Grant the title: %s",
+  "crusadecraft.hub.chancery.free": "Creative mode: titles are granted with no conditions; every step of the timeline can be clicked.",
+  "crusadecraft.title.granted": "Title granted: %s (creative mode).",
+  "crusadecraft.title.free_only": "Only the host or an operator, in creative mode, can grant themselves a title this way.",
+  "crusadecraft.title.already": "You already hold this title: %s.",
+  "crusadecraft.command.titre.unknown": "\"%s\" is not a title: baronnie, comte, duche, royaume or empire.",
+  "crusadecraft.command.titre.done": "%s is now: %s."
+}

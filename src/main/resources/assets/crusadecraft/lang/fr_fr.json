@@ -3722,5 +3722,12 @@
   "crusadecraft.task.espionner_rival.short": "Perce les secrets d'un voisin",
   "crusadecraft.task.legitimite.short": "La couronne gagne de la piété",
   "crusadecraft.task.bonheur_du_peuple.short": "Le bonheur des citoyens monte",
-  "crusadecraft.task.recherche.short": "Fait avancer le savoir du royaume"
+  "crusadecraft.task.recherche.short": "Fait avancer le savoir du royaume",
+  "crusadecraft.hub.chancery.grant": "Accorder le titre : %s",
+  "crusadecraft.hub.chancery.free": "Mode créatif : le titre s'accorde sans conditions ; chaque cran de la frise se clique.",
+  "crusadecraft.title.granted": "Titre accordé : %s (mode créatif).",
+  "crusadecraft.title.free_only": "Seul l'hôte ou un opérateur, en mode créatif, s'accorde un titre ainsi.",
+  "crusadecraft.title.already": "Vous tenez déjà ce titre : %s.",
+  "crusadecraft.command.titre.unknown": "« %s » n'est pas un titre : baronnie, comte, duche, royaume ou empire.",
+  "crusadecraft.command.titre.done": "%s est désormais : %s."
 }

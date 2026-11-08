@@ -75,6 +75,7 @@ public final class CrusadeConfig {
         public final ForgeConfigSpec.IntValue lawCooldownDays;
         public final ForgeConfigSpec.IntValue forceCostPerVote;
         public final ForgeConfigSpec.BooleanValue aiRealms;
+        public final ForgeConfigSpec.IntValue worldSurvey;
         public final ForgeConfigSpec.IntValue aiRealmCount;
         public final ForgeConfigSpec.IntValue aiMinDistance;
         public final ForgeConfigSpec.IntValue aiMaxDistance;
@@ -293,6 +294,10 @@ public final class CrusadeConfig {
             mapEditor = b.comment("Qui peut ouvrir l'éditeur de la carte (poser royaumes et villes, peindre les frontières) :",
                             "TOUS, HOTE_ET_OPERATEURS (l'hôte d'une partie solo et les opérateurs) ou PERSONNE.")
                     .defineEnum("editeurCarte", fr.crusadecraft.core.world.WorldEditService.Access.HOTE_ET_OPERATEURS);
+            worldSurvey = b.comment("La carte montre le monde tel qu'il est : au démarrage, chaque chunk déjà généré est lu sur le disque",
+                            "(sans être chargé) pour sa vraie couleur, une seule fois. Nombre de chunks lus par seconde, 0 pour s'en passer",
+                            "(la carte n'a alors les vrais blocs que là où les joueurs passent, et ce que le générateur prévoit ailleurs).")
+                    .defineInRange("releveParSeconde", 100, 0, 2000);
             b.pop();
 
             b.comment("Territoire : bâton de bornage et constructions (P14)").push("territoire");

@@ -26,7 +26,8 @@ import org.joml.Matrix4f;
 public class WarMapRenderer implements BlockEntityRenderer<WarMapBlockEntity> {
     private static final int SIZE = 192;
     private static final MapTexture TEXTURE = new MapTexture("war_map");
-    private static int builtVersion = -1;
+    private static int builtVersion = -1, builtTerrain = -1;
+    private static long builtAt;
 
     public WarMapRenderer(BlockEntityRendererProvider.Context context) {}
 
@@ -56,10 +57,22 @@ public class WarMapRenderer implements BlockEntityRenderer<WarMapBlockEntity> {
         MapView view = ClientMapData.view();
         ClientMapData.refreshIfStale(60_000);
         if (view == null) return false;
-        if (builtVersion != ClientMapData.version() || !TEXTURE.ready()) {
+        long now = net.minecraft.Util.getMillis();
+        // P62 : le vrai monde sous les royaumes ; il se redessine quand un morceau du paysage arrive, pas plus d'une fois par seconde.
+        boolean landscape = builtTerrain != ClientTerrain.version() && now - builtAt > 1000;
+        if (builtVersion != ClientMapData.version() || !TEXTURE.ready() || landscape) {
             double scale = MapRaster.fit(view, view.focusX(), view.focusZ(), SIZE, SIZE);
-            TEXTURE.upload(MapRaster.render(view, SIZE, SIZE, view.focusX(), view.focusZ(), scale, false));
+            int lod = scale <= 24 ? 0 : ClientTerrain.lodFor(scale);
+            double half = SIZE / 2.0 * scale;
+            var dim = view.dimension();
+            ClientTerrain.ensure(dim, lod, view.focusX() - half, view.focusZ() - half, view.focusX() + half, view.focusZ() + half);
+            MapRaster.Extras extras = new MapRaster.Extras((x, z) -> ClientTerrain.color(dim, x, z, lod),
+                    new it.unimi.dsi.fastutil.ints.Int2IntOpenHashMap(), new it.unimi.dsi.fastutil.ints.IntOpenHashSet(),
+                    new it.unimi.dsi.fastutil.ints.IntOpenHashSet());
+            TEXTURE.upload(MapRaster.render(view, SIZE, SIZE, view.focusX(), view.focusZ(), scale, MapRaster.Mode.POLITICAL, null, extras));
             builtVersion = ClientMapData.version();
+            builtTerrain = ClientTerrain.version();
+            builtAt = now;
         }
         return true;
     }

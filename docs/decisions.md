@@ -1165,6 +1165,19 @@ veux la voir comme le bâton de construction de MineColonies », des commandes, 
 - **Les gardes frappent eux-mêmes** (`target.hurt`), au lieu de compter sur l'intelligence de Comes Alive, qui fuit plus qu'elle ne combat. On efface leur peur à chaque passage.
   Rien ne se déclenche en créatif, comme les monstres de Minecraft.
 
+**P62 (8 novembre 2026) — la carte telle quelle, les titres en créatif, 3.18.0**
+
+- **Demande** : « reprendre tel quel notre map », « qu'il s'adapte aux maps » ; puis, en jeu en créatif : « qu'on puisse s'auto-donner les titres ». Sa capture du menu montrait une carte presque toute noire, les noms entassés au centre.
+- **« Notre map », c'est le monde lui-même** : vérifié dans les fichiers de son serveur (lecture seule, avec son accord) : aucune image de carte, un monde Minecraft ordinaire (Tectonic, Oh The Biomes, régions prégénérées par Hundred Years War), et le cache du paysage de CrusadeCraft déjà là.
+- **Le monde est relu sur le disque, pas deviné** : jusqu'ici, seuls les chunks chargés autour d'un joueur donnaient leurs vrais blocs ; ailleurs, le générateur estimait. Une carte téléchargée ou un monde bâti à la main aurait été faux. Le relevé lit chaque chunk enregistré par le lecteur de Minecraft lui-même (`ChunkMap.read`, qui sert aussi ce qui attend d'être écrit), dans un fil à part ; les fichiers de région ne sont ouverts qu'en lecture, pour leur en-tête. Les blocs se décodent par le codec de Minecraft (`PalettedContainer.codecRW`), pas par un décodage maison des bits.
+- **Seize points par chunk au lieu de quatre** : une moyenne plus juste, et la même pour un chunk chargé et pour un chunk lu sur le disque. L'essai en jeu le vérifie à l'identique sur ce que Minecraft écrit lui-même (`ChunkSerializer.write`).
+- **Un chunk relevé en jeu garde ce relevé** : le relevé sur disque ne remplace que ce qu'on ignorait. Ce qui change ensuite se relève à l'enregistrement du chunk (`ChunkDataEvent.Save`), même loin de tout joueur : une colonie qui bâtit seule se voit sur la carte.
+- **Un essai sur la sauvegarde ordinaire a menti** : `save(false)` peut différer un chunk (un délai de dix secondes entre deux sauvegardes du même chunk), et la relecture ne trouvait « rien sur le disque ». L'essai confie le chunk à la file d'écriture de Minecraft (`ChunkMap.write`), le chemin que suit toute sauvegarde.
+- **La carte du menu se cadre sur son royaume** : englober tout le monde connu faisait de son domaine un point. Elle prend son royaume, ses vassaux et ses revendications, avec au moins 700 blocs autour. Une étiquette qui en chevaucherait une autre se tait, la sienne passant d'abord.
+- **Les titres en créatif suivent la règle de l'éditeur de la carte** : créatif, et hôte d'une partie solo ou opérateur (`WorldEditService.canEdit`). En survie, rien ne change. Rien n'est dépensé, mais la chronique et la notification sont celles d'un vrai titre. `/crusade titre` (opérateurs) fait aussi redescendre, et sert pour un autre joueur.
+- **Canal réseau 32** : la vue de la chancellerie porte maintenant le passe-droit du créatif. Client et serveur doivent avoir la même version.
+- **Un essai instable de plus** : `unGardeSeBat` (le chemin sous les pas d'un garde) a échoué une fois sur trois passages, sans lien avec la carte : il dépend de la position d'un garde au tick près.
+
 **P61 (8 novembre 2026) — le kit Varenhold et le menu royal, 3.17.0**
 
 - **Demande** : reprendre la maquette « Varenhold · interface du royaume » de Romain pour tous les écrans. Il a choisi l'ordre : d'abord le kit (couleurs, polices, panneaux, boutons, icônes) et ses quatre écrans à l'identique (Royaume, Conseil, Lois, Chancellerie) ; puis la création du souverain ; puis la construction de ville ; puis le reste.

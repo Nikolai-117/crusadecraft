@@ -19,6 +19,19 @@ import net.minecraft.world.level.levelgen.RandomState;
 import net.minecraft.world.level.material.MapColor;
 import net.minecraftforge.common.Tags;
 
+import com.mojang.serialization.Codec;
+import it.unimi.dsi.fastutil.ints.Int2ObjectOpenHashMap;
+import net.minecraft.nbt.CompoundTag;
+import net.minecraft.nbt.ListTag;
+import net.minecraft.nbt.NbtOps;
+import net.minecraft.nbt.Tag;
+import net.minecraft.util.Mth;
+import net.minecraft.util.SimpleBitStorage;
+import net.minecraft.world.level.EmptyBlockGetter;
+import net.minecraft.world.level.block.Block;
+import net.minecraft.world.level.block.Blocks;
+import net.minecraft.world.level.chunk.PalettedContainer;
+
 import java.util.Locale;
 
 /**
@@ -145,33 +158,109 @@ public final class TerrainSampler {
         return new Sample(TerrainPalette.color(kind, ground, water ? below : 0, sea), ground);
     }
 
+    /** Les seize points relevés dans un chunk : une grille de quatre sur quatre, au milieu de ses carrés de quatre blocs. */
+    public static final int[] POINTS = {2, 6, 10, 14};
+
     /**
-     * La vraie surface d'un chunk chargé : la moyenne de quatre points, avec leur couleur de carte et l'eau assombrie
-     * par sa profondeur ; {@code null} si le chunk n'est pas en mémoire (rien n'est chargé pour le lire).
+     * La vraie surface d'un chunk chargé : la moyenne de seize points, avec leur couleur de carte et l'eau assombrie par
+     * sa profondeur ; {@code null} si le chunk n'est pas en mémoire (rien n'est chargé pour le lire).
      */
     public static Sample explored(ServerLevel level, int chunkX, int chunkZ) {
         LevelChunk chunk = level.getChunkSource().getChunkNow(chunkX, chunkZ);
-        if (chunk == null) return null;
-        int r = 0, g = 0, b = 0, h = 0, n = 0;
-        for (int dx = 4; dx < 16; dx += 8) {
-            for (int dz = 4; dz < 16; dz += 8) {
-                int x = (chunkX << 4) + dx, z = (chunkZ << 4) + dz;
-                int surface = chunk.getHeight(Heightmap.Types.WORLD_SURFACE, x & 15, z & 15);
-                int floor = chunk.getHeight(Heightmap.Types.OCEAN_FLOOR, x & 15, z & 15);
-                BlockPos pos = new BlockPos(x, surface, z);
-                BlockState state = chunk.getBlockState(pos);
-                MapColor mapColor = state.getMapColor(level, pos);
-                int rgb = mapColor == MapColor.NONE ? Kind.VOID.color : mapColor.col;
-                if (mapColor == MapColor.WATER) {
-                    rgb = TerrainPalette.color(Kind.OCEAN, floor, Math.max(1, surface - floor), level.getSeaLevel());
-                }
-                r += (rgb >> 16) & 0xFF;
-                g += (rgb >> 8) & 0xFF;
-                b += rgb & 0xFF;
-                h += mapColor == MapColor.WATER ? floor : surface;
-                n++;
+        return chunk == null ? null : explored(level, chunk);
+    }
+
+    public static Sample explored(ServerLevel level, LevelChunk chunk) {
+        Mean mean = new Mean();
+        for (int dx : POINTS) {
+            for (int dz : POINTS) {
+                int surface = chunk.getHeight(Heightmap.Types.WORLD_SURFACE, dx, dz);
+                int floor = chunk.getHeight(Heightmap.Types.OCEAN_FLOOR, dx, dz);
+                if (surface < level.getMinBuildHeight()) continue;
+                BlockPos pos = new BlockPos(chunk.getPos().getMinBlockX() + dx, surface, chunk.getPos().getMinBlockZ() + dz);
+                mean.add(chunk.getBlockState(pos).getMapColor(level, pos), surface, floor, level.getSeaLevel());
             }
         }
-        return new Sample(((r / n) << 16) | ((g / n) << 8) | (b / n), h / n);
+        return mean.sample();
+    }
+
+    // ------------------------------------------------------------------ un chunk lu sur le disque (P62)
+
+    /** Le lecteur des blocs d'une section, celui de Minecraft lui-même (sa palette, ses bits). */
+    private static final Codec<PalettedContainer<BlockState>> BLOCKS = PalettedContainer.codecRW(Block.BLOCK_STATE_REGISTRY, BlockState.CODEC,
+            PalettedContainer.Strategy.SECTION_STATES, Blocks.AIR.defaultBlockState());
+    /** Les chunks enregistrés avant la 1.18 ont une autre forme : on les laisse au relevé en jeu. */
+    private static final int FIRST_DATA_VERSION = 2860;
+
+    /**
+     * La vraie surface d'un chunk tel qu'il est enregistré (P62), lue dans ses données sans le charger dans le monde : ses
+     * cartes des hauteurs, puis le bloc du dessus, section par section. Les mêmes seize points et les mêmes couleurs
+     * qu'{@link #explored(ServerLevel, LevelChunk)}. {@code null} pour un chunk inachevé ou illisible. Sans état : sûr hors
+     * du fil du serveur.
+     */
+    public static Sample fromSaved(ServerLevel level, CompoundTag tag) {
+        if (tag == null || tag.getInt("DataVersion") < FIRST_DATA_VERSION) return null;
+        String status = tag.getString("Status");
+        if (!status.equals("full") && !status.equals("minecraft:full")) return null;
+        CompoundTag maps = tag.getCompound("Heightmaps");
+        if (!maps.contains("WORLD_SURFACE", Tag.TAG_LONG_ARRAY)) return null;
+        int min = level.getMinBuildHeight();
+        int bits = Mth.ceillog2(level.getHeight() + 1);
+        SimpleBitStorage surfaces, floors;
+        try {
+            surfaces = new SimpleBitStorage(bits, 256, maps.getLongArray("WORLD_SURFACE"));
+            floors = maps.contains("OCEAN_FLOOR", Tag.TAG_LONG_ARRAY) ? new SimpleBitStorage(bits, 256, maps.getLongArray("OCEAN_FLOOR")) : surfaces;
+        } catch (RuntimeException e) {
+            return null;
+        }
+        ListTag sections = tag.getList("sections", Tag.TAG_COMPOUND);
+        Int2ObjectOpenHashMap<PalettedContainer<BlockState>> read = new Int2ObjectOpenHashMap<>();
+        Mean mean = new Mean();
+        for (int dx : POINTS) {
+            for (int dz : POINTS) {
+                int index = dx + dz * 16;
+                // La carte des hauteurs garde le premier bloc libre, compté depuis le fond du monde.
+                int surface = surfaces.get(index) + min - 1, floor = floors.get(index) + min - 1;
+                if (surface < min) continue;
+                PalettedContainer<BlockState> blocks = section(sections, read, surface >> 4);
+                if (blocks == null) continue;
+                BlockState state = blocks.get(dx, surface & 15, dz);
+                mean.add(state.getMapColor(EmptyBlockGetter.INSTANCE, BlockPos.ZERO), surface, floor, level.getSeaLevel());
+            }
+        }
+        return mean.sample();
+    }
+
+    private static PalettedContainer<BlockState> section(ListTag sections, Int2ObjectOpenHashMap<PalettedContainer<BlockState>> read, int y) {
+        if (read.containsKey(y)) return read.get(y);
+        PalettedContainer<BlockState> found = null;
+        for (int i = 0; i < sections.size(); i++) {
+            CompoundTag section = sections.getCompound(i);
+            if (section.getByte("Y") != y || !section.contains("block_states", Tag.TAG_COMPOUND)) continue;
+            found = BLOCKS.parse(NbtOps.INSTANCE, section.getCompound("block_states")).result().orElse(null);
+            break;
+        }
+        read.put(y, found);
+        return found;
+    }
+
+    /** La moyenne des points d'un chunk : leur couleur de carte, l'eau teintée par sa profondeur. */
+    private static final class Mean {
+        private int r, g, b, h, n;
+
+        void add(MapColor mapColor, int surface, int floor, int seaLevel) {
+            int rgb = mapColor == MapColor.NONE ? Kind.VOID.color : mapColor.col;
+            boolean water = mapColor == MapColor.WATER;
+            if (water) rgb = TerrainPalette.color(Kind.OCEAN, floor, Math.max(1, surface - floor), seaLevel);
+            r += (rgb >> 16) & 0xFF;
+            g += (rgb >> 8) & 0xFF;
+            b += rgb & 0xFF;
+            h += water ? floor : surface;
+            n++;
+        }
+
+        Sample sample() {
+            return n == 0 ? null : new Sample(((r / n) << 16) | ((g / n) << 8) | (b / n), h / n);
+        }
     }
 }

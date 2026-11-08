@@ -53,6 +53,13 @@ public final class CrusadeCommand {
                         .executes(ctx -> info(ctx, ctx.getSource().getPlayerOrException()))
                         .then(Commands.argument("joueur", EntityArgument.player())
                                 .executes(ctx -> info(ctx, EntityArgument.getPlayer(ctx, "joueur")))))
+                // P62 : un opérateur donne un titre, plus haut ou plus bas, sans conditions.
+                .then(Commands.literal("titre").requires(src -> src.hasPermission(2))
+                        .then(Commands.argument("rang", StringArgumentType.word())
+                                .suggests((c, sb) -> SharedSuggestionProvider.suggest(java.util.List.of("baronnie", "comte", "duche", "royaume", "empire"), sb))
+                                .executes(ctx -> giveTitle(ctx, ctx.getSource().getPlayerOrException(), StringArgumentType.getString(ctx, "rang")))
+                                .then(Commands.argument("joueur", EntityArgument.player())
+                                        .executes(ctx -> giveTitle(ctx, EntityArgument.getPlayer(ctx, "joueur"), StringArgumentType.getString(ctx, "rang"))))))
                 .then(Commands.literal("liste").requires(src -> src.hasPermission(2)).executes(CrusadeCommand::list))
                 .then(Commands.literal("colonie").requires(src -> src.hasPermission(2)).executes(CrusadeCommand::colonyHere))
                 .then(Commands.literal("lieux").executes(ctx -> {
@@ -298,6 +305,36 @@ public final class CrusadeCommand {
                     r.capital().toString(), Component.translatable(r.state().key())), false);
         }
         return realms.size();
+    }
+
+    /** P62 : « comte », « comté », « COMTE »… vers le rang ; {@code null} si le mot n'en est pas un. */
+    static fr.crusadecraft.core.realm.TitleRank rankOf(String word) {
+        String w = java.text.Normalizer.normalize(word, java.text.Normalizer.Form.NFD).replaceAll("[\\u0300-\\u036f]", "").toLowerCase(java.util.Locale.ROOT);
+        return switch (w) {
+            case "baronnie", "barony", "baron" -> fr.crusadecraft.core.realm.TitleRank.BARONNIE;
+            case "comte", "county", "count" -> fr.crusadecraft.core.realm.TitleRank.COMTE;
+            case "duche", "duchy", "duc", "duke" -> fr.crusadecraft.core.realm.TitleRank.DUCHE;
+            case "royaume", "kingdom", "roi", "king" -> fr.crusadecraft.core.realm.TitleRank.ROYAUME;
+            case "empire", "empereur", "emperor" -> fr.crusadecraft.core.realm.TitleRank.EMPIRE;
+            default -> null;
+        };
+    }
+
+    private static int giveTitle(CommandContext<CommandSourceStack> ctx, ServerPlayer target, String word) {
+        fr.crusadecraft.core.realm.TitleRank rank = rankOf(word);
+        if (rank == null) {
+            ctx.getSource().sendFailure(Component.translatable("crusadecraft.command.titre.unknown", word));
+            return 0;
+        }
+        Optional<Realm> realm = RealmService.realmOf(ctx.getSource().getServer(), target.getUUID());
+        if (realm.isEmpty()) {
+            ctx.getSource().sendFailure(Component.translatable("crusadecraft.command.no_realm_for", target.getGameProfile().getName()));
+            return 0;
+        }
+        fr.crusadecraft.core.diplomacy.TitleService.setRank(ctx.getSource().getServer(), realm.get(), rank, target);
+        ctx.getSource().sendSuccess(() -> Component.translatable("crusadecraft.command.titre.done", realm.get().name(),
+                Component.translatable(rank.titleKey())), true);
+        return 1;
     }
 
     private static int info(CommandContext<CommandSourceStack> ctx, ServerPlayer target) {

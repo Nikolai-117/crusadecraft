@@ -582,8 +582,14 @@ Le chantier dure au plus une demi-heure passée à côté, même pour une grande
 
 ### Une carte du vrai monde
 54. La carte du royaume montre maintenant le **vrai paysage** : mers (plus sombres au large), montagnes, forêts,
-    déserts, neige, relief ombré. Là où tu es passé, ce sont les **vraies couleurs** de la surface ; ailleurs, une
-    **estimation** tirée du générateur du monde (sans tes constructions ni les villages).
+    déserts, neige, relief ombré. Depuis la 3.18, c'est **ton monde tel qu'il est** partout où il a déjà été généré :
+    au démarrage, le serveur relit une fois chaque chunk enregistré, sur le disque et sans le charger, pour sa vraie
+    couleur (une centaine par seconde, en pause si le serveur peine), puis chaque chunk qui s'enregistre ensuite, même
+    loin de tout joueur. Au-delà de ce qui a été généré, une **estimation** tirée du générateur. Ça marche avec n'importe
+    quel monde : généré, prégénéré, ou une carte téléchargée. Réglage `monde.releveParSeconde` (0 pour s'en passer).
+54b. Toutes les cartes posent les royaumes **en voile sur ce vrai monde** : la carte (touche **;**), la carte du menu
+    royal (page Royaume et page Chancellerie, cadrées sur ton royaume, tes vassaux et tes revendications) et la Table de
+    guerre. Ce que tu ne connais pas reste dans l'ombre.
 55. Le bouton de vue passe de **politique** (les royaumes en voile sur le paysage) à **de jure**, puis à **terrain**
     (le paysage seul, frontières en trait).
 56. Le paysage se prépare à part, **sans ralentir la partie** : il arrive par morceaux, d'abord grossier puis fin,
@@ -744,12 +750,18 @@ Chaque système peut être coupé.
 
 ## 5. Commandes d'administration (opérateur)
 
+**En créatif**, l'hôte d'une partie solo ou un opérateur s'accorde ses titres sans conditions : à la page
+*Chancellerie*, le bouton devient **Accorder le titre**, et chaque cran de la frise des titres se clique (Comté, Duché,
+Royaume, Empire d'un coup). Rien n'est dépensé ; la chronique le note comme un vrai titre. Pour redescendre, ou donner
+un titre à un autre joueur : `/crusade titre <rang> [joueur]`.
+
 | Commande | Effet |
 | --- | --- |
 | `/crusade liste` | Les royaumes du monde |
 | `/crusade info <joueur>` | Le royaume d'un joueur (sans nom : à qui est le chunk où tu te tiens, pour tous) |
 | `/crusade colonie` | La colonie sous tes pieds et son royaume |
 | `/crusade royaume [joueur]` | Le détail d'un royaume (l'ancien `/crusade info`) |
+| `/crusade titre <baronnie\|comte\|duche\|royaume\|empire> [joueur]` | Donne ce titre au royaume, plus haut ou plus bas, sans conditions |
 | `/crusade lieux` | Ouvre l'écran des lieux (pour tous) |
 | `/crusade ici` | Où tu te tiens : place proche, région, royaume et suzerains (pour tous) |
 | `/crusade claim`, `unclaim`, `map`, `info` | Le territoire (pour tous, voir plus haut) |

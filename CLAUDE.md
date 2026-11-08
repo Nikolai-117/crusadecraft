@@ -107,6 +107,15 @@ des packs), `docs/etape-2-plan.md` (le plan des phases).
   ouvert remettrait aussitôt son échelle.
 - Captures à la taille de l'écran de Romain : `./gradlew runUiShots -Pshots_only=menu_ -Pui_size=1920x1080 -Pui_scale=4`.
 
+## La carte telle quelle (P62)
+
+- `core/world/terrain/TerrainSurvey` relit au démarrage chaque chunk enregistré (en-têtes des régions, puis
+  `ChunkMap.read`), hors du fil du serveur ; ce qu'il trouve arrive dans `TerrainService` par une file. Les chunks qui
+  s'enregistrent ensuite sont relevés par `ChunkDataEvent.Save`. `TerrainSampler.fromSaved` et `explored` doivent
+  rester identiques (même points, mêmes couleurs) : l'essai `leReleveSurDisqueVoitCommeEnJeu` y veille.
+- Les cartes posent les royaumes sur `ClientTerrain` : `MapScreen`, `KingdomMap` (menu royal), `WarMapRenderer`.
+- Les titres en créatif : `TitleService.freeHand` (créatif + `WorldEditService.canEdit`), `grant`, `setRank`.
+
 ## Nations et habitants (P41 à P43)
 
 - `core/nation/` : `NationDef` (un fichier JSON), `NationBook` (les lit dans `crusadecraft/nations/`), `NationService`
