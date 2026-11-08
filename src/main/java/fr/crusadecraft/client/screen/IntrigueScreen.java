@@ -53,12 +53,12 @@ public class IntrigueScreen extends Screen {
         h = Math.min(256, height - 8);
         left = (width - w) / 2;
         top = (height - h) / 2;
-        addRenderableWidget(Button.builder(Component.translatable("gui.done"), b -> onClose()).bounds(left + w - 88, top + h - 22, 80, 16).build());
+        addRenderableWidget(Button.builder(Component.translatable("gui.done"), b -> onClose()).bounds(left + w - 88, top + h - 22, 80, 16).build(KitButton::new));
         if (view.pendingEvents() > 0) {
             addRenderableWidget(Button.builder(Component.translatable("crusadecraft.realm.events", view.pendingEvents()),
                     b -> {
                         if (minecraft != null && minecraft.getConnection() != null) CrusadeNetwork.toServer(new IntriguePackets.RequestEvent(null));
-                    }).bounds(left + w - 196, top + h - 22, 104, 16).build());
+                    }).bounds(left + w - 196, top + h - 22, 104, 16).build(KitButton::new));
         }
         int x = columnX(), cw = columnW();
         int y = top + 58;
@@ -67,12 +67,12 @@ public class IntrigueScreen extends Screen {
             if (y + SECRET_ROW > top + h - 60) break;
             Button blackmail = Button.builder(Component.translatable("crusadecraft.intrigue.blackmail"),
                     b -> send(new IntriguePackets.IntrigueAction(IntriguePackets.IntrigueAction.Kind.BLACKMAIL, s.id())))
-                    .bounds(x + cw - 2 * bw - 3, y + 2, bw, 14).build();
+                    .bounds(x + cw - 2 * bw - 3, y + 2, bw, 14).build(KitButton::new);
             blackmail.setTooltip(Tooltip.create(Component.translatable("crusadecraft.intrigue.blackmail.tip")));
             addRenderableWidget(blackmail);
             Button expose = Button.builder(Component.translatable("crusadecraft.intrigue.expose"),
                     b -> send(new IntriguePackets.IntrigueAction(IntriguePackets.IntrigueAction.Kind.EXPOSE, s.id())))
-                    .bounds(x + cw - bw, y + 2, bw, 14).build();
+                    .bounds(x + cw - bw, y + 2, bw, 14).build(KitButton::new);
             expose.setTooltip(Tooltip.create(Component.translatable("crusadecraft.intrigue.expose.tip")));
             addRenderableWidget(expose);
             y += SECRET_ROW;
@@ -88,7 +88,7 @@ public class IntrigueScreen extends Screen {
         Component spy = view.spymaster().isEmpty() ? Component.translatable("crusadecraft.intrigue.no_spy")
                 : Component.translatable(view.hunting() ? "crusadecraft.intrigue.spy.hunting" : "crusadecraft.intrigue.spy", view.spymaster());
         Ui.text(g, font, Component.literal(font.plainSubstrByWidth(spy.getString(), w - 110)), left + 10, top + 26,
-                view.spymaster().isEmpty() ? 0xFFE0A070 : Ui.TEXT_MUTED);
+                view.spymaster().isEmpty() ? 0xFFE3B34F : Ui.TEXT_MUTED);
         Component dread = Component.translatable("crusadecraft.intrigue.dread", view.dread());
         Ui.text(g, font, dread, left + w - 10 - font.width(dread), top + 10, Ui.TEXT_MUTED);
         if (Ui.inside(mouseX, mouseY, left + w - 10 - font.width(dread), top + 9, font.width(dread), 10)) {
@@ -121,10 +121,10 @@ public class IntrigueScreen extends Screen {
             Component name = Component.translatable(f.kind().key());
             Ui.text(g, font, name, x, y, Ui.TEXT);
             String power = f.power() + " %";
-            Ui.text(g, font, Component.literal(power), x + cw - font.width(power), y, f.power() >= IntrigueRules.ULTIMATUM_POWER ? Ui.RED : 0xFFE0A070);
+            Ui.text(g, font, Component.literal(power), x + cw - font.width(power), y, f.power() >= IntrigueRules.ULTIMATUM_POWER ? Ui.RED : 0xFFE3B34F);
             // La jauge de puissance, avec le seuil de l'ultimatum.
-            g.fill(x, y + 11, x + cw, y + 15, 0xFF1C1612);
-            g.fill(x, y + 11, x + cw * Math.min(100, f.power()) / 100, y + 15, f.power() >= IntrigueRules.ULTIMATUM_POWER ? Ui.RED : 0xFFC99A3C);
+            g.fill(x, y + 11, x + cw, y + 15, 0xFF1B2026);
+            g.fill(x, y + 11, x + cw * Math.min(100, f.power()) / 100, y + 15, f.power() >= IntrigueRules.ULTIMATUM_POWER ? Ui.RED : 0xFFE3B34F);
             int mark = x + cw * IntrigueRules.ULTIMATUM_POWER / 100;
             g.fill(mark, y + 10, mark + 1, y + 16, Ui.GOLD);
             Component who = Component.translatable(f.place().isEmpty() ? "crusadecraft.intrigue.members" : "crusadecraft.intrigue.members.place",
@@ -171,7 +171,7 @@ public class IntrigueScreen extends Screen {
         for (IntrigueView.SecretLine s : view.secrets()) {
             if (y + SECRET_ROW > top + h - 60) break;
             Ui.text(g, font, Component.literal(font.plainSubstrByWidth(s.holder(), cw - 116)), x, y + 1, Ui.TEXT);
-            Ui.scaled(g, font, Component.translatable(s.kind().key()), x, y + 11, 0.75f, 0xFFE0A070, false);
+            Ui.scaled(g, font, Component.translatable(s.kind().key()), x, y + 11, 0.75f, 0xFFE3B34F, false);
             y += SECRET_ROW;
             shown++;
         }

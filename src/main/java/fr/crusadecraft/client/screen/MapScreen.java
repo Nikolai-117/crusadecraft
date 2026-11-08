@@ -288,18 +288,18 @@ public class MapScreen extends Screen {
         if (scale < 0) scale = MapRaster.fit(view, centerX, centerZ, mapW, mapH) * 0.6;
         targetScale = scale;
         int bx = left + w - 8;
-        addRenderableWidget(Button.builder(Component.translatable("gui.done"), b -> onClose()).bounds(bx - 50, top + 5, 50, 16).build());
+        addRenderableWidget(Button.builder(Component.translatable("gui.done"), b -> onClose()).bounds(bx - 50, top + 5, 50, 16).build(KitButton::new));
         addRenderableWidget(Button.builder(Component.translatable("crusadecraft.map.center"), b -> {
             centerX = view.focusX();
             centerZ = view.focusZ();
             dirty = true;
-        }).bounds(bx - 118, top + 5, 64, 16).build());
+        }).bounds(bx - 118, top + 5, 64, 16).build(KitButton::new));
         Button modeButton = Button.builder(Component.translatable("crusadecraft.map.mode." + mode.name().toLowerCase(Locale.ROOT)), b -> {
             mode = MapRaster.Mode.values()[(mode.ordinal() + 1) % MapRaster.Mode.values().length];
             lastMode = mode;
             dirty = true;
             rebuildWidgets();
-        }).bounds(bx - 214, top + 5, 92, 16).build();
+        }).bounds(bx - 214, top + 5, 92, 16).build(KitButton::new);
         modeButton.setTooltip(Tooltip.create(Component.translatable("crusadecraft.map.mode.tip")));
         addRenderableWidget(modeButton);
         if (view.canEdit()) {
@@ -308,7 +308,7 @@ public class MapScreen extends Screen {
                 moving = false;
                 armed = 0;
                 CrusadeNetwork.toServer(new WorldPackets.RequestMap(false, !editing()));
-            }).bounds(bx - 292, top + 5, 74, 16).build();
+            }).bounds(bx - 292, top + 5, 74, 16).build(KitButton::new);
             edit.setTooltip(Tooltip.create(Component.translatable(editing() ? "crusadecraft.mapedit.leave.tip" : "crusadecraft.mapedit.enter.tip")));
             addRenderableWidget(edit);
         }
@@ -316,13 +316,13 @@ public class MapScreen extends Screen {
         else {
             Button lieux = Button.builder(Component.translatable("crusadecraft.lieu.open"),
                     b -> CrusadeNetwork.toServer(fr.crusadecraft.network.packet.LieuPackets.Request.of(null)))
-                    .bounds(mapX + mapW - 56, top + h - 21, 56, 16).build();
+                    .bounds(mapX + mapW - 56, top + h - 21, 56, 16).build(KitButton::new);
             lieux.setTooltip(Tooltip.create(Component.translatable("crusadecraft.lieu.open.tip")));
             addRenderableWidget(lieux);
             // P54 : l'économie du monde, à gauche de ce qui tient déjà le coin.
             int economyX = mapX + mapW - 56 - 4 - (view.war().enabled() ? 84 + 4 : 0) - 58;
             Button economy = Button.builder(Component.translatable("crusadecraft.economy.open"), b -> CrusadeNetwork.toServer(new fr.crusadecraft.network.packet.WorldEconomyPackets.Request(false)))
-                    .bounds(economyX, top + h - 21, 58, 16).build();
+                    .bounds(economyX, top + h - 21, 58, 16).build(KitButton::new);
             economy.setTooltip(Tooltip.create(Component.translatable("crusadecraft.economy.open.tip")));
             addRenderableWidget(economy);
             if (view.war().enabled()) {
@@ -333,7 +333,7 @@ public class MapScreen extends Screen {
                     warOverlay.clear();
                     armed = 0;
                     rebuildWidgets();
-                }).bounds(mapX + mapW - 56 - 4 - 84, top + h - 21, 84, 16).build();
+                }).bounds(mapX + mapW - 56 - 4 - 84, top + h - 21, 84, 16).build(KitButton::new);
                 warButton.setTooltip(Tooltip.create(Component.translatable(warMode() ? "crusadecraft.warmap.leave.tip" : "crusadecraft.warmap.open.tip")));
                 addRenderableWidget(warButton);
             }
@@ -360,7 +360,7 @@ public class MapScreen extends Screen {
                 arrowing = false;
                 armed = 0;
                 rebuildWidgets();
-            }).bounds(x, ty, bw, 16).build();
+            }).bounds(x, ty, bw, 16).build(KitButton::new);
             b.setTooltip(Tooltip.create(compact ? Component.empty().append(t.label()).append("\n").append(t.tip()) : t.tip()));
             addRenderableWidget(b);
             if (t == warTool) warToolButton = b;
@@ -369,14 +369,14 @@ public class MapScreen extends Screen {
         Button clear = Button.builder(armedLabel(4, "crusadecraft.warmap.clear"), b -> {
             if (confirm(4)) CrusadeNetwork.toServer(WarMapPackets.Edit.clear());
             rebuildWidgets();
-        }).bounds(right - 76, ty, 76, 16).build();
+        }).bounds(right - 76, ty, 76, 16).build(KitButton::new);
         clear.setTooltip(Tooltip.create(Component.translatable("crusadecraft.warmap.clear.tip")));
         addRenderableWidget(clear);
         if (warTool.paints()) {
             addRenderableWidget(Button.builder(Component.literal("◯ " + BRUSH_SIZES[brushSize]), b -> {
                 brushSize = (brushSize + 1) % BRUSH_SIZES.length;
                 rebuildWidgets();
-            }).bounds(right - 76 - 36, ty, 34, 16).tooltip(Tooltip.create(Component.translatable("crusadecraft.mapedit.brush.size.tip"))).build());
+            }).bounds(right - 76 - 36, ty, 34, 16).tooltip(Tooltip.create(Component.translatable("crusadecraft.mapedit.brush.size.tip"))).build(KitButton::new));
         }
     }
 
@@ -391,7 +391,7 @@ public class MapScreen extends Screen {
                 moving = false;
                 armed = 0;
                 rebuildWidgets();
-            }).bounds(x, ty, 58, 16).build();
+            }).bounds(x, ty, 58, 16).build(KitButton::new);
             b.setTooltip(Tooltip.create(t.tip()));
             addRenderableWidget(b);
             x += 60;
@@ -403,12 +403,12 @@ public class MapScreen extends Screen {
             addRenderableWidget(Button.builder(Component.literal("◯ " + BRUSH_SIZES[brushSize]), b -> {
                 brushSize = (brushSize + 1) % BRUSH_SIZES.length;
                 rebuildWidgets();
-            }).bounds(right - 34, ty, 34, 16).tooltip(Tooltip.create(Component.translatable("crusadecraft.mapedit.brush.size.tip"))).build());
+            }).bounds(right - 34, ty, 34, 16).tooltip(Tooltip.create(Component.translatable("crusadecraft.mapedit.brush.size.tip"))).build(KitButton::new));
             int cw = Math.min(150, room - 38);
             addRenderableWidget(Button.builder(Component.literal(font.plainSubstrByWidth(brushLabel().getString(), cw - 8)), b -> {
                 brushChoice = (brushChoice + (hasShiftDown() ? view.territories().size() + 1 : 1)) % (view.territories().size() + 2);
                 rebuildWidgets();
-            }).bounds(right - 38 - cw, ty, cw, 16).tooltip(Tooltip.create(Component.translatable("crusadecraft.mapedit.brush.tip"))).build());
+            }).bounds(right - 38 - cw, ty, cw, 16).tooltip(Tooltip.create(Component.translatable("crusadecraft.mapedit.brush.tip"))).build(KitButton::new));
         } else if (tool == Tool.CITY && !view.territories().isEmpty()) {
             if (cityOwner < 0 || cityOwner >= view.territories().size()) cityOwner = defaultTerritory();
             int cw = Math.min(170, room);
@@ -416,7 +416,7 @@ public class MapScreen extends Screen {
             addRenderableWidget(Button.builder(Component.literal(font.plainSubstrByWidth(label.getString(), cw - 8)), b -> {
                 cityOwner = (cityOwner + (hasShiftDown() ? view.territories().size() - 1 : 1)) % view.territories().size();
                 rebuildWidgets();
-            }).bounds(right - cw, ty, cw, 16).tooltip(Tooltip.create(Component.translatable("crusadecraft.mapedit.city.for.tip"))).build());
+            }).bounds(right - cw, ty, cw, 16).tooltip(Tooltip.create(Component.translatable("crusadecraft.mapedit.city.for.tip"))).build(KitButton::new));
         }
         if (tool == Tool.CHOOSE) initPanel();
     }
@@ -466,15 +466,15 @@ public class MapScreen extends Screen {
             Button wipe = Button.builder(armedLabel(3, "crusadecraft.mapedit.wipe"), b -> {
                 if (confirm(3)) CrusadeNetwork.toServer(new MapEditPackets.Wipe());
                 rebuildWidgets();
-            }).bounds(px, y, bw, 15).build();
+            }).bounds(px, y, bw, 15).build(KitButton::new);
             wipe.setTooltip(Tooltip.create(Component.translatable("crusadecraft.mapedit.wipe.tip")));
             addRenderableWidget(wipe);
             Button lineages = Button.builder(Component.translatable("crusadecraft.lineage.open"),
-                    b -> CrusadeNetwork.toServer(new fr.crusadecraft.network.packet.LineagePackets.Request(null, null))).bounds(px, y + 17, bw, 15).build();
+                    b -> CrusadeNetwork.toServer(new fr.crusadecraft.network.packet.LineagePackets.Request(null, null))).bounds(px, y + 17, bw, 15).build(KitButton::new);
             lineages.setTooltip(Tooltip.create(Component.translatable("crusadecraft.lineage.open.tip")));
             addRenderableWidget(lineages);
             Button lieux = Button.builder(Component.translatable("crusadecraft.lieu.open"),
-                    b -> CrusadeNetwork.toServer(fr.crusadecraft.network.packet.LieuPackets.Request.of(null))).bounds(px, y + 34, bw, 15).build();
+                    b -> CrusadeNetwork.toServer(fr.crusadecraft.network.packet.LieuPackets.Request.of(null))).bounds(px, y + 34, bw, 15).build(KitButton::new);
             lieux.setTooltip(Tooltip.create(Component.translatable("crusadecraft.lieu.open.tip")));
             addRenderableWidget(lieux);
             return;
@@ -490,10 +490,10 @@ public class MapScreen extends Screen {
             addRenderableWidget(Button.builder(Component.literal(font.plainSubstrByWidth(give.getString(), bw - 40)), b -> {
                 giveTarget = (giveTarget + (hasShiftDown() ? view.territories().size() - 1 : 1)) % view.territories().size();
                 rebuildWidgets();
-            }).bounds(px, y, bw - 32, 15).tooltip(Tooltip.create(Component.translatable("crusadecraft.mapedit.city.give.tip"))).build());
+            }).bounds(px, y, bw - 32, 15).tooltip(Tooltip.create(Component.translatable("crusadecraft.mapedit.city.give.tip"))).build(KitButton::new));
             Button ok = Button.builder(Component.translatable("crusadecraft.mapedit.city.give"), b ->
                     CrusadeNetwork.toServer(new MapEditPackets.SiteAction(s.site().id(), false, view.territories().get(giveTarget).id())))
-                    .bounds(px + bw - 30, y, 30, 15).build();
+                    .bounds(px + bw - 30, y, 30, 15).build(KitButton::new);
             ok.active = giveTarget != s.territory();
             addRenderableWidget(ok);
             y += 16;
@@ -503,7 +503,7 @@ public class MapScreen extends Screen {
                     selected = null;
                 }
                 rebuildWidgets();
-            }).bounds(px, y, bw, 15).build();
+            }).bounds(px, y, bw, 15).build(KitButton::new);
             delete.setTooltip(Tooltip.create(Component.translatable("crusadecraft.mapedit.site.delete.tip")));
             addRenderableWidget(delete);
             if (s.site().town()) {
@@ -515,7 +515,7 @@ public class MapScreen extends Screen {
                         selected = null;
                     }
                     rebuildWidgets();
-                }).bounds(px, y, bw, 15).build();
+                }).bounds(px, y, bw, 15).build(KitButton::new);
                 undo.setTooltip(Tooltip.create(Component.translatable("crusadecraft.town.undo.tip")));
                 addRenderableWidget(undo);
                 // P35 : la faire sienne — colonie MineColonies, ou capitale d'un royaume à fonder.
@@ -526,7 +526,7 @@ public class MapScreen extends Screen {
                         selected = null;
                     }
                     rebuildWidgets();
-                }).bounds(px, y, bw / 2 - 1, 15).build();
+                }).bounds(px, y, bw / 2 - 1, 15).build(KitButton::new);
                 colony.setTooltip(Tooltip.create(Component.translatable("crusadecraft.colony.offer.colony.tip")));
                 addRenderableWidget(colony);
                 Button realmButton = Button.builder(armedLabel(9, "crusadecraft.colony.button.realm"), b -> {
@@ -535,17 +535,17 @@ public class MapScreen extends Screen {
                         selected = null;
                     }
                     rebuildWidgets();
-                }).bounds(px + bw / 2 + 1, y, bw / 2 - 1, 15).build();
+                }).bounds(px + bw / 2 + 1, y, bw / 2 - 1, 15).build(KitButton::new);
                 realmButton.setTooltip(Tooltip.create(Component.translatable("crusadecraft.colony.offer.realm.tip")));
                 addRenderableWidget(realmButton);
             }
         } else if (s.provinceId() >= 0) {
             addRenderableWidget(Button.builder(Component.translatable("crusadecraft.mapedit.city.rename"), b ->
-                    minecraft.setScreen(MapEditForm.renameCity(this, s.provinceId(), s.name()))).bounds(px, y, bw / 2 - 1, 15).build());
+                    minecraft.setScreen(MapEditForm.renameCity(this, s.provinceId(), s.name()))).bounds(px, y, bw / 2 - 1, 15).build(KitButton::new));
             Button move = Button.builder(Component.translatable(moving ? "crusadecraft.mapedit.city.moving" : "crusadecraft.mapedit.city.move"), b -> {
                 moving = !moving;
                 rebuildWidgets();
-            }).bounds(px + bw / 2 + 1, y, bw / 2 - 1, 15).build();
+            }).bounds(px + bw / 2 + 1, y, bw / 2 - 1, 15).build(KitButton::new);
             move.setTooltip(Tooltip.create(Component.translatable("crusadecraft.mapedit.city.move.tip")));
             addRenderableWidget(move);
             y += 16;
@@ -554,17 +554,17 @@ public class MapScreen extends Screen {
             addRenderableWidget(Button.builder(Component.literal(font.plainSubstrByWidth(give.getString(), bw - 40)), b -> {
                 giveTarget = (giveTarget + (hasShiftDown() ? view.territories().size() - 1 : 1)) % view.territories().size();
                 rebuildWidgets();
-            }).bounds(px, y, bw - 32, 15).tooltip(Tooltip.create(Component.translatable("crusadecraft.mapedit.city.give.tip"))).build());
+            }).bounds(px, y, bw - 32, 15).tooltip(Tooltip.create(Component.translatable("crusadecraft.mapedit.city.give.tip"))).build(KitButton::new));
             Button ok = Button.builder(Component.translatable("crusadecraft.mapedit.city.give"), b ->
                     CrusadeNetwork.toServer(MapEditPackets.CityAction.give(s.provinceId(), view.territories().get(giveTarget).id())))
-                    .bounds(px + bw - 30, y, 30, 15).build();
+                    .bounds(px + bw - 30, y, 30, 15).build(KitButton::new);
             ok.active = giveTarget != s.territory();
             addRenderableWidget(ok);
             y += 16;
             Button delete = Button.builder(armedLabel(1, "crusadecraft.mapedit.city.delete"), b -> {
                 if (confirm(1)) CrusadeNetwork.toServer(MapEditPackets.CityAction.delete(s.provinceId()));
                 rebuildWidgets();
-            }).bounds(px, y, bw, 15).build();
+            }).bounds(px, y, bw, 15).build(KitButton::new);
             if (s.capital()) {
                 delete.active = false;
                 delete.setTooltip(Tooltip.create(Component.translatable("crusadecraft.mapedit.city.delete.capital")));
@@ -576,12 +576,12 @@ public class MapScreen extends Screen {
                 Button build = Button.builder(armedLabel(6, "crusadecraft.town.build"), b -> {
                     if (confirm(6)) CrusadeNetwork.toServer(new MapEditPackets.TownAction(s.provinceId(), null, MapEditPackets.TownAction.BUILD));
                     rebuildWidgets();
-                }).bounds(px, y, bw, 15).build();
+                }).bounds(px, y, bw, 15).build(KitButton::new);
                 build.setTooltip(Tooltip.create(Component.translatable("crusadecraft.town.build.tip")));
                 addRenderableWidget(build);
             } else {
                 Button state = Button.builder(s.town() >= 100 ? Component.translatable("crusadecraft.town.built")
-                        : Component.translatable("crusadecraft.town.building", s.town()), b -> {}).bounds(px, y, bw, 15).build();
+                        : Component.translatable("crusadecraft.town.building", s.town()), b -> {}).bounds(px, y, bw, 15).build(KitButton::new);
                 state.active = false;
                 state.setTooltip(Tooltip.create(Component.translatable("crusadecraft.town.state.tip")));
                 addRenderableWidget(state);
@@ -597,7 +597,7 @@ public class MapScreen extends Screen {
                 ? new fr.crusadecraft.network.packet.LieuPackets.Request(null, fr.crusadecraft.core.place.Lieu.RefType.AI_PROVINCE.ordinal(), null, s.provinceId())
                 : new fr.crusadecraft.network.packet.LieuPackets.Request(null, fr.crusadecraft.core.place.Lieu.RefType.PLAYER_REALM.ordinal(),
                 view.territories().get(s.territory()).id(), 0);
-        Button sheetButton = Button.builder(Component.translatable("crusadecraft.lieu.sheet"), b -> CrusadeNetwork.toServer(sheet)).build();
+        Button sheetButton = Button.builder(Component.translatable("crusadecraft.lieu.sheet"), b -> CrusadeNetwork.toServer(sheet)).build(KitButton::new);
         sheetButton.setTooltip(Tooltip.create(Component.translatable("crusadecraft.lieu.sheet.tip")));
         if (!owner.ai()) {
             sheetButton.setPosition(px, y);
@@ -607,14 +607,14 @@ public class MapScreen extends Screen {
         }
         if (owner.ai()) {
             addRenderableWidget(Button.builder(Component.translatable("crusadecraft.mapedit.realm.edit"), b ->
-                    minecraft.setScreen(MapEditForm.editRealm(this, owner))).bounds(px, y, bw, 15).build());
+                    minecraft.setScreen(MapEditForm.editRealm(this, owner))).bounds(px, y, bw, 15).build(KitButton::new));
             y += 16;
             // P34 : le style de ses villes bâties, qu'on fait défiler (Maj : en arrière).
             fr.crusadecraft.core.build.plan.NationStyle style = fr.crusadecraft.core.build.plan.NationStyle.byOrdinal(Math.max(0, owner.style()));
             Component styleLabel = Component.translatable("crusadecraft.style.label", Component.translatable(style.key()));
             Button styleButton = Button.builder(Component.literal(font.plainSubstrByWidth(styleLabel.getString(), bw - 6)), b ->
                     CrusadeNetwork.toServer(new MapEditPackets.SetStyle(owner.id(), style.ordinal() + (hasShiftDown() ? -1 : 1))))
-                    .bounds(px, y, bw, 15).build();
+                    .bounds(px, y, bw, 15).build(KitButton::new);
             styleButton.setTooltip(Tooltip.create(Component.translatable("crusadecraft.style.tip")));
             addRenderableWidget(styleButton);
             y += 16;
@@ -624,7 +624,7 @@ public class MapScreen extends Screen {
                     selected = null;
                 }
                 rebuildWidgets();
-            }).bounds(px, y, bw, 15).build());
+            }).bounds(px, y, bw, 15).build(KitButton::new));
             y += 16;
             // P33 : fusionner ce royaume dans un autre (choisi en faisant défiler), confirmé d'un second clic.
             if (mergeTarget < 0 || mergeTarget >= view.territories().size() || view.territories().get(mergeTarget).id().equals(owner.id())) {
@@ -639,7 +639,7 @@ public class MapScreen extends Screen {
                         if (!view.territories().get(mergeTarget).id().equals(owner.id())) break;
                     }
                     rebuildWidgets();
-                }).bounds(px, y, bw - 32, 15).tooltip(Tooltip.create(Component.translatable("crusadecraft.zone.merge.tip"))).build());
+                }).bounds(px, y, bw - 32, 15).tooltip(Tooltip.create(Component.translatable("crusadecraft.zone.merge.tip"))).build(KitButton::new));
                 final int target = mergeTarget;
                 addRenderableWidget(Button.builder(armedLabel(5, "crusadecraft.zone.merge.ok"), b -> {
                     if (confirm(5)) {
@@ -647,11 +647,11 @@ public class MapScreen extends Screen {
                         selected = null;
                     }
                     rebuildWidgets();
-                }).bounds(px + bw - 30, y, 30, 15).build());
+                }).bounds(px + bw - 30, y, 30, 15).build(KitButton::new));
             }
             y += 16;
             Button lineage = Button.builder(Component.translatable("crusadecraft.lineage.of_realm"),
-                    b -> CrusadeNetwork.toServer(new fr.crusadecraft.network.packet.LineagePackets.Request(null, owner.id()))).bounds(px, y, bw / 2 - 1, 15).build();
+                    b -> CrusadeNetwork.toServer(new fr.crusadecraft.network.packet.LineagePackets.Request(null, owner.id()))).bounds(px, y, bw / 2 - 1, 15).build(KitButton::new);
             lineage.setTooltip(Tooltip.create(Component.translatable("crusadecraft.lineage.of_realm.tip")));
             addRenderableWidget(lineage);
             sheetButton.setPosition(px + bw / 2 + 1, y);
@@ -900,7 +900,7 @@ public class MapScreen extends Screen {
                 g.fill(x - 1, y - 1, x + 1, y + 1, INK);
             } else {
                 g.fill(x - 2, y - 2, x + 2, y + 2, INK);
-                g.fill(x - 1, y - 1, x + 1, y + 1, s.village() ? 0xFFEDE3CC : 0xFFB0A080);
+                g.fill(x - 1, y - 1, x + 1, y + 1, s.village() ? 0xFFEADFC4 : 0xFFB0A080);
             }
             if (s.capital() || scale <= 6 || i == chosen) {
                 Component name = Component.literal(s.name());
@@ -1009,7 +1009,7 @@ public class MapScreen extends Screen {
             }
             case VILLAGE -> {
                 g.fill(x - 3, y - 1, x + 3, y + 3, ink);
-                g.fill(x - 2, y, x + 2, y + 2, 0xFFEDE3CC);
+                g.fill(x - 2, y, x + 2, y + 2, 0xFFEADFC4);
                 for (int i = 0; i < 3; i++) g.fill(x - i - 1, y - 3 + i, x + i + 1, y - 2 + i, color);
             }
             default -> g.fill(x - 2, y - 2, x + 2, y + 2, ink);
@@ -1303,7 +1303,7 @@ public class MapScreen extends Screen {
                 for (int i = -4; i <= 4; i++) g.fill(x + i, y - 1 + i / 2, x + i + 1, y + i / 2, 0xFFE0796E);
             }
             String men = a.men() >= 1000 ? (a.men() / 100) / 10.0 + "k" : String.valueOf(a.men());
-            Ui.scaled(g, font, Component.literal(men), x - Math.round(font.width(men) * 0.6f / 2), y + 7, 0.6f, a.mine() ? 0xFFF3D88C : 0xFFEDE3CC, false);
+            Ui.scaled(g, font, Component.literal(men), x - Math.round(font.width(men) * 0.6f / 2), y + 7, 0.6f, a.mine() ? 0xFFE8C066 : 0xFFEADFC4, false);
         }
     }
 
@@ -1414,7 +1414,7 @@ public class MapScreen extends Screen {
                 g.fill(x + 1, y + 1, x + 3, y + 3, INK);
             } else {
                 g.fill(x - 2, y - 2, x + 2, y + 2, INK);
-                g.fill(x - 1, y - 1, x + 1, y + 1, 0xFFEDE3CC);
+                g.fill(x - 1, y - 1, x + 1, y + 1, 0xFFEADFC4);
             }
         }
     }

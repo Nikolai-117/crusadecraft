@@ -77,7 +77,7 @@ public class StaffScreen extends Screen {
         colC = colB + colBW + 8;
         colCW = left + w - 8 - colC;
         listTop = top + 44;
-        addRenderableWidget(Button.builder(Component.translatable("gui.done"), b -> onClose()).bounds(left + w - 58, top + 6, 50, 16).build());
+        addRenderableWidget(Button.builder(Component.translatable("gui.done"), b -> onClose()).bounds(left + w - 58, top + 6, 50, 16).build(KitButton::new));
 
         // Colonne A : pour qui.
         int ay = top + h - 26;
@@ -87,17 +87,17 @@ public class StaffScreen extends Screen {
                 List<Integer> colors = new ArrayList<>();
                 for (MapView.Territory t : view.territories()) colors.add(t.color());
                 minecraft.setScreen(MapEditForm.newRealm(this, (int) Math.round(x), (int) Math.round(z), colors));
-            }).bounds(colA, ay, colAW, 15).tooltip(Tooltip.create(Component.translatable("crusadecraft.bornage.new_realm.tip"))).build());
+            }).bounds(colA, ay, colAW, 15).tooltip(Tooltip.create(Component.translatable("crusadecraft.bornage.new_realm.tip"))).build(KitButton::new));
             ay -= 17;
         }
         int half = (colAW - 2) / 2;
         addRenderableWidget(Button.builder(Component.translatable("crusadecraft.mapedit.brush.neutral"),
                 b -> send(new StaffPackets.Action(StaffPackets.Action.Op.SET_SPECIAL, null, BornageStaffItem.NEUTRAL, 0, false)))
-                .bounds(colA, ay, editor() ? half : colAW, 15).tooltip(Tooltip.create(Component.translatable("crusadecraft.bornage.neutral.tip"))).build());
+                .bounds(colA, ay, editor() ? half : colAW, 15).tooltip(Tooltip.create(Component.translatable("crusadecraft.bornage.neutral.tip"))).build(KitButton::new));
         if (editor()) {
             addRenderableWidget(Button.builder(Component.translatable("crusadecraft.bornage.erase"),
                     b -> send(new StaffPackets.Action(StaffPackets.Action.Op.SET_SPECIAL, null, BornageStaffItem.ERASE, 0, false)))
-                    .bounds(colA + half + 2, ay, half, 15).tooltip(Tooltip.create(Component.translatable("crusadecraft.bornage.erase.tip"))).build());
+                    .bounds(colA + half + 2, ay, half, 15).tooltip(Tooltip.create(Component.translatable("crusadecraft.bornage.erase.tip"))).build(KitButton::new));
         }
         listBottom = ay - 4;
 
@@ -107,19 +107,19 @@ public class StaffScreen extends Screen {
                 BornageStaffItem.Mode.MARCHE}) {
             Component label = Component.translatable(mode.key());
             addRenderableWidget(Button.builder(label, b -> send(new StaffPackets.Action(StaffPackets.Action.Op.SET_MODE, null, "", mode.ordinal(), false)))
-                    .bounds(colB, by, colBW, 15).tooltip(Tooltip.create(Component.translatable(mode.key() + ".tip"))).build());
+                    .bounds(colB, by, colBW, 15).tooltip(Tooltip.create(Component.translatable(mode.key() + ".tip"))).build(KitButton::new));
             by += 17;
         }
         by += 6;
         addRenderableWidget(Button.builder(Component.translatable("crusadecraft.bornage.validate"),
-                b -> send(StaffPackets.Action.of(StaffPackets.Action.Op.VALIDATE))).bounds(colB, by, colBW, 15).build());
+                b -> send(StaffPackets.Action.of(StaffPackets.Action.Op.VALIDATE))).bounds(colB, by, colBW, 15).build(KitButton::new));
         by += 17;
         addRenderableWidget(Button.builder(Component.translatable("crusadecraft.bornage.clear"),
-                b -> send(StaffPackets.Action.of(StaffPackets.Action.Op.CLEAR))).bounds(colB, by, colBW, 15).build());
+                b -> send(StaffPackets.Action.of(StaffPackets.Action.Op.CLEAR))).bounds(colB, by, colBW, 15).build(KitButton::new));
         by += 17;
         addRenderableWidget(Button.builder(Component.translatable("crusadecraft.bornage.undo"),
                 b -> send(StaffPackets.Action.of(StaffPackets.Action.Op.UNDO))).bounds(colB, by, colBW, 15)
-                .tooltip(Tooltip.create(Component.translatable("crusadecraft.bornage.undo.tip"))).build());
+                .tooltip(Tooltip.create(Component.translatable("crusadecraft.bornage.undo.tip"))).build(KitButton::new));
 
         // Colonne C : construire.
         int cy = top + 44;
@@ -129,14 +129,14 @@ public class StaffScreen extends Screen {
                     kind.garrison(), kind.cost());
             addRenderableWidget(Button.builder(Component.translatable(kind.key()),
                     b -> send(new StaffPackets.Action(StaffPackets.Action.Op.SET_BUILD, null, "", kind.ordinal(), instant)))
-                    .bounds(colC, cy, colCW, 15).tooltip(Tooltip.create(tip)).build());
+                    .bounds(colC, cy, colCW, 15).tooltip(Tooltip.create(tip)).build(KitButton::new));
             cy += 16;
         }
         if (editor()) {
             addRenderableWidget(Button.builder(Component.translatable(instant ? "crusadecraft.bornage.instant" : "crusadecraft.bornage.progressive"), b -> {
                 instant = !instant;
                 rebuildWidgets();
-            }).bounds(colC, cy + 4, colCW, 15).tooltip(Tooltip.create(Component.translatable("crusadecraft.bornage.instant.tip"))).build());
+            }).bounds(colC, cy + 4, colCW, 15).tooltip(Tooltip.create(Component.translatable("crusadecraft.bornage.instant.tip"))).build(KitButton::new));
             cy += 20;
         }
         // Les lieux qu'on pose d'un clic au sol (P15) : on les nomme ensuite.
@@ -149,7 +149,7 @@ public class StaffScreen extends Screen {
             addRenderableWidget(Button.builder(Component.translatable(kind.key()),
                     b -> send(new StaffPackets.Action(StaffPackets.Action.Op.SET_LIEU, null, "", kind.ordinal(), false)))
                     .bounds(colC + i * (third + 2), cy + 14, third, 15)
-                    .tooltip(Tooltip.create(Component.translatable("crusadecraft.bornage.lieu.tip", Component.translatable(kind.key())))).build());
+                    .tooltip(Tooltip.create(Component.translatable("crusadecraft.bornage.lieu.tip", Component.translatable(kind.key())))).build(KitButton::new));
         }
     }
 
@@ -183,7 +183,7 @@ public class StaffScreen extends Screen {
             MapView.Territory t = owners.get(i);
             int ry = listTop + 2 + (i - scroll) * ROW;
             boolean on = t.id().equals(chosen);
-            if (on || Ui.inside(mouseX, mouseY, colA + 2, ry, colAW - 4, ROW)) g.fill(colA + 2, ry, colA + colAW - 2, ry + ROW, on ? 0xFF3A2E22 : Ui.PANEL_HIGHLIGHT);
+            if (on || Ui.inside(mouseX, mouseY, colA + 2, ry, colAW - 4, ROW)) g.fill(colA + 2, ry, colA + colAW - 2, ry + ROW, on ? 0xFF2E3740 : Ui.PANEL_HIGHLIGHT);
             g.fill(colA + 4, ry + 2, colA + 10, ry + ROW - 2, 0xFF000000 | t.color());
             Component name = t.ai() ? AiNames.realm(t.rank(), t.label()) : Component.literal(t.label());
             Ui.text(g, font, Component.literal(font.plainSubstrByWidth(name.getString(), colAW - 18)), colA + 13, ry + 2, on ? Ui.TEXT_TITLE : Ui.TEXT);

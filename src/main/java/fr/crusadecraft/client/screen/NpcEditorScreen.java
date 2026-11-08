@@ -144,11 +144,11 @@ public class NpcEditorScreen extends Screen {
             Button b = Button.builder(Component.translatable("crusadecraft.city.npc.tab." + t.name().toLowerCase(Locale.ROOT)), x -> {
                 tab = t;
                 rebuildWidgets();
-            }).bounds(left + 12 + i * (tw + 2), top + 24, tw, 14).build();
+            }).bounds(left + 12 + i * (tw + 2), top + 24, tw, 14).build(KitButton::new);
             b.active = t != tab;
             addRenderableWidget(b);
         }
-        addRenderableWidget(Button.builder(Component.translatable("gui.done"), b -> onClose()).bounds(left + 12, top + H - 22, 66, 16).build());
+        addRenderableWidget(Button.builder(Component.translatable("gui.done"), b -> onClose()).bounds(left + 12, top + H - 22, 66, 16).build(KitButton::new));
         switch (tab) {
             case SHEET -> initSheet();
             case LOOK -> initLook();
@@ -170,14 +170,14 @@ public class NpcEditorScreen extends Screen {
     }
 
     private Button button(String key, int x, int y, int w, Button.OnPress press) {
-        Button b = Button.builder(Component.translatable(key), press).bounds(x, y, w, 14).build();
+        Button b = Button.builder(Component.translatable(key), press).bounds(x, y, w, 14).build(KitButton::new);
         addRenderableWidget(b);
         return b;
     }
 
     private void toggle(String key, boolean on, int x, int y, int w, Consumer<Boolean> change) {
         Component label = Component.translatable(key).append(" : ").append(Component.translatable(on ? "crusadecraft.city.panel.yes" : "crusadecraft.city.panel.no"));
-        addRenderableWidget(Button.builder(label, b -> change.accept(!on)).bounds(x, y, w, 14).build());
+        addRenderableWidget(Button.builder(label, b -> change.accept(!on)).bounds(x, y, w, 14).build(KitButton::new));
     }
 
     // ------------------------------------------------------------------ la fiche
@@ -191,7 +191,7 @@ public class NpcEditorScreen extends Screen {
         box(cx() + 204, y, 30, ageDraft, 3, v -> ageDraft = v);
         y += 17;
         boolean female = view.getBoolean("female");
-        addRenderableWidget(Button.builder(Component.translatable(female ? "crusadecraft.city.npc.female" : "crusadecraft.city.npc.male"), b -> send(t -> t.putBoolean("female", !female))).bounds(cx() + 60, y, 70, 14).build());
+        addRenderableWidget(Button.builder(Component.translatable(female ? "crusadecraft.city.npc.female" : "crusadecraft.city.npc.male"), b -> send(t -> t.putBoolean("female", !female))).bounds(cx() + 60, y, 70, 14).build(KitButton::new));
         button("crusadecraft.city.npc.save", cx() + cw() - 90, y, 90, b -> send(t -> {
             t.putString("name", nameDraft);
             t.putString("surname", surnameDraft);
@@ -216,7 +216,7 @@ public class NpcEditorScreen extends Screen {
             if (on) label = label.copy().withStyle(net.minecraft.ChatFormatting.GOLD);
             int ordinal = trait.ordinal();
             addRenderableWidget(Button.builder(label, b -> setTrait(mine, ordinal)).bounds(cx() + col * (bw + 2), y + row * 15, bw, 14)
-                    .tooltip(Tooltip.create(Component.translatable(trait.descriptionKey()))).build());
+                    .tooltip(Tooltip.create(Component.translatable(trait.descriptionKey()))).build(KitButton::new));
             if (++col == 4) {
                 col = 0;
                 row++;
@@ -281,7 +281,7 @@ public class NpcEditorScreen extends Screen {
                 gridJob = gridJob + 1 >= jobs.size() ? -1 : gridJob + 1;
                 gridPage = 0;
                 rebuildWidgets();
-            }).bounds(cx() + 164, y, 80, 14).build());
+            }).bounds(cx() + 164, y, 80, 14).build(KitButton::new));
         }
         button("crusadecraft.city.npc.look.reset", cx() + cw() - 90, y, 90, b -> send(t -> {
             t.putString("look", "");
@@ -368,7 +368,7 @@ public class NpcEditorScreen extends Screen {
         for (BuildingFunction f : all) {
             if (f.dwelling()) continue;
             Button b = Button.builder(Component.translatable(f.key()), x -> send(t -> t.putString("job", f.name())))
-                    .bounds(cx() + (n % 4) * (bw + 2), y + (n / 4) * 15, bw, 14).build();
+                    .bounds(cx() + (n % 4) * (bw + 2), y + (n / 4) * 15, bw, 14).build(KitButton::new);
             b.active = !job.equals(f.name());
             addRenderableWidget(b);
             n++;
@@ -389,7 +389,7 @@ public class NpcEditorScreen extends Screen {
             rebuildWidgets();
         });
         Button shown = Button.builder(Component.translatable("crusadecraft.city.npc.moment." + moment().toLowerCase(Locale.ROOT).replace("*", "any")), b -> {
-        }).bounds(cx() + 16, y, 150, 14).build();
+        }).bounds(cx() + 16, y, 150, 14).build(KitButton::new);
         shown.active = false;
         addRenderableWidget(shown);
         button("crusadecraft.city.panel.next", cx() + 168, y, 14, b -> {

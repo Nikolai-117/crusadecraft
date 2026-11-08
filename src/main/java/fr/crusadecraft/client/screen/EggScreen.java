@@ -43,10 +43,10 @@ public class EggScreen extends Screen {
         Button go = Button.builder(Component.translatable("crusadecraft.city.egg.hatch"), b -> {
             CrusadeNetwork.toServer(new InhabitantPackets.ChooseEgg(city, job.ordinal(), at));
             onClose();
-        }).bounds(left + w - 150, top + h - 24, 84, 16).build();
+        }).bounds(left + w - 150, top + h - 24, 84, 16).build(KitButton::new);
         go.active = city != null;
         addRenderableWidget(go);
-        addRenderableWidget(Button.builder(Component.translatable("gui.cancel"), b -> onClose()).bounds(left + w - 62, top + h - 24, 54, 16).build());
+        addRenderableWidget(Button.builder(Component.translatable("gui.cancel"), b -> onClose()).bounds(left + w - 62, top + h - 24, 54, 16).build(KitButton::new));
     }
 
     private int listTop() {

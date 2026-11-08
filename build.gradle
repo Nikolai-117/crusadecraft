@@ -48,6 +48,9 @@ minecraft {
             property 'crusadecraft.uishots', 'true'
             // -Pshots_only=v3_ : seulement les captures dont le nom contient ce morceau.
             property 'crusadecraft.uishots.only', (project.findProperty('shots_only') ?: '').toString()
+            // -Pui_size=1440x810 -Pui_scale=3 : capturer à une autre taille que la fenêtre par défaut.
+            property 'crusadecraft.uishots.size', (project.findProperty('ui_size') ?: '').toString()
+            property 'crusadecraft.uishots.scale', (project.findProperty('ui_scale') ?: '').toString()
         }
 
         // Banc d'essai en monde réel : monde plat jetable dans run-worldshots, captures, puis fermeture.

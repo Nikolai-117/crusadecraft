@@ -37,12 +37,12 @@ public class AiRealmScreen extends Screen {
         left = (width - w) / 2;
         top = (height - h) / 2;
         addRenderableWidget(Button.builder(Component.translatable("gui.done"), b -> onClose())
-                .bounds(left + w - 90, top + h - 26, 80, 18).build());
+                .bounds(left + w - 90, top + h - 26, 80, 18).build(KitButton::new));
         // P41 : une nation a une histoire, et des relations qu'on peut lire.
         if (view.nation()) {
             addRenderableWidget(Button.builder(Component.translatable("crusadecraft.nation.open"), b ->
                     CrusadeNetwork.toServer(new fr.crusadecraft.network.packet.NationPackets.Request(view.id())))
-                    .bounds(left + 10, top + h - 26, 110, 18).build());
+                    .bounds(left + 10, top + h - 26, 110, 18).build(KitButton::new));
         }
         AiRealmView.Province capital = view.provinces().stream().filter(AiRealmView.Province::capital).findFirst()
                 .orElse(view.provinces().isEmpty() ? null : view.provinces().get(0));
@@ -50,7 +50,7 @@ public class AiRealmScreen extends Screen {
             addRenderableWidget(Button.builder(Component.translatable("crusadecraft.ai.show_on_map"), b -> {
                 MapScreen.centerNextOn(capital.x(), capital.z());
                 CrusadeNetwork.toServer(new WorldPackets.RequestMap(true));
-            }).bounds(left + w - 196, top + h - 26, 100, 18).build());
+            }).bounds(left + w - 196, top + h - 26, 100, 18).build(KitButton::new));
         }
     }
 
@@ -130,7 +130,7 @@ public class AiRealmScreen extends Screen {
         resource(g, new ItemStack(Items.CANDLE), view.piety(), rx + 124, by);
         Ui.wrapped(g, font, Component.translatable("crusadecraft.ai.discovered", view.discoveredDay(), view.distance()), rx, by + 20, colW, Ui.TEXT_MUTED);
         Component relations = Component.translatable("crusadecraft.map.status.neutral");
-        Ui.text(g, font, relations, rx, by + 42, 0xFFE0C060);
+        Ui.text(g, font, relations, rx, by + 42, 0xFFE8C066);
         if (Ui.inside(mouseX, mouseY, rx, by + 41, font.width(relations), 10)) {
             pendingTooltip = List.of(relations, Component.translatable("crusadecraft.ai.relations").withStyle(ChatFormatting.GRAY));
         }

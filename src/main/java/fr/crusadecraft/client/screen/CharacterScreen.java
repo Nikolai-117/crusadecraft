@@ -69,7 +69,7 @@ public class CharacterScreen extends Screen {
             Button appoint = Button.builder(Component.translatable("crusadecraft.action.appoint"), b -> {
                 appointOpen = true;
                 rebuildWidgets();
-            }).build();
+            }).build(KitButton::new);
             appoint.setTooltip(Tooltip.create(Component.translatable("crusadecraft.action.appoint.tip")));
             appoint.active = !view.child() && view.status() == CharacterStatus.LIBRE;
             buttons.add(appoint);
@@ -80,7 +80,7 @@ public class CharacterScreen extends Screen {
                     ? action("crusadecraft.action.recall", CharacterService.Action.RECALL, null)
                     : action("crusadecraft.action.exile", CharacterService.Action.EXILE, "crusadecraft.action.exile.tip"));
         }
-        buttons.add(Button.builder(Component.translatable("gui.done"), b -> onClose()).build());
+        buttons.add(Button.builder(Component.translatable("gui.done"), b -> onClose()).build(KitButton::new));
         int gap = 4;
         int perRow = buttons.size() <= 3 ? buttons.size() : (buttons.size() + 1) / 2;
         int rowsUsed = (buttons.size() + perRow - 1) / perRow;
@@ -101,7 +101,7 @@ public class CharacterScreen extends Screen {
     }
 
     private Button action(String key, CharacterService.Action action, String tip) {
-        Button b = Button.builder(Component.translatable(key), btn -> send(action, null)).build();
+        Button b = Button.builder(Component.translatable(key), btn -> send(action, null)).build(KitButton::new);
         if (tip != null) b.setTooltip(Tooltip.create(Component.translatable(tip)));
         return b;
     }
@@ -123,7 +123,7 @@ public class CharacterScreen extends Screen {
                     ? Component.translatable("crusadecraft.appoint.vacant").withStyle(ChatFormatting.GRAY)
                     : Component.literal(slot.holderName());
             MutableComponent label = Component.translatable(post.key(view.female())).append(" : ").append(holder);
-            Button b = Button.builder(label, btn -> send(CharacterService.Action.APPOINT, post)).bounds(px + 10, y, pw - 20, 18).build();
+            Button b = Button.builder(label, btn -> send(CharacterService.Action.APPOINT, post)).bounds(px + 10, y, pw - 20, 18).build(KitButton::new);
             int statValue = view.stats()[post.stat().ordinal()];
             b.setTooltip(Tooltip.create(Component.translatable("crusadecraft.appoint.tip",
                     Component.translatable(post.stat().key()), statValue)));
@@ -134,13 +134,13 @@ public class CharacterScreen extends Screen {
         if (view.post() != null) {
             addRenderableWidget(Button.builder(Component.translatable("crusadecraft.action.dismiss",
                     Component.translatable(view.post().key(view.female()))), btn -> send(CharacterService.Action.DISMISS, null))
-                    .bounds(px + 10, y, pw - 20, 18).build());
+                    .bounds(px + 10, y, pw - 20, 18).build(KitButton::new));
         }
         y += 20;
         addRenderableWidget(Button.builder(Component.translatable("gui.cancel"), btn -> {
             appointOpen = false;
             rebuildWidgets();
-        }).bounds(px + pw / 2 - 40, y, 80, 18).build());
+        }).bounds(px + pw / 2 - 40, y, 80, 18).build(KitButton::new));
     }
 
     // ------------------------------------------------------------------ rendu
@@ -202,7 +202,7 @@ public class CharacterScreen extends Screen {
         int x = left + 88, y = top + 49;
         for (Stat stat : Stat.values()) {
             int bx = x + stat.ordinal() * 39;
-            g.fill(bx, y, bx + 36, y + 22, 0xFF1C1612);
+            g.fill(bx, y, bx + 36, y + 22, 0xFF1B2026);
             g.renderOutline(bx, y, 36, 22, Ui.GOLD_DARK);
             g.renderItem(Portraits.statIcon(stat), bx + 2, y + 3);
             Ui.text(g, font, Component.literal(String.valueOf(view.stats()[stat.ordinal()])), bx + 20, y + 8, Ui.TEXT);
@@ -296,7 +296,7 @@ public class CharacterScreen extends Screen {
         if (view.hasOpinion()) {
             int op = view.opinion();
             Ui.text(g, font, Component.translatable("crusadecraft.character.opinion"), x, y + 2, Ui.TEXT_MUTED);
-            int color = op >= 20 ? Ui.GREEN : op <= -20 ? Ui.RED : 0xFFC99A3C;
+            int color = op >= 20 ? Ui.GREEN : op <= -20 ? Ui.RED : 0xFFE3B34F;
             Ui.bar(g, x + 46, y + 3, bw, 6, (op + 100) / 200.0, color);
             Ui.text(g, font, Component.literal(signed(op)), x + 50 + bw, y + 2, color);
             if (Ui.inside(mouseX, mouseY, x, y, 102 + bw, 12)) pendingTooltip = opinionTooltip();

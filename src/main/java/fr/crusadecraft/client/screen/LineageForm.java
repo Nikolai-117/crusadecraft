@@ -81,29 +81,29 @@ public class LineageForm extends Screen {
             addRenderableWidget(Button.builder(realmLabel(), b -> {
                 realmIndex = realmIndex + 1 >= realms.size() ? -1 : realmIndex + 1;
                 b.setMessage(realmLabel());
-            }).bounds(left + 12, y, fw - 24, 16).tooltip(Tooltip.create(Component.translatable("crusadecraft.lineage.form.realm.tip"))).build());
+            }).bounds(left + 12, y, fw - 24, 16).tooltip(Tooltip.create(Component.translatable("crusadecraft.lineage.form.realm.tip"))).build(KitButton::new));
             y += 20;
         }
         if (mode == Mode.NEW_HOUSE) {
             addRenderableWidget(Button.builder(generationsLabel(), b -> {
                 generations = generations % LineageGenerator.MAX_GENERATIONS + 1;
                 b.setMessage(generationsLabel());
-            }).bounds(left + 12, y, fw - 24, 16).tooltip(Tooltip.create(Component.translatable("crusadecraft.lineage.form.generations.tip"))).build());
+            }).bounds(left + 12, y, fw - 24, 16).tooltip(Tooltip.create(Component.translatable("crusadecraft.lineage.form.generations.tip"))).build(KitButton::new));
         }
         if (mode == Mode.NEW_COMMUNITY) {
             int half = (fw - 24 - 4) / 2;
             addRenderableWidget(Button.builder(kindLabel(), b -> {
                 kind = CommunityKind.values()[(kind.ordinal() + 1) % CommunityKind.values().length];
                 b.setMessage(kindLabel());
-            }).bounds(left + 12, y, half, 16).tooltip(Tooltip.create(Component.translatable("crusadecraft.lineage.form.kind.tip"))).build());
+            }).bounds(left + 12, y, half, 16).tooltip(Tooltip.create(Component.translatable("crusadecraft.lineage.form.kind.tip"))).build(KitButton::new));
             addRenderableWidget(Button.builder(sizeLabel(), b -> {
                 sizeIndex = (sizeIndex + 1) % SIZES.length;
                 b.setMessage(sizeLabel());
-            }).bounds(left + 16 + half, y, half, 16).tooltip(Tooltip.create(Component.translatable("crusadecraft.lineage.form.size.tip"))).build());
+            }).bounds(left + 16 + half, y, half, 16).tooltip(Tooltip.create(Component.translatable("crusadecraft.lineage.form.size.tip"))).build(KitButton::new));
         }
         Component confirm = Component.translatable(mode == Mode.RENAME ? "crusadecraft.mapedit.form.save" : "crusadecraft.lineage.form.generate");
-        addRenderableWidget(Button.builder(confirm, b -> confirm()).bounds(left + fw / 2 - 94, top + fh - 26, 90, 18).build());
-        addRenderableWidget(Button.builder(Component.translatable("gui.cancel"), b -> onClose()).bounds(left + fw / 2 + 4, top + fh - 26, 90, 18).build());
+        addRenderableWidget(Button.builder(confirm, b -> confirm()).bounds(left + fw / 2 - 94, top + fh - 26, 90, 18).build(KitButton::new));
+        addRenderableWidget(Button.builder(Component.translatable("gui.cancel"), b -> onClose()).bounds(left + fw / 2 + 4, top + fh - 26, 90, 18).build(KitButton::new));
         setInitialFocus(nameBox);
     }
 

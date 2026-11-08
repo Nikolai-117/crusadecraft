@@ -42,7 +42,7 @@ public class DialogueScreen extends Screen {
         top = (height - H) / 2;
         List<Button> buttons = new ArrayList<>();
         Button order = Button.builder(Component.translatable("crusadecraft.dialogue.order"), b ->
-                CrusadeNetwork.toServer(new fr.crusadecraft.network.packet.CourtPackets.OpenOffice(view.ref()))).build();
+                CrusadeNetwork.toServer(new fr.crusadecraft.network.packet.CourtPackets.OpenOffice(view.ref()))).build(KitButton::new);
         order.active = view.canAct() && view.post() != null && !view.deceased();
         order.setTooltip(Tooltip.create(Component.translatable(view.post() == null
                 ? "crusadecraft.dialogue.order.none" : "crusadecraft.dialogue.order.tip")));
@@ -58,9 +58,9 @@ public class DialogueScreen extends Screen {
                     : act("crusadecraft.action.exile", CharacterService.Action.EXILE, "crusadecraft.action.exile.tip"));
         }
         buttons.add(Button.builder(Component.translatable("crusadecraft.dialogue.sheet"), b ->
-                CrusadeNetwork.toServer(new RequestCharacterPacket(view.ref(), RequestCharacterPacket.Mode.SHEET))).build());
-        buttons.add(Button.builder(Component.translatable("crusadecraft.dialogue.minecolonies"), b -> openMineColonies()).build());
-        buttons.add(Button.builder(Component.translatable("crusadecraft.dialogue.farewell"), b -> onClose()).build());
+                CrusadeNetwork.toServer(new RequestCharacterPacket(view.ref(), RequestCharacterPacket.Mode.SHEET))).build(KitButton::new));
+        buttons.add(Button.builder(Component.translatable("crusadecraft.dialogue.minecolonies"), b -> openMineColonies()).build(KitButton::new));
+        buttons.add(Button.builder(Component.translatable("crusadecraft.dialogue.farewell"), b -> onClose()).build(KitButton::new));
 
         int colW = (W - 30) / 2;
         int bx0 = left + 10, by0 = top + H - 10 - ((buttons.size() + 1) / 2) * 20;
@@ -76,7 +76,7 @@ public class DialogueScreen extends Screen {
 
     private Button act(String key, CharacterService.Action action, String tip) {
         Button b = Button.builder(Component.translatable(key), btn -> CrusadeNetwork.toServer(
-                new CharacterActionPacket(view.ref(), action, null, RequestCharacterPacket.Mode.DIALOGUE))).build();
+                new CharacterActionPacket(view.ref(), action, null, RequestCharacterPacket.Mode.DIALOGUE))).build(KitButton::new);
         if (tip != null) b.setTooltip(Tooltip.create(Component.translatable(tip)));
         return b;
     }
@@ -107,7 +107,7 @@ public class DialogueScreen extends Screen {
         Ui.text(g, font, role, tx, top + 26, Ui.TEXT_MUTED);
         if (view.hasOpinion()) {
             int op = view.opinion();
-            int color = op >= 20 ? Ui.GREEN : op <= -20 ? Ui.RED : 0xFFC99A3C;
+            int color = op >= 20 ? Ui.GREEN : op <= -20 ? Ui.RED : 0xFFE3B34F;
             Ui.text(g, font, Component.translatable("crusadecraft.character.opinion").append(" " + CharacterScreen.signed(op)), tx, top + 37, color);
         }
         Component address = Component.translatable(view.rulerFeminine() ? "crusadecraft.dialogue.address.f" : "crusadecraft.dialogue.address.m");

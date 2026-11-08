@@ -57,13 +57,13 @@ public class BuildingScreen extends Screen {
         addRenderableWidget(name);
         int by = top + H - 24;
         addRenderableWidget(Button.builder(Component.translatable("crusadecraft.city.screen.validate"), b -> send(selected, false))
-                .bounds(left + W - 12 - 84, by, 84, 16).build());
+                .bounds(left + W - 12 - 84, by, 84, 16).build(KitButton::new));
         if (!draft && view.function() >= 0) {
             addRenderableWidget(Button.builder(Component.translatable("crusadecraft.city.screen.clear"), b -> send(-1, false))
-                    .bounds(left + W - 12 - 84 - 6 - 104, by, 104, 16).build());
+                    .bounds(left + W - 12 - 84 - 6 - 104, by, 104, 16).build(KitButton::new));
         }
         addRenderableWidget(Button.builder(Component.translatable(draft ? "crusadecraft.city.screen.drop" : "crusadecraft.city.screen.forget"),
-                b -> send(-1, true)).bounds(left + 12, by, 110, 16).build());
+                b -> send(-1, true)).bounds(left + 12, by, 110, 16).build(KitButton::new));
     }
 
     private void send(int function, boolean forget) {

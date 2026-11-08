@@ -73,11 +73,11 @@ public final class CityHud {
             colors.add(Ui.TEXT_MUTED);
         }
         lines.add(Component.translatable("crusadecraft.city.hud.hint.1"));
-        colors.add(0xFF8A7C60);
+        colors.add(0xFF949CA6);
         lines.add(Component.translatable("crusadecraft.city.hud.hint.2"));
-        colors.add(0xFF8A7C60);
+        colors.add(0xFF949CA6);
         lines.add(Component.translatable("crusadecraft.city.hud.hint.3"));
-        colors.add(0xFF8A7C60);
+        colors.add(0xFF949CA6);
         int x = 8, y = 8;
         int h = PAD * 2 + 12 + lines.size() * 10;
         g.fill(x, y, x + W, y + h, fade(0xC81A1511, alpha));

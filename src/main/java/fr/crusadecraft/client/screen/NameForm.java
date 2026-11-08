@@ -40,8 +40,8 @@ public class NameForm extends Screen {
         addRenderableWidget(box);
         setInitialFocus(box);
         addRenderableWidget(Button.builder(Component.translatable("crusadecraft.name.validate"), b -> validate())
-                .bounds(left + W - 10 - 160, top + H - 26, 78, 16).build());
-        addRenderableWidget(Button.builder(Component.translatable("gui.cancel"), b -> onClose()).bounds(left + W - 10 - 78, top + H - 26, 78, 16).build());
+                .bounds(left + W - 10 - 160, top + H - 26, 78, 16).build(KitButton::new));
+        addRenderableWidget(Button.builder(Component.translatable("gui.cancel"), b -> onClose()).bounds(left + W - 10 - 78, top + H - 26, 78, 16).build(KitButton::new));
     }
 
     private void validate() {

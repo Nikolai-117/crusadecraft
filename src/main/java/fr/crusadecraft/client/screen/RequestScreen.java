@@ -40,7 +40,7 @@ public class RequestScreen extends Screen {
             Button b = Button.builder(label, btn -> {
                 CrusadeNetwork.toServer(new CourtPackets.AnswerRequest(view.id(), c.choice()));
                 onClose();
-            }).bounds(left + 12, y, W - 24, 18).build();
+            }).bounds(left + 12, y, W - 24, 18).build(KitButton::new);
             MutableComponent tip = Component.translatable(c.choice().effectKey()).withStyle(ChatFormatting.GRAY);
             if (!c.enabled()) tip = Component.translatable("crusadecraft.choice.cannot_afford").withStyle(ChatFormatting.RED);
             b.setTooltip(Tooltip.create(tip));

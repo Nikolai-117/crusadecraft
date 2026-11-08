@@ -14,36 +14,32 @@ import java.util.List;
  * <p>Tout est dessiné avec des aplats : aucune texture d'interface à maintenir.
  */
 public final class Ui {
-    public static final int PANEL = 0xF01A1511;
-    public static final int PANEL_INNER = 0xFF241D17;
-    public static final int PANEL_HIGHLIGHT = 0xFF33291F;
-    public static final int GOLD = 0xFFC9A55C;
-    public static final int GOLD_DARK = 0xFF6E5528;
-    public static final int TEXT = 0xFFEDE3CC;
-    public static final int TEXT_MUTED = 0xFFA89A7C;
-    public static final int TEXT_TITLE = 0xFFF3D88C;
-    public static final int RED = 0xFFB0413A;
-    public static final int GREEN = 0xFF6E9E4A;
-    public static final int PARCHMENT = 0xFFEADDBE;
-    public static final int PARCHMENT_DARK = 0xFFD4C29A;
-    public static final int INK = 0xFF3A2918;
-    public static final int INK_MUTED = 0xFF7A6345;
+    // P61 : la palette de la maquette Varenhold (voir Kit). Les noms restent ceux d'avant : tous les écrans changent d'un coup.
+    public static final int PANEL = Kit.ARDOISE;
+    public static final int PANEL_INNER = Kit.CARTE;
+    public static final int PANEL_HIGHLIGHT = Kit.SELECTION;
+    public static final int GOLD = Kit.DORURE;
+    public static final int GOLD_DARK = Kit.FILET_OR;
+    public static final int TEXT = Kit.CREME;
+    public static final int TEXT_MUTED = Kit.GRIS_DISCRET;
+    public static final int TEXT_TITLE = Kit.OR;
+    public static final int RED = Kit.GUEULES;
+    public static final int GREEN = Kit.SINOPLE;
+    public static final int PARCHMENT = Kit.PARCHEMIN;
+    public static final int PARCHMENT_DARK = 0xFFC9BD9F;
+    public static final int INK = Kit.ENCRE;
+    public static final int INK_MUTED = 0xFF6E6250;
 
     private Ui() {}
 
-    /** Panneau principal : ombre, fond sombre, double liseré doré. */
+    /** Panneau principal : le panneau ancré de la maquette (noir, dorure, noir, ardoise). */
     public static void panel(GuiGraphics g, int x, int y, int w, int h) {
-        g.fill(x + 3, y + 3, x + w + 3, y + h + 3, 0x80000000);
-        g.fill(x, y, x + w, y + h, PANEL);
-        g.fillGradient(x + 1, y + 1, x + w - 1, y + 24, 0x40C9A55C, 0x00C9A55C);
-        g.renderOutline(x, y, w, h, GOLD);
-        g.renderOutline(x + 2, y + 2, w - 4, h - 4, GOLD_DARK);
+        Kit.anchored(g, x, y, w, h);
     }
 
-    /** Encadré secondaire à l'intérieur d'un panneau. */
+    /** Encadré secondaire à l'intérieur d'un panneau : une carte, relief clair en haut, sombre en bas. */
     public static void inset(GuiGraphics g, int x, int y, int w, int h) {
-        g.fill(x, y, x + w, y + h, PANEL_INNER);
-        g.renderOutline(x, y, w, h, GOLD_DARK);
+        Kit.card(g, x, y, w, h);
     }
 
     /** Page de parchemin (registre, lettres). */
@@ -100,18 +96,18 @@ public final class Ui {
         return 0.2126 * r + 0.7152 * gr + 0.0722 * b;
     }
 
-    /** Jauge horizontale, valeur entre 0 et 1. */
+    /** Jauge horizontale, valeur entre 0 et 1 : un puits, et la couleur qui le remplit. */
     public static void bar(GuiGraphics g, int x, int y, int w, int h, double frac, int color) {
-        g.fill(x, y, x + w, y + h, 0xFF110D0A);
+        g.fill(x, y, x + w, y + h, Kit.CONTOUR);
+        g.fill(x + 1, y + 1, x + w - 1, y + h - 1, 0xFF2A323B);
         int filled = (int) Math.round(Math.max(0, Math.min(1, frac)) * (w - 2));
         g.fill(x + 1, y + 1, x + 1 + filled, y + h - 1, color);
-        g.renderOutline(x, y, w, h, GOLD_DARK);
     }
 
     /** Couleur du bonheur MineColonies (0 à 10) : rouge, ambre, vert. */
     public static int happinessColor(double happiness) {
         if (happiness < 4) return RED;
-        if (happiness < 6.5) return 0xFFC99A3C;
+        if (happiness < 6.5) return Kit.AMBRE;
         return GREEN;
     }
 

@@ -33,23 +33,23 @@ public class PlacementScreen extends Screen {
         top = height - H - 34;
         int x0 = left + 8, y0 = top + 24;
         int c1 = x0, c2 = x0 + B + GAP, c3 = x0 + 2 * (B + GAP);
-        addRenderableWidget(Button.builder(Component.translatable("crusadecraft.plan.panel.rotate_left"), b -> rotate(3)).bounds(c1, y0, B, BH).build());
-        addRenderableWidget(Button.builder(Component.translatable("crusadecraft.plan.panel.forward"), b -> move(0, 0, 1)).bounds(c2, y0, B, BH).build());
-        addRenderableWidget(Button.builder(Component.translatable("crusadecraft.plan.panel.rotate_right"), b -> rotate(1)).bounds(c3, y0, B, BH).build());
+        addRenderableWidget(Button.builder(Component.translatable("crusadecraft.plan.panel.rotate_left"), b -> rotate(3)).bounds(c1, y0, B, BH).build(KitButton::new));
+        addRenderableWidget(Button.builder(Component.translatable("crusadecraft.plan.panel.forward"), b -> move(0, 0, 1)).bounds(c2, y0, B, BH).build(KitButton::new));
+        addRenderableWidget(Button.builder(Component.translatable("crusadecraft.plan.panel.rotate_right"), b -> rotate(1)).bounds(c3, y0, B, BH).build(KitButton::new));
         int y1 = y0 + BH + GAP;
-        addRenderableWidget(Button.builder(Component.translatable("crusadecraft.plan.panel.left"), b -> move(-1, 0, 0)).bounds(c1, y1, B, BH).build());
-        addRenderableWidget(Button.builder(Component.translatable("crusadecraft.plan.panel.back"), b -> move(0, 0, -1)).bounds(c2, y1, B, BH).build());
-        addRenderableWidget(Button.builder(Component.translatable("crusadecraft.plan.panel.right"), b -> move(1, 0, 0)).bounds(c3, y1, B, BH).build());
+        addRenderableWidget(Button.builder(Component.translatable("crusadecraft.plan.panel.left"), b -> move(-1, 0, 0)).bounds(c1, y1, B, BH).build(KitButton::new));
+        addRenderableWidget(Button.builder(Component.translatable("crusadecraft.plan.panel.back"), b -> move(0, 0, -1)).bounds(c2, y1, B, BH).build(KitButton::new));
+        addRenderableWidget(Button.builder(Component.translatable("crusadecraft.plan.panel.right"), b -> move(1, 0, 0)).bounds(c3, y1, B, BH).build(KitButton::new));
         int y2 = y1 + BH + GAP;
-        addRenderableWidget(Button.builder(Component.translatable("crusadecraft.plan.panel.up"), b -> move(0, 1, 0)).bounds(c1, y2, B, BH).build());
+        addRenderableWidget(Button.builder(Component.translatable("crusadecraft.plan.panel.up"), b -> move(0, 1, 0)).bounds(c1, y2, B, BH).build(KitButton::new));
         stepButton = addRenderableWidget(Button.builder(stepLabel(), b -> {
             step = (step + 1) % STEPS.length;
             b.setMessage(stepLabel());
-        }).bounds(c2, y2, B, BH).build());
-        addRenderableWidget(Button.builder(Component.translatable("crusadecraft.plan.panel.down"), b -> move(0, -1, 0)).bounds(c3, y2, B, BH).build());
+        }).bounds(c2, y2, B, BH).build(KitButton::new));
+        addRenderableWidget(Button.builder(Component.translatable("crusadecraft.plan.panel.down"), b -> move(0, -1, 0)).bounds(c3, y2, B, BH).build(KitButton::new));
         int y3 = y2 + BH + GAP;
-        addRenderableWidget(Button.builder(Component.translatable("crusadecraft.plan.panel.place"), b -> place()).bounds(c1, y3, B * 2 + GAP, BH).build());
-        addRenderableWidget(Button.builder(Component.translatable("crusadecraft.plan.panel.cancel"), b -> cancel()).bounds(c3, y3, B, BH).build());
+        addRenderableWidget(Button.builder(Component.translatable("crusadecraft.plan.panel.place"), b -> place()).bounds(c1, y3, B * 2 + GAP, BH).build(KitButton::new));
+        addRenderableWidget(Button.builder(Component.translatable("crusadecraft.plan.panel.cancel"), b -> cancel()).bounds(c3, y3, B, BH).build(KitButton::new));
     }
 
     private Component stepLabel() {

@@ -102,7 +102,7 @@ public class TreeScreen extends Screen {
             panY = Math.max(8, (areaH - treeH * zoom) / 2.0);
             centered = true;
         }
-        addRenderableWidget(Button.builder(Component.translatable("gui.back"), b -> onClose()).bounds(left + w - 68, top + h - 24, 60, 16).build());
+        addRenderableWidget(Button.builder(Component.translatable("gui.back"), b -> onClose()).bounds(left + w - 68, top + h - 24, 60, 16).build(KitButton::new));
         LineageView.Row r = selected == null ? null : rows.get(selected);
         int x = left + 8;
         if (r != null && view.canEdit()) {
@@ -209,7 +209,7 @@ public class TreeScreen extends Screen {
         boolean sel = p.id().equals(selected);
         int border = sel ? Ui.TEXT_TITLE : r.member() ? Ui.GOLD_DARK : 0xFF4A4036;
         g.fill(x - 1, y - 1, x + BOX_W + 1, y + BOX_H + 1, border);
-        g.fill(x, y, x + BOX_W, y + BOX_H, !r.alive() ? 0xFF1A1714 : hover ? 0xFF3A2E22 : sel ? Ui.PANEL_HIGHLIGHT : 0xFF2A2119);
+        g.fill(x, y, x + BOX_W, y + BOX_H, !r.alive() ? 0xFF1A1714 : hover ? 0xFF2E3740 : sel ? Ui.PANEL_HIGHLIGHT : 0xFF2A2119);
         String mark = switch (r.role()) {
             case SOUVERAIN -> "♛ ";
             case HERITIER -> "♔ ";

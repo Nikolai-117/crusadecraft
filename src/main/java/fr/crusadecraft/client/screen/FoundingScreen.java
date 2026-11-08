@@ -74,12 +74,12 @@ public class FoundingScreen extends Screen {
         titleButton = addRenderableWidget(Button.builder(titleLabel(), b -> {
             feminine = !feminine;
             b.setMessage(titleLabel());
-        }).bounds(fieldX, top + 127, fieldW, 18).build());
+        }).bounds(fieldX, top + 127, fieldW, 18).build(KitButton::new));
 
         addRenderableWidget(Button.builder(Component.translatable("crusadecraft.founding.confirm"), b -> confirm())
-                .bounds(left + W / 2 - 104, top + H - 27, 100, 20).build());
+                .bounds(left + W / 2 - 104, top + H - 27, 100, 20).build(KitButton::new));
         addRenderableWidget(Button.builder(Component.translatable("gui.cancel"), b -> onClose())
-                .bounds(left + W / 2 + 4, top + H - 27, 100, 20).build());
+                .bounds(left + W / 2 + 4, top + H - 27, 100, 20).build(KitButton::new));
         setInitialFocus(nameBox);
     }
 

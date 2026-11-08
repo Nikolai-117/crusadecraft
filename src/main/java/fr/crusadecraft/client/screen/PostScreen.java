@@ -48,14 +48,14 @@ public class PostScreen extends Screen {
         delete = Button.builder(Component.translatable("crusadecraft.city.post.delete"), b -> {
             if (selected < 0) return;
             CrusadeNetwork.toServer(new CityPostPackets.Act(CityPostPackets.DELETE, index(selected)));
-        }).bounds(left + 12, by, 84, 16).build();
+        }).bounds(left + 12, by, 84, 16).build(KitButton::new);
         delete.active = selected >= 0;
         addRenderableWidget(delete);
         Button clear = Button.builder(Component.translatable("crusadecraft.city.post.clear"), b -> CrusadeNetwork.toServer(new CityPostPackets.Act(CityPostPackets.CLEAR, 0)))
-                .bounds(left + 100, by, 84, 16).build();
+                .bounds(left + 100, by, 84, 16).build(KitButton::new);
         clear.active = !letters.isEmpty();
         addRenderableWidget(clear);
-        addRenderableWidget(Button.builder(Component.translatable("gui.done"), b -> onClose()).bounds(left + W - 66, by, 54, 16).build());
+        addRenderableWidget(Button.builder(Component.translatable("gui.done"), b -> onClose()).bounds(left + W - 66, by, 54, 16).build(KitButton::new));
     }
 
     @Override

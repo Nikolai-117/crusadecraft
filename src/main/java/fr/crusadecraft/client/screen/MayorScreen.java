@@ -49,7 +49,7 @@ public class MayorScreen extends Screen {
         if (view.mayor() != null) {
             addRenderableWidget(Button.builder(Component.translatable("crusadecraft.dialogue.sheet"), b ->
                     CrusadeNetwork.toServer(new RequestCharacterPacket(view.mayor().ref(), RequestCharacterPacket.Mode.SHEET)))
-                    .bounds(left + 12, top + 74, 100, 16).build());
+                    .bounds(left + 12, top + 74, 100, 16).build(KitButton::new));
         }
         if (view.canAct()) {
             int cx = left + w / 2 + 6;
@@ -57,14 +57,14 @@ public class MayorScreen extends Screen {
             for (MayorView.Person p : view.candidates()) {
                 Button appoint = Button.builder(Component.translatable("crusadecraft.mayor.appoint"), b ->
                         CrusadeNetwork.toServer(new CourtPackets.MayorAction(view.colony(), p.ref(), false, null)))
-                        .bounds(left + w - 66, y, 56, 14).build();
+                        .bounds(left + w - 66, y, 56, 14).build(KitButton::new);
                 appoint.setTooltip(Tooltip.create(Component.translatable("crusadecraft.mayor.appoint.tip", p.name())));
                 addRenderableWidget(appoint);
                 y += 17;
             }
         }
         addRenderableWidget(Button.builder(Component.translatable("gui.done"), b -> onClose())
-                .bounds(left + w - 90, top + h - 26, 80, 18).build());
+                .bounds(left + w - 90, top + h - 26, 80, 18).build(KitButton::new));
     }
 
     @Override

@@ -156,12 +156,12 @@ public class CityPanelScreen extends Screen {
                 tab = t;
                 scroll = 0;
                 rebuildWidgets();
-            }).bounds(tx, top + 24, tw, 14).build();
+            }).bounds(tx, top + 24, tw, 14).build(KitButton::new);
             b.active = t != tab;
             addRenderableWidget(b);
             tx += tw + 1;
         }
-        addRenderableWidget(Button.builder(Component.translatable("gui.done"), b -> onClose()).bounds(left + W - 66, top + H - 22, 54, 16).build());
+        addRenderableWidget(Button.builder(Component.translatable("gui.done"), b -> onClose()).bounds(left + W - 66, top + H - 22, 54, 16).build(KitButton::new));
         switch (tab) {
             case LIVE -> initLive();
             case GENERAL -> initGeneral();
@@ -186,7 +186,7 @@ public class CityPanelScreen extends Screen {
             addRenderableWidget(Button.builder(Component.translatable("crusadecraft.city.panel.live.go"), b -> {
                 send(t -> t.putUUID("goSee", id));
                 onClose();
-            }).bounds(left + W - 12 - 32, y0() + 13 + i * LIVE_ROW, 32, 14).build());
+            }).bounds(left + W - 12 - 32, y0() + 13 + i * LIVE_ROW, 32, 14).build(KitButton::new));
         }
     }
 
@@ -200,7 +200,7 @@ public class CityPanelScreen extends Screen {
     }
 
     private Button button(String key, int x, int y, int w, Button.OnPress press) {
-        Button b = Button.builder(Component.translatable(key), press).bounds(x, y, w, 14).build();
+        Button b = Button.builder(Component.translatable(key), press).bounds(x, y, w, 14).build(KitButton::new);
         addRenderableWidget(b);
         return b;
     }
@@ -208,7 +208,7 @@ public class CityPanelScreen extends Screen {
     private void toggle(String key, boolean on, int x, int y, int w, Consumer<Boolean> change) {
         Component label = Component.translatable(key).append(" : ").append(Component.translatable(on ? "crusadecraft.city.panel.yes" : "crusadecraft.city.panel.no"));
         addRenderableWidget(Button.builder(label, b -> change.accept(!on)).bounds(x, y, w, 14)
-                .tooltip(Tooltip.create(Component.translatable(key + ".tip"))).build());
+                .tooltip(Tooltip.create(Component.translatable(key + ".tip"))).build(KitButton::new));
     }
 
     private void initGeneral() {
@@ -256,7 +256,7 @@ public class CityPanelScreen extends Screen {
                 rebuildWidgets();
             });
             Button name = Button.builder(Component.literal(r.getString("name")), b -> {
-            }).bounds(x() + 16, y, 196, 14).build();
+            }).bounds(x() + 16, y, 196, 14).build(KitButton::new);
             name.active = false;
             addRenderableWidget(name);
             button("crusadecraft.city.panel.next", x() + 214, y, 14, b -> {
@@ -271,20 +271,20 @@ public class CityPanelScreen extends Screen {
         addRenderableWidget(Button.builder(Component.translatable(rank.titleKey()), b -> {
             rankIndex = (rankIndex + 1) % TitleRank.values().length;
             rebuildWidgets();
-        }).bounds(x() + 134, y + 12, 64, 14).build());
+        }).bounds(x() + 134, y + 12, 64, 14).build(KitButton::new));
         addRenderableWidget(Button.builder(Component.literal("█").withStyle(s -> s.withColor(COLORS[colorIndex])), b -> {
             colorIndex = (colorIndex + 1) % COLORS.length;
             rebuildWidgets();
-        }).bounds(x() + 200, y + 12, 18, 14).build());
+        }).bounds(x() + 200, y + 12, 18, 14).build(KitButton::new));
         AiPersonality p = AiPersonality.values()[personalityIndex];
         addRenderableWidget(Button.builder(Component.translatable(p.key()), b -> {
             personalityIndex = (personalityIndex + 1) % AiPersonality.values().length;
             rebuildWidgets();
-        }).bounds(x() + 220, y + 12, 82, 14).build());
+        }).bounds(x() + 220, y + 12, 82, 14).build(KitButton::new));
         addRenderableWidget(Button.builder(Component.translatable(mine ? "crusadecraft.city.panel.realm.mine" : "crusadecraft.city.panel.realm.computer"), b -> {
             mine = !mine;
             rebuildWidgets();
-        }).bounds(x() + 304, y + 12, 58, 14).tooltip(Tooltip.create(Component.translatable("crusadecraft.city.panel.realm.who.tip"))).build());
+        }).bounds(x() + 304, y + 12, 58, 14).tooltip(Tooltip.create(Component.translatable("crusadecraft.city.panel.realm.who.tip"))).build(KitButton::new));
         button("crusadecraft.city.panel.realm.found", x() + 364, y + 12, 52, b -> send(t -> {
             CompoundTag r = new CompoundTag();
             r.putString("name", realmNameDraft);
@@ -321,14 +321,14 @@ public class CityPanelScreen extends Screen {
                     : Component.translatable("crusadecraft.city.panel.no_function");
             Button f = Button.builder(label, x -> {
                 if (current < 0 && b.getInt("suggestion") >= 0) function(id, b.getInt("suggestion"));
-            }).bounds(x() + 176, y, 136, 14).build();
+            }).bounds(x() + 176, y, 136, 14).build(KitButton::new);
             f.active = current < 0 && b.getInt("suggestion") >= 0;
             addRenderableWidget(f);
             button("crusadecraft.city.panel.next", x() + 314, y, 14, x -> function(id, current + 1 >= all.length ? -1 : current + 1));
             addRenderableWidget(Button.builder(Component.translatable("crusadecraft.city.panel.remove"), x -> send(t -> {
                 t.putUUID("building", id);
                 t.putBoolean("forget", true);
-            })).bounds(x() + W - 24 - 14, y, 14, 14).tooltip(Tooltip.create(Component.translatable("crusadecraft.city.panel.forget.tip"))).build());
+            })).bounds(x() + W - 24 - 14, y, 14, 14).tooltip(Tooltip.create(Component.translatable("crusadecraft.city.panel.forget.tip"))).build(KitButton::new));
         }
         button("crusadecraft.city.panel.recognize", x(), top + H - 22, 130, b -> send(t -> t.putBoolean("recognize", true)));
         button("crusadecraft.city.panel.accept_all", x() + 134, top + H - 22, 130, b -> send(t -> t.putBoolean("acceptAll", true)));
@@ -408,7 +408,7 @@ public class CityPanelScreen extends Screen {
             rebuildWidgets();
         });
         Button who = Button.builder(poolJob < 0 ? Component.translatable("crusadecraft.city.panel.looks.everyone") : Component.translatable(all[poolJob].key()), b -> {
-        }).bounds(x() + 86, y, 110, 14).build();
+        }).bounds(x() + 86, y, 110, 14).build(KitButton::new);
         who.active = false;
         addRenderableWidget(who);
         button("crusadecraft.city.panel.next", x() + 198, y, 14, b -> {
@@ -416,7 +416,7 @@ public class CityPanelScreen extends Screen {
             rebuildWidgets();
         });
         addRenderableWidget(Button.builder(Component.translatable("crusadecraft.city.panel.looks.apply"), b -> send(t -> t.putBoolean("applyPools", true))).bounds(x() + 216, y, 126, 14)
-                .tooltip(Tooltip.create(Component.translatable("crusadecraft.city.panel.looks.apply.tip"))).build());
+                .tooltip(Tooltip.create(Component.translatable("crusadecraft.city.panel.looks.apply.tip"))).build(KitButton::new));
         // Ce qu'on parcourt, en dessous.
         int sy = gridY() - 16;
         String[] sources = {"crusadecraft.city.panel.looks.skins", "crusadecraft.city.panel.looks.men", "crusadecraft.city.panel.looks.women"};
@@ -426,7 +426,7 @@ public class CityPanelScreen extends Screen {
                 gridSource = s;
                 gridPage = 0;
                 rebuildWidgets();
-            }).bounds(x() + i * 96, sy, 94, 14).build();
+            }).bounds(x() + i * 96, sy, 94, 14).build(KitButton::new);
             b.active = gridSource != i;
             addRenderableWidget(b);
         }
@@ -437,7 +437,7 @@ public class CityPanelScreen extends Screen {
                 gridJob = gridJob + 1 >= jobs.size() ? -1 : gridJob + 1;
                 gridPage = 0;
                 rebuildWidgets();
-            }).bounds(x() + 288, sy, 84, 14).build());
+            }).bounds(x() + 288, sy, 84, 14).build(KitButton::new));
         }
         // Importer un skin.
         int iy = top + H - 42;
@@ -468,7 +468,7 @@ public class CityPanelScreen extends Screen {
             rebuildWidgets();
         });
         Button shown = Button.builder(value, b -> {
-        }).bounds(x + 15, y, w, 14).build();
+        }).bounds(x + 15, y, w, 14).build(KitButton::new);
         shown.active = false;
         addRenderableWidget(shown);
         button("crusadecraft.city.panel.next", x + 16 + w, y, 14, b -> {
@@ -514,12 +514,12 @@ public class CityPanelScreen extends Screen {
         }));
         create.active = !stops.isEmpty() && !stops.getCompound(stopIndex).getBoolean("war");
         addRenderableWidget(Button.builder(Component.translatable("crusadecraft.economy.title"), b -> CrusadeNetwork.toServer(new fr.crusadecraft.network.packet.WorldEconomyPackets.Request(false)))
-                .bounds(x(), top + H - 22, 130, 16).tooltip(Tooltip.create(Component.translatable("crusadecraft.economy.open.tip"))).build());
+                .bounds(x(), top + H - 22, 130, 16).tooltip(Tooltip.create(Component.translatable("crusadecraft.economy.open.tip"))).build(KitButton::new));
         int toll = view.getInt("toll"), duty = view.getInt("duty");
         addRenderableWidget(Button.builder(Component.translatable("crusadecraft.city.panel.trade.toll", toll), b -> send(t -> t.putInt("toll", following(fr.crusadecraft.core.city.CityTolls.TOLLS, toll))))
-                .bounds(x() + 134, top + H - 22, 92, 16).tooltip(Tooltip.create(Component.translatable("crusadecraft.city.panel.trade.toll.tip"))).build());
+                .bounds(x() + 134, top + H - 22, 92, 16).tooltip(Tooltip.create(Component.translatable("crusadecraft.city.panel.trade.toll.tip"))).build(KitButton::new));
         addRenderableWidget(Button.builder(Component.translatable("crusadecraft.city.panel.trade.duty", duty), b -> send(t -> t.putInt("duty", following(fr.crusadecraft.core.city.CityTolls.DUTIES, duty))))
-                .bounds(x() + 228, top + H - 22, 92, 16).tooltip(Tooltip.create(Component.translatable("crusadecraft.city.panel.trade.duty.tip"))).build());
+                .bounds(x() + 228, top + H - 22, 92, 16).tooltip(Tooltip.create(Component.translatable("crusadecraft.city.panel.trade.duty.tip"))).build(KitButton::new));
         ListTag lines = view.getList("lines", Tag.TAG_COMPOUND);
         int rows = (H - 42 - 66 - 28) / TRADE_ROW;
         scroll = Mth.clamp(scroll, 0, Math.max(0, lines.size() - rows));
@@ -529,7 +529,7 @@ public class CityPanelScreen extends Screen {
             UUID id = l.getUUID("id");
             int ry = y0() + 66 + (i - scroll) * TRADE_ROW;
             addRenderableWidget(Button.builder(Component.translatable(l.getBoolean("active") ? "crusadecraft.city.panel.trade.pause" : "crusadecraft.city.panel.trade.resume"), b -> send(t -> t.putUUID("lineToggle", id)))
-                    .bounds(x() + W - 24 - 16 - 16, ry, 15, 14).tooltip(Tooltip.create(Component.translatable("crusadecraft.city.panel.trade.pause.tip"))).build());
+                    .bounds(x() + W - 24 - 16 - 16, ry, 15, 14).tooltip(Tooltip.create(Component.translatable("crusadecraft.city.panel.trade.pause.tip"))).build(KitButton::new));
             button("crusadecraft.city.panel.remove", x() + W - 24 - 15, ry, 14, b -> send(t -> t.putUUID("lineRemove", id)));
         }
     }
@@ -576,12 +576,12 @@ public class CityPanelScreen extends Screen {
         for (int i = 0; i < goods.length; i++) {
             CityGood g = goods[i];
             int col = i % 2, y = y0() + (i / 2) * ROW, cx = x() + col * 212;
-            addRenderableWidget(Button.builder(Component.literal("−8"), b -> stock(g, -8)).bounds(cx + 130, y, 24, 14).build());
-            addRenderableWidget(Button.builder(Component.literal("+8"), b -> stock(g, 8)).bounds(cx + 156, y, 24, 14).build());
+            addRenderableWidget(Button.builder(Component.literal("−8"), b -> stock(g, -8)).bounds(cx + 130, y, 24, 14).build(KitButton::new));
+            addRenderableWidget(Button.builder(Component.literal("+8"), b -> stock(g, 8)).bounds(cx + 156, y, 24, 14).build(KitButton::new));
         }
         int py = y0() + 5 * ROW;
-        addRenderableWidget(Button.builder(Component.literal("−50"), b -> send(t -> t.putLong("purse", -50))).bounds(x() + 130, py, 24, 14).build());
-        addRenderableWidget(Button.builder(Component.literal("+50"), b -> send(t -> t.putLong("purse", 50))).bounds(x() + 156, py, 24, 14).build());
+        addRenderableWidget(Button.builder(Component.literal("−50"), b -> send(t -> t.putLong("purse", -50))).bounds(x() + 130, py, 24, 14).build(KitButton::new));
+        addRenderableWidget(Button.builder(Component.literal("+50"), b -> send(t -> t.putLong("purse", 50))).bounds(x() + 156, py, 24, 14).build(KitButton::new));
         int ry = py + 20;
         EditBox rumor = box(x(), ry, 330, rumorDraft, 200, v -> rumorDraft = v);
         rumor.setHint(Component.translatable("crusadecraft.city.panel.rumor.hint"));

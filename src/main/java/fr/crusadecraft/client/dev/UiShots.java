@@ -86,17 +86,29 @@ public final class UiShots {
     /** Écrans à capturer. Chaque phase y ajoute les siens. */
     private static List<Shot> buildShots() {
         RealmView view = sampleView();
+        MapView map = sampleMap();
+        RealmView withCouncil = withSeats(view);
+        // P61 : le menu royal lit la carte du royaume dans ClientMapData, comme en jeu.
+        Runnable withMap = () -> fr.crusadecraft.client.map.ClientMapData.set(map);
         List<Shot> list = new ArrayList<>();
         list.add(new Shot("fondation", () -> new FoundingScreen(BlockPos.ZERO, view.capital(), "Romain"), null));
-        list.add(new Shot("menu_royaume", () -> RealmScreen.withTab(view, RealmScreen.Tab.ROYAUME), null));
+        list.add(new Shot("menu_royaume", () -> {
+            RealmScreen s = RealmScreen.withTab(withCouncil, RealmScreen.Tab.ROYAUME);
+            s.setChancery(sampleChancery());
+            s.setLaws(sampleLaws());
+            return s;
+        }, withMap));
         list.add(new Shot("menu_conseil_vide", () -> RealmScreen.withTab(view, RealmScreen.Tab.CONSEIL), null));
         list.add(new Shot("registre", () -> new RegistreScreen(view), null));
         CharacterView character = sampleCharacter();
         list.add(new Shot("fiche_personnage", () -> new CharacterScreen(character, false), null));
         list.add(new Shot("fiche_nomination", () -> new CharacterScreen(character, true), null));
         list.add(new Shot("dialogue", () -> new DialogueScreen(character), null));
-        RealmView withCouncil = withSeats(view);
-        list.add(new Shot("menu_conseil", () -> RealmScreen.withTab(withCouncil, RealmScreen.Tab.CONSEIL), null));
+        list.add(new Shot("menu_conseil", () -> {
+            RealmScreen s = RealmScreen.withTab(withCouncil, RealmScreen.Tab.CONSEIL);
+            s.setCouncil(sampleCouncil(true));
+            return s;
+        }, null));
         list.add(new Shot("conseil", () -> new CouncilScreen(sampleCouncil(true)), null));
         list.add(new Shot("conseil_sans_table", () -> new CouncilScreen(sampleCouncil(false)), null));
         list.add(new Shot("bureau_maire", () -> new MayorScreen(sampleMayor(true)), null));
@@ -110,12 +122,11 @@ public final class UiShots {
             return s;
         }, null));
         list.add(new Shot("menu_lois", () -> {
-            RealmScreen s = RealmScreen.withTab(view, RealmScreen.Tab.LOIS);
+            RealmScreen s = RealmScreen.withTab(withCouncil, RealmScreen.Tab.LOIS);
             s.setLaws(sampleLaws());
             s.select(Law.FISCALITE, 2);
             return s;
         }, null));
-        MapView map = sampleMap();
         list.add(new Shot("carte_politique", () -> new MapScreen(map), null));
         list.add(new Shot("carte_dejure", () -> {
             MapScreen s = new MapScreen(map);
@@ -133,10 +144,10 @@ public final class UiShots {
             return s;
         }, null));
         list.add(new Shot("menu_vassaux", () -> {
-            RealmScreen s = RealmScreen.withTab(view, RealmScreen.Tab.VASSAUX);
+            RealmScreen s = RealmScreen.withTab(withCouncil, RealmScreen.Tab.VASSAUX);
             s.setChancery(sampleChancery());
             return s;
-        }, null));
+        }, withMap));
         fr.crusadecraft.core.war.WarView war = sampleWar();
         list.add(new Shot("table_guerre", () -> {
             fr.crusadecraft.client.screen.WarScreen s = new fr.crusadecraft.client.screen.WarScreen(war);
@@ -755,6 +766,17 @@ public final class UiShots {
                 started = true;
                 shots = buildShots();
                 wait = 60; // laisser le jeu finir de charger
+                // -Pui_size=1440x810 -Pui_scale=3 : la taille d'interface d'un écran 1080p en échelle automatique (480 x 270).
+                String size = System.getProperty("crusadecraft.uishots.size", "").trim();
+                if (size.matches("[0-9]+x[0-9]+")) {
+                    String[] wh = size.split("x");
+                    org.lwjgl.glfw.GLFW.glfwSetWindowSize(mc.getWindow().getWindow(), Integer.parseInt(wh[0]), Integer.parseInt(wh[1]));
+                }
+                String scale = System.getProperty("crusadecraft.uishots.scale", "").trim();
+                if (scale.matches("[0-9]+")) {
+                    mc.options.guiScale().set(Integer.parseInt(scale));
+                    mc.resizeDisplay();
+                }
             }
             return;
         }

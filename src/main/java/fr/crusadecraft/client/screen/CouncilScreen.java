@@ -52,20 +52,20 @@ public class CouncilScreen extends Screen {
         for (CouncilView.Seat seat : view.seats()) {
             CouncilTask task = seat.task();
             Component label = task == null ? Component.literal("—") : Component.translatable(task.key());
-            Button b = Button.builder(label, btn -> cycleTask(seat)).bounds(taskX, y + 2, 142, 18).build();
+            Button b = Button.builder(label, btn -> cycleTask(seat)).bounds(taskX, y + 2, 142, 18).build(KitButton::new);
             b.setTooltip(Tooltip.create(taskTooltip(seat)));
             addRenderableWidget(b);
             y += ROW;
         }
         Button convene = Button.builder(Component.translatable("crusadecraft.council.convene"), btn ->
                 CrusadeNetwork.toServer(new CourtPackets.CouncilAction(CourtPackets.CouncilAction.Kind.CONVENE, null, null, null)))
-                .bounds(left + 10, top + h - 26, 150, 18).build();
+                .bounds(left + 10, top + h - 26, 150, 18).build(KitButton::new);
         convene.active = view.canConvene();
         convene.setTooltip(Tooltip.create(Component.translatable(view.hasTable()
                 ? "crusadecraft.council.convene.tip" : "crusadecraft.council.no_table")));
         addRenderableWidget(convene);
         addRenderableWidget(Button.builder(Component.translatable("gui.done"), btn -> onClose())
-                .bounds(left + w - 90, top + h - 26, 80, 18).build());
+                .bounds(left + w - 90, top + h - 26, 80, 18).build(KitButton::new));
     }
 
     private void cycleTask(CouncilView.Seat seat) {
@@ -135,13 +135,13 @@ public class CouncilScreen extends Screen {
     private void renderSeat(GuiGraphics g, CouncilView.Seat seat, int y, int mouseX, int mouseY) {
         int x = left + 10;
         int rw = w - 20 - 154;
-        g.fill(x, y, x + rw, y + ROW - 2, 0xFF1C1612);
+        g.fill(x, y, x + rw, y + ROW - 2, 0xFF1B2026);
         g.renderOutline(x, y, rw, ROW - 2, Ui.GOLD_DARK);
         g.renderItem(Portraits.statIcon(seat.post().stat()), x + 3, y + 2);
         Ui.text(g, font, Component.translatable(seat.post().key(seat.female())), x + 22, y + 6, Ui.TEXT_MUTED);
         int nx = x + 110;
         if (seat.holder() == null) {
-            Ui.text(g, font, Component.translatable("crusadecraft.appoint.vacant"), nx, y + 6, 0xFF6E6250);
+            Ui.text(g, font, Component.translatable("crusadecraft.appoint.vacant"), nx, y + 6, 0xFF7D858E);
             if (Ui.inside(mouseX, mouseY, x, y, rw, ROW - 2)) {
                 pendingTooltip = List.of(Component.translatable("crusadecraft.council.hint"));
             }
@@ -153,7 +153,7 @@ public class CouncilScreen extends Screen {
         String stat = String.valueOf(seat.stat());
         Ui.text(g, font, Component.literal(stat), x + rw - 58, y + 6, Ui.TEXT);
         String op = CharacterScreen.signed(seat.opinion());
-        int opColor = seat.opinion() >= 20 ? Ui.GREEN : seat.opinion() <= -20 ? Ui.RED : 0xFFC99A3C;
+        int opColor = seat.opinion() >= 20 ? Ui.GREEN : seat.opinion() <= -20 ? Ui.RED : 0xFFE3B34F;
         Ui.text(g, font, Component.literal(op), x + rw - 6 - font.width(op), y + 6, opColor);
         nameHits.add(new Object[]{seat, nx, y, rw - 110});
         if (hover) {

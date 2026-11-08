@@ -101,22 +101,22 @@ public class LineageScreen extends Screen {
         rightW = left + w - 8 - rightX;
 
         int bx = left + w - 8;
-        addRenderableWidget(Button.builder(Component.translatable("gui.done"), b -> onClose()).bounds(bx - 50, top + 6, 50, 16).build());
+        addRenderableWidget(Button.builder(Component.translatable("gui.done"), b -> onClose()).bounds(bx - 50, top + 6, 50, 16).build(KitButton::new));
         addRenderableWidget(Button.builder(tabLabel(true), b -> {
             communitiesTab = true;
             listScroll = 0;
             rebuildWidgets();
-        }).bounds(bx - 54 - 92, top + 6, 90, 16).build());
+        }).bounds(bx - 54 - 92, top + 6, 90, 16).build(KitButton::new));
         addRenderableWidget(Button.builder(tabLabel(false), b -> {
             communitiesTab = false;
             listScroll = 0;
             rebuildWidgets();
-        }).bounds(bx - 54 - 92 - 74, top + 6, 72, 16).build());
+        }).bounds(bx - 54 - 92 - 74, top + 6, 72, 16).build(KitButton::new));
 
         if (view.canEdit()) {
             Button create = Button.builder(Component.translatable(communitiesTab ? "crusadecraft.lineage.new_community" : "crusadecraft.lineage.new_house"),
                     b -> minecraft.setScreen(communitiesTab ? LineageForm.newCommunity(this, view.realms()) : LineageForm.newHouse(this, view.realms())))
-                    .bounds(left + 8, top + h - 24, LIST_W, 16).build();
+                    .bounds(left + 8, top + h - 24, LIST_W, 16).build(KitButton::new);
             create.setTooltip(Tooltip.create(Component.translatable(communitiesTab ? "crusadecraft.lineage.new_community.tip"
                     : "crusadecraft.lineage.new_house.tip")));
             addRenderableWidget(create);
@@ -129,7 +129,7 @@ public class LineageScreen extends Screen {
             Component label = Component.translatable("crusadecraft.tree.open");
             treeButtonW = font.width(label) + 12;
             Button tree = Button.builder(label, b -> minecraft.setScreen(new TreeScreen(this, view)))
-                    .bounds(rightX + rightW - treeButtonW, top + 28, treeButtonW, 15).build();
+                    .bounds(rightX + rightW - treeButtonW, top + 28, treeButtonW, 15).build(KitButton::new);
             tree.setTooltip(Tooltip.create(Component.translatable("crusadecraft.tree.open.tip")));
             addRenderableWidget(tree);
         }
@@ -147,7 +147,7 @@ public class LineageScreen extends Screen {
             Button remove = Button.builder(armedLabel(sel.id(), "crusadecraft.lineage.remove"), b -> {
                 if (confirm(sel.id())) act(LineagePackets.Action.Op.REMOVE, sel.id());
                 rebuildWidgets();
-            }).size(54, 15).build();
+            }).size(54, 15).build(KitButton::new);
             remove.setTooltip(Tooltip.create(Component.translatable(sel.house() ? "crusadecraft.lineage.remove.house.tip"
                     : "crusadecraft.lineage.remove.community.tip")));
             group.add(remove);
@@ -175,7 +175,7 @@ public class LineageScreen extends Screen {
                 Role[] all = Role.values();
                 Role next = all[(person.role().ordinal() + (hasShiftDown() ? all.length - 1 : 1)) % all.length];
                 CrusadeNetwork.toServer(new LineagePackets.Action(LineagePackets.Action.Op.ROLE, person.id(), "", next.ordinal(), 0, null, shown()));
-            }).size(Math.min(130, 12 + font.width(roleLabel)), 15).build();
+            }).size(Math.min(130, 12 + font.width(roleLabel)), 15).build(KitButton::new);
             role.setTooltip(Tooltip.create(Component.translatable("crusadecraft.lineage.role.tip")));
             group.add(role);
             group.add(button("crusadecraft.lineage.child", "crusadecraft.lineage.child.tip", b -> act(LineagePackets.Action.Op.ADD_CHILD, person.id())));
@@ -188,7 +188,7 @@ public class LineageScreen extends Screen {
             Button remove = Button.builder(armedLabel(person.id(), "crusadecraft.lineage.remove"), b -> {
                 if (confirm(person.id())) act(LineagePackets.Action.Op.REMOVE, person.id());
                 rebuildWidgets();
-            }).size(54, 15).build();
+            }).size(54, 15).build(KitButton::new);
             group.add(remove);
             int rowsNeeded = rowsFor(group);
             int start = bottom - rowsNeeded * 16 + 1;
@@ -201,7 +201,7 @@ public class LineageScreen extends Screen {
 
     private Button button(String key, String tip, Button.OnPress press) {
         Component label = Component.translatable(key);
-        Button b = Button.builder(label, press).size(font.width(label) + 12, 15).build();
+        Button b = Button.builder(label, press).size(font.width(label) + 12, 15).build(KitButton::new);
         if (tip != null) b.setTooltip(Tooltip.create(Component.translatable(tip)));
         return b;
     }
@@ -325,7 +325,7 @@ public class LineageScreen extends Screen {
             }
             boolean chosen = id.equals(shown());
             boolean hover = Ui.inside(mouseX, mouseY, x + 2, ry, LIST_W - 4, rowH - 1);
-            if (chosen || hover) g.fill(x + 2, ry, x + LIST_W - 2, ry + rowH - 1, chosen ? 0xFF3A2E22 : Ui.PANEL_HIGHLIGHT);
+            if (chosen || hover) g.fill(x + 2, ry, x + LIST_W - 2, ry + rowH - 1, chosen ? 0xFF2E3740 : Ui.PANEL_HIGHLIGHT);
             g.fill(x + 4, ry + 3, x + 7, ry + rowH - 4, color);
             Ui.text(g, font, Component.literal(font.plainSubstrByWidth(name, LIST_W - 16)), x + 10, ry + 2, chosen ? Ui.TEXT_TITLE : Ui.TEXT);
             Ui.scaled(g, font, Component.literal(font.plainSubstrByWidth(sub.getString(), (int) ((LIST_W - 16) / 0.75f))), x + 10, ry + 12, 0.75f,
@@ -368,7 +368,7 @@ public class LineageScreen extends Screen {
             LineageView.Row r = line.row;
             boolean chosen = r.id().equals(selectedPerson);
             boolean hover = Ui.inside(mouseX, mouseY, x + 2, ry, rightW - 4, ROW_H);
-            if (chosen || hover) g.fill(x + 2, ry, x + rightW - 2, ry + ROW_H - 1, chosen ? 0xFF3A2E22 : Ui.PANEL_HIGHLIGHT);
+            if (chosen || hover) g.fill(x + 2, ry, x + rightW - 2, ry + ROW_H - 1, chosen ? 0xFF2E3740 : Ui.PANEL_HIGHLIGHT);
             int indent = r.member() ? 8 : 18;
             String sign = r.female() ? "♀" : "♂";
             int textColor = !r.alive() ? 0xFF7C7062 : chosen ? Ui.TEXT_TITLE : Ui.TEXT;

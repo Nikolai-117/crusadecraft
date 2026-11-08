@@ -66,6 +66,8 @@ public final class ClientPackets {
     public static void openCouncil(CouncilView view) {
         Minecraft mc = Minecraft.getInstance();
         if (mc.screen instanceof CouncilScreen open) open.refresh(view);
+        // P61 : la page Conseil du menu royal demande le conseil pour ses tâches ; il s'y range au lieu d'ouvrir l'écran de la table.
+        else if (mc.screen instanceof RealmScreen realm) realm.setCouncil(view);
         else mc.setScreen(new CouncilScreen(view));
     }
 

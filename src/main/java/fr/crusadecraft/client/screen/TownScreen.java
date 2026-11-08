@@ -39,19 +39,19 @@ public class TownScreen extends Screen {
         top = (height - H) / 2;
         int by = top + H - 24;
         Button recognize = Button.builder(Component.translatable("crusadecraft.city.screen.recognize"), b -> act(CityStaff.RECOGNIZE))
-                .bounds(left + 12, by, 156, 16).build();
+                .bounds(left + 12, by, 156, 16).build(KitButton::new);
         Button accept = Button.builder(Component.translatable("crusadecraft.city.screen.accept", pending()), b -> act(CityStaff.ACCEPT_ALL))
-                .bounds(left + 12 + 156 + 6, by, 180, 16).build();
+                .bounds(left + 12 + 156 + 6, by, 180, 16).build(KitButton::new);
         recognize.active = city.canEdit();
         accept.active = city.canEdit() && pending() > 0;
         addRenderableWidget(recognize);
         addRenderableWidget(accept);
-        addRenderableWidget(Button.builder(Component.translatable("gui.done"), b -> onClose()).bounds(left + W - 12 - 54, by, 54, 16).build());
+        addRenderableWidget(Button.builder(Component.translatable("gui.done"), b -> onClose()).bounds(left + W - 12 - 54, by, 54, 16).build(KitButton::new));
         // P41 : la nation de cette ville, son histoire et ses relations.
         if (city.nation() != null) {
             addRenderableWidget(Button.builder(Component.translatable("crusadecraft.nation.open"), b ->
                     CrusadeNetwork.toServer(new fr.crusadecraft.network.packet.NationPackets.Request(city.nation())))
-                    .bounds(left + W - 12 - 90, top + 8, 90, 14).build());
+                    .bounds(left + W - 12 - 90, top + 8, 90, 14).build(KitButton::new));
         }
     }
 

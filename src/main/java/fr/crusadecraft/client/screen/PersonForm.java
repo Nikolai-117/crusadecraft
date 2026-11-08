@@ -75,7 +75,7 @@ public class PersonForm extends Screen {
             Button button = Button.builder(Component.literal(font.plainSubstrByWidth((on ? "✔ " : "") + label.getString(), bw - 6)), x -> {
                 mask ^= 1 << t.ordinal();
                 rebuildWidgets();
-            }).bounds(left + 12 + (i % cols) * (bw + 2), y0 + (i / cols) * 15, bw, 14).build();
+            }).bounds(left + 12 + (i % cols) * (bw + 2), y0 + (i / cols) * 15, bw, 14).build(KitButton::new);
             button.active = on || !blocked;
             button.setTooltip(Tooltip.create(Component.translatable(t.descriptionKey())));
             addRenderableWidget(button);
@@ -91,8 +91,8 @@ public class PersonForm extends Screen {
             CrusadeNetwork.toServer(new LineagePackets.Action(LineagePackets.Action.Op.EDIT, person.id(), name.getValue() + "\n" + bio.getValue(),
                     years, mask, null, parent.shownForForm()));
             onClose();
-        }).bounds(left + fw / 2 - 94, top + fh - 24, 90, 18).build());
-        addRenderableWidget(Button.builder(Component.translatable("gui.cancel"), x -> onClose()).bounds(left + fw / 2 + 4, top + fh - 24, 90, 18).build());
+        }).bounds(left + fw / 2 - 94, top + fh - 24, 90, 18).build(KitButton::new));
+        addRenderableWidget(Button.builder(Component.translatable("gui.cancel"), x -> onClose()).bounds(left + fw / 2 + 4, top + fh - 24, 90, 18).build(KitButton::new));
     }
 
     @Override

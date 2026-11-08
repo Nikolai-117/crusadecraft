@@ -51,7 +51,7 @@ public class EventScreen extends Screen {
                 if (minecraft != null && minecraft.getConnection() != null) {
                     CrusadeNetwork.toServer(new IntriguePackets.AnswerEvent(view.id(), index));
                 }
-            }).bounds(left + 12, by + i * (OPTION_H + 2), w - 24, OPTION_H).build();
+            }).bounds(left + 12, by + i * (OPTION_H + 2), w - 24, OPTION_H).build(KitButton::new);
             b.active = o.allowed();
             b.setTooltip(Tooltip.create(tooltip(o, i)));
             addRenderableWidget(b);
@@ -85,7 +85,7 @@ public class EventScreen extends Screen {
         Ui.text(g, font, deadline, left + 58, top + 32, Ui.TEXT_MUTED);
         if (view.waiting() > 1) {
             Component more = Component.translatable("crusadecraft.event.waiting", view.waiting());
-            Ui.text(g, font, more, left + w - 10 - font.width(more), top + 32, 0xFFE0C060);
+            Ui.text(g, font, more, left + w - 10 - font.width(more), top + 32, 0xFFE8C066);
         }
         Ui.separator(g, left + 10, top + 56, w - 20, Ui.GOLD_DARK);
         // Le récit, coupé à la largeur ; ce qui ne tient pas est rogné proprement.

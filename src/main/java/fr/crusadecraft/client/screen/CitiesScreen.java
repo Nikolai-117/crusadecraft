@@ -62,11 +62,11 @@ public class CitiesScreen extends Screen {
                 : Component.translatable("crusadecraft.city.attach.named", view.here());
         int aw = Math.min(w / 2 - 12, font.width(attachLabel) + 12);
         Button attach = Button.builder(attachLabel, b -> CrusadeNetwork.toServer(new CityPackets.Action(CityPackets.Action.Op.ATTACH_HERE, null, null, 0, 0)))
-                .bounds(left + w - 8 - aw, top + 8, aw, 16).build();
+                .bounds(left + w - 8 - aw, top + 8, aw, 16).build(KitButton::new);
         attach.active = !view.here().isEmpty();
         attach.setTooltip(Tooltip.create(Component.translatable(view.here().isEmpty() ? "crusadecraft.city.attach.none.tip" : "crusadecraft.city.attach.tip")));
         addRenderableWidget(attach);
-        addRenderableWidget(Button.builder(Component.translatable("gui.done"), b -> onClose()).bounds(left + w - 8 - 60, top + h - 22, 60, 16).build());
+        addRenderableWidget(Button.builder(Component.translatable("gui.done"), b -> onClose()).bounds(left + w - 8 - 60, top + h - 22, 60, 16).build(KitButton::new));
 
         int gw = Math.min(130, w / 3), sw = shareWidth();
         int bx = left + w - 8 - gw - 2 * (sw + 2);
@@ -77,13 +77,13 @@ public class CitiesScreen extends Screen {
             Button rename = Button.builder(Component.literal("✎"), b -> minecraft.setScreen(new NameForm(this,
                     Component.translatable("crusadecraft.name.city.title"), r.name(), name -> CrusadeNetwork.toServer(
                             new fr.crusadecraft.network.packet.NamePackets.Rename(fr.crusadecraft.network.packet.NamePackets.Rename.Kind.CITY, r.colony(), name)))))
-                    .bounds(bx - 2 - 16, y, 16, 16).build();
+                    .bounds(bx - 2 - 16, y, 16, 16).build(KitButton::new);
             rename.setTooltip(Tooltip.create(Component.translatable("crusadecraft.name.city.tip")));
             addRenderableWidget(rename);
             Button governor = Button.builder(Component.literal(font.plainSubstrByWidth(governorLabel(r).getString(), gw - 8)),
-                    b -> cycleGovernor(r)).bounds(bx, y, gw, 16).build();
-            Button tax = Button.builder(Component.translatable("crusadecraft.city.tax", r.taxShare()), b -> share(r, true)).bounds(bx + gw + 2, y, sw, 16).build();
-            Button levy = Button.builder(Component.translatable("crusadecraft.city.levy", r.levyShare()), b -> share(r, false)).bounds(bx + gw + sw + 4, y, sw, 16).build();
+                    b -> cycleGovernor(r)).bounds(bx, y, gw, 16).build(KitButton::new);
+            Button tax = Button.builder(Component.translatable("crusadecraft.city.tax", r.taxShare()), b -> share(r, true)).bounds(bx + gw + 2, y, sw, 16).build(KitButton::new);
+            Button levy = Button.builder(Component.translatable("crusadecraft.city.levy", r.levyShare()), b -> share(r, false)).bounds(bx + gw + sw + 4, y, sw, 16).build(KitButton::new);
             boolean governed = r.governor() != null;
             tax.active = governed;
             levy.active = governed;

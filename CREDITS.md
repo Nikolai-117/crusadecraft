@@ -11,6 +11,12 @@ CrusadeCraft est un mod à **usage personnel**. Il ne doit pas être redistribu�
 | [MineColonies](https://github.com/ldtteam/minecolonies) | LDT Team | GPL-3.0 | Dépendance : CrusadeCraft passe par son API publique |
 | Hundred Years Warfare | ydmsama | Tous droits réservés | Compatibilité optionnelle, par son registre d'unités et ses commandes. Aucun code repris |
 
+## Polices
+
+| Police | Auteurs | Licence | Usage |
+|---|---|---|---|
+| [Jacquarda Bastarda 9](https://github.com/scfried/soft-type-jacquarda-bastarda) | The Soft Type Project Authors | SIL Open Font License 1.1 | Redessinée en police bitmap (`assets/crusadecraft/font/gothique.json`) pour les titres. Le texte de la licence est dans `assets/crusadecraft/font/OFL-Jacquarda-Bastarda-9.txt` |
+
 ## Notice MIT de War 'N Taxes
 
 > Permission is hereby granted, free of charge, to any person obtaining a copy of this software and

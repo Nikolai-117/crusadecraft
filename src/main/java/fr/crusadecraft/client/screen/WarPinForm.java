@@ -56,12 +56,12 @@ public class WarPinForm extends Screen {
             kind = (kind + 1) % WarMap.Mark.values().length;
             parent.rememberPinKind(kind);
             b.setMessage(kindLabel());
-        }).bounds(left + 12, top + 58, fw - 24, 16).build());
+        }).bounds(left + 12, top + 58, fw - 24, 16).build(KitButton::new));
         addRenderableWidget(Button.builder(Component.translatable("crusadecraft.warmap.pin.place"), b -> {
             CrusadeNetwork.toServer(WarMapPackets.Edit.pin(kind, x, z, note.getValue()));
             onClose();
-        }).bounds(left + fw / 2 - 94, top + fh - 26, 90, 18).build());
-        addRenderableWidget(Button.builder(Component.translatable("gui.cancel"), b -> onClose()).bounds(left + fw / 2 + 4, top + fh - 26, 90, 18).build());
+        }).bounds(left + fw / 2 - 94, top + fh - 26, 90, 18).build(KitButton::new));
+        addRenderableWidget(Button.builder(Component.translatable("gui.cancel"), b -> onClose()).bounds(left + fw / 2 + 4, top + fh - 26, 90, 18).build(KitButton::new));
     }
 
     @Override

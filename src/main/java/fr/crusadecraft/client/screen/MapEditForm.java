@@ -119,28 +119,28 @@ public class MapEditForm extends Screen {
             addRenderableWidget(Button.builder(rankLabel(), b -> {
                 rank = TitleRank.values()[(rank.ordinal() + 1) % TitleRank.values().length];
                 b.setMessage(rankLabel());
-            }).bounds(cx, top + 36, cw, 16).build());
+            }).bounds(cx, top + 36, cw, 16).build(KitButton::new));
             Button faithButton = Button.builder(faithLabel(), b -> {
                 faith = AiFaith.values()[(faith.ordinal() + 1) % AiFaith.values().length];
                 b.setMessage(faithLabel());
-            }).bounds(cx, top + 56, cw, 16).build();
+            }).bounds(cx, top + 56, cw, 16).build(KitButton::new);
             faithButton.setTooltip(Tooltip.create(Component.translatable("crusadecraft.mapedit.form.faith.tip")));
             addRenderableWidget(faithButton);
             addRenderableWidget(Button.builder(personalityLabel(), b -> {
                 personality = AiPersonality.values()[(personality.ordinal() + 1) % AiPersonality.values().length];
                 b.setMessage(personalityLabel());
-            }).bounds(cx, top + 76, cw, 16).build());
+            }).bounds(cx, top + 76, cw, 16).build(KitButton::new));
         }
         if (mode == Mode.NEW_CITY) {
             addRenderableWidget(Button.builder(sizeLabel(), b -> {
                 size = WorldEditService.CitySize.byOrdinal(size.ordinal() + 1);
                 b.setMessage(sizeLabel());
-            }).bounds(left + 12, top + 70, fw - 24, 16).tooltip(Tooltip.create(Component.translatable("crusadecraft.mapedit.form.size.tip"))).build());
+            }).bounds(left + 12, top + 70, fw - 24, 16).tooltip(Tooltip.create(Component.translatable("crusadecraft.mapedit.form.size.tip"))).build(KitButton::new));
         }
         Component confirm = Component.translatable(mode == Mode.NEW_REALM || mode == Mode.NEW_CITY ? "crusadecraft.mapedit.form.create"
                 : "crusadecraft.mapedit.form.save");
-        addRenderableWidget(Button.builder(confirm, b -> confirm()).bounds(left + fw / 2 - 94, top + fh - 26, 90, 18).build());
-        addRenderableWidget(Button.builder(Component.translatable("gui.cancel"), b -> onClose()).bounds(left + fw / 2 + 4, top + fh - 26, 90, 18).build());
+        addRenderableWidget(Button.builder(confirm, b -> confirm()).bounds(left + fw / 2 - 94, top + fh - 26, 90, 18).build(KitButton::new));
+        addRenderableWidget(Button.builder(Component.translatable("gui.cancel"), b -> onClose()).bounds(left + fw / 2 + 4, top + fh - 26, 90, 18).build(KitButton::new));
         setInitialFocus(nameBox);
     }
 

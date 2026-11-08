@@ -45,6 +45,26 @@ données du mod (fichier `crusadecraft.dat` du monde) restent sur place, sans ef
    baronnie : nom, devise, maison, couleurs.
 3. La touche **K** ouvre le **menu royal**. Un bouton **« ♔ Mon royaume »** apparaît aussi en haut à droite de la
    fenêtre de l'Hôtel de ville.
+   - **En haut**, la barre du royaume : ton blason et ton nom, l'or, le prestige, la piété et la crainte (survole
+     une valeur pour son explication), puis les affaires qui attendent ta décision (sceau rouge), les **Intrigues**
+     (l'œil), les **Lieux** (le drapeau), le jour du monde, les réglages **⚙** et la croix.
+   - **À gauche**, le rail : **Royaume, Conseil, Lois, Chancellerie**, puis **Domaine** (tes villes), **Trésor**,
+     **Armée**, **Voisins**, **Maison** (ta dynastie) et **Chronique**. Les touches **1** à **0** y mènent aussi. Une
+     pastille rouge signale une page qui attend un geste : un siège du conseil vacant, un titre que tu peux créer.
+   - **Royaume** : ton souverain, ce qu'il manque pour le prochain titre, les lois en vigueur, la carte de ton
+     royaume (ton domaine en or, tes vassaux en orange, les voisins connus en ardoise), ta capitale, ton conseil et
+     tes vassaux. Le **✎** à côté du nom renomme le royaume.
+   - **Conseil** : clique sur un siège pour voir son titulaire, son opinion de −100 à +100, sa fonction, et
+     **choisis sa tâche** en cliquant sur une carte (plus besoin d'aller à la Table du conseil pour ça). L'onglet
+     *Maires* liste les maires de tes colonies.
+   - **Lois** : clique sur une loi, puis sur un niveau ; le vote attendu s'affiche visage par visage, avec le coût.
+     **Soumettre au vote** si le conseil approuve, **Imposer** (contre du prestige) s'il rejette.
+   - **Chancellerie** : la frise de tes titres, l'acte du prochain (ce qui est rempli, ce qui manque) et son bouton
+     **Créer le titre**, la carte des revendications, les provinces à **Revendiquer** et les contrats de tes vassaux
+     (impôt et levées, de 5 en 5, sceau royal en poche).
+   - Sur un écran 1080p en échelle d'interface automatique, le menu se dessine une échelle en dessous, à la taille
+     de sa maquette (640 × 360), et rend la tienne en se fermant. Pour t'en passer : `echelleMaquette = false` dans
+     `config/crusadecraft-client.toml`.
 4. Les royaumes IA se génèrent autour de toi à la fondation. Des hérauts viennent se présenter ; voyager te
    fait découvrir les autres.
 
@@ -52,7 +72,7 @@ données du mod (fichier `crusadecraft.dat` du monde) restent sur place, sans ef
 5. Fabrique le **Sceptre** (diamant sur deux lingots d'or). Clic droit avec, sur un citoyen : sa fiche, puis
    « Nommer » (chancelier, maréchal, intendant, maître-espion, chapelain).
 6. La **Table du conseil** demande un Hôtel de ville de niveau 3. Le **Coffre du trésor** reçoit tes pièces
-   d'or. Les impôts tombent chaque jour du monde (un jour = 20 minutes). Les lois se votent dans l'onglet *Lois*.
+   d'or. Les impôts tombent chaque jour du monde (un jour = 20 minutes). Les lois se votent à la page *Lois*.
 
 ### Le monde et la diplomatie
 7. **Table de guerre** : un cadre (bâtons, cuir, carte) à poser sur un mur. En clic droit, elle ouvre la guerre ;
@@ -72,18 +92,18 @@ données du mod (fichier `crusadecraft.dat` du monde) restent sur place, sans ef
     sceller. Les dégâts faits à la TNT en territoire ennemi se réparent à la paix.
 
 ### Les intrigues et les événements
-14. Quand une décision t'attend, une notification l'annonce et un bouton **« Événements »** apparaît dans le menu
-    royal.
-15. Le bouton **« Intrigues »** (onglet *Conseil*) montre les factions, complots et secrets découverts par ton
+14. Quand une décision t'attend, une notification l'annonce et un **sceau rouge** apparaît dans la barre du haut du
+    menu royal.
+15. L'**œil** de la barre du haut (ou le bouton **« Intrigues »** de la page *Conseil*) montre les factions, complots et secrets découverts par ton
     maître-espion. Donne-lui la tâche **« Débusquer les complots »** pour en découvrir davantage.
-16. L'onglet **Chroniques** raconte ton règne et les nouvelles du monde. Le livre **Chroniques du royaume** se
+16. La page **Chronique** raconte ton règne et les nouvelles du monde. Le livre **Chroniques du royaume** se
     fabrique avec un livre, une plume, une poche d'encre et du papier.
 
 ### La cour
 17. La **Lice de tournoi** (laine rouge, laine blanche, bâtons, bûche) se pose dans ton royaume. Elle demande la
     recherche « Chevalerie » à l'Université de la capitale. Tu peux couper cette exigence dans les réglages
     (section `cour`).
-18. Le bouton **« Maison »** (onglet *Royaume*) sert à accueillir des citoyens dans ta dynastie, désigner un
+18. **Maison** (rail du menu royal, touche 9) sert à accueillir des citoyens dans ta dynastie, désigner un
     héritier et marier un membre à une maison IA de ta foi.
 19. **Croisade** : il faut être comte et avoir 100 de piété, contre un royaume païen ou hérétique (la foi
     s'affiche sur sa fiche). Choisis le motif « Guerre sainte » à la Table de guerre.
@@ -140,7 +160,7 @@ données du mod (fichier `crusadecraft.dat` du monde) restent sur place, sans ef
     capitales. Au survol, son infobulle dit à qui sont les terres en son centre.
 
 ### Les lieux : ranger le monde et écrire ses fiches
-36. Le bouton **« Lieux »** (menu royal, onglet *Royaume* ; ou au pied de la carte) ouvre l'arbre de tous les lieux :
+36. Le **drapeau** de la barre du haut du menu royal (ou le bouton **« Lieux »** au pied de la carte) ouvre l'arbre de tous les lieux :
     les royaumes sous leurs suzerains, les villes sous leurs royaumes, les forts sous leurs villes. En haut, la ligne
     « Vous êtes : » dit où tu te tiens.
 37. Clique sur un lieu : sa **fiche** s'affiche (qui le tient, de quoi il relève, sa population, sa position).
@@ -195,7 +215,7 @@ données du mod (fichier `crusadecraft.dat` du monde) restent sur place, sans ef
 53c. Pour retirer le cadre sombre que Dynmap pose derrière les noms, le mod écrit sa feuille de style dans
     `dynmap/web/css/override.css` et l'active dans la page de Dynmap (la voie prévue par Dynmap). Un `override.css`
     à toi est complété, jamais écrasé. Réglage `carteWeb.styleFantasy` pour s'en passer.
-53d. **Renommer** : bouton **✎** à côté des boutons du menu royal pour ton royaume, **✎** devant chaque ville dans
+53d. **Renommer** : bouton **✎** à côté du nom, page *Royaume* du menu royal, pour ton royaume, **✎** devant chaque ville dans
     l'écran des Villes (la colonie MineColonies change de nom aussi), et l'écran des **Lieux** pour tout le reste
     (les royaumes et villes de l'ordinateur, si tu as l'éditeur). Par commande : `/crusade renommer royaume <nom>`,
     `/crusade renommer ville <nom>` en se tenant dans la ville.
@@ -575,8 +595,8 @@ Le chantier dure au plus une demi-heure passée à côté, même pour une grande
 58. Pour avoir plusieurs colonies MineColonies, il faut d'abord autoriser MineColonies à en donner plusieurs au même
     joueur : réglage `allowinfinitecolonies = true` dans `saves/<ton monde>/serverconfig/minecolonies-server.toml` (c'est un réglage
     de MineColonies, pas de CrusadeCraft).
-59. Fonde ta deuxième colonie normalement. Tiens-toi **dedans**, ouvre le menu royal (onglet Royaume) et clique sur
-    **Villes**, puis sur **Rattacher « nom de la colonie »**. (La Borne de frontière posée dans la colonie marche aussi.)
+59. Fonde ta deuxième colonie normalement. Tiens-toi **dedans**, ouvre le menu royal et clique sur
+    **Domaine** (le château du rail, touche 5), puis sur **Rattacher « nom de la colonie »**. (La Borne de frontière posée dans la colonie marche aussi.)
 60. Dans l'écran **Villes**, chaque ville a trois boutons :
     - le **gouverneur** : « En direct » (tu la gouvernes toi-même) ; chaque clic la confie à la personne suivante de
       ton registre des lignées (Maj + clic : la précédente), jusqu'à revenir à « En direct » ;
@@ -616,7 +636,7 @@ Le chantier dure au plus une demi-heure passée à côté, même pour une grande
     l'ordinateur et leur conseil. Avant 50 ans, on meurt rarement ; ensuite, la vieillesse gagne ; personne ne passe
     100 ans. **Toi, tu ne vieillis pas.**
 66. Quand le chef d'une maison meurt, l'héritier prend sa place selon la nouvelle loi **Succession** (menu royal,
-    onglet Lois) : **primogéniture** (l'aîné des enfants, les fils d'abord), **égalitaire** (l'aîné, fille ou fils),
+    page Lois) : **primogéniture** (l'aîné des enfants, les fils d'abord), **égalitaire** (l'aîné, fille ou fils),
     **ancienneté** (le doyen de la maison) ou **élective** (l'adulte qui a le plus de traits).
 67b. Une ville confiée passe à l'**héritier** de son gouverneur mort, aux mêmes conditions, s'il est encore de ta
     maison ou de ton royaume ; sinon elle revient en direct.
@@ -691,7 +711,7 @@ Le chantier dure au plus une demi-heure passée à côté, même pour une grande
 
 ## 4. Réglages
 
-Tout se règle **en jeu** : menu royal, onglet Royaume, bouton **⚙** tout en haut à droite (ou `/crusade reglages`). Les sections à gauche,
+Tout se règle **en jeu** : menu royal, bouton **⚙** tout en haut à droite (ou `/crusade reglages`). Les sections à gauche,
 leurs réglages à droite : oui/non d'un clic, nombres avec − et + (Maj : par dix) ou saisis puis ✔, choix qu'on fait
 défiler. Survole un nom pour son explication. Réservé aux opérateurs et au propriétaire d'un monde solo ; chaque
 changement est vérifié, enregistré et pris en compte aussitôt. Les listes (valeurs de l'or, limites par rang…) se

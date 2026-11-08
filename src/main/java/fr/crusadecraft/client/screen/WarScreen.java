@@ -77,7 +77,7 @@ public class WarScreen extends Screen {
     }
 
     static int scoreColor(int score) {
-        return score >= 10 ? Ui.GREEN : score <= -10 ? Ui.RED : 0xFFC99A3C;
+        return score >= 10 ? Ui.GREEN : score <= -10 ? Ui.RED : 0xFFE3B34F;
     }
 
     static String signed(int v) {
@@ -155,17 +155,17 @@ public class WarScreen extends Screen {
         ensureSelection();
 
         int lx = left + 8, half = (LIST_W - 4) / 2;
-        addRenderableWidget(Button.builder(Component.translatable("gui.done"), b -> onClose()).bounds(lx, top + h - 22, half, 16).build());
+        addRenderableWidget(Button.builder(Component.translatable("gui.done"), b -> onClose()).bounds(lx, top + h - 22, half, 16).build(KitButton::new));
         addRenderableWidget(Button.builder(Component.translatable("crusadecraft.war.map"), b -> {
             // La carte s'ouvre en carte de guerre (P18) : c'est ce qu'on vient chercher à la Table de guerre.
             MapScreen.openNextAtWar();
             if (minecraft != null && minecraft.getConnection() != null) CrusadeNetwork.toServer(new WorldPackets.RequestMap(true));
-        }).bounds(lx + half + 4, top + h - 22, LIST_W - half - 4, 16).tooltip(Tooltip.create(Component.translatable("crusadecraft.war.map.tip"))).build());
+        }).bounds(lx + half + 4, top + h - 22, LIST_W - half - 4, 16).tooltip(Tooltip.create(Component.translatable("crusadecraft.war.map.tip"))).build(KitButton::new));
 
         int ay = armyY();
         Button army = Button.builder(Component.translatable(view.raised() ? "crusadecraft.war.army.disband" : "crusadecraft.war.army.raise"),
                 b -> send(WarPackets.WarAction.of(view.raised() ? WarPackets.WarAction.Kind.DISBAND : WarPackets.WarAction.Kind.RAISE)))
-                .bounds(lx + 4, ay + 23, LIST_W - 8, 15).build();
+                .bounds(lx + 4, ay + 23, LIST_W - 8, 15).build(KitButton::new);
         army.setTooltip(Tooltip.create(Component.translatable(view.raised() ? "crusadecraft.war.army.disband.tip" : "crusadecraft.war.army.raise.tip",
                 (int) Math.ceil(view.men() / 10.0))));
         addRenderableWidget(army);
@@ -212,7 +212,7 @@ public class WarScreen extends Screen {
 
     private Button order(Component label, WarPackets.WarAction.Kind kind, int arg, String tip, int x, int y, int width, boolean active) {
         Button b = Button.builder(Component.literal(font.plainSubstrByWidth(label.getString(), width - 6)),
-                btn -> send(new WarPackets.WarAction(kind, null, null, arg, null))).bounds(x, y, width, 15).build();
+                btn -> send(new WarPackets.WarAction(kind, null, null, arg, null))).bounds(x, y, width, 15).build(KitButton::new);
         b.setTooltip(Tooltip.create(Component.translatable(tip)));
         b.active = active;
         return b;
@@ -228,7 +228,7 @@ public class WarScreen extends Screen {
             if (p != WarRules.Peace.SURRENDER && v != null && war.leader()) label.withStyle(v.accepted() ? ChatFormatting.GREEN : ChatFormatting.RED);
             Button b = Button.builder(label,
                     btn -> send(new WarPackets.WarAction(WarPackets.WarAction.Kind.PEACE, war.id(), null, -1, p)))
-                    .bounds(rx + i * (bw + 3), by, i == 2 ? rw - 2 * (bw + 3) : bw, 16).build();
+                    .bounds(rx + i * (bw + 3), by, i == 2 ? rw - 2 * (bw + 3) : bw, 16).build(KitButton::new);
             b.active = war.leader() && (p != WarRules.Peace.SURRENDER || view.sealOk());
             b.setTooltip(Tooltip.create(peaceTooltip(war, p, v)));
             addRenderableWidget(b);
@@ -275,7 +275,7 @@ public class WarScreen extends Screen {
                 provinceIndex = 0;
                 confirm = false;
                 rebuildWidgets();
-            }).bounds(rx + col * (cw + 4), cy + row * 18, cw, 16).build();
+            }).bounds(rx + col * (cw + 4), cy + row * 18, cw, 16).build(KitButton::new);
             b.setTooltip(Tooltip.create(cbTooltip(o)));
             addRenderableWidget(b);
             i++;
@@ -289,7 +289,7 @@ public class WarScreen extends Screen {
                 provinceIndex++;
                 confirm = false;
                 rebuildWidgets();
-            }).bounds(rx, after, rw, 16).build();
+            }).bounds(rx, after, rw, 16).build(KitButton::new);
             prov.active = current.provinces().size() > 1;
             prov.setTooltip(Tooltip.create(Component.translatable("crusadecraft.war.province.tip", current.provinces().size())));
             addRenderableWidget(prov);
@@ -310,7 +310,7 @@ public class WarScreen extends Screen {
             }
             confirm = false;
             send(new WarPackets.WarAction(WarPackets.WarAction.Kind.DECLARE, t.party().id(), cb, province, null));
-        }).bounds(rx, top + h - 22, rw, 16).build();
+        }).bounds(rx, top + h - 22, rw, 16).build(KitButton::new);
         declare.active = allowed;
         declare.setTooltip(Tooltip.create(allowed ? Component.translatable("crusadecraft.war.declare.tip")
                 : Component.translatable(t.problem() != null ? t.problem() : current == null ? "crusadecraft.war.cb.none" : current.problem())));
@@ -355,7 +355,7 @@ public class WarScreen extends Screen {
     private void renderThreat(GuiGraphics g, int right, int y, int mouseX, int mouseY) {
         boolean coalition = !view.coalition().isEmpty();
         Component label = Component.translatable(coalition ? "crusadecraft.war.threat.coalition" : "crusadecraft.war.threat", view.threat());
-        int color = coalition || view.threat() >= view.threatThreshold() ? Ui.RED : view.threat() >= view.threatThreshold() / 2 ? 0xFFE0A070 : Ui.TEXT_MUTED;
+        int color = coalition || view.threat() >= view.threatThreshold() ? Ui.RED : view.threat() >= view.threatThreshold() / 2 ? 0xFFE3B34F : Ui.TEXT_MUTED;
         int x = right - font.width(label);
         Ui.text(g, font, label, x, y, color);
         if (Ui.inside(mouseX, mouseY, x, y - 1, font.width(label), 10)) {
@@ -389,7 +389,7 @@ public class WarScreen extends Screen {
             UUID id = row.war() != null ? row.war().id() : party.id();
             boolean sel = id.equals(selected);
             boolean hover = Ui.inside(mouseX, mouseY, lx + 2, ry, lw - 4, ROW - 1);
-            g.fill(lx + 2, ry, lx + lw - 2, ry + ROW - 1, sel ? Ui.PANEL_HIGHLIGHT : hover ? 0xFF2C231B : 0xFF1C1612);
+            g.fill(lx + 2, ry, lx + lw - 2, ry + ROW - 1, sel ? Ui.PANEL_HIGHLIGHT : hover ? 0xFF28313B : 0xFF1B2026);
             g.fill(lx + 5, ry + 4, lx + 13, ry + 13, 0xFF000000 | party.color());
             String name = font.plainSubstrByWidth(partyName(party).getString(), lw - 24);
             Ui.text(g, font, Component.literal(name), lx + 17, ry + 1, sel ? Ui.TEXT_TITLE : Ui.TEXT);
@@ -433,7 +433,7 @@ public class WarScreen extends Screen {
         Component state = view.raised() ? Component.translatable("crusadecraft.war.army.state.raised", view.upkeep())
                 : Component.translatable("crusadecraft.war.army.state.home");
         Ui.scaled(g, font, Component.literal(font.plainSubstrByWidth(state.getString(), Math.round((LIST_W - 10) / 0.8f))), ax + 5, ay + 14, 0.8f,
-                view.raised() ? 0xFFE0C060 : Ui.TEXT_MUTED, false);
+                view.raised() ? 0xFFE8C066 : Ui.TEXT_MUTED, false);
         if (Ui.inside(mouseX, mouseY, ax, ay, LIST_W, 22)) {
             pendingTooltip = List.of(Component.translatable("crusadecraft.war.army.title").withStyle(ChatFormatting.GOLD),
                     Component.translatable("crusadecraft.war.army.desc").withStyle(ChatFormatting.GRAY));
@@ -464,7 +464,7 @@ public class WarScreen extends Screen {
         if (Ui.inside(mouseX, mouseY, rx, y - 1, rw, 20)) pendingTooltip = scoreTooltip(war);
         int bx = rx + font.width(sc) + 8, bw = rw - (bx - rx);
         int mid = bx + bw / 2;
-        g.fill(bx, y + 1, bx + bw, y + 8, 0xFF1C1612);
+        g.fill(bx, y + 1, bx + bw, y + 8, 0xFF1B2026);
         g.renderOutline(bx, y + 1, bw, 7, Ui.GOLD_DARK);
         int len = (int) Math.round(bw / 2.0 * Math.min(100, Math.abs(score)) / 100.0);
         if (score > 0) g.fill(mid, y + 2, mid + len, y + 7, Ui.GREEN);
@@ -492,7 +492,7 @@ public class WarScreen extends Screen {
         }
         if (!war.occupied().isEmpty()) {
             Component occ = Component.translatable("crusadecraft.war.occupied", String.join(", ", war.occupied()));
-            Ui.text(g, font, Component.literal(font.plainSubstrByWidth(occ.getString(), rw)), rx, y, 0xFFE0C060);
+            Ui.text(g, font, Component.literal(font.plainSubstrByWidth(occ.getString(), rw)), rx, y, 0xFFE8C066);
             y += 11;
         }
         // Le journal : les faits d'armes les plus récents d'abord.
@@ -534,7 +534,7 @@ public class WarScreen extends Screen {
         Component ex = Component.translatable("crusadecraft.war.exhaustion", exhaustion);
         Ui.scaled(g, font, ex, x, y + 11, 0.7f, Ui.TEXT_MUTED, false);
         int bx = x + Math.round(font.width(ex) * 0.7f) + 4;
-        if (x + width - bx > 4) Ui.bar(g, bx, y + 12, x + width - bx, 4, exhaustion / 100.0, exhaustion >= 60 ? Ui.RED : 0xFFC99A3C);
+        if (x + width - bx > 4) Ui.bar(g, bx, y + 12, x + width - bx, 4, exhaustion / 100.0, exhaustion >= 60 ? Ui.RED : 0xFFE3B34F);
     }
 
     private void renderTarget(GuiGraphics g, WarView.Target t, int mouseX, int mouseY) {
@@ -554,7 +554,7 @@ public class WarScreen extends Screen {
         y += 32;
         boolean blocked = t.problem() != null;
         Ui.text(g, font, Component.translatable(blocked ? "crusadecraft.war.blocked" : "crusadecraft.war.cb.choose"), rx, y,
-                blocked ? 0xFFE0A070 : Ui.TEXT_TITLE);
+                blocked ? 0xFFE3B34F : Ui.TEXT_TITLE);
         // Sous les motifs (et la province) : ce qui interdit la guerre, ou ce que ce motif ferait.
         WarView.CbOption o = cbOption(t);
         if (o == null) return;
@@ -567,7 +567,7 @@ public class WarScreen extends Screen {
             List<net.minecraft.util.FormattedCharSequence> lines = font.split(desc, rw);
             int maxLines = room / 10;
             for (int i = 0; i < lines.size() && i < maxLines; i++) {
-                g.drawString(font, lines.get(i), rx, dy + i * 10, problem == null ? Ui.TEXT_MUTED : 0xFFE0A070, false);
+                g.drawString(font, lines.get(i), rx, dy + i * 10, problem == null ? Ui.TEXT_MUTED : 0xFFE3B34F, false);
             }
         }
     }

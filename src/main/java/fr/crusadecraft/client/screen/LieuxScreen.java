@@ -79,11 +79,11 @@ public class LieuxScreen extends Screen {
         listTop = top + 40;
         rightX = left + 8 + LIST_W + 8;
         rightW = left + w - 8 - rightX;
-        addRenderableWidget(Button.builder(Component.translatable("gui.done"), b -> onClose()).bounds(left + w - 58, top + 6, 50, 16).build());
+        addRenderableWidget(Button.builder(Component.translatable("gui.done"), b -> onClose()).bounds(left + w - 58, top + 6, 50, 16).build(KitButton::new));
 
         Button create = Button.builder(Component.translatable("crusadecraft.lieu.new"),
                 b -> minecraft.setScreen(LieuForm.create(this, null, null, view.canEdit() ? selectedId() : null)))
-                .bounds(left + 8, top + h - 24, LIST_W, 16).build();
+                .bounds(left + 8, top + h - 24, LIST_W, 16).build(KitButton::new);
         create.setTooltip(Tooltip.create(Component.translatable(view.canEdit() ? "crusadecraft.lieu.new.tip" : "crusadecraft.lieu.new.survival.tip")));
         addRenderableWidget(create);
         listBottom = top + h - 28;
@@ -113,7 +113,7 @@ public class LieuxScreen extends Screen {
                     armedUntil = Util.getMillis() + 4000;
                 }
                 rebuildWidgets();
-            }).size(70, 16).build();
+            }).size(70, 16).build(KitButton::new);
             del.setTooltip(Tooltip.create(Component.translatable("crusadecraft.lieu.delete.tip")));
             actions.add(del);
         }
@@ -133,7 +133,7 @@ public class LieuxScreen extends Screen {
     }
 
     private Button button(String key, String tip, Button.OnPress press) {
-        Button b = Button.builder(Component.translatable(key), press).size(72, 16).build();
+        Button b = Button.builder(Component.translatable(key), press).size(72, 16).build(KitButton::new);
         if (tip != null) b.setTooltip(Tooltip.create(Component.translatable(tip)));
         return b;
     }
@@ -176,7 +176,7 @@ public class LieuxScreen extends Screen {
             int ry = listTop + 2 + (i - listScroll) * ROW_H;
             boolean on = e.id().equals(chosen);
             if (on || Ui.inside(mouseX, mouseY, left + 10, ry, LIST_W - 4, ROW_H)) {
-                g.fill(left + 10, ry, left + 8 + LIST_W - 2, ry + ROW_H, on ? 0xFF3A2E22 : Ui.PANEL_HIGHLIGHT);
+                g.fill(left + 10, ry, left + 8 + LIST_W - 2, ry + ROW_H, on ? 0xFF2E3740 : Ui.PANEL_HIGHLIGHT);
             }
             int x = left + 12 + Math.min(e.depth(), 6) * 8;
             LieuKind kind = LieuKind.byOrdinal(e.kind());

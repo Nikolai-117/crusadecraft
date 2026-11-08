@@ -134,11 +134,11 @@ public class EconomyScreen extends Screen {
                 tab = t;
                 scroll = 0;
                 rebuildWidgets();
-            }).bounds(left + 12 + i * (tw + 1), top + 24, tw, 14).build();
+            }).bounds(left + 12 + i * (tw + 1), top + 24, tw, 14).build(KitButton::new);
             b.active = t != tab;
             addRenderableWidget(b);
         }
-        addRenderableWidget(Button.builder(Component.translatable("gui.done"), b -> onClose()).bounds(left + W - 66, top + H - 22, 54, 16).build());
+        addRenderableWidget(Button.builder(Component.translatable("gui.done"), b -> onClose()).bounds(left + W - 66, top + H - 22, 54, 16).build(KitButton::new));
         if (tab == Tab.CITIES) initBlockades();
         if (tab == Tab.CONTRACTS) initContracts();
         if (tab == Tab.CITIES) {
@@ -146,7 +146,7 @@ public class EconomyScreen extends Screen {
                 sort = Sort.values()[(sort.ordinal() + 1) % Sort.values().length];
                 scroll = 0;
                 rebuildWidgets();
-            }).bounds(x(), top + H - 22, 150, 16).build());
+            }).bounds(x(), top + H - 22, 150, 16).build(KitButton::new));
         }
         if (tab == Tab.PRICES) {
             CityGood[] goods = CityGood.values();
@@ -154,16 +154,16 @@ public class EconomyScreen extends Screen {
                 good = Math.floorMod(good - 1, goods.length);
                 scroll = 0;
                 rebuildWidgets();
-            }).bounds(x(), y0(), 14, 14).build());
+            }).bounds(x(), y0(), 14, 14).build(KitButton::new));
             Button shown = Button.builder(Component.translatable(goods[good].key()), b -> {
-            }).bounds(x() + 15, y0(), 90, 14).build();
+            }).bounds(x() + 15, y0(), 90, 14).build(KitButton::new);
             shown.active = false;
             addRenderableWidget(shown);
             addRenderableWidget(Button.builder(Component.translatable("crusadecraft.city.panel.next"), b -> {
                 good = (good + 1) % goods.length;
                 scroll = 0;
                 rebuildWidgets();
-            }).bounds(x() + 106, y0(), 14, 14).build());
+            }).bounds(x() + 106, y0(), 14, 14).build(KitButton::new));
         }
     }
 
@@ -200,14 +200,14 @@ public class EconomyScreen extends Screen {
             if (c.hasUUID("site")) {
                 java.util.UUID site = c.getUUID("site");
                 Button b = Button.builder(Component.translatable("crusadecraft.economy.contract.deliver"), x -> act(t -> t.putUUID("deliver", site))).bounds(bx, ry, 62, 14)
-                        .tooltip(net.minecraft.client.gui.components.Tooltip.create(Component.translatable("crusadecraft.economy.contract.deliver.tip"))).build();
+                        .tooltip(net.minecraft.client.gui.components.Tooltip.create(Component.translatable("crusadecraft.economy.contract.deliver.tip"))).build(KitButton::new);
                 b.active = c.getBoolean("can");
                 addRenderableWidget(b);
             } else {
                 java.util.UUID id = c.getUUID("id");
                 boolean mine = c.getBoolean("mine");
                 Button b = Button.builder(Component.translatable(mine ? "crusadecraft.economy.contract.abandon" : "crusadecraft.economy.contract.accept"), x -> act(t -> t.putUUID(mine ? "abandon" : "accept", id))).bounds(bx, ry, 62, 14)
-                        .tooltip(net.minecraft.client.gui.components.Tooltip.create(Component.translatable(mine ? "crusadecraft.economy.contract.abandon.tip" : "crusadecraft.economy.contract.accept.tip", fr.crusadecraft.core.city.CityContracts.SIGN_RANGE))).build();
+                        .tooltip(net.minecraft.client.gui.components.Tooltip.create(Component.translatable(mine ? "crusadecraft.economy.contract.abandon.tip" : "crusadecraft.economy.contract.accept.tip", fr.crusadecraft.core.city.CityContracts.SIGN_RANGE))).build(KitButton::new);
                 addRenderableWidget(b);
             }
         }
@@ -264,7 +264,7 @@ public class EconomyScreen extends Screen {
                 t.putUUID("site", id);
                 t.putBoolean("lift", mine);
                 CrusadeNetwork.toServer(new WorldEconomyPackets.Action(t));
-            }).bounds(x() + W - 24 - 44, ry - 2, 44, 12).tooltip(net.minecraft.client.gui.components.Tooltip.create(Component.translatable("crusadecraft.economy.blockade.tip", fr.crusadecraft.core.city.CityBlockades.COST))).build());
+            }).bounds(x() + W - 24 - 44, ry - 2, 44, 12).tooltip(net.minecraft.client.gui.components.Tooltip.create(Component.translatable("crusadecraft.economy.blockade.tip", fr.crusadecraft.core.city.CityBlockades.COST))).build(KitButton::new));
         }
     }
 

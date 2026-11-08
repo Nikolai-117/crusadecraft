@@ -105,14 +105,14 @@ public class PlanCatalogScreen extends Screen {
         setInitialFocus(search);
         // P60 : l'atelier des villes s'ouvre d'ici : c'est le plan d'architecte qui les pose.
         addRenderableWidget(Button.builder(Component.translatable("crusadecraft.urban.open"), b -> UrbanScreen.request())
-                .bounds(dx, top + 5, dw, 14).build());
+                .bounds(dx, top + 5, dw, 14).build(KitButton::new));
         take = addRenderableWidget(Button.builder(Component.translatable("crusadecraft.plan.take"), b -> chooseSelected())
-                .bounds(dx + 4, listBottom - 18, dw - 8, 16).build());
+                .bounds(dx + 4, listBottom - 18, dw - 8, 16).build(KitButton::new));
         reroll = addRenderableWidget(Button.builder(Component.translatable("crusadecraft.plan.reroll"), b -> rerollSelected())
-                .bounds(dx + 4, listBottom - 36, dw - 8, 16).build());
+                .bounds(dx + 4, listBottom - 36, dw - 8, 16).build(KitButton::new));
         favorite = addRenderableWidget(Button.builder(Component.translatable("crusadecraft.plan.favorite.add"), b -> {
             if (selected >= 0 && selected < rows.size()) CrusadeNetwork.toServer(new PlanPackets.ToggleFavorite(rows.get(selected).ref()));
-        }).bounds(dx + 4, listBottom - 36, dw - 8, 16).build());
+        }).bounds(dx + 4, listBottom - 36, dw - 8, 16).build(KitButton::new));
         favorite.setY(listBottom - 36);
         if (source != null && entries.isEmpty() && !loading) request(source);
         rebuildRows();

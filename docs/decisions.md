@@ -1165,6 +1165,22 @@ veux la voir comme le bâton de construction de MineColonies », des commandes, 
 - **Les gardes frappent eux-mêmes** (`target.hurt`), au lieu de compter sur l'intelligence de Comes Alive, qui fuit plus qu'elle ne combat. On efface leur peur à chaque passage.
   Rien ne se déclenche en créatif, comme les monstres de Minecraft.
 
+**P61 (8 novembre 2026) — le kit Varenhold et le menu royal, 3.17.0**
+
+- **Demande** : reprendre la maquette « Varenhold · interface du royaume » de Romain pour tous les écrans. Il a choisi l'ordre : d'abord le kit (couleurs, polices, panneaux, boutons, icônes) et ses quatre écrans à l'identique (Royaume, Conseil, Lois, Chancellerie) ; puis la création du souverain ; puis la construction de ville ; puis le reste.
+- **Le kit s'applique à tout le mod d'un coup** : la palette de `Ui` pointe sur celle de `Kit`, ses panneaux sont les panneaux ancrés de la maquette, et les 269 boutons de pierre de Minecraft sont devenus des `KitButton`. Les écrans pas encore refaits changent donc de couleurs sans changer de disposition.
+- **La gothique de la maquette (Jacquarda Bastarda 9) devient une police bitmap** : ses glyphes tombent sur une grille de 13 pixels, on les a relevés un par un. Elle est sous licence OFL 1.1, qui permet de l'embarquer : la licence est dans le jar (`font/OFL-Jacquarda-Bastarda-9.txt`) et dans `CREDITS.md`. Le texte courant reste dans la police du jeu, la plus proche de la Pixelify de la maquette, et qui a tous les accents.
+- **Les titres ne s'agrandissent que par deux** : une échelle de 1,5 rendrait des pixels inégaux. Un titre trop long passe en taille 1, puis se coupe.
+- **Le menu royal se dessine à l'échelle de la maquette** : sur l'écran de Romain (1080p, échelle automatique), l'interface ne fait que 480 × 270 pixels, et la maquette en demande 640 × 360. Les captures à 480 × 270 débordaient de partout. Le menu baisse donc l'échelle d'un cran tant qu'il en manque (un entier, pour garder des pixels nets), et la rend à la fermeture. Sur son écran, cela tombe pile sur 640 × 360. Le réglage client `echelleMaquette` le coupe ; la mise en page tient alors encore, en plus serré.
+- **Tout se dessine au rendu, sans boutons de Minecraft** : les données arrivent page par page (chancellerie, lois, conseil, carte) et la disposition dépend de ce qui est arrivé. Les zones cliquables se notent en dessinant, et le clic lit celles de la dernière image.
+- **On choisit la tâche d'un conseiller depuis le menu** : le serveur l'acceptait déjà sans la Table (`SET_TASK` ne la demande pas). Convoquer le conseil et répondre aux requêtes restent à la Table, comme avant.
+- **Les actions de la chancellerie aussi** (créer un titre, revendiquer, régler un contrat) : elles passaient déjà par un paquet qui ne vérifie que la recherche « Chancellerie », le sceau royal et, pour revendiquer, le chancelier. C'est ce que montre la maquette. La Table reste utile pour libérer un vassal.
+- **Les petits visages se déduisent du nom** : un portrait de 8 pixels pour les listes (conseil, votants). Le même nom donne toujours le même visage. Ce n'est pas l'apparence du personnage, qui viendra avec la création du souverain ; le souverain, lui, a déjà le visage de son skin.
+- **La carte du royaume est la vraie** (`MapRaster`), repeinte en aplats : domaine, vassaux, voisins connus, inconnu ; et sur la page Chancellerie, la revendication en cours et celles obtenues. Hors des royaumes, le terrain d'origine est gardé très assombri : la mer se devine.
+- **La maquette montre « Pierre » dans la barre du haut** : le mod n'a pas cette ressource. La barre montre la crainte à la place, qui existe.
+- **Le rail ajoute « Voisins »** (la diplomatie, qui avait son onglet) : la maquette n'a que neuf entrées. Deux icônes ont été dessinées dans le même style (la lettre, le drapeau des lieux).
+- **Banc d'essai** : `-Pui_size=1920x1080 -Pui_scale=4` capture comme l'écran de Romain. Un test du serveur (`villedevientcolonie`) a échoué une fois sur deux passages, MineColonies refusant une colonie posée dans une autre : il est instable, sans lien avec les menus.
+
 **P60 (5 novembre 2026) — l'atelier des villes, 3.16.0**
 
 - **Demande** : « un système de création de villes très poussé, avec tous les paramètres modifiables, en reprenant le fonctionnement » de Fantasy Town Generator et du générateur de Watabou, « mais pour Minecraft ». On reprend les idées et la logique des réglages. Pas leur code, pas leurs images, pas leurs textes.

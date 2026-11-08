@@ -47,7 +47,7 @@ public class TreasuryScreen extends Screen {
         Button deposit = Button.builder(Component.translatable("crusadecraft.treasury.deposit"), b ->
                 CrusadeNetwork.toServer(new EconomyPackets.TreasuryAction(chest, EconomyPackets.TreasuryAction.Kind.DEPOSIT_ALL,
                         net.minecraft.resources.ResourceLocation.tryParse("minecraft:air"), 0)))
-                .bounds(left + 10, by, 104, 18).build();
+                .bounds(left + 10, by, 104, 18).build(KitButton::new);
         deposit.setTooltip(Tooltip.create(Component.translatable("crusadecraft.treasury.deposit.tip")));
         addRenderableWidget(deposit);
 
@@ -63,14 +63,14 @@ public class TreasuryScreen extends Screen {
             Button b = Button.builder(Component.literal("    ").append(Component.translatable("crusadecraft.treasury.withdraw.short", d.value())), btn ->
                     CrusadeNetwork.toServer(new EconomyPackets.TreasuryAction(chest, EconomyPackets.TreasuryAction.Kind.WITHDRAW,
                             d.item(), hasShiftDown() ? 10 : 1)))
-                    .bounds(bx, by, bw, 18).build();
+                    .bounds(bx, by, bw, 18).build(KitButton::new);
             b.setTooltip(Tooltip.create(Component.translatable("crusadecraft.treasury.withdraw.tip", name, d.value())));
             b.active = view.canWithdraw() && view.gold() >= d.value();
             addRenderableWidget(b);
             bx += bw + 4;
         }
         addRenderableWidget(Button.builder(Component.translatable("gui.done"), b -> onClose())
-                .bounds(left + w - 90, by, 80, 18).build());
+                .bounds(left + w - 90, by, 80, 18).build(KitButton::new));
     }
 
     @Override

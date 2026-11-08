@@ -138,7 +138,7 @@ public final class PaperMapOverlay {
                 img.setPixelRGBA(px, py, abgr(0xFF000000 | view.territories().get(s.territory()).color()));
             } else {
                 square(img, px, py, 1, ink);
-                img.setPixelRGBA(px, py, abgr(0xFFEDE3CC));
+                img.setPixelRGBA(px, py, abgr(0xFFEADFC4));
             }
         }
         c.texture.upload();

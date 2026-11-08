@@ -63,12 +63,12 @@ public class NationScreen extends Screen {
                 tab = t;
                 scroll = 0;
                 rebuildWidgets();
-            }).bounds(tx, ty, tw - 2, 16).build();
+            }).bounds(tx, ty, tw - 2, 16).build(KitButton::new);
             b.active = tab != t;
             addRenderableWidget(b);
             tx += tw;
         }
-        addRenderableWidget(Button.builder(Component.translatable("gui.done"), b -> onClose()).bounds(left + w - 64, top + h - 24, 54, 16).build());
+        addRenderableWidget(Button.builder(Component.translatable("gui.done"), b -> onClose()).bounds(left + w - 64, top + h - 24, 54, 16).build(KitButton::new));
         if (tab == Tab.RELATIONS && view.mine()) relationButtons();
         if (tab == Tab.COURRIER) mailButtons();
         if (tab == Tab.VILLES && !view.cities().isEmpty()) {
@@ -76,7 +76,7 @@ public class NationScreen extends Screen {
             addRenderableWidget(Button.builder(Component.translatable("crusadecraft.ai.show_on_map"), b -> {
                 MapScreen.centerNextOn(capital.x(), capital.z());
                 CrusadeNetwork.toServer(new WorldPackets.RequestMap(true));
-            }).bounds(left + 10, top + h - 24, 110, 16).build());
+            }).bounds(left + 10, top + h - 24, 110, 16).build(KitButton::new));
         }
     }
 
@@ -108,7 +108,7 @@ public class NationScreen extends Screen {
             Component label = Component.literal(has ? "− " : "+ ").append(Component.translatable(t.key() + ".court"));
             Button b = Button.builder(label, btn -> act(has ? NationService.OP_BREAK : NationService.OP_PROPOSE, t.ordinal()))
                     .bounds(x + i * (bw + 2), y, bw, 16)
-                    .tooltip(net.minecraft.client.gui.components.Tooltip.create(Component.translatable(has ? "crusadecraft.nation.break" : "crusadecraft.nation.propose", Component.translatable(t.key())))).build();
+                    .tooltip(net.minecraft.client.gui.components.Tooltip.create(Component.translatable(has ? "crusadecraft.nation.break" : "crusadecraft.nation.propose", Component.translatable(t.key())))).build(KitButton::new);
             b.active = !rel.atWar();
             addRenderableWidget(b);
             i++;
@@ -116,13 +116,13 @@ public class NationScreen extends Screen {
         y += 18;
         bw = (w - 20) / 3 - 2;
         Button gift = Button.builder(Component.translatable("crusadecraft.nation.gift", NationService.GIFT), b -> act(NationService.OP_GIFT, -1))
-                .bounds(x, y, bw, 16).build();
+                .bounds(x, y, bw, 16).build(KitButton::new);
         gift.active = view.gold() >= NationService.GIFT && !rel.atWar();
         addRenderableWidget(gift);
         addRenderableWidget(Button.builder(Component.translatable("crusadecraft.nation.insult"), b -> act(NationService.OP_INSULT, -1))
-                .bounds(x + bw + 2, y, bw, 16).build());
+                .bounds(x + bw + 2, y, bw, 16).build(KitButton::new));
         Button war = Button.builder(Component.translatable("crusadecraft.nation.war"), b -> act(NationService.OP_WAR, -1))
-                .bounds(x + 2 * (bw + 2), y, bw, 16).build();
+                .bounds(x + 2 * (bw + 2), y, bw, 16).build(KitButton::new);
         war.active = rel.canWar();
         addRenderableWidget(war);
     }
@@ -138,10 +138,10 @@ public class NationScreen extends Screen {
         letter = m.id();
         int y = top + h - 24, x = left + 10;
         if (m.treaty() >= 0) {
-            addRenderableWidget(Button.builder(Component.translatable("crusadecraft.nation.mail.accept"), b -> act(NationService.OP_ACCEPT, -1)).bounds(x, y, 80, 16).build());
-            addRenderableWidget(Button.builder(Component.translatable("crusadecraft.nation.mail.refuse"), b -> act(NationService.OP_REFUSE, -1)).bounds(x + 84, y, 80, 16).build());
+            addRenderableWidget(Button.builder(Component.translatable("crusadecraft.nation.mail.accept"), b -> act(NationService.OP_ACCEPT, -1)).bounds(x, y, 80, 16).build(KitButton::new));
+            addRenderableWidget(Button.builder(Component.translatable("crusadecraft.nation.mail.refuse"), b -> act(NationService.OP_REFUSE, -1)).bounds(x + 84, y, 80, 16).build(KitButton::new));
         } else {
-            addRenderableWidget(Button.builder(Component.translatable("crusadecraft.nation.mail.done"), b -> act(NationService.OP_READ, -1)).bounds(x, y, 80, 16).build());
+            addRenderableWidget(Button.builder(Component.translatable("crusadecraft.nation.mail.done"), b -> act(NationService.OP_READ, -1)).bounds(x, y, 80, 16).build(KitButton::new));
         }
     }
 

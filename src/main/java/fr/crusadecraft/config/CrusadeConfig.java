@@ -526,12 +526,18 @@ public final class CrusadeConfig {
     public static final class Client {
         public final ForgeConfigSpec.BooleanValue showToasts;
         public final ForgeConfigSpec.IntValue toastSeconds;
+        public final ForgeConfigSpec.BooleanValue hubScale;
 
         Client(ForgeConfigSpec.Builder b) {
             b.comment("Notifications façon CK3 en haut de l'écran").push("notifications");
             showToasts = b.comment("Afficher les notifications.").define("afficher", true);
             toastSeconds = b.comment("Durée d'affichage d'une notification, en secondes.")
                     .defineInRange("duree", 6, 2, 30);
+            b.pop();
+            b.comment("Le menu royal (touche du royaume)").push("menu");
+            hubScale = b.comment("Quand l'échelle d'interface le rendrait trop petit (moins de 600 x 340), le menu royal se dessine",
+                    "une échelle en dessous, à la taille de sa maquette. Sur un écran 1080p en échelle automatique : 640 x 360.")
+                    .define("echelleMaquette", true);
             b.pop();
         }
     }

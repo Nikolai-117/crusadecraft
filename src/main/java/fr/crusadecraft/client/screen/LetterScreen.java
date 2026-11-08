@@ -51,7 +51,7 @@ public class LetterScreen extends Screen {
                 Button b = Button.builder(label, btn -> {
                     CrusadeNetwork.toServer(new DiplomacyPackets.AnswerLetter(id, index));
                     onClose();
-                }).bounds(left + 15 + i * (bw + 6), top + h - 30, bw, 18).build();
+                }).bounds(left + 15 + i * (bw + 6), top + h - 30, bw, 18).build(KitButton::new);
                 if (seal) b.setTooltip(Tooltip.create(Component.translatable("crusadecraft.letter.seal_tip")));
                 addRenderableWidget(b);
             }

@@ -46,10 +46,10 @@ public class ChanceryScreen extends Screen {
         left = (width - w) / 2;
         top = (height - h) / 2;
         int colW = w / 2 - 14;
-        addRenderableWidget(Button.builder(Component.translatable("gui.done"), b -> onClose()).bounds(left + w - 78, top + h - 24, 70, 16).build());
+        addRenderableWidget(Button.builder(Component.translatable("gui.done"), b -> onClose()).bounds(left + w - 78, top + h - 24, 70, 16).build(KitButton::new));
         if (view.nextRank() != null) {
             Button create = Button.builder(Component.translatable("crusadecraft.chancery.create", Component.translatable(view.nextRank().titleKey())),
-                    b -> send(DiplomacyPackets.ChanceryAction.Kind.CREATE_TITLE, null, -1, 0, 0)).bounds(left + 10, top + 96, colW, 16).build();
+                    b -> send(DiplomacyPackets.ChanceryAction.Kind.CREATE_TITLE, null, -1, 0, 0)).bounds(left + 10, top + 96, colW, 16).build(KitButton::new);
             create.active = view.canRankUp();
             create.setTooltip(Tooltip.create(Component.translatable(view.sealOk() ? "crusadecraft.chancery.create.tip" : "crusadecraft.chancery.seal_needed")));
             addRenderableWidget(create);
@@ -71,7 +71,7 @@ public class ChanceryScreen extends Screen {
         for (ChanceryView.Claim c : view.candidates()) {
             if (cy > top + h - 44) break;
             Button b = Button.builder(Component.translatable("crusadecraft.chancery.claim"),
-                    btn -> send(DiplomacyPackets.ChanceryAction.Kind.CLAIM, null, c.province(), 0, 0)).bounds(rx + colW - 70, cy - 3, 70, 16).build();
+                    btn -> send(DiplomacyPackets.ChanceryAction.Kind.CLAIM, null, c.province(), 0, 0)).bounds(rx + colW - 70, cy - 3, 70, 16).build(KitButton::new);
             b.active = view.hasChancellor() && view.claimTarget() != c.province();
             b.setTooltip(Tooltip.create(Component.translatable(view.hasChancellor() ? "crusadecraft.chancery.claim.tip" : "crusadecraft.diplo.no_chancellor")));
             addRenderableWidget(b);
@@ -80,7 +80,7 @@ public class ChanceryScreen extends Screen {
     }
 
     private Button small(String label, int x, int y, Runnable action) {
-        Button b = Button.builder(Component.literal(label), btn -> action.run()).bounds(x, y, 18, 16).build();
+        Button b = Button.builder(Component.literal(label), btn -> action.run()).bounds(x, y, 18, 16).build(KitButton::new);
         b.active = view.sealOk();
         if (!view.sealOk()) b.setTooltip(Tooltip.create(Component.literal(view.sealProblem())));
         return b;
@@ -94,7 +94,7 @@ public class ChanceryScreen extends Screen {
         int colW = w / 2 - 14;
         Ui.scaled(g, font, Component.translatable("crusadecraft.chancery.title", view.realmName()), left + 10, top + 8, 1.3f, Ui.TEXT_TITLE, false);
         Component seal = view.sealOk() ? Component.translatable("crusadecraft.chancery.seal_ok") : Component.literal(view.sealProblem());
-        Ui.text(g, font, Component.literal(font.plainSubstrByWidth(seal.getString(), w - 20)), left + 10, top + 24, view.sealOk() ? Ui.GREEN : 0xFFE0A070);
+        Ui.text(g, font, Component.literal(font.plainSubstrByWidth(seal.getString(), w - 20)), left + 10, top + 24, view.sealOk() ? Ui.GREEN : 0xFFE3B34F);
 
         // Titre
         int x = left + 10, y = top + 40;
@@ -157,7 +157,7 @@ public class ChanceryScreen extends Screen {
         int ly = top + 112;
         Ui.text(g, font, Component.translatable("crusadecraft.chancery.claimed", view.claims().size()), rx, ly - 12 + 2, Ui.TEXT_MUTED);
         if (view.claims().isEmpty()) {
-            Ui.text(g, font, Component.translatable("crusadecraft.chancery.claimed.none"), rx, ly, 0xFF6E6250);
+            Ui.text(g, font, Component.translatable("crusadecraft.chancery.claimed.none"), rx, ly, 0xFF7D858E);
         }
         for (ChanceryView.Claim c : view.claims()) {
             Component line = Component.literal("• " + c.name() + " (").append(realmName(c.realmPlace(), c.realmRank())).append(")");

@@ -115,7 +115,7 @@ public class LieuForm extends Screen {
             Button kindButton = Button.builder(kindLabel(), b -> {
                 kindIndex = (kindIndex + 1) % kinds.size();
                 rebuildWidgets();
-            }).bounds(left + 12, y, kind() == LieuKind.REGION ? half : fw - 24, 16).build();
+            }).bounds(left + 12, y, kind() == LieuKind.REGION ? half : fw - 24, 16).build(KitButton::new);
             kindButton.active = kinds.size() > 1;
             kindButton.setTooltip(Tooltip.create(Component.translatable(kind().title() ? "crusadecraft.lieu.form.kind.title.tip"
                     : "crusadecraft.lieu.form.kind.place.tip")));
@@ -124,14 +124,14 @@ public class LieuForm extends Screen {
                 addRenderableWidget(Button.builder(Component.translatable("crusadecraft.lieu.form.radius", RADII[radiusIndex]), b -> {
                     radiusIndex = (radiusIndex + 1) % RADII.length;
                     b.setMessage(Component.translatable("crusadecraft.lieu.form.radius", RADII[radiusIndex]));
-                }).bounds(left + 16 + half, y, half, 16).build());
+                }).bounds(left + 16 + half, y, half, 16).build(KitButton::new));
             }
             y += 20;
             if (under != null) {
                 addRenderableWidget(Button.builder(underLabel(), b -> {
                     useUnder = !useUnder;
                     b.setMessage(underLabel());
-                }).bounds(left + 12, y, fw - 24, 16).tooltip(Tooltip.create(Component.translatable("crusadecraft.lieu.form.under.tip"))).build());
+                }).bounds(left + 12, y, fw - 24, 16).tooltip(Tooltip.create(Component.translatable("crusadecraft.lieu.form.under.tip"))).build(KitButton::new));
             }
         }
         if (mode == Mode.HOLDER) {
@@ -139,7 +139,7 @@ public class LieuForm extends Screen {
                 List<LieuView.Choice> realms = parent.view().realms();
                 holderIndex = holderIndex + 1 >= realms.size() ? -1 : holderIndex + 1;
                 b.setMessage(holderLabel());
-            }).bounds(left + 12, y, fw - 24, 16).build());
+            }).bounds(left + 12, y, fw - 24, 16).build(KitButton::new));
         }
         if (mode == Mode.PARENT) {
             listTop = top + 34;
@@ -147,13 +147,13 @@ public class LieuForm extends Screen {
             addRenderableWidget(Button.builder(Component.translatable("crusadecraft.lieu.form.parent.world"), b -> {
                 CrusadeNetwork.toServer(LieuPackets.Action.of(LieuPackets.Action.Op.PARENT, target, "", null));
                 onClose();
-            }).bounds(left + 12, top + fh - 48, fw - 24, 16).tooltip(Tooltip.create(Component.translatable("crusadecraft.lieu.form.parent.world.tip"))).build());
-            addRenderableWidget(Button.builder(Component.translatable("gui.cancel"), b -> onClose()).bounds(left + fw / 2 - 45, top + fh - 26, 90, 18).build());
+            }).bounds(left + 12, top + fh - 48, fw - 24, 16).tooltip(Tooltip.create(Component.translatable("crusadecraft.lieu.form.parent.world.tip"))).build(KitButton::new));
+            addRenderableWidget(Button.builder(Component.translatable("gui.cancel"), b -> onClose()).bounds(left + fw / 2 - 45, top + fh - 26, 90, 18).build(KitButton::new));
             return;
         }
         addRenderableWidget(Button.builder(Component.translatable(mode == Mode.CREATE ? "crusadecraft.lieu.form.place" : "crusadecraft.mapedit.form.save"),
-                b -> confirm()).bounds(left + fw / 2 - 94, top + fh - 26, 90, 18).build());
-        addRenderableWidget(Button.builder(Component.translatable("gui.cancel"), b -> onClose()).bounds(left + fw / 2 + 4, top + fh - 26, 90, 18).build());
+                b -> confirm()).bounds(left + fw / 2 - 94, top + fh - 26, 90, 18).build(KitButton::new));
+        addRenderableWidget(Button.builder(Component.translatable("gui.cancel"), b -> onClose()).bounds(left + fw / 2 + 4, top + fh - 26, 90, 18).build(KitButton::new));
     }
 
     private Component kindLabel() {

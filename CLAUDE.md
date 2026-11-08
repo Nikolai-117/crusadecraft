@@ -85,7 +85,7 @@ rm -rf run-gametest/world && ./gradlew runGameTestServer   # GameTests en monde 
 | `core/city` | Les **villes vivantes** : bâton d'intendant (`CityStaff`), reconnaissance des bâtiments (`BuildingScan`), fonctions (`BuildingFunction`), habitants et échanges (`CityService`, `CityTrades`), commandes (`CityCommands`) |
 | `compat/minecolonies` | **Tout ce qui touche à l'API de MineColonies et Structurize**, et seulement ici |
 | `compat/mca`, `dynmap`, `xaero`, `hyw` | Comes Alive, Dynmap, Xaero, Hundred Years Warfare : chacun derrière un pont (`*Bridge`) qui se coupe sans planter si le mod manque ou change |
-| `client` | Écrans (`client/screen`, outil `Ui`), HUD (`client/hud`), carte et fantôme (`client/map`), villes (`client/city`), scénarios de captures (`client/dev`) |
+| `client` | Écrans (`client/screen`, outils `Ui` et `Kit`), HUD (`client/hud`), carte et fantôme (`client/map`), villes (`client/city`), scénarios de captures (`client/dev`) |
 | `network/packet` | Les paquets, par sujet (`PlanPackets`, `BuildingPackets`, `CityPackets`…) |
 | `data/CrusadeSavedData` | Tout l'état enregistré du mod, versionné |
 | `gametest` | Les GameTests (`*GameTests.java`, outil `TestWorld`) |
@@ -93,6 +93,19 @@ rm -rf run-gametest/world && ./gradlew runGameTestServer   # GameTests en monde 
 Documents : `docs/decisions.md` (pourquoi chaque chose est comme elle est), `docs/GUIDE.md` (mode d'emploi joueur),
 `docs/conception-villes.md` (ce que Romain a décidé pour les villes), `docs/catalogue-plans.md` (inventaire des pièces
 des packs), `docs/etape-2-plan.md` (le plan des phases).
+
+## Le kit Varenhold (P61)
+
+- `client/screen/Kit.java` tient la maquette de Romain : couleurs, panneau ancré, carte, puits, acte, boutons, pastilles,
+  sections, icônes (`textures/gui/kit/icons.png`, 10 × 10, teintées au dessin) et ressources. `Ui` pointe sur ses
+  couleurs : un écran pas encore refait en hérite déjà. Un bouton s'écrit `.build(KitButton::new)`, ou
+  `KitButton::primary` pour l'action dorée.
+- La gothique (`Kit.title`, police `crusadecraft:gothique`) ne sert qu'aux titres, à l'échelle 1 ou 2. Elle est plus
+  large que la police du jeu : couper avec `fitGothic`, jamais avec la mesure de la police ordinaire.
+- `RealmScreen` (le menu royal) dessine tout au rendu et note ses zones cliquables ; il baisse l'échelle d'interface
+  sous 600 × 340 (`echelleMaquette`) et la rend dans `removed()`. Ne pas y appeler `resizeDisplay()` : l'écran encore
+  ouvert remettrait aussitôt son échelle.
+- Captures à la taille de l'écran de Romain : `./gradlew runUiShots -Pshots_only=menu_ -Pui_size=1920x1080 -Pui_scale=4`.
 
 ## Nations et habitants (P41 à P43)
 

@@ -90,7 +90,7 @@ public class SettingsScreen extends Screen {
         rw = left + w - 8 - rx;
         rowsTop = top + 26;
         rowsBottom = top + h - 30;
-        addRenderableWidget(Button.builder(Component.translatable("gui.done"), b -> onClose()).bounds(left + w - 68, top + h - 24, 60, 16).build());
+        addRenderableWidget(Button.builder(Component.translatable("gui.done"), b -> onClose()).bounds(left + w - 68, top + h - 24, 60, 16).build(KitButton::new));
         if (!view.allowed()) return;
         List<SettingsService.Entry> rows = rows();
         int visible = Math.max(1, (rowsBottom - rowsTop) / ROW_H);
@@ -104,13 +104,13 @@ public class SettingsScreen extends Screen {
                     boolean on = Boolean.parseBoolean(e.value());
                     addRenderableWidget(Button.builder(Component.translatable(on ? "crusadecraft.settings.yes" : "crusadecraft.settings.no")
                             .withStyle(on ? ChatFormatting.GREEN : ChatFormatting.RED), b -> send(e.path(), String.valueOf(!on)))
-                            .bounds(cx, y, CONTROL_W, 16).build());
+                            .bounds(cx, y, CONTROL_W, 16).build(KitButton::new));
                 }
                 case ENUM -> {
                     int at = Math.max(0, e.choices().indexOf(e.value()));
                     String next = e.choices().isEmpty() ? e.value() : e.choices().get((at + 1) % e.choices().size());
                     addRenderableWidget(Button.builder(Component.literal(e.value()), b -> send(e.path(), next)).bounds(cx, y, CONTROL_W, 16)
-                            .tooltip(Tooltip.create(Component.literal(String.join(", ", e.choices())))).build());
+                            .tooltip(Tooltip.create(Component.literal(String.join(", ", e.choices())))).build(KitButton::new));
                 }
                 case INT, DOUBLE, TEXT -> {
                     boolean number = e.kind() != SettingsService.Kind.TEXT;
@@ -121,10 +121,10 @@ public class SettingsScreen extends Screen {
                     box.setValue(e.value());
                     addRenderableWidget(box);
                     addRenderableWidget(Button.builder(Component.literal("✔"), b -> send(e.path(), box.getValue()))
-                            .bounds(bx + boxW + 2, y, 22, 16).tooltip(Tooltip.create(Component.translatable("crusadecraft.settings.apply"))).build());
+                            .bounds(bx + boxW + 2, y, 22, 16).tooltip(Tooltip.create(Component.translatable("crusadecraft.settings.apply"))).build(KitButton::new));
                     if (number) {
-                        addRenderableWidget(Button.builder(Component.literal("−"), b -> send(e.path(), step(e, -1))).bounds(cx, y, 16, 16).build());
-                        addRenderableWidget(Button.builder(Component.literal("+"), b -> send(e.path(), step(e, 1))).bounds(cx + CONTROL_W - 16, y, 16, 16).build());
+                        addRenderableWidget(Button.builder(Component.literal("−"), b -> send(e.path(), step(e, -1))).bounds(cx, y, 16, 16).build(KitButton::new));
+                        addRenderableWidget(Button.builder(Component.literal("+"), b -> send(e.path(), step(e, 1))).bounds(cx + CONTROL_W - 16, y, 16, 16).build(KitButton::new));
                     }
                 }
                 case LIST -> { }
@@ -173,7 +173,7 @@ public class SettingsScreen extends Screen {
             int y = sy + 2 + (i - sectionScroll) * SECTION_H;
             boolean chosen = names.get(i).equals(section);
             if (chosen || Ui.inside(mouseX, mouseY, sx + 2, y, SECTIONS_W - 4, SECTION_H)) {
-                g.fill(sx + 2, y, sx + SECTIONS_W - 2, y + SECTION_H - 1, chosen ? 0xFF3A2E22 : Ui.PANEL_HIGHLIGHT);
+                g.fill(sx + 2, y, sx + SECTIONS_W - 2, y + SECTION_H - 1, chosen ? 0xFF2E3740 : Ui.PANEL_HIGHLIGHT);
             }
             String label = font.plainSubstrByWidth(sectionName(names.get(i)).getString(), SECTIONS_W - 10);
             Ui.text(g, font, Component.literal(label), sx + 5, y + 1, chosen ? Ui.TEXT_TITLE : Ui.TEXT);

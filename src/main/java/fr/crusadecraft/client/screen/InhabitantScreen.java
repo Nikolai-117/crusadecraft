@@ -47,12 +47,12 @@ public class InhabitantScreen extends Screen {
         for (int i = 0; i < all.length; i++) {
             CityTalk.Topic t = all[i];
             addRenderableWidget(Button.builder(Component.translatable(t.key()), b -> CrusadeNetwork.toServer(new InhabitantPackets.Say(view.id(), t.ordinal())))
-                    .bounds(left + 10 + (i % 4) * (bw + 2), y + (i / 4) * 18, bw, 16).build());
+                    .bounds(left + 10 + (i % 4) * (bw + 2), y + (i / 4) * 18, bw, 16).build(KitButton::new));
         }
         Button trade = Button.builder(Component.translatable("crusadecraft.city.talk.trade"), b -> {
             CrusadeNetwork.toServer(new InhabitantPackets.Say(view.id(), -1));
             onClose();
-        }).bounds(left + 10 + 3 * (bw + 2), y + 18, bw, 16).build();
+        }).bounds(left + 10 + 3 * (bw + 2), y + 18, bw, 16).build(KitButton::new);
         trade.active = view.trades();
         addRenderableWidget(trade);
         // P49 : ce que la ville a commandé ; P47 : l'éditeur, pour qui a la main sur la ville.
@@ -60,13 +60,13 @@ public class InhabitantScreen extends Screen {
             net.minecraft.network.chat.MutableComponent tip = Component.translatable("crusadecraft.city.order.tip");
             for (String s : view.orders()) tip.append(Component.literal((char) 10 + "· " + s));
             Button deliver = Button.builder(Component.translatable("crusadecraft.city.order.deliver"), b -> CrusadeNetwork.toServer(new InhabitantPackets.Say(view.id(), InhabitantPackets.DELIVER)))
-                    .bounds(left + W - 10 - 64, top + 10, 64, 14).tooltip(net.minecraft.client.gui.components.Tooltip.create(tip)).build();
+                    .bounds(left + W - 10 - 64, top + 10, 64, 14).tooltip(net.minecraft.client.gui.components.Tooltip.create(tip)).build(KitButton::new);
             deliver.active = view.canDeliver();
             addRenderableWidget(deliver);
         }
         if (view.canEdit()) {
             addRenderableWidget(Button.builder(Component.translatable("crusadecraft.city.npc.open"), b -> CrusadeNetwork.toServer(new InhabitantPackets.Say(view.id(), InhabitantPackets.EDIT)))
-                    .bounds(left + W - 10 - 64, top + 26, 64, 14).build());
+                    .bounds(left + W - 10 - 64, top + 26, 64, 14).build(KitButton::new));
         }
     }
 

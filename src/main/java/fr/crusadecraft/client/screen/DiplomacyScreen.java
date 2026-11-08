@@ -70,11 +70,11 @@ public class DiplomacyScreen extends Screen {
         top = (height - h) / 2;
         Button mail = Button.builder(Component.translatable("crusadecraft.diplo.take_mail", view.mailArrived()),
                 b -> send(DiplomacyPackets.DiploAction.of(DiplomacyPackets.DiploAction.Kind.TAKE_MAIL, null)))
-                .bounds(left + w - 150, top + 6, 140, 16).build();
+                .bounds(left + w - 150, top + 6, 140, 16).build(KitButton::new);
         mail.active = view.mailArrived() > 0;
         mail.setTooltip(Tooltip.create(Component.translatable("crusadecraft.diplo.take_mail.tip", view.mailAwaiting())));
         addRenderableWidget(mail);
-        addRenderableWidget(Button.builder(Component.translatable("gui.done"), b -> onClose()).bounds(left + 8, top + h - 22, 172, 16).build());
+        addRenderableWidget(Button.builder(Component.translatable("gui.done"), b -> onClose()).bounds(left + 8, top + h - 22, 172, 16).build(KitButton::new));
 
         DiplomacyView.Entry e = selectedEntry();
         if (e == null) return;
@@ -87,7 +87,7 @@ public class DiplomacyScreen extends Screen {
         for (int gold : fr.crusadecraft.core.diplomacy.DiplomacyService.GIFTS) {
             Button g = Button.builder(Component.translatable("crusadecraft.diplo.gift", gold),
                     b -> send(new DiplomacyPackets.DiploAction(DiplomacyPackets.DiploAction.Kind.GIFT, e.id(), null, null, gold, 20, 20)))
-                    .bounds(gx, by, sw, 16).build();
+                    .bounds(gx, by, sw, 16).build(KitButton::new);
             g.active = view.gold() >= gold;
             g.setTooltip(Tooltip.create(Component.translatable("crusadecraft.diplo.gift.tip", gold)));
             addRenderableWidget(g);
@@ -95,7 +95,7 @@ public class DiplomacyScreen extends Screen {
         }
         if (e.ai()) {
             Button insult = Button.builder(Component.translatable("crusadecraft.diplo.insult"),
-                    b -> send(DiplomacyPackets.DiploAction.of(DiplomacyPackets.DiploAction.Kind.INSULT, e.id()))).bounds(gx, by, rx + rw - gx, 16).build();
+                    b -> send(DiplomacyPackets.DiploAction.of(DiplomacyPackets.DiploAction.Kind.INSULT, e.id()))).bounds(gx, by, rx + rw - gx, 16).build(KitButton::new);
             insult.setTooltip(Tooltip.create(Component.translatable("crusadecraft.diplo.insult.tip")));
             addRenderableWidget(insult);
         }
@@ -109,7 +109,7 @@ public class DiplomacyScreen extends Screen {
             int col = i % 2, row = i / 2;
             Button b = Button.builder(Component.literal(mark).append(Component.translatable(p.key())),
                     btn -> send(new DiplomacyPackets.DiploAction(DiplomacyPackets.DiploAction.Kind.PROPOSE, e.id(), p, null, 0, tax, levy)))
-                    .bounds(px + col * (pw + 4), py + row * 18, pw, 16).build();
+                    .bounds(px + col * (pw + 4), py + row * 18, pw, 16).build(KitButton::new);
             b.active = v == null || v.blockedKey() == null;
             b.setTooltip(Tooltip.create(verdictTooltip(e, p, v)));
             addRenderableWidget(b);
@@ -120,7 +120,7 @@ public class DiplomacyScreen extends Screen {
             int col = i % 2, row = i / 2;
             Button chancellor = Button.builder(Component.translatable(already ? "crusadecraft.diplo.chancellor.on" : "crusadecraft.diplo.chancellor"),
                     b -> send(DiplomacyPackets.DiploAction.of(DiplomacyPackets.DiploAction.Kind.CHANCELLOR, e.id())))
-                    .bounds(px + col * (pw + 4), py + row * 18, pw, 16).build();
+                    .bounds(px + col * (pw + 4), py + row * 18, pw, 16).build(KitButton::new);
             chancellor.active = view.hasChancellor() && !already;
             chancellor.setTooltip(Tooltip.create(Component.translatable(view.hasChancellor() ? "crusadecraft.diplo.chancellor.tip"
                     : "crusadecraft.diplo.no_chancellor")));
@@ -130,17 +130,17 @@ public class DiplomacyScreen extends Screen {
         // Contrat proposé avec la vassalisation : impôt et levées, chacun sur une moitié de la rangée.
         int cy = py + ((i + 1) / 2) * 18 + 2;
         int half = rw / 2;
-        addRenderableWidget(Button.builder(Component.literal("−"), b -> { tax = Relation.clampRate(tax - 5); rebuildWidgets(); }).bounds(rx + half - 62, cy, 18, 16).build());
-        addRenderableWidget(Button.builder(Component.literal("+"), b -> { tax = Relation.clampRate(tax + 5); rebuildWidgets(); }).bounds(rx + half - 22, cy, 18, 16).build());
-        addRenderableWidget(Button.builder(Component.literal("−"), b -> { levy = Relation.clampRate(levy - 5); rebuildWidgets(); }).bounds(rx + rw - 58, cy, 18, 16).build());
-        addRenderableWidget(Button.builder(Component.literal("+"), b -> { levy = Relation.clampRate(levy + 5); rebuildWidgets(); }).bounds(rx + rw - 18, cy, 18, 16).build());
+        addRenderableWidget(Button.builder(Component.literal("−"), b -> { tax = Relation.clampRate(tax - 5); rebuildWidgets(); }).bounds(rx + half - 62, cy, 18, 16).build(KitButton::new));
+        addRenderableWidget(Button.builder(Component.literal("+"), b -> { tax = Relation.clampRate(tax + 5); rebuildWidgets(); }).bounds(rx + half - 22, cy, 18, 16).build(KitButton::new));
+        addRenderableWidget(Button.builder(Component.literal("−"), b -> { levy = Relation.clampRate(levy - 5); rebuildWidgets(); }).bounds(rx + rw - 58, cy, 18, 16).build(KitButton::new));
+        addRenderableWidget(Button.builder(Component.literal("+"), b -> { levy = Relation.clampRate(levy + 5); rebuildWidgets(); }).bounds(rx + rw - 18, cy, 18, 16).build(KitButton::new));
         // Rompre un traité
         int ty = top + 92;
         for (Map.Entry<Treaty, Long> t : e.treatyDays().entrySet()) {
             Treaty treaty = t.getKey();
             Button br = Button.builder(Component.translatable("crusadecraft.diplo.break"),
                     b -> send(new DiplomacyPackets.DiploAction(DiplomacyPackets.DiploAction.Kind.BREAK, e.id(), null, treaty, 0, 20, 20)))
-                    .bounds(rx + rw - 46, ty - 3, 46, 16).build();
+                    .bounds(rx + rw - 46, ty - 3, 46, 16).build(KitButton::new);
             br.setTooltip(Tooltip.create(Component.translatable("crusadecraft.diplo.break.tip")));
             addRenderableWidget(br);
             ty += 16;
@@ -212,7 +212,7 @@ public class DiplomacyScreen extends Screen {
             int ry = ly + 2 + (i - listScroll) * ROW;
             boolean sel = e.id().equals(selected);
             boolean hover = Ui.inside(mouseX, mouseY, lx + 2, ry, lw - 4, ROW - 1);
-            g.fill(lx + 2, ry, lx + lw - 2, ry + ROW - 1, sel ? Ui.PANEL_HIGHLIGHT : hover ? 0xFF2C231B : 0xFF1C1612);
+            g.fill(lx + 2, ry, lx + lw - 2, ry + ROW - 1, sel ? Ui.PANEL_HIGHLIGHT : hover ? 0xFF28313B : 0xFF1B2026);
             g.fill(lx + 5, ry + 4, lx + 13, ry + 13, 0xFF000000 | e.color());
             String name = font.plainSubstrByWidth(entryName(e).getString(), lw - 24);
             Ui.text(g, font, Component.literal(name), lx + 17, ry + 1, sel ? Ui.TEXT_TITLE : Ui.TEXT);
@@ -232,7 +232,7 @@ public class DiplomacyScreen extends Screen {
     }
 
     private static int opinionColor(int opinion) {
-        return opinion >= 20 ? Ui.GREEN : opinion <= -20 ? Ui.RED : 0xFFC99A3C;
+        return opinion >= 20 ? Ui.GREEN : opinion <= -20 ? Ui.RED : 0xFFE3B34F;
     }
 
     private void renderEntry(GuiGraphics g, DiplomacyView.Entry e, int mouseX, int mouseY) {
@@ -262,7 +262,7 @@ public class DiplomacyScreen extends Screen {
         y += 12;
         // Traités en cours
         if (e.treatyDays().isEmpty()) {
-            Ui.text(g, font, Component.translatable("crusadecraft.diplo.no_treaty.short"), rx, y, 0xFF6E6250);
+            Ui.text(g, font, Component.translatable("crusadecraft.diplo.no_treaty.short"), rx, y, 0xFF7D858E);
         }
         for (Map.Entry<Treaty, Long> t : e.treatyDays().entrySet()) {
             Component line = Component.translatable(t.getKey().key()).append(Component.literal(" — ").append(t.getValue() < 0
@@ -287,7 +287,7 @@ public class DiplomacyScreen extends Screen {
         Ui.centered(g, font, Component.literal(levy + "%"), rx + rw - 29, cy + 4, Ui.TEXT);
         if (!view.sealUsable()) {
             String problem = font.plainSubstrByWidth(view.sealProblem(), Math.round((w - 196) / 0.8f));
-            Ui.scaled(g, font, Component.literal(problem), left + 186, top + h - 11, 0.8f, 0xFFE0A070, false);
+            Ui.scaled(g, font, Component.literal(problem), left + 186, top + h - 11, 0.8f, 0xFFE3B34F, false);
         }
     }
 

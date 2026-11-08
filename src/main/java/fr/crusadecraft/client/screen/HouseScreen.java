@@ -59,7 +59,7 @@ public class HouseScreen extends Screen {
         left = (width - w) / 2;
         top = (height - h) / 2;
         int cw = colW(), rx = left + 20 + cw;
-        addRenderableWidget(Button.builder(Component.translatable("gui.done"), b -> onClose()).bounds(left + w - 88, top + h - 22, 80, 16).build());
+        addRenderableWidget(Button.builder(Component.translatable("gui.done"), b -> onClose()).bounds(left + w - 88, top + h - 22, 80, 16).build(KitButton::new));
         // Le registre des lignées (P13) : les maisons et les communautés du monde, au-delà de la vôtre.
         // Ouvert sur la maison du royaume quand on la connaît : les deux généalogies se rejoignent là (P26).
         java.util.UUID realmId = view.court() == null ? null : view.court().realm();
@@ -67,14 +67,14 @@ public class HouseScreen extends Screen {
             if (minecraft != null && minecraft.getConnection() != null) {
                 fr.crusadecraft.network.CrusadeNetwork.toServer(new fr.crusadecraft.network.packet.LineagePackets.Request(null, realmId));
             }
-        }).bounds(left + w / 2 - 60, top + h - 22, 120, 16).build();
+        }).bounds(left + w / 2 - 60, top + h - 22, 120, 16).build(KitButton::new);
         lineages.setTooltip(net.minecraft.client.gui.components.Tooltip.create(Component.translatable("crusadecraft.lineage.open.tip")));
         addRenderableWidget(lineages);
         if (view.court() != null) {
             HouseView.Court court = view.court();
             Component label = Component.translatable("crusadecraft.feast.button", court.feastCost());
             Button feast = Button.builder(label, b -> send(CourtLifePackets.HouseAction.of(CourtLifePackets.HouseAction.Kind.FEAST)))
-                    .bounds(left + 11, top + 28 + listH() + 12, Math.min(colW() - 6, font.width(label) + 12), 15).build();
+                    .bounds(left + 11, top + 28 + listH() + 12, Math.min(colW() - 6, font.width(label) + 12), 15).build(KitButton::new);
             feast.active = court.problem().isEmpty();
             feast.setTooltip(Tooltip.create(court.problem().isEmpty() ? Component.translatable("crusadecraft.feast.tip")
                     : Component.translatable(court.problem(), court.cooldown())));
@@ -84,19 +84,19 @@ public class HouseScreen extends Screen {
         Button heir = Button.builder(Component.translatable("crusadecraft.house.make_heir"), b -> {
             HouseView.Member s = selectedMember();
             if (s != null) send(new CourtLifePackets.HouseAction(CourtLifePackets.HouseAction.Kind.HEIR, s.ref(), null));
-        }).bounds(left + 8, top + h - 22, 120, 16).build();
+        }).bounds(left + 8, top + h - 22, 120, 16).build(KitButton::new);
         heir.active = m != null && !m.heir();
         heir.setTooltip(Tooltip.create(Component.translatable("crusadecraft.house.make_heir.tip")));
         addRenderableWidget(heir);
         Button adoptMode = Button.builder(Component.translatable("crusadecraft.house.mode.adopt"), b -> {
             marryMode = false;
             rebuildWidgets();
-        }).bounds(rx, top + 30, cw / 2 - 2, 14).build();
+        }).bounds(rx, top + 30, cw / 2 - 2, 14).build(KitButton::new);
         adoptMode.active = marryMode;
         Button marry = Button.builder(Component.translatable("crusadecraft.house.mode.marry"), b -> {
             marryMode = true;
             rebuildWidgets();
-        }).bounds(rx + cw / 2 + 2, top + 30, cw - cw / 2 - 2, 14).build();
+        }).bounds(rx + cw / 2 + 2, top + 30, cw - cw / 2 - 2, 14).build(KitButton::new);
         marry.active = !marryMode;
         addRenderableWidget(adoptMode);
         addRenderableWidget(marry);
@@ -107,7 +107,7 @@ public class HouseScreen extends Screen {
                 if (y + ROW > bottom) break;
                 Button b = Button.builder(Component.translatable("crusadecraft.house.adopt", view.adoptCost()),
                         btn -> send(new CourtLifePackets.HouseAction(CourtLifePackets.HouseAction.Kind.ADOPT, c.ref(), null)))
-                        .bounds(rx + cw - 92, y + 2, 92, 16).build();
+                        .bounds(rx + cw - 92, y + 2, 92, 16).build(KitButton::new);
                 b.active = view.size() < view.max() && view.prestige() >= view.adoptCost();
                 b.setTooltip(Tooltip.create(Component.translatable("crusadecraft.house.adopt.tip", view.adoptCost())));
                 addRenderableWidget(b);
@@ -118,7 +118,7 @@ public class HouseScreen extends Screen {
                 if (y + ROW > bottom) break;
                 Button b = Button.builder(Component.translatable("crusadecraft.house.propose"),
                         btn -> send(new CourtLifePackets.HouseAction(CourtLifePackets.HouseAction.Kind.PROPOSE, m.ref(), match.realm())))
-                        .bounds(rx + cw - 70, y + 2, 70, 16).build();
+                        .bounds(rx + cw - 70, y + 2, 70, 16).build(KitButton::new);
                 b.active = match.blocked().isEmpty();
                 b.setTooltip(Tooltip.create(matchTooltip(match)));
                 addRenderableWidget(b);
@@ -157,7 +157,7 @@ public class HouseScreen extends Screen {
             HouseView.Member m = view.members().get(i);
             boolean sel = i == selected;
             boolean hover = Ui.inside(mouseX, mouseY, lx + 2, my, cw, ROW - 1);
-            g.fill(lx + 2, my, lx + cw + 2, my + ROW - 1, sel ? Ui.PANEL_HIGHLIGHT : hover ? 0xFF2C231B : 0xFF1C1612);
+            g.fill(lx + 2, my, lx + cw + 2, my + ROW - 1, sel ? Ui.PANEL_HIGHLIGHT : hover ? 0xFF28313B : 0xFF1B2026);
             Component name = Component.literal((m.heir() ? "♔ " : "") + m.name());
             Ui.text(g, font, name, lx + 6, my + 2, m.heir() ? Ui.TEXT_TITLE : Ui.TEXT);
             Component sub = m.child() ? Component.translatable("crusadecraft.house.child")
@@ -194,7 +194,7 @@ public class HouseScreen extends Screen {
                         k, Ui.TEXT, false);
                 Component state = !match.blocked().isEmpty() ? Component.translatable(match.faith().key())
                         : Component.translatable(match.accepts() ? "crusadecraft.house.would_accept" : "crusadecraft.house.would_refuse");
-                int color = !match.blocked().isEmpty() ? Ui.RED : match.accepts() ? Ui.GREEN : 0xFFE0A070;
+                int color = !match.blocked().isEmpty() ? Ui.RED : match.accepts() ? Ui.GREEN : 0xFFE3B34F;
                 Ui.scaled(g, font, state, rx + 13, ry + 12, 0.75f, color, false);
                 ry += ROW;
             }

@@ -33,10 +33,10 @@ public class TournamentScreen extends Screen {
         h = Math.min(250, height - 8);
         left = (width - w) / 2;
         top = (height - h) / 2;
-        addRenderableWidget(Button.builder(Component.translatable("gui.done"), b -> onClose()).bounds(left + w - 88, top + h - 22, 80, 16).build());
+        addRenderableWidget(Button.builder(Component.translatable("gui.done"), b -> onClose()).bounds(left + w - 88, top + h - 22, 80, 16).build(KitButton::new));
         Button host = Button.builder(Component.translatable("crusadecraft.tournament.host", view.cost()), b -> {
             if (minecraft != null && minecraft.getConnection() != null) CrusadeNetwork.toServer(new CourtLifePackets.TournamentAction(true));
-        }).bounds(left + 8, top + h - 22, 180, 16).build();
+        }).bounds(left + 8, top + h - 22, 180, 16).build(KitButton::new);
         host.active = view.problem().isEmpty();
         host.setTooltip(Tooltip.create(view.problem().isEmpty() ? Component.translatable("crusadecraft.tournament.host.tip")
                 : view.problem().equals("crusadecraft.tournament.cooldown") ? Component.translatable(view.problem(), view.cooldownLeft())
@@ -70,7 +70,7 @@ public class TournamentScreen extends Screen {
             List<FormattedCharSequence> lines = font.split(p, colW - 6);
             int py = y + ch - 4 - lines.size() * 10;
             for (FormattedCharSequence l : lines) {
-                g.drawString(font, l, lx + 5, py, 0xFFE0A070, false);
+                g.drawString(font, l, lx + 5, py, 0xFFE3B34F, false);
                 py += 10;
             }
         }

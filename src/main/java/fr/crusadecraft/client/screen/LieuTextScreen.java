@@ -47,8 +47,8 @@ public class LieuTextScreen extends Screen {
         addRenderableWidget(Button.builder(Component.translatable("crusadecraft.mapedit.form.save"), b -> {
             CrusadeNetwork.toServer(LieuPackets.Action.of(LieuPackets.Action.Op.TEXT, target, box.getValue(), null));
             onClose();
-        }).bounds(left + fw / 2 - 94, top + fh - 26, 90, 18).build());
-        addRenderableWidget(Button.builder(Component.translatable("gui.cancel"), b -> onClose()).bounds(left + fw / 2 + 4, top + fh - 26, 90, 18).build());
+        }).bounds(left + fw / 2 - 94, top + fh - 26, 90, 18).build(KitButton::new));
+        addRenderableWidget(Button.builder(Component.translatable("gui.cancel"), b -> onClose()).bounds(left + fw / 2 + 4, top + fh - 26, 90, 18).build(KitButton::new));
     }
 
     @Override

@@ -229,14 +229,14 @@ public class UrbanScreen extends Screen {
             params.clearEdits();
             syncSeed();
             changed();
-        }).bounds(listX, by, third, 16).tooltip(net.minecraft.client.gui.components.Tooltip.create(Component.translatable("crusadecraft.urban.roll.hint"))).build());
+        }).bounds(listX, by, third, 16).tooltip(net.minecraft.client.gui.components.Tooltip.create(Component.translatable("crusadecraft.urban.roll.hint"))).build(KitButton::new));
         takeButton = addRenderableWidget(Button.builder(Component.translatable("crusadecraft.urban.take"), b -> send(UrbanPackets.TAKE, ""))
-                .bounds(listX + third + 4, by, third, 16).tooltip(net.minecraft.client.gui.components.Tooltip.create(Component.translatable("crusadecraft.urban.take.hint"))).build());
-        doneButton = addRenderableWidget(Button.builder(Component.translatable("gui.done"), b -> onClose()).bounds(listX + 2 * third + 8, by, third, 16).build());
+                .bounds(listX + third + 4, by, third, 16).tooltip(net.minecraft.client.gui.components.Tooltip.create(Component.translatable("crusadecraft.urban.take.hint"))).build(KitButton::new));
+        doneButton = addRenderableWidget(Button.builder(Component.translatable("gui.done"), b -> onClose()).bounds(listX + 2 * third + 8, by, third, 16).build(KitButton::new));
         forgetButton = addRenderableWidget(Button.builder(Component.translatable("crusadecraft.urban.forget"), b -> {
             params.clearEdits();
             changed();
-        }).bounds(mapX + mapW - 118, mapY + 4, 114, 14).build());
+        }).bounds(mapX + mapW - 118, mapY + 4, 114, 14).build(KitButton::new));
 
         saveBox = new EditBox(font, listX + 4, listTop + 4, listW - 92, 14, Component.translatable("crusadecraft.urban.save.name"));
         saveBox.setMaxLength(UrbanParams.NAME_MAX);
@@ -244,7 +244,7 @@ public class UrbanScreen extends Screen {
         addRenderableWidget(saveBox);
         saveButton = addRenderableWidget(Button.builder(Component.translatable("crusadecraft.urban.save"), b -> {
             if (!saveBox.getValue().isBlank()) send(UrbanPackets.SAVE, saveBox.getValue());
-        }).bounds(listX + listW - 84, listTop + 3, 80, 16).build());
+        }).bounds(listX + listW - 84, listTop + 3, 80, 16).build(KitButton::new));
         if (texture != null && half > 0) fit(2 * half + 1);
         changed();
     }
@@ -357,7 +357,7 @@ public class UrbanScreen extends Screen {
         int ch = ROW_H - 6;
         switch (d.kind()) {
             case SLIDER -> {
-                g.fill(x, y, x + CONTROL_W, y + ch, 0xFF15110D);
+                g.fill(x, y, x + CONTROL_W, y + ch, 0xFF0F1216);
                 double f = (double) (params.get(d) - d.min()) / Math.max(1, d.max() - d.min());
                 g.fill(x + 1, y + 1, x + 1 + (int) ((CONTROL_W - 2) * f), y + ch - 1, Ui.GOLD_DARK);
                 int knob = x + (int) ((CONTROL_W - 3) * f);
@@ -366,11 +366,11 @@ public class UrbanScreen extends Screen {
             }
             case TOGGLE -> {
                 boolean on = params.on(d);
-                g.fill(x, y, x + CONTROL_W, y + ch, on ? 0xFF3E5A2A : 0xFF15110D);
+                g.fill(x, y, x + CONTROL_W, y + ch, on ? 0xFF3E5A2A : 0xFF0F1216);
                 Ui.centered(g, font, valueText(d), x + CONTROL_W / 2, y + 3, on ? Ui.TEXT_TITLE : Ui.TEXT_MUTED);
             }
             case CHOICE -> {
-                g.fill(x, y, x + CONTROL_W, y + ch, 0xFF15110D);
+                g.fill(x, y, x + CONTROL_W, y + ch, 0xFF0F1216);
                 g.drawString(font, "‹", x + 4, y + 3, Ui.GOLD, false);
                 g.drawString(font, "›", x + CONTROL_W - 8, y + 3, Ui.GOLD, false);
                 Component text = valueText(d);
